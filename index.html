@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 <meta charset="UTF-8">
 <title>Padel App</title>
 
 <style>
+
 body{
 font-family: Arial;
 background:#f2f2f2;
@@ -32,6 +34,7 @@ padding:10px 20px;
 margin:10px;
 cursor:pointer;
 }
+
 </style>
 
 </head>
@@ -75,46 +78,51 @@ const auth = firebase.auth();
 
 function registro(){
 
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+const email = document.getElementById("email").value;
+const password = document.getElementById("password").value;
 
-  auth.createUserWithEmailAndPassword(email, password)
-  .then((userCredential) => {
+auth.createUserWithEmailAndPassword(email, password)
 
-    document.getElementById("mensaje").innerText =
-    "Usuario registrado correctamente";
+.then((userCredential) => {
 
-  })
-  .catch((error) => {
+document.getElementById("mensaje").innerText =
+"Usuario registrado correctamente";
 
-    document.getElementById("mensaje").innerText =
-    "Error: " + error.message;
+})
 
-  });
+.catch((error) => {
+
+document.getElementById("mensaje").innerText =
+"Error: " + error.message;
+
+});
 
 }
 
 function login(){
 
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+const email = document.getElementById("email").value;
+const password = document.getElementById("password").value;
 
-  auth.signInWithEmailAndPassword(email, password)
-  .then((userCredential) => {
+auth.signInWithEmailAndPassword(email, password)
 
-    document.getElementById("mensaje").innerText =
-    "Usuario conectado";
+.then((userCredential) => {
 
-  })
-  .catch((error) => {
+document.getElementById("mensaje").innerText =
+"Usuario conectado correctamente";
 
-    document.getElementById("mensaje").innerText =
-    "Error: " + error.message;
+})
 
-  });
+.catch((error) => {
+
+document.getElementById("mensaje").innerText =
+"Error: " + error.message;
+
+});
 
 }
 
 </script>
+
 </body>
 </html>
