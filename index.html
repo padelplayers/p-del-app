@@ -1,1 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Padel App</title>
 
+<style>
+body{
+font-family: Arial;
+background:#f2f2f2;
+text-align:center;
+margin-top:50px;
+}
+
+.container{
+background:white;
+padding:30px;
+width:300px;
+margin:auto;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.2);
+}
+
+input{
+width:90%;
+padding:10px;
+margin:10px;
+}
+
+button{
+padding:10px 20px;
+margin:10px;
+cursor:pointer;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Padel App</h2>
+
+<input id="email" placeholder="email">
+<input id="password" type="password" placeholder="contraseña">
+
+<br>
+
+<button onclick="registro()">Registrarse</button>
+<button onclick="login()">Entrar</button>
+
+<p id="mensaje"></p>
+
+</div>
+
+<script>
+
+function registro(){
+document.getElementById("mensaje").innerText="Registro pendiente de conectar con Firebase";
+}
+
+function login(){
+document.getElementById("mensaje").innerText="Login pendiente de conectar con Firebase";
+}
+
+</script>
+
+</body>
+</html>
