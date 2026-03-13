@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>Pádel Players Morvedre</title>
 
 <style>
@@ -15,45 +18,47 @@ text-align:center;
 
 .header{
 background:linear-gradient(90deg,#1565C0 0%,#1565C0 45%,#FFC107 55%,#FFC107 100%);
-padding:20px 10px;
+padding:25px 10px;
 color:white;
 }
 
 .logo{
-width:160px;
-margin-bottom:5px;
+width:220px;
+margin-bottom:8px;
 }
 
 .title{
-font-size:26px;
+font-size:28px;
 font-weight:bold;
 }
 
 .container{
 background:white;
-padding:25px;
-width:330px;
+padding:30px;
+width:90%;
+max-width:420px;
 margin:35px auto;
-border-radius:10px;
-box-shadow:0 4px 12px rgba(0,0,0,0.15);
+border-radius:12px;
+box-shadow:0 4px 14px rgba(0,0,0,0.15);
 }
 
 input,select{
-width:90%;
-padding:12px;
-margin:10px;
+width:92%;
+padding:16px;
+margin:12px;
 border:1px solid #ddd;
-border-radius:6px;
-font-size:15px;
+border-radius:8px;
+font-size:18px;
 }
 
 button{
-padding:14px;
-margin:8px 0;
+padding:16px;
+margin:10px 0;
 cursor:pointer;
 border:none;
-border-radius:6px;
-font-size:16px;
+border-radius:8px;
+font-size:18px;
+width:95%;
 }
 
 .btnBlue{
@@ -67,12 +72,13 @@ background:#FFC107;
 
 .menuButton{
 display:block;
-width:100%;
-margin:12px 0;
-padding:14px;
-font-size:16px;
+width:95%;
+margin:14px auto;
+padding:18px;
+font-size:20px;
 background:#1565C0;
 color:white;
+border-radius:10px;
 }
 
 .logout{
@@ -90,9 +96,10 @@ color:white;
 
 .partidaCard{
 background:#f5f5f5;
-padding:12px;
-margin:12px 0;
-border-radius:6px;
+padding:16px;
+margin:14px 0;
+border-radius:8px;
+font-size:17px;
 }
 
 </style>
@@ -102,47 +109,65 @@ border-radius:6px;
 <body>
 
 <div class="header">
+
 <img src="logo.png" class="logo">
-<div class="title">Pádel Players Morvedre</div>
+
+<div class="title">
+Pádel Players Morvedre
 </div>
+
+</div>
+
 
 <div id="login" class="container">
 
 <input id="email" placeholder="email">
+
 <input id="password" type="password" placeholder="contraseña">
 
 <button class="btnBlue" onclick="registro()">Registrarse</button>
+
 <button class="btnYellow" onclick="login()">Entrar</button>
 
 <p id="mensaje"></p>
 
 </div>
 
+
 <div id="menu" class="container">
 
 <button class="menuButton" onclick="abrirPartidas()">Partidas</button>
+
 <button class="menuButton">Chat jugadores</button>
+
 <button class="menuButton">Perfil</button>
+
 <button class="menuButton">Tutoriales</button>
+
 <button class="menuButton">Media Center</button>
 
 <button class="logout" onclick="logout()">Cerrar sesión</button>
 
 </div>
 
+
 <div id="partidas" class="container">
 
 <h3>Crear partida</h3>
 
 <input id="fecha" type="date">
+
 <input id="hora" type="time">
+
 <input id="lugar" placeholder="Lugar">
 
 <select id="nivel">
+
 <option value="0-2">Nivel inferior (0 – 2)</option>
 <option value="2-4">Nivel medio (2 – 4)</option>
 <option value="4-7">Nivel superior (4 – 7)</option>
 <option value="cualquiera">Cualquier nivel</option>
+
 </select>
 
 <button class="btnBlue" onclick="crearPartida()">Crear partida</button>
@@ -154,6 +179,7 @@ border-radius:6px;
 <button class="btnYellow" onclick="volverMenu()">Volver</button>
 
 </div>
+
 
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -176,14 +202,19 @@ firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const db=firebase.firestore();
 
+
 auth.onAuthStateChanged(function(user){
 
 if(user){
+
 document.getElementById("login").style.display="none";
 document.getElementById("menu").style.display="block";
+
 }else{
+
 document.getElementById("login").style.display="block";
 document.getElementById("menu").style.display="none";
+
 }
 
 });
@@ -197,6 +228,7 @@ const password=document.getElementById("password").value;
 try{
 
 const userCredential=await auth.createUserWithEmailAndPassword(email,password);
+
 const user=userCredential.user;
 
 await db.collection("usuarios").doc(user.uid).set({
@@ -229,6 +261,7 @@ const email=document.getElementById("email").value;
 const password=document.getElementById("password").value;
 
 auth.signInWithEmailAndPassword(email,password)
+.then(()=>{})
 .catch(error=>{
 document.getElementById("mensaje").innerText="Error: "+error.message;
 });
@@ -237,7 +270,9 @@ document.getElementById("mensaje").innerText="Error: "+error.message;
 
 
 function logout(){
+
 auth.signOut();
+
 }
 
 
@@ -270,4 +305,53 @@ const nivel=document.getElementById("nivel").value;
 
 await db.collection("partidas").add({
 
-cre
+creador:user.uid,
+fecha:fecha,
+hora:hora,
+lugar:lugar,
+nivel:nivel,
+jugadores:[],
+reservas:[],
+estado:"abierta"
+
+});
+
+cargarPartidas();
+
+}
+
+
+async function cargarPartidas(){
+
+const contenedor=document.getElementById("listaPartidas");
+
+contenedor.innerHTML="";
+
+const snapshot=await db.collection("partidas").get();
+
+snapshot.forEach(doc=>{
+
+const p=doc.data();
+
+const div=document.createElement("div");
+
+div.className="partidaCard";
+
+div.innerHTML=
+
+"<b>"+p.lugar+"</b><br>"+
+p.fecha+" "+p.hora+"<br>"+
+"Nivel: "+p.nivel+"<br>"+
+"Jugadores: "+p.jugadores.length+"/4<br>"+
+"Reservas: "+p.reservas.length+"/2";
+
+contenedor.appendChild(div);
+
+});
+
+}
+
+</script>
+
+</body>
+</html>
