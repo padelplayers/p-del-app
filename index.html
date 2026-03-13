@@ -58,8 +58,10 @@ cursor:pointer;
 </div>
 
 <!-- Firebase -->
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
 
@@ -75,6 +77,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
+const db = firebase.firestore();
 
 function registro(){
 
@@ -84,6 +87,23 @@ const password = document.getElementById("password").value;
 auth.createUserWithEmailAndPassword(email, password)
 
 .then((userCredential) => {
+
+const user = userCredential.user;
+
+db.collection("usuarios").doc(user.uid).set({
+
+nombre: "",
+foto: "",
+nivel: 2,
+partidos: 0,
+victorias: 0,
+derrotas: 0,
+puntualidad: 5,
+valoracion: 5,
+companerosHabituales: [],
+rivalesFrecuentes: []
+
+});
 
 document.getElementById("mensaje").innerText =
 "Usuario registrado correctamente";
