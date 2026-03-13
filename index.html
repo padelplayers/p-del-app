@@ -5,22 +5,98 @@
 <title>Pádel Players Morvedre</title>
 
 <style>
-body{font-family:Arial;background:#ffffff;margin:0;text-align:center;}
-.header{background:linear-gradient(90deg,#1565C0 0%,#1565C0 45%,#FFC107 55%,#FFC107 100%);padding:20px 10px;color:white;}
-.logo{width:160px;margin-bottom:5px;}
-.title{font-size:26px;font-weight:bold;}
-.container{background:white;padding:25px;width:330px;margin:35px auto;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
-input,select{width:90%;padding:12px;margin:10px;border:1px solid #ddd;border-radius:6px;font-size:15px;}
-button{padding:14px;margin:8px 0;cursor:pointer;border:none;border-radius:6px;font-size:16px;}
-.btnBlue{background:#1565C0;color:white;}
-.btnYellow{background:#FFC107;}
-.menuButton{display:block;width:100%;margin:12px 0;padding:14px;font-size:16px;background:#1565C0;color:white;}
-.logout{background:#f44336;color:white;}
+
+body{
+font-family:Arial;
+background:#ffffff;
+margin:0;
+text-align:center;
+}
+
+.header{
+background:linear-gradient(90deg,#1565C0 0%,#1565C0 45%,#FFC107 55%,#FFC107 100%);
+padding:20px 10px;
+color:white;
+}
+
+.logo{
+width:160px;
+margin-bottom:5px;
+}
+
+.title{
+font-size:26px;
+font-weight:bold;
+}
+
+.container{
+background:white;
+padding:25px;
+width:330px;
+margin:35px auto;
+border-radius:10px;
+box-shadow:0 4px 12px rgba(0,0,0,0.15);
+}
+
+input,select{
+width:90%;
+padding:12px;
+margin:10px;
+border:1px solid #ddd;
+border-radius:6px;
+font-size:15px;
+}
+
+button{
+padding:14px;
+margin:8px 0;
+cursor:pointer;
+border:none;
+border-radius:6px;
+font-size:16px;
+}
+
+.btnBlue{
+background:#1565C0;
+color:white;
+}
+
+.btnYellow{
+background:#FFC107;
+}
+
+.menuButton{
+display:block;
+width:100%;
+margin:12px 0;
+padding:14px;
+font-size:16px;
+background:#1565C0;
+color:white;
+}
+
+.logout{
+background:#f44336;
+color:white;
+}
+
+.btnRemove{
+background:#777;
+color:white;
+}
+
 #menu{display:none;}
 #partidas{display:none;}
-.partidaCard{background:#f5f5f5;padding:12px;margin:12px 0;border-radius:6px;}
-.jugador{font-size:14px;margin:2px;}
+
+.partidaCard{
+background:#f5f5f5;
+padding:12px;
+margin:12px 0;
+border-radius:6px;
+}
+
 </style>
+
 </head>
 
 <body>
@@ -30,22 +106,32 @@ button{padding:14px;margin:8px 0;cursor:pointer;border:none;border-radius:6px;fo
 <div class="title">Pádel Players Morvedre</div>
 </div>
 
+
 <div id="login" class="container">
+
 <input id="email" placeholder="email">
 <input id="password" type="password" placeholder="contraseña">
+
 <button class="btnBlue" onclick="registro()">Registrarse</button>
 <button class="btnYellow" onclick="login()">Entrar</button>
+
 <p id="mensaje"></p>
+
 </div>
 
+
 <div id="menu" class="container">
+
 <button class="menuButton" onclick="abrirPartidas()">Partidas</button>
 <button class="menuButton">Chat jugadores</button>
 <button class="menuButton">Perfil</button>
 <button class="menuButton">Tutoriales</button>
 <button class="menuButton">Media Center</button>
+
 <button class="logout" onclick="logout()">Cerrar sesión</button>
+
 </div>
+
 
 <div id="partidas" class="container">
 
@@ -56,15 +142,18 @@ button{padding:14px;margin:8px 0;cursor:pointer;border:none;border-radius:6px;fo
 <input id="lugar" placeholder="Lugar">
 
 <select id="nivel">
+
 <option value="0-2">Nivel inferior (0 – 2)</option>
 <option value="2-4">Nivel medio (2 – 4)</option>
 <option value="4-7">Nivel superior (4 – 7)</option>
 <option value="cualquiera">Cualquier nivel</option>
+
 </select>
 
 <button class="btnBlue" onclick="crearPartida()">Crear partida</button>
 
 <h3>Partidas disponibles</h3>
+
 <div id="listaPartidas"></div>
 
 <button class="btnYellow" onclick="volverMenu()">Volver</button>
@@ -92,7 +181,9 @@ firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const db=firebase.firestore();
 
+
 auth.onAuthStateChanged(function(user){
+
 if(user){
 document.getElementById("login").style.display="none";
 document.getElementById("menu").style.display="block";
@@ -100,13 +191,17 @@ document.getElementById("menu").style.display="block";
 document.getElementById("login").style.display="block";
 document.getElementById("menu").style.display="none";
 }
+
 });
 
+
 async function registro(){
+
 const email=document.getElementById("email").value;
 const password=document.getElementById("password").value;
 
 try{
+
 const userCredential=await auth.createUserWithEmailAndPassword(email,password);
 const user=userCredential.user;
 
@@ -124,34 +219,51 @@ rivalesFrecuentes:[]
 });
 
 document.getElementById("mensaje").innerText="Usuario registrado";
+
 }catch(error){
+
 document.getElementById("mensaje").innerText="Error: "+error.message;
-}
+
 }
 
+}
+
+
 function login(){
+
 const email=document.getElementById("email").value;
 const password=document.getElementById("password").value;
+
 auth.signInWithEmailAndPassword(email,password)
 .catch(error=>{
 document.getElementById("mensaje").innerText="Error: "+error.message;
 });
+
 }
+
 
 function logout(){
 auth.signOut();
 }
 
+
 function abrirPartidas(){
+
 document.getElementById("menu").style.display="none";
 document.getElementById("partidas").style.display="block";
+
 cargarPartidas();
+
 }
 
+
 function volverMenu(){
+
 document.getElementById("partidas").style.display="none";
 document.getElementById("menu").style.display="block";
+
 }
+
 
 async function crearPartida(){
 
@@ -163,45 +275,98 @@ const lugar=document.getElementById("lugar").value;
 const nivel=document.getElementById("nivel").value;
 
 await db.collection("partidas").add({
+
 creador:user.uid,
 fecha:fecha,
 hora:hora,
 lugar:lugar,
 nivel:nivel,
-jugadores:[user.uid],
+jugadores:[],
 reservas:[],
 estado:"abierta"
+
 });
 
 cargarPartidas();
+
 }
 
-async function apuntarse(id){
+
+async function apuntarJugador(id){
 
 const user=auth.currentUser;
+
 const ref=db.collection("partidas").doc(id);
 const doc=await ref.get();
-const data=doc.data();
 
-let jugadores=data.jugadores;
-let reservas=data.reservas;
+let data=doc.data();
 
-if(jugadores.length<4){
-jugadores.push(user.uid);
-}else if(reservas.length<2){
-reservas.push(user.uid);
-}else{
-alert("Partida completa");
+if(data.jugadores.includes(user.uid) || data.reservas.includes(user.uid)){
 return;
 }
 
+if(data.jugadores.length>=4){
+alert("Jugadores completos");
+return;
+}
+
+data.jugadores.push(user.uid);
+
+await ref.update({jugadores:data.jugadores});
+
+cargarPartidas();
+
+}
+
+
+async function apuntarReserva(id){
+
+const user=auth.currentUser;
+
+const ref=db.collection("partidas").doc(id);
+const doc=await ref.get();
+
+let data=doc.data();
+
+if(data.jugadores.includes(user.uid) || data.reservas.includes(user.uid)){
+return;
+}
+
+if(data.reservas.length>=2){
+alert("Reservas completas");
+return;
+}
+
+data.reservas.push(user.uid);
+
+await ref.update({reservas:data.reservas});
+
+cargarPartidas();
+
+}
+
+
+async function desapuntar(id){
+
+const user=auth.currentUser;
+
+const ref=db.collection("partidas").doc(id);
+const doc=await ref.get();
+
+let data=doc.data();
+
+data.jugadores=data.jugadores.filter(u=>u!==user.uid);
+data.reservas=data.reservas.filter(u=>u!==user.uid);
+
 await ref.update({
-jugadores:jugadores,
-reservas:reservas
+jugadores:data.jugadores,
+reservas:data.reservas
 });
 
 cargarPartidas();
+
 }
+
 
 async function cargarPartidas(){
 
@@ -210,24 +375,42 @@ contenedor.innerHTML="";
 
 const snapshot=await db.collection("partidas").get();
 
+const user=auth.currentUser;
+
 snapshot.forEach(doc=>{
 
 const p=doc.data();
 
+let botones="";
+
+if(p.jugadores.includes(user.uid) || p.reservas.includes(user.uid)){
+
+botones="<button class='btnRemove' onclick='desapuntar(\""+doc.id+"\")'>Desapuntarme</button>";
+
+}else{
+
+botones=
+"<button class='btnBlue' onclick='apuntarJugador(\""+doc.id+"\")'>Apuntarme jugador</button>"+
+"<button class='btnYellow' onclick='apuntarReserva(\""+doc.id+"\")'>Apuntarme reserva</button>";
+
+}
+
 const div=document.createElement("div");
+
 div.className="partidaCard";
 
 div.innerHTML=
 "<b>"+p.lugar+"</b><br>"+
 p.fecha+" "+p.hora+"<br>"+
 "Nivel: "+p.nivel+"<br>"+
-"<div class='jugador'>Jugadores: "+p.jugadores.length+"/4</div>"+
-"<div class='jugador'>Reservas: "+p.reservas.length+"/2</div>"+
-"<button class='btnBlue' onclick='apuntarse(\""+doc.id+"\")'>Apuntarme</button>";
+"Jugadores: "+p.jugadores.length+"/4<br>"+
+"Reservas: "+p.reservas.length+"/2<br>"+
+botones;
 
 contenedor.appendChild(div);
 
 });
+
 }
 
 </script>
