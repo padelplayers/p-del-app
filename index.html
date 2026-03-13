@@ -34,6 +34,7 @@ border-radius:8px;font-size:16px;width:95%;
 
 .btnBlue{background:#1565C0;color:white;}
 .btnYellow{background:#FFC107;}
+.btnRemove{background:#e53935;color:white;}
 .logout{background:#f44336;color:white;}
 
 .menuButton{
@@ -43,10 +44,13 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 
 #menu{display:none;}
 #perfilCompletar{display:none;}
+#testNivel{display:none;}
 
 .small{font-size:12px;color:#666;margin:0 4% 10px;text-align:left}
 .error{color:#e53935;font-size:13px;text-align:left;margin:0 4%}
 .ok{color:#2e7d32;font-size:13px;text-align:left;margin:0 4%}
+
+.pregunta{margin:12px 0;text-align:left}
 </style>
 </head>
 
@@ -57,7 +61,7 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 <div class="title">Pádel Players Morvedre</div>
 </div>
 
-<!-- LOGIN / REGISTRO -->
+<!-- LOGIN -->
 <div id="login" class="container">
 
 <label>Email</label>
@@ -72,6 +76,7 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 <div id="msgAuth" class="error"></div>
 
 </div>
+
 
 <!-- COMPLETAR PERFIL -->
 <div id="perfilCompletar" class="container">
@@ -94,12 +99,18 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 </select>
 
 <label>Nivel <span class="req">*</span></label>
-<select id="nivel">
-<option value="">Seleccionar</option>
-<option value="1">Nivel iniciación (0–2)</option>
-<option value="3">Nivel intermedio (2–4)</option>
-<option value="5">Nivel avanzado (4–7)</option>
+
+<select id="nivelManual">
+<option value="">Elegir nivel manualmente</option>
+<option>0</option><option>0.5</option><option>1</option><option>1.5</option>
+<option>2</option><option>2.5</option><option>3</option><option>3.5</option>
+<option>4</option><option>4.5</option><option>5</option><option>5.5</option>
+<option>6</option><option>6.5</option><option>7</option>
 </select>
+
+<button class="btnYellow" onclick="abrirTest()">Descubrir mi nivel</button>
+
+<div id="nivelResultado" class="ok"></div>
 
 <label>Mano dominante</label>
 <select id="mano">
@@ -121,7 +132,59 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 
 </div>
 
-<!-- MENÚ -->
+
+<!-- TEST NIVEL -->
+<div id="testNivel" class="container">
+
+<h3>Test de nivel</h3>
+
+<div class="pregunta">
+¿Hace cuánto juegas?
+<select id="p1">
+<option value="0">Menos de 6 meses</option>
+<option value="1">1 año</option>
+<option value="2">2-4 años</option>
+<option value="3">Más de 4 años</option>
+</select>
+</div>
+
+<div class="pregunta">
+¿Usas paredes?
+<select id="p2">
+<option value="0">Nunca</option>
+<option value="1">A veces</option>
+<option value="2">Con frecuencia</option>
+<option value="3">Siempre</option>
+</select>
+</div>
+
+<div class="pregunta">
+¿Control de bola?
+<select id="p3">
+<option value="0">Básico</option>
+<option value="1">Aceptable</option>
+<option value="2">Bueno</option>
+<option value="3">Muy bueno</option>
+</select>
+</div>
+
+<div class="pregunta">
+¿Bandeja o víbora?
+<select id="p4">
+<option value="0">No</option>
+<option value="1">A veces</option>
+<option value="2">Sí</option>
+<option value="3">Dominio alto</option>
+</select>
+</div>
+
+<button class="btnBlue" onclick="calcularNivel()">Calcular nivel</button>
+<button class="btnYellow" onclick="cerrarTest()">Volver</button>
+
+</div>
+
+
+<!-- MENU -->
 <div id="menu" class="container">
 
 <button class="menuButton">Partidas</button>
@@ -134,6 +197,7 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 <button class="logout" onclick="logout()">Cerrar sesión</button>
 
 </div>
+
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -155,7 +219,8 @@ firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const db=firebase.firestore();
 
-/* CONTROL DE SESIÓN */
+/* CONTROL SESIÓN */
+
 auth.onAuthStateChanged(async function(user){
 
 if(!user){
@@ -173,90 +238,99 @@ mostrar("menu");
 
 });
 
-function mostrar(pantalla){
-
+function mostrar(p){
 document.getElementById("login").style.display="none";
 document.getElementById("perfilCompletar").style.display="none";
 document.getElementById("menu").style.display="none";
+document.getElementById("testNivel").style.display="none";
 
-if(pantalla==="login")document.getElementById("login").style.display="block";
-if(pantalla==="perfil")document.getElementById("perfilCompletar").style.display="block";
-if(pantalla==="menu")document.getElementById("menu").style.display="block";
-
+if(p==="login")document.getElementById("login").style.display="block";
+if(p==="perfil")document.getElementById("perfilCompletar").style.display="block";
+if(p==="menu")document.getElementById("menu").style.display="block";
+if(p==="test")document.getElementById("testNivel").style.display="block";
 }
 
-/* REGISTRO */
-async function registro(){
+/* LOGIN / REGISTRO */
 
+async function registro(){
 const email=document.getElementById("email").value;
 const password=document.getElementById("password").value;
-
-try{
-
-await auth.createUserWithEmailAndPassword(email,password);
-
-}catch(e){
-
-document.getElementById("msgAuth").innerText=e.message;
-
+try{await auth.createUserWithEmailAndPassword(email,password);}
+catch(e){document.getElementById("msgAuth").innerText=e.message;}
 }
 
-}
-
-/* LOGIN */
 function login(){
-
 auth.signInWithEmailAndPassword(
 document.getElementById("email").value,
 document.getElementById("password").value
 ).catch(e=>{
 document.getElementById("msgAuth").innerText=e.message;
 });
+}
+
+/* TEST NIVEL */
+
+function abrirTest(){mostrar("test")}
+function cerrarTest(){mostrar("perfil")}
+
+function calcularNivel(){
+
+let puntos=
+parseInt(p1.value)+
+parseInt(p2.value)+
+parseInt(p3.value)+
+parseInt(p4.value);
+
+let nivel=1;
+
+if(puntos<=2)nivel=1.5;
+else if(puntos<=5)nivel=2.5;
+else if(puntos<=8)nivel=3.5;
+else if(puntos<=10)nivel=4.5;
+else nivel=5.5;
+
+document.getElementById("nivelManual").value=nivel;
+document.getElementById("nivelResultado").innerText="Nivel sugerido: "+nivel;
+
+mostrar("perfil");
 
 }
 
 /* GUARDAR PERFIL */
+
 async function guardarPerfil(){
 
 const user=auth.currentUser;
 
 const nombre=document.getElementById("nombre").value.trim();
 const sexo=document.getElementById("sexo").value;
-const nivel=document.getElementById("nivel").value;
+const nivel=document.getElementById("nivelManual").value;
 const mano=document.getElementById("mano").value;
 const posicion=document.getElementById("posicion").value;
 
-document.getElementById("msgNombre").innerText="";
-document.getElementById("msgPerfil").innerText="";
-
-/* VALIDAR CAMPOS */
 if(!nombre || !sexo || !nivel){
-
-document.getElementById("msgPerfil").innerText="Debes completar todos los campos obligatorios.";
+document.getElementById("msgPerfil").innerText="Completa los campos obligatorios.";
 return;
-
 }
 
-/* COMPROBAR SI EL NOMBRE YA EXISTE */
+/* comprobar nombre */
 
 const query=await db.collection("usuarios")
 .where("nombre","==",nombre)
 .get();
 
 if(!query.empty){
-
-document.getElementById("msgNombre").innerText="Ese nombre ya existe. Elige otro.";
+document.getElementById("msgNombre").innerText="Ese nombre ya existe.";
 return;
-
 }
 
-/* GUARDAR PERFIL */
+/* guardar */
 
 await db.collection("usuarios").doc(user.uid).set({
 
 nombre:nombre,
 sexo:sexo,
-nivel:nivel,
+nivel:parseFloat(nivel),
 mano:mano,
 posicion:posicion,
 puntuacion:0,
@@ -274,13 +348,8 @@ mostrar("menu");
 
 }
 
-/* LOGOUT */
-
-function logout(){
-auth.signOut();
-}
+function logout(){auth.signOut();}
 
 </script>
-
 </body>
 </html>
