@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,17 +18,17 @@ text-align:center;
 
 .header{
 background:linear-gradient(90deg,#1565C0 0%,#1565C0 45%,#FFC107 55%,#FFC107 100%);
-padding:15px 10px;
+padding:18px 10px;
 color:white;
 }
 
 .logo{
-width:180px;
+width:200px;
 margin-bottom:5px;
 }
 
 .title{
-font-size:24px;
+font-size:26px;
 font-weight:bold;
 }
 
@@ -56,7 +57,7 @@ margin:8px 0;
 cursor:pointer;
 border:none;
 border-radius:8px;
-font-size:17px;
+font-size:16px;
 width:95%;
 }
 
@@ -222,4 +223,133 @@ document.getElementById("menu").style.display="none";
 async function registro(){
 
 const email=document.getElementById("email").value;
-const password=document.get
+const password=document.getElementById("password").value;
+
+try{
+
+const userCredential=await auth.createUserWithEmailAndPassword(email,password);
+const user=userCredential.user;
+
+await db.collection("usuarios").doc(user.uid).set({
+nombre:"",
+foto:"",
+nivel:2,
+partidos:0,
+victorias:0,
+derrotas:0,
+puntualidad:5,
+valoracion:5,
+companerosHabituales:[],
+rivalesFrecuentes:[]
+});
+
+document.getElementById("mensaje").innerText="Usuario registrado";
+
+}catch(error){
+
+document.getElementById("mensaje").innerText="Error: "+error.message;
+
+}
+
+}
+
+
+function login(){
+
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+
+auth.signInWithEmailAndPassword(email,password)
+.catch(error=>{
+document.getElementById("mensaje").innerText="Error: "+error.message;
+});
+
+}
+
+
+function logout(){
+
+auth.signOut();
+
+}
+
+
+function abrirPartidas(){
+
+document.getElementById("menu").style.display="none";
+document.getElementById("partidas").style.display="block";
+
+cargarPartidas();
+
+}
+
+
+function volverMenu(){
+
+document.getElementById("partidas").style.display="none";
+document.getElementById("menu").style.display="block";
+
+}
+
+
+async function crearPartida(){
+
+const user=auth.currentUser;
+
+const fecha=document.getElementById("fecha").value;
+const hora=document.getElementById("hora").value;
+const lugar=document.getElementById("lugar").value;
+const nivel=document.getElementById("nivel").value;
+
+await db.collection("partidas").add({
+
+creador:user.uid,
+fecha:fecha,
+hora:hora,
+lugar:lugar,
+nivel:nivel,
+jugadores:[user.uid],
+reservas:[],
+estado:"abierta"
+
+});
+
+cargarPartidas();
+
+}
+
+
+async function cargarPartidas(){
+
+const contenedor=document.getElementById("listaPartidas");
+
+contenedor.innerHTML="";
+
+const snapshot=await db.collection("partidas").get();
+
+snapshot.forEach(doc=>{
+
+const p=doc.data();
+
+const div=document.createElement("div");
+
+div.className="partidaCard";
+
+div.innerHTML=
+
+"<b>"+p.lugar+"</b><br>"+
+p.fecha+" "+p.hora+"<br>"+
+"Nivel: "+p.nivel+"<br>"+
+"Jugadores: "+p.jugadores.length+"/4<br>"+
+"Reservas: "+p.reservas.length+"/2";
+
+contenedor.appendChild(div);
+
+});
+
+}
+
+</script>
+
+</body>
+</html>
