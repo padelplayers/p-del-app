@@ -9,46 +9,48 @@
 
 body{
 font-family: Arial;
-background:white;
-text-align:center;
+background:#ffffff;
 margin:0;
+text-align:center;
 }
 
 .header{
-background: linear-gradient(135deg,#1565C0,#FFC107);
-padding:25px;
+background:linear-gradient(90deg,#1565C0 0%,#1565C0 45%,#FFC107 55%,#FFC107 100%);
+padding:20px 10px;
 color:white;
 }
 
 .logo{
 width:160px;
-margin-bottom:10px;
+margin-bottom:5px;
 }
 
 .title{
-font-size:28px;
+font-size:26px;
 font-weight:bold;
+margin-top:5px;
 }
 
 .container{
 background:white;
-padding:30px;
+padding:25px;
 width:320px;
-margin:40px auto;
+margin:35px auto;
 border-radius:10px;
-box-shadow:0 0 10px rgba(0,0,0,0.2);
+box-shadow:0 4px 12px rgba(0,0,0,0.15);
 }
 
 input{
 width:90%;
-padding:10px;
+padding:12px;
 margin:10px;
 border:1px solid #ddd;
-border-radius:5px;
+border-radius:6px;
+font-size:15px;
 }
 
 button{
-padding:12px;
+padding:14px;
 margin:8px 0;
 cursor:pointer;
 border:none;
@@ -65,10 +67,6 @@ color:white;
 background:#FFC107;
 }
 
-#menu{
-display:none;
-}
-
 .menuButton{
 display:block;
 width:100%;
@@ -82,6 +80,10 @@ color:white;
 .logout{
 background:#f44336;
 color:white;
+}
+
+#menu{
+display:none;
 }
 
 </style>
@@ -109,7 +111,6 @@ Pádel Players Morvedre
 <br>
 
 <button class="btnBlue" onclick="registro()">Registrarse</button>
-
 <button class="btnYellow" onclick="login()">Entrar</button>
 
 <p id="mensaje"></p>
