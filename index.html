@@ -133,15 +133,26 @@ box-shadow:0 2px 6px rgba(0,0,0,0.1);
 
 <h3>Crear partida</h3>
 
+<input id="lugar" placeholder="Lugar">
+
+<select id="tipoLugar" onchange="controlTipoPartida()">
+<option value="publico">Público / Polideportivo / Urbanización</option>
+<option value="club">Club</option>
+</select>
+
+<select id="tipoPartida">
+<option value="puntuacion">Partida de puntuación</option>
+<option value="amistosa">Partida amistosa / americana</option>
+</select>
+
 <input id="fecha" type="date">
 <input id="hora" type="time">
-<input id="lugar" placeholder="Lugar">
 
 <select id="nivel">
 
-<option value="0-2">Nivel inferior (0 – 2)</option>
-<option value="2-4">Nivel medio (2 – 4)</option>
-<option value="4-7">Nivel superior (4 – 7)</option>
+<option value="iniciacion">Nivel iniciación (0.0 – 2.0)</option>
+<option value="intermedio">Nivel intermedio (2.0 – 4.0)</option>
+<option value="avanzado">Nivel avanzado (4.0 – 7.0)</option>
 <option value="cualquiera">Cualquier nivel</option>
 
 </select>
@@ -192,6 +203,25 @@ document.getElementById("menu").style.display="none";
 });
 
 
+function controlTipoPartida(){
+
+const tipoLugar=document.getElementById("tipoLugar").value;
+const tipoPartida=document.getElementById("tipoPartida");
+
+if(tipoLugar==="club"){
+
+tipoPartida.value="puntuacion";
+tipoPartida.options[1].disabled=true;
+
+}else{
+
+tipoPartida.options[1].disabled=false;
+
+}
+
+}
+
+
 async function registro(){
 
 const email=document.getElementById("email").value;
@@ -206,13 +236,10 @@ await db.collection("usuarios").doc(user.uid).set({
 nombre:"",
 foto:"",
 nivel:2,
+puntuacion:0,
 partidos:0,
 victorias:0,
-derrotas:0,
-puntualidad:5,
-valoracion:5,
-companerosHabituales:[],
-rivalesFrecuentes:[]
+derrotas:0
 });
 
 document.getElementById("mensaje").innerText="Usuario registrado";
@@ -264,17 +291,23 @@ async function crearPartida(){
 
 const user=auth.currentUser;
 
+const lugar=document.getElementById("lugar").value;
+const tipoLugar=document.getElementById("tipoLugar").value;
+const tipoPartida=document.getElementById("tipoPartida").value;
 const fecha=document.getElementById("fecha").value;
 const hora=document.getElementById("hora").value;
-const lugar=document.getElementById("lugar").value;
 const nivel=document.getElementById("nivel").value;
+
+if(!fecha || !hora || !lugar) return;
 
 await db.collection("partidas").add({
 
 creador:user.uid,
+lugar:lugar,
+tipoLugar:tipoLugar,
+tipoPartida:tipoPartida,
 fecha:fecha,
 hora:hora,
-lugar:lugar,
 nivel:nivel,
 jugadores:[],
 reservas:[]
@@ -286,125 +319,32 @@ cargarPartidas();
 }
 
 
-async function apuntarJugador(id){
-
-const user=auth.currentUser;
-const ref=db.collection("partidas").doc(id);
-const doc=await ref.get();
-let data=doc.data();
-
-if(data.jugadores.includes(user.uid) || data.reservas.includes(user.uid)) return;
-
-if(data.jugadores.length>=4){
-alert("Jugadores completos");
-return;
-}
-
-data.jugadores.push(user.uid);
-
-await ref.update({jugadores:data.jugadores});
-
-cargarPartidas();
-
-}
-
-
-async function apuntarReserva(id){
-
-const user=auth.currentUser;
-const ref=db.collection("partidas").doc(id);
-const doc=await ref.get();
-let data=doc.data();
-
-if(data.jugadores.includes(user.uid) || data.reservas.includes(user.uid)) return;
-
-if(data.reservas.length>=2){
-alert("Reservas completas");
-return;
-}
-
-data.reservas.push(user.uid);
-
-await ref.update({reservas:data.reservas});
-
-cargarPartidas();
-
-}
-
-
-async function desapuntar(id){
-
-const user=auth.currentUser;
-const ref=db.collection("partidas").doc(id);
-const doc=await ref.get();
-let data=doc.data();
-
-data.jugadores=data.jugadores.filter(u=>u!==user.uid);
-data.reservas=data.reservas.filter(u=>u!==user.uid);
-
-await ref.update({
-jugadores:data.jugadores,
-reservas:data.reservas
-});
-
-cargarPartidas();
-
-}
-
-
-function confirmarReserva(id){
-
-alert("Reserva confirmada por el creador");
-
-}
-
-
 async function cargarPartidas(){
 
 const contenedor=document.getElementById("listaPartidas");
 contenedor.innerHTML="";
 
 const snapshot=await db.collection("partidas").get();
-const user=auth.currentUser;
 
 snapshot.forEach(doc=>{
 
 const p=doc.data();
 
-let botones="";
-
-if(p.jugadores.includes(user.uid) || p.reservas.includes(user.uid)){
-
-botones="<button class='btnRemove' onclick='desapuntar(\""+doc.id+"\")'>Desapuntarme</button>";
-
-}else{
-
-botones=
-"<button class='btnBlue' onclick='apuntarJugador(\""+doc.id+"\")'>Apuntarme jugador</button>"+
-"<button class='btnYellow' onclick='apuntarReserva(\""+doc.id+"\")'>Apuntarme reserva</button>";
-
-}
-
-let confirmar="";
-
-if(user.uid===p.creador && p.jugadores.length===4){
-
-confirmar="<button class='btnConfirm' onclick='confirmarReserva(\""+doc.id+"\")'>Confirmar reserva</button>";
-
-}
+if(!p.lugar || !p.fecha || !p.hora) return;
 
 const div=document.createElement("div");
 
 div.className="partidaCard";
 
 div.innerHTML=
+
 "<b>"+p.lugar+"</b><br>"+
+p.tipoLugar+"<br>"+
+p.tipoPartida+"<br>"+
 p.fecha+" "+p.hora+"<br>"+
 "Nivel: "+p.nivel+"<br>"+
 "Jugadores: "+p.jugadores.length+"/4<br>"+
-"Reservas: "+p.reservas.length+"/2<br>"+
-botones+
-confirmar;
+"Reservas: "+p.reservas.length+"/2";
 
 contenedor.appendChild(div);
 
