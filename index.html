@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -18,46 +17,46 @@ text-align:center;
 
 .header{
 background:linear-gradient(90deg,#1565C0 0%,#1565C0 45%,#FFC107 55%,#FFC107 100%);
-padding:25px 10px;
+padding:15px 10px;
 color:white;
 }
 
 .logo{
-width:220px;
-margin-bottom:8px;
+width:180px;
+margin-bottom:5px;
 }
 
 .title{
-font-size:28px;
+font-size:24px;
 font-weight:bold;
 }
 
 .container{
 background:white;
-padding:30px;
+padding:20px;
 width:90%;
 max-width:420px;
-margin:35px auto;
-border-radius:12px;
-box-shadow:0 4px 14px rgba(0,0,0,0.15);
+margin:20px auto;
+border-radius:10px;
+box-shadow:0 4px 12px rgba(0,0,0,0.15);
 }
 
 input,select{
 width:92%;
-padding:16px;
-margin:12px;
+padding:14px;
+margin:8px;
 border:1px solid #ddd;
 border-radius:8px;
-font-size:18px;
+font-size:16px;
 }
 
 button{
-padding:16px;
-margin:10px 0;
+padding:14px;
+margin:8px 0;
 cursor:pointer;
 border:none;
 border-radius:8px;
-font-size:18px;
+font-size:17px;
 width:95%;
 }
 
@@ -70,12 +69,17 @@ color:white;
 background:#FFC107;
 }
 
+.btnRemove{
+background:#e53935;
+color:white;
+}
+
 .menuButton{
 display:block;
 width:95%;
-margin:14px auto;
-padding:18px;
-font-size:20px;
+margin:12px auto;
+padding:16px;
+font-size:18px;
 background:#1565C0;
 color:white;
 border-radius:10px;
@@ -86,20 +90,15 @@ background:#f44336;
 color:white;
 }
 
-.btnRemove{
-background:#e53935;
-color:white;
-}
-
 #menu{display:none;}
 #partidas{display:none;}
 
 .partidaCard{
 background:#f5f5f5;
-padding:16px;
-margin:14px 0;
+padding:14px;
+margin:12px 0;
 border-radius:8px;
-font-size:17px;
+font-size:16px;
 }
 
 </style>
@@ -223,135 +222,4 @@ document.getElementById("menu").style.display="none";
 async function registro(){
 
 const email=document.getElementById("email").value;
-const password=document.getElementById("password").value;
-
-try{
-
-const userCredential=await auth.createUserWithEmailAndPassword(email,password);
-
-const user=userCredential.user;
-
-await db.collection("usuarios").doc(user.uid).set({
-nombre:"",
-foto:"",
-nivel:2,
-partidos:0,
-victorias:0,
-derrotas:0,
-puntualidad:5,
-valoracion:5,
-companerosHabituales:[],
-rivalesFrecuentes:[]
-});
-
-document.getElementById("mensaje").innerText="Usuario registrado";
-
-}catch(error){
-
-document.getElementById("mensaje").innerText="Error: "+error.message;
-
-}
-
-}
-
-
-function login(){
-
-const email=document.getElementById("email").value;
-const password=document.getElementById("password").value;
-
-auth.signInWithEmailAndPassword(email,password)
-.then(()=>{})
-.catch(error=>{
-document.getElementById("mensaje").innerText="Error: "+error.message;
-});
-
-}
-
-
-function logout(){
-
-auth.signOut();
-
-}
-
-
-function abrirPartidas(){
-
-document.getElementById("menu").style.display="none";
-document.getElementById("partidas").style.display="block";
-
-cargarPartidas();
-
-}
-
-
-function volverMenu(){
-
-document.getElementById("partidas").style.display="none";
-document.getElementById("menu").style.display="block";
-
-}
-
-
-async function crearPartida(){
-
-const user=auth.currentUser;
-
-const fecha=document.getElementById("fecha").value;
-const hora=document.getElementById("hora").value;
-const lugar=document.getElementById("lugar").value;
-const nivel=document.getElementById("nivel").value;
-
-await db.collection("partidas").add({
-
-creador:user.uid,
-fecha:fecha,
-hora:hora,
-lugar:lugar,
-nivel:nivel,
-jugadores:[],
-reservas:[],
-estado:"abierta"
-
-});
-
-cargarPartidas();
-
-}
-
-
-async function cargarPartidas(){
-
-const contenedor=document.getElementById("listaPartidas");
-
-contenedor.innerHTML="";
-
-const snapshot=await db.collection("partidas").get();
-
-snapshot.forEach(doc=>{
-
-const p=doc.data();
-
-const div=document.createElement("div");
-
-div.className="partidaCard";
-
-div.innerHTML=
-
-"<b>"+p.lugar+"</b><br>"+
-p.fecha+" "+p.hora+"<br>"+
-"Nivel: "+p.nivel+"<br>"+
-"Jugadores: "+p.jugadores.length+"/4<br>"+
-"Reservas: "+p.reservas.length+"/2";
-
-contenedor.appendChild(div);
-
-});
-
-}
-
-</script>
-
-</body>
-</html>
+const password=document.get
