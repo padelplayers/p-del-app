@@ -64,7 +64,6 @@ width:95%;
 .btnBlue{background:#1565C0;color:white;}
 .btnYellow{background:#FFC107;}
 .btnRemove{background:#e53935;color:white;}
-.btnConfirm{background:#2e7d32;color:white;}
 
 .menuButton{
 display:block;
@@ -209,14 +208,10 @@ const tipoLugar=document.getElementById("tipoLugar").value;
 const tipoPartida=document.getElementById("tipoPartida");
 
 if(tipoLugar==="club"){
-
 tipoPartida.value="puntuacion";
 tipoPartida.options[1].disabled=true;
-
 }else{
-
 tipoPartida.options[1].disabled=false;
-
 }
 
 }
@@ -236,10 +231,7 @@ await db.collection("usuarios").doc(user.uid).set({
 nombre:"",
 foto:"",
 nivel:2,
-puntuacion:0,
-partidos:0,
-victorias:0,
-derrotas:0
+puntuacion:0
 });
 
 document.getElementById("mensaje").innerText="Usuario registrado";
@@ -266,7 +258,9 @@ document.getElementById("mensaje").innerText="Error: "+error.message;
 }
 
 
-function logout(){auth.signOut();}
+function logout(){
+auth.signOut();
+}
 
 
 function abrirPartidas(){
@@ -298,8 +292,6 @@ const fecha=document.getElementById("fecha").value;
 const hora=document.getElementById("hora").value;
 const nivel=document.getElementById("nivel").value;
 
-if(!fecha || !hora || !lugar) return;
-
 await db.collection("partidas").add({
 
 creador:user.uid,
@@ -319,20 +311,36 @@ cargarPartidas();
 }
 
 
+async function eliminarPartida(id){
+
+await db.collection("partidas").doc(id).delete();
+
+cargarPartidas();
+
+}
+
+
 async function cargarPartidas(){
 
 const contenedor=document.getElementById("listaPartidas");
 contenedor.innerHTML="";
 
 const snapshot=await db.collection("partidas").get();
+const user=auth.currentUser;
 
 snapshot.forEach(doc=>{
 
 const p=doc.data();
 
-if(!p.lugar || !p.fecha || !p.hora) return;
-
 const div=document.createElement("div");
+
+let botonEliminar="";
+
+if(user && user.uid===p.creador){
+
+botonEliminar="<button class='btnRemove' onclick='eliminarPartida(\""+doc.id+"\")'>Eliminar partida</button>";
+
+}
 
 div.className="partidaCard";
 
@@ -344,7 +352,8 @@ p.tipoPartida+"<br>"+
 p.fecha+" "+p.hora+"<br>"+
 "Nivel: "+p.nivel+"<br>"+
 "Jugadores: "+p.jugadores.length+"/4<br>"+
-"Reservas: "+p.reservas.length+"/2";
+"Reservas: "+p.reservas.length+"/2<br>"+
+botonEliminar;
 
 contenedor.appendChild(div);
 
