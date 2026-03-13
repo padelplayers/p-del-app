@@ -3,21 +3,38 @@
 
 <head>
 <meta charset="UTF-8">
-<title>Padel App</title>
+<title>Pádel Players Morvedre</title>
 
 <style>
+
 body{
 font-family: Arial;
-background:#f2f2f2;
+background:white;
 text-align:center;
-margin-top:50px;
+margin:0;
+}
+
+.header{
+background: linear-gradient(135deg,#1565C0,#FFC107);
+padding:25px;
+color:white;
+}
+
+.logo{
+width:160px;
+margin-bottom:10px;
+}
+
+.title{
+font-size:28px;
+font-weight:bold;
 }
 
 .container{
 background:white;
 padding:30px;
-width:300px;
-margin:auto;
+width:320px;
+margin:40px auto;
 border-radius:10px;
 box-shadow:0 0 10px rgba(0,0,0,0.2);
 }
@@ -26,34 +43,96 @@ input{
 width:90%;
 padding:10px;
 margin:10px;
+border:1px solid #ddd;
+border-radius:5px;
 }
 
 button{
-padding:10px 20px;
-margin:10px;
+padding:12px;
+margin:8px 0;
 cursor:pointer;
+border:none;
+border-radius:6px;
+font-size:16px;
 }
+
+.btnBlue{
+background:#1565C0;
+color:white;
+}
+
+.btnYellow{
+background:#FFC107;
+}
+
+#menu{
+display:none;
+}
+
+.menuButton{
+display:block;
+width:100%;
+margin:12px 0;
+padding:14px;
+font-size:16px;
+background:#1565C0;
+color:white;
+}
+
+.logout{
+background:#f44336;
+color:white;
+}
+
 </style>
 
 </head>
 
 <body>
 
-<div class="container">
+<div class="header">
 
-<h2>Padel App</h2>
+<img src="logo.png" class="logo">
+
+<div class="title">
+Pádel Players Morvedre
+</div>
+
+</div>
+
+
+<div id="login" class="container">
 
 <input id="email" placeholder="email">
 <input id="password" type="password" placeholder="contraseña">
 
 <br>
 
-<button onclick="registro()">Registrarse</button>
-<button onclick="login()">Entrar</button>
+<button class="btnBlue" onclick="registro()">Registrarse</button>
+
+<button class="btnYellow" onclick="login()">Entrar</button>
 
 <p id="mensaje"></p>
 
 </div>
+
+
+<div id="menu" class="container">
+
+<button class="menuButton">Partidas</button>
+
+<button class="menuButton">Chat jugadores</button>
+
+<button class="menuButton">Perfil</button>
+
+<button class="menuButton">Tutoriales</button>
+
+<button class="menuButton">Media Center</button>
+
+<button class="logout" onclick="logout()">Cerrar sesión</button>
+
+</div>
+
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -75,18 +154,36 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-function registro(){
 
-const email = document.getElementById("email").value;
-const password = document.getElementById("password").value;
+auth.onAuthStateChanged(function(user){
 
-auth.createUserWithEmailAndPassword(email, password)
+if(user){
 
-.then((userCredential) => {
+document.getElementById("login").style.display="none";
+document.getElementById("menu").style.display="block";
 
-const user = userCredential.user;
+}else{
 
-db.collection("usuarios").doc(user.uid).set({
+document.getElementById("login").style.display="block";
+document.getElementById("menu").style.display="none";
+
+}
+
+});
+
+
+async function registro(){
+
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+
+try{
+
+const userCredential=await auth.createUserWithEmailAndPassword(email,password);
+const user=userCredential.user;
+
+await db.collection("usuarios").doc(user.uid).set({
+
 nombre:"",
 foto:"",
 nivel:2,
@@ -97,13 +194,28 @@ puntualidad:5,
 valoracion:5,
 companerosHabituales:[],
 rivalesFrecuentes:[]
+
 });
 
-document.getElementById("mensaje").innerText="Usuario registrado correctamente";
+document.getElementById("mensaje").innerText="Usuario registrado";
 
-})
+}catch(error){
 
-.catch((error) => {
+document.getElementById("mensaje").innerText="Error: "+error.message;
+
+}
+
+}
+
+
+function login(){
+
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+
+auth.signInWithEmailAndPassword(email,password)
+
+.catch((error)=>{
 
 document.getElementById("mensaje").innerText="Error: "+error.message;
 
@@ -111,24 +223,10 @@ document.getElementById("mensaje").innerText="Error: "+error.message;
 
 }
 
-function login(){
 
-const email = document.getElementById("email").value;
-const password = document.getElementById("password").value;
+function logout(){
 
-auth.signInWithEmailAndPassword(email, password)
-
-.then((userCredential) => {
-
-document.getElementById("mensaje").innerText="Usuario conectado correctamente";
-
-})
-
-.catch((error) => {
-
-document.getElementById("mensaje").innerText="Error: "+error.message;
-
-});
+auth.signOut();
 
 }
 
