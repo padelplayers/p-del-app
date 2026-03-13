@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,7 +15,6 @@ padding:18px 10px;color:white;
 }
 
 .logo{width:200px;margin-bottom:5px;}
-
 .title{font-size:26px;font-weight:bold;}
 
 .container{
@@ -48,4 +46,277 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 #menu{display:none;}
 #partidas{display:none;}
 
-.partidaCard
+.partidaCard{
+background:#f5f5f5;padding:16px;margin:14px 0;border-radius:10px;
+font-size:16px;box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.jugador{font-size:14px;margin:2px}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<img src="logo.png" class="logo">
+<div class="title">Pádel Players Morvedre</div>
+</div>
+
+<div id="login" class="container">
+<input id="email" placeholder="email">
+<input id="password" type="password" placeholder="contraseña">
+<button class="btnBlue" onclick="registro()">Registrarse</button>
+<button class="btnYellow" onclick="login()">Entrar</button>
+<p id="mensaje"></p>
+</div>
+
+<div id="menu" class="container">
+<button class="menuButton" onclick="abrirPartidas()">Partidas</button>
+<button class="menuButton">Chat jugadores</button>
+<button class="menuButton">Perfil</button>
+<button class="menuButton">Tutoriales</button>
+<button class="menuButton">Media Center</button>
+<button class="logout" onclick="logout()">Cerrar sesión</button>
+</div>
+
+<div id="partidas" class="container">
+
+<h3>Crear partida</h3>
+
+<input id="lugar" placeholder="Lugar">
+
+<select id="tipoLugar" onchange="controlTipoPartida()">
+<option value="publico">Público / Polideportivo / Urbanización</option>
+<option value="club">Club</option>
+</select>
+
+<select id="tipoPartida">
+<option value="puntuacion">Partida de puntuación</option>
+<option value="amistosa">Partida amistosa / americana</option>
+</select>
+
+<input id="fecha" type="date">
+<input id="hora" type="time">
+
+<select id="nivel">
+<option value="iniciacion">Nivel iniciación (0.0 – 2.0)</option>
+<option value="intermedio">Nivel intermedio (2.0 – 4.0)</option>
+<option value="avanzado">Nivel avanzado (4.0 – 7.0)</option>
+<option value="cualquiera">Cualquier nivel</option>
+</select>
+
+<button class="btnBlue" onclick="crearPartida()">Crear partida</button>
+
+<h3>Partidas disponibles</h3>
+<div id="listaPartidas"></div>
+
+<button class="btnYellow" onclick="volverMenu()">Volver</button>
+
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+
+const firebaseConfig={
+apiKey:"AIzaSyDhKVAw6952bEITC4pjoKbEMRFEQhcqgYU",
+authDomain:"padel-app-9e144.firebaseapp.com",
+projectId:"padel-app-9e144",
+storageBucket:"padel-app-9e144.firebasestorage.app",
+messagingSenderId:"849083376311",
+appId:"1:849083376311:web:40e8f10ac167745e806332"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth=firebase.auth();
+const db=firebase.firestore();
+
+auth.onAuthStateChanged(function(user){
+if(user){
+document.getElementById("login").style.display="none";
+document.getElementById("menu").style.display="block";
+}else{
+document.getElementById("login").style.display="block";
+document.getElementById("menu").style.display="none";
+}
+});
+
+function controlTipoPartida(){
+const tipoLugar=document.getElementById("tipoLugar").value;
+const tipoPartida=document.getElementById("tipoPartida");
+
+if(tipoLugar==="club"){
+tipoPartida.value="puntuacion";
+tipoPartida.options[1].disabled=true;
+}else{
+tipoPartida.options[1].disabled=false;
+}
+}
+
+async function registro(){
+
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+
+const cred=await auth.createUserWithEmailAndPassword(email,password);
+
+await db.collection("usuarios").doc(cred.user.uid).set({
+nombre:email.split("@")[0]
+});
+
+}
+
+function login(){
+auth.signInWithEmailAndPassword(
+document.getElementById("email").value,
+document.getElementById("password").value
+);
+}
+
+function logout(){auth.signOut();}
+
+function abrirPartidas(){
+document.getElementById("menu").style.display="none";
+document.getElementById("partidas").style.display="block";
+cargarPartidas();
+}
+
+function volverMenu(){
+document.getElementById("partidas").style.display="none";
+document.getElementById("menu").style.display="block";
+}
+
+async function crearPartida(){
+
+const user=auth.currentUser;
+
+await db.collection("partidas").add({
+
+creador:user.uid,
+lugar:document.getElementById("lugar").value,
+tipoLugar:document.getElementById("tipoLugar").value,
+tipoPartida:document.getElementById("tipoPartida").value,
+fecha:document.getElementById("fecha").value,
+hora:document.getElementById("hora").value,
+nivel:document.getElementById("nivel").value,
+jugadores:[user.uid],
+reservas:[]
+
+});
+
+cargarPartidas();
+
+}
+
+async function apuntarJugador(id){
+
+const user=auth.currentUser;
+const ref=db.collection("partidas").doc(id);
+const doc=await ref.get();
+let data=doc.data();
+
+if(data.jugadores.includes(user.uid)) return;
+
+if(data.jugadores.length<4){
+data.jugadores.push(user.uid);
+}else{
+data.reservas.push(user.uid);
+}
+
+await ref.update(data);
+
+cargarPartidas();
+
+}
+
+async function desapuntar(id){
+
+const user=auth.currentUser;
+const ref=db.collection("partidas").doc(id);
+const doc=await ref.get();
+let data=doc.data();
+
+data.jugadores=data.jugadores.filter(u=>u!==user.uid);
+data.reservas=data.reservas.filter(u=>u!==user.uid);
+
+await ref.update(data);
+
+cargarPartidas();
+
+}
+
+async function eliminarPartida(id){
+await db.collection("partidas").doc(id).delete();
+cargarPartidas();
+}
+
+async function cargarPartidas(){
+
+const contenedor=document.getElementById("listaPartidas");
+contenedor.innerHTML="";
+
+const snapshot=await db.collection("partidas").get();
+const user=auth.currentUser;
+
+snapshot.forEach(async doc=>{
+
+const p=doc.data();
+
+let jugadoresHTML="";
+
+for(let i=0;i<p.jugadores.length;i++){
+
+const u=await db.collection("usuarios").doc(p.jugadores[i]).get();
+
+jugadoresHTML+="<div class='jugador'>Jugador "+(i+1)+" - "+u.data().nombre+"</div>";
+
+}
+
+let botones="";
+
+if(p.jugadores.includes(user.uid)||p.reservas.includes(user.uid)){
+
+botones="<button class='btnRemove' onclick='desapuntar(\""+doc.id+"\")'>Desapuntarme</button>";
+
+}else{
+
+botones="<button class='btnBlue' onclick='apuntarJugador(\""+doc.id+"\")'>Apuntarme jugador</button>";
+
+}
+
+let eliminar="";
+
+if(user.uid===p.creador){
+
+eliminar="<button class='btnRemove' onclick='eliminarPartida(\""+doc.id+"\")'>Eliminar partida</button>";
+
+}
+
+const div=document.createElement("div");
+
+div.className="partidaCard";
+
+div.innerHTML=
+"<b>"+p.lugar+"</b><br>"+
+p.tipoLugar+"<br>"+
+p.tipoPartida+"<br>"+
+p.fecha+" "+p.hora+"<br>"+
+"Nivel: "+p.nivel+"<br>"+
+jugadoresHTML+
+botones+
+eliminar;
+
+contenedor.appendChild(div);
+
+});
+
+}
+
+</script>
+</body>
+</html>
