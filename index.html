@@ -61,19 +61,10 @@ font-size:16px;
 width:95%;
 }
 
-.btnBlue{
-background:#1565C0;
-color:white;
-}
-
-.btnYellow{
-background:#FFC107;
-}
-
-.btnRemove{
-background:#e53935;
-color:white;
-}
+.btnBlue{background:#1565C0;color:white;}
+.btnYellow{background:#FFC107;}
+.btnRemove{background:#e53935;color:white;}
+.btnConfirm{background:#2e7d32;color:white;}
 
 .menuButton{
 display:block;
@@ -86,20 +77,18 @@ color:white;
 border-radius:10px;
 }
 
-.logout{
-background:#f44336;
-color:white;
-}
+.logout{background:#f44336;color:white;}
 
 #menu{display:none;}
 #partidas{display:none;}
 
 .partidaCard{
 background:#f5f5f5;
-padding:14px;
-margin:12px 0;
-border-radius:8px;
+padding:16px;
+margin:14px 0;
+border-radius:10px;
 font-size:16px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 </style>
@@ -109,24 +98,17 @@ font-size:16px;
 <body>
 
 <div class="header">
-
 <img src="logo.png" class="logo">
-
-<div class="title">
-Pádel Players Morvedre
-</div>
-
+<div class="title">Pádel Players Morvedre</div>
 </div>
 
 
 <div id="login" class="container">
 
 <input id="email" placeholder="email">
-
 <input id="password" type="password" placeholder="contraseña">
 
 <button class="btnBlue" onclick="registro()">Registrarse</button>
-
 <button class="btnYellow" onclick="login()">Entrar</button>
 
 <p id="mensaje"></p>
@@ -137,13 +119,9 @@ Pádel Players Morvedre
 <div id="menu" class="container">
 
 <button class="menuButton" onclick="abrirPartidas()">Partidas</button>
-
 <button class="menuButton">Chat jugadores</button>
-
 <button class="menuButton">Perfil</button>
-
 <button class="menuButton">Tutoriales</button>
-
 <button class="menuButton">Media Center</button>
 
 <button class="logout" onclick="logout()">Cerrar sesión</button>
@@ -156,9 +134,7 @@ Pádel Players Morvedre
 <h3>Crear partida</h3>
 
 <input id="fecha" type="date">
-
 <input id="hora" type="time">
-
 <input id="lugar" placeholder="Lugar">
 
 <select id="nivel">
@@ -206,15 +182,11 @@ const db=firebase.firestore();
 auth.onAuthStateChanged(function(user){
 
 if(user){
-
 document.getElementById("login").style.display="none";
 document.getElementById("menu").style.display="block";
-
 }else{
-
 document.getElementById("login").style.display="block";
 document.getElementById("menu").style.display="none";
-
 }
 
 });
@@ -267,11 +239,7 @@ document.getElementById("mensaje").innerText="Error: "+error.message;
 }
 
 
-function logout(){
-
-auth.signOut();
-
-}
+function logout(){auth.signOut();}
 
 
 function abrirPartidas(){
@@ -308,9 +276,8 @@ fecha:fecha,
 hora:hora,
 lugar:lugar,
 nivel:nivel,
-jugadores:[user.uid],
-reservas:[],
-estado:"abierta"
+jugadores:[],
+reservas:[]
 
 });
 
@@ -319,29 +286,125 @@ cargarPartidas();
 }
 
 
+async function apuntarJugador(id){
+
+const user=auth.currentUser;
+const ref=db.collection("partidas").doc(id);
+const doc=await ref.get();
+let data=doc.data();
+
+if(data.jugadores.includes(user.uid) || data.reservas.includes(user.uid)) return;
+
+if(data.jugadores.length>=4){
+alert("Jugadores completos");
+return;
+}
+
+data.jugadores.push(user.uid);
+
+await ref.update({jugadores:data.jugadores});
+
+cargarPartidas();
+
+}
+
+
+async function apuntarReserva(id){
+
+const user=auth.currentUser;
+const ref=db.collection("partidas").doc(id);
+const doc=await ref.get();
+let data=doc.data();
+
+if(data.jugadores.includes(user.uid) || data.reservas.includes(user.uid)) return;
+
+if(data.reservas.length>=2){
+alert("Reservas completas");
+return;
+}
+
+data.reservas.push(user.uid);
+
+await ref.update({reservas:data.reservas});
+
+cargarPartidas();
+
+}
+
+
+async function desapuntar(id){
+
+const user=auth.currentUser;
+const ref=db.collection("partidas").doc(id);
+const doc=await ref.get();
+let data=doc.data();
+
+data.jugadores=data.jugadores.filter(u=>u!==user.uid);
+data.reservas=data.reservas.filter(u=>u!==user.uid);
+
+await ref.update({
+jugadores:data.jugadores,
+reservas:data.reservas
+});
+
+cargarPartidas();
+
+}
+
+
+function confirmarReserva(id){
+
+alert("Reserva confirmada por el creador");
+
+}
+
+
 async function cargarPartidas(){
 
 const contenedor=document.getElementById("listaPartidas");
-
 contenedor.innerHTML="";
 
 const snapshot=await db.collection("partidas").get();
+const user=auth.currentUser;
 
 snapshot.forEach(doc=>{
 
 const p=doc.data();
+
+let botones="";
+
+if(p.jugadores.includes(user.uid) || p.reservas.includes(user.uid)){
+
+botones="<button class='btnRemove' onclick='desapuntar(\""+doc.id+"\")'>Desapuntarme</button>";
+
+}else{
+
+botones=
+"<button class='btnBlue' onclick='apuntarJugador(\""+doc.id+"\")'>Apuntarme jugador</button>"+
+"<button class='btnYellow' onclick='apuntarReserva(\""+doc.id+"\")'>Apuntarme reserva</button>";
+
+}
+
+let confirmar="";
+
+if(user.uid===p.creador && p.jugadores.length===4){
+
+confirmar="<button class='btnConfirm' onclick='confirmarReserva(\""+doc.id+"\")'>Confirmar reserva</button>";
+
+}
 
 const div=document.createElement("div");
 
 div.className="partidaCard";
 
 div.innerHTML=
-
 "<b>"+p.lugar+"</b><br>"+
 p.fecha+" "+p.hora+"<br>"+
 "Nivel: "+p.nivel+"<br>"+
 "Jugadores: "+p.jugadores.length+"/4<br>"+
-"Reservas: "+p.reservas.length+"/2";
+"Reservas: "+p.reservas.length+"/2<br>"+
+botones+
+confirmar;
 
 contenedor.appendChild(div);
 
