@@ -1,1 +1,286 @@
-no sale nada has puesto muy poco código, está incompleto. Incluye que marque los campos que son obligados de rellenar para que lo sepa el que se registra, el que completa el perfil. Y también hay que tener en cuenta que si el nombre de usuario que va a poner ya existe, debe salir un aviso como que ese nombre no es válido, que ya existe, que debe cambiarlo.
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pádel Players Morvedre</title>
+
+<style>
+body{font-family:Arial;background:#ffffff;margin:0;text-align:center;}
+.header{
+background:linear-gradient(90deg,#1565C0 0%,#1565C0 45%,#FFC107 55%,#FFC107 100%);
+padding:18px 10px;color:white;
+}
+.logo{width:200px;margin-bottom:5px;}
+.title{font-size:26px;font-weight:bold;}
+
+.container{
+background:white;padding:20px;width:90%;max-width:420px;margin:20px auto;
+border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);
+}
+
+label{display:block;text-align:left;margin:10px 4% 4px;font-size:14px}
+.req{color:#e53935;font-weight:bold}
+
+input,select{
+width:92%;padding:14px;margin:4px 0 8px;border:1px solid #ddd;
+border-radius:8px;font-size:16px;
+}
+
+button{
+padding:14px;margin:10px 0;cursor:pointer;border:none;
+border-radius:8px;font-size:16px;width:95%;
+}
+
+.btnBlue{background:#1565C0;color:white;}
+.btnYellow{background:#FFC107;}
+.logout{background:#f44336;color:white;}
+
+.menuButton{
+display:block;width:95%;margin:12px auto;padding:16px;
+font-size:18px;background:#1565C0;color:white;border-radius:10px;
+}
+
+#menu{display:none;}
+#perfilCompletar{display:none;}
+
+.small{font-size:12px;color:#666;margin:0 4% 10px;text-align:left}
+.error{color:#e53935;font-size:13px;text-align:left;margin:0 4%}
+.ok{color:#2e7d32;font-size:13px;text-align:left;margin:0 4%}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<img src="logo.png" class="logo">
+<div class="title">Pádel Players Morvedre</div>
+</div>
+
+<!-- LOGIN / REGISTRO -->
+<div id="login" class="container">
+
+<label>Email</label>
+<input id="email" placeholder="email">
+
+<label>Contraseña</label>
+<input id="password" type="password" placeholder="contraseña">
+
+<button class="btnBlue" onclick="registro()">Registrarse</button>
+<button class="btnYellow" onclick="login()">Entrar</button>
+
+<div id="msgAuth" class="error"></div>
+
+</div>
+
+<!-- COMPLETAR PERFIL -->
+<div id="perfilCompletar" class="container">
+
+<h3>Completar perfil</h3>
+<p class="small">Los campos con <span class="req">*</span> son obligatorios.</p>
+
+<label>Foto de perfil (opcional)</label>
+<input type="file" id="foto">
+
+<label>Nombre de usuario <span class="req">*</span></label>
+<input id="nombre" placeholder="Nombre">
+<div id="msgNombre" class="error"></div>
+
+<label>Sexo <span class="req">*</span></label>
+<select id="sexo">
+<option value="">Seleccionar</option>
+<option value="hombre">Hombre</option>
+<option value="mujer">Mujer</option>
+</select>
+
+<label>Nivel <span class="req">*</span></label>
+<select id="nivel">
+<option value="">Seleccionar</option>
+<option value="1">Nivel iniciación (0–2)</option>
+<option value="3">Nivel intermedio (2–4)</option>
+<option value="5">Nivel avanzado (4–7)</option>
+</select>
+
+<label>Mano dominante</label>
+<select id="mano">
+<option value="">Seleccionar</option>
+<option value="derecha">Derecha</option>
+<option value="izquierda">Izquierda</option>
+</select>
+
+<label>Posición en pista</label>
+<select id="posicion">
+<option value="">Seleccionar</option>
+<option value="drive">Drive</option>
+<option value="reves">Revés</option>
+</select>
+
+<button class="btnBlue" onclick="guardarPerfil()">Guardar perfil</button>
+
+<div id="msgPerfil" class="error"></div>
+
+</div>
+
+<!-- MENÚ -->
+<div id="menu" class="container">
+
+<button class="menuButton">Partidas</button>
+<button class="menuButton">Chat jugadores</button>
+<button class="menuButton">Clasificación</button>
+<button class="menuButton">Perfil</button>
+<button class="menuButton">Tutoriales</button>
+<button class="menuButton">Media Center</button>
+
+<button class="logout" onclick="logout()">Cerrar sesión</button>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+
+const firebaseConfig={
+apiKey:"AIzaSyDhKVAw6952bEITC4pjoKbEMRFEQhcqgYU",
+authDomain:"padel-app-9e144.firebaseapp.com",
+projectId:"padel-app-9e144",
+storageBucket:"padel-app-9e144.firebasestorage.app",
+messagingSenderId:"849083376311",
+appId:"1:849083376311:web:40e8f10ac167745e806332"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth=firebase.auth();
+const db=firebase.firestore();
+
+/* CONTROL DE SESIÓN */
+auth.onAuthStateChanged(async function(user){
+
+if(!user){
+mostrar("login");
+return;
+}
+
+const doc=await db.collection("usuarios").doc(user.uid).get();
+
+if(!doc.exists || !doc.data().nombre){
+mostrar("perfil");
+}else{
+mostrar("menu");
+}
+
+});
+
+function mostrar(pantalla){
+
+document.getElementById("login").style.display="none";
+document.getElementById("perfilCompletar").style.display="none";
+document.getElementById("menu").style.display="none";
+
+if(pantalla==="login")document.getElementById("login").style.display="block";
+if(pantalla==="perfil")document.getElementById("perfilCompletar").style.display="block";
+if(pantalla==="menu")document.getElementById("menu").style.display="block";
+
+}
+
+/* REGISTRO */
+async function registro(){
+
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+
+try{
+
+await auth.createUserWithEmailAndPassword(email,password);
+
+}catch(e){
+
+document.getElementById("msgAuth").innerText=e.message;
+
+}
+
+}
+
+/* LOGIN */
+function login(){
+
+auth.signInWithEmailAndPassword(
+document.getElementById("email").value,
+document.getElementById("password").value
+).catch(e=>{
+document.getElementById("msgAuth").innerText=e.message;
+});
+
+}
+
+/* GUARDAR PERFIL */
+async function guardarPerfil(){
+
+const user=auth.currentUser;
+
+const nombre=document.getElementById("nombre").value.trim();
+const sexo=document.getElementById("sexo").value;
+const nivel=document.getElementById("nivel").value;
+const mano=document.getElementById("mano").value;
+const posicion=document.getElementById("posicion").value;
+
+document.getElementById("msgNombre").innerText="";
+document.getElementById("msgPerfil").innerText="";
+
+/* VALIDAR CAMPOS */
+if(!nombre || !sexo || !nivel){
+
+document.getElementById("msgPerfil").innerText="Debes completar todos los campos obligatorios.";
+return;
+
+}
+
+/* COMPROBAR SI EL NOMBRE YA EXISTE */
+
+const query=await db.collection("usuarios")
+.where("nombre","==",nombre)
+.get();
+
+if(!query.empty){
+
+document.getElementById("msgNombre").innerText="Ese nombre ya existe. Elige otro.";
+return;
+
+}
+
+/* GUARDAR PERFIL */
+
+await db.collection("usuarios").doc(user.uid).set({
+
+nombre:nombre,
+sexo:sexo,
+nivel:nivel,
+mano:mano,
+posicion:posicion,
+puntuacion:0,
+partidos:0,
+victorias:0,
+derrotas:0,
+puntualidad:5,
+companero:5,
+actitud:5,
+compromiso:5
+
+});
+
+mostrar("menu");
+
+}
+
+/* LOGOUT */
+
+function logout(){
+auth.signOut();
+}
+
+</script>
+
+</body>
+</html>
