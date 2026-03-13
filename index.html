@@ -222,25 +222,11 @@ async function registro(){
 const email=document.getElementById("email").value;
 const password=document.getElementById("password").value;
 
-try{
-
 const userCredential=await auth.createUserWithEmailAndPassword(email,password);
-const user=userCredential.user;
 
-await db.collection("usuarios").doc(user.uid).set({
-nombre:"",
-foto:"",
-nivel:2,
+await db.collection("usuarios").doc(userCredential.user.uid).set({
 puntuacion:0
 });
-
-document.getElementById("mensaje").innerText="Usuario registrado";
-
-}catch(error){
-
-document.getElementById("mensaje").innerText="Error: "+error.message;
-
-}
 
 }
 
@@ -250,17 +236,12 @@ function login(){
 const email=document.getElementById("email").value;
 const password=document.getElementById("password").value;
 
-auth.signInWithEmailAndPassword(email,password)
-.catch(error=>{
-document.getElementById("mensaje").innerText="Error: "+error.message;
-});
+auth.signInWithEmailAndPassword(email,password);
 
 }
 
 
-function logout(){
-auth.signOut();
-}
+function logout(){auth.signOut();}
 
 
 function abrirPartidas(){
@@ -311,10 +292,75 @@ cargarPartidas();
 }
 
 
+async function apuntarJugador(id){
+
+const user=auth.currentUser;
+const ref=db.collection("partidas").doc(id);
+const doc=await ref.get();
+let data=doc.data();
+
+if(data.jugadores.includes(user.uid) || data.reservas.includes(user.uid)) return;
+
+if(data.jugadores.length>=4){
+alert("Jugadores completos");
+return;
+}
+
+data.jugadores.push(user.uid);
+
+await ref.update({jugadores:data.jugadores});
+
+cargarPartidas();
+
+}
+
+
+async function apuntarReserva(id){
+
+const user=auth.currentUser;
+const ref=db.collection("partidas").doc(id);
+const doc=await ref.get();
+let data=doc.data();
+
+if(data.jugadores.includes(user.uid) || data.reservas.includes(user.uid)) return;
+
+if(data.reservas.length>=2){
+alert("Reservas completas");
+return;
+}
+
+data.reservas.push(user.uid);
+
+await ref.update({reservas:data.reservas});
+
+cargarPartidas();
+
+}
+
+
+async function desapuntar(id){
+
+const user=auth.currentUser;
+const ref=db.collection("partidas").doc(id);
+const doc=await ref.get();
+let data=doc.data();
+
+data.jugadores=data.jugadores.filter(u=>u!==user.uid);
+data.reservas=data.reservas.filter(u=>u!==user.uid);
+
+await ref.update({
+jugadores:data.jugadores,
+reservas:data.reservas
+});
+
+cargarPartidas();
+
+}
+
+
 async function eliminarPartida(id){
 
 await db.collection("partidas").doc(id).delete();
-
 cargarPartidas();
 
 }
@@ -332,20 +378,33 @@ snapshot.forEach(doc=>{
 
 const p=doc.data();
 
-const div=document.createElement("div");
+let botones="";
 
-let botonEliminar="";
+if(p.jugadores.includes(user.uid) || p.reservas.includes(user.uid)){
 
-if(user && user.uid===p.creador){
+botones="<button class='btnRemove' onclick='desapuntar(\""+doc.id+"\")'>Desapuntarme</button>";
 
-botonEliminar="<button class='btnRemove' onclick='eliminarPartida(\""+doc.id+"\")'>Eliminar partida</button>";
+}else{
+
+botones=
+"<button class='btnBlue' onclick='apuntarJugador(\""+doc.id+"\")'>Apuntarme jugador</button>"+
+"<button class='btnYellow' onclick='apuntarReserva(\""+doc.id+"\")'>Apuntarme reserva</button>";
 
 }
+
+let eliminar="";
+
+if(user.uid===p.creador){
+
+eliminar="<button class='btnRemove' onclick='eliminarPartida(\""+doc.id+"\")'>Eliminar partida</button>";
+
+}
+
+const div=document.createElement("div");
 
 div.className="partidaCard";
 
 div.innerHTML=
-
 "<b>"+p.lugar+"</b><br>"+
 p.tipoLugar+"<br>"+
 p.tipoPartida+"<br>"+
@@ -353,7 +412,8 @@ p.fecha+" "+p.hora+"<br>"+
 "Nivel: "+p.nivel+"<br>"+
 "Jugadores: "+p.jugadores.length+"/4<br>"+
 "Reservas: "+p.reservas.length+"/2<br>"+
-botonEliminar;
+botones+
+eliminar;
 
 contenedor.appendChild(div);
 
