@@ -34,7 +34,6 @@ border-radius:8px;font-size:16px;width:95%;
 
 .btnBlue{background:#1565C0;color:white;}
 .btnYellow{background:#FFC107;}
-.btnRemove{background:#e53935;color:white;}
 .logout{background:#f44336;color:white;}
 
 .menuButton{
@@ -61,7 +60,7 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 <div class="title">Pádel Players Morvedre</div>
 </div>
 
-<!-- LOGIN -->
+<!-- LOGIN / REGISTRO -->
 <div id="login" class="container">
 
 <label>Email</label>
@@ -76,7 +75,6 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 <div id="msgAuth" class="error"></div>
 
 </div>
-
 
 <!-- COMPLETAR PERFIL -->
 <div id="perfilCompletar" class="container">
@@ -102,10 +100,13 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 
 <select id="nivelManual">
 <option value="">Elegir nivel manualmente</option>
-<option>0</option><option>0.5</option><option>1</option><option>1.5</option>
-<option>2</option><option>2.5</option><option>3</option><option>3.5</option>
-<option>4</option><option>4.5</option><option>5</option><option>5.5</option>
-<option>6</option><option>6.5</option><option>7</option>
+<option>0.5</option><option>0.75</option><option>1</option><option>1.25</option>
+<option>1.5</option><option>1.75</option><option>2</option><option>2.25</option>
+<option>2.5</option><option>2.75</option><option>3</option><option>3.25</option>
+<option>3.5</option><option>3.75</option><option>4</option><option>4.25</option>
+<option>4.5</option><option>4.75</option><option>5</option><option>5.25</option>
+<option>5.5</option><option>5.75</option><option>6</option><option>6.25</option>
+<option>6.5</option><option>6.75</option><option>7</option>
 </select>
 
 <button class="btnYellow" onclick="abrirTest()">Descubrir mi nivel</button>
@@ -131,7 +132,6 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 <div id="msgPerfil" class="error"></div>
 
 </div>
-
 
 <!-- TEST NIVEL -->
 <div id="testNivel" class="container">
@@ -231,7 +231,6 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 
 </div>
 
-
 <!-- MENU -->
 <div id="menu" class="container">
 
@@ -246,13 +245,11 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 
 </div>
 
-
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-
 const firebaseConfig={
 apiKey:"AIzaSyDhKVAw6952bEITC4pjoKbEMRFEQhcqgYU",
 authDomain:"padel-app-9e144.firebaseapp.com",
@@ -268,22 +265,11 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 
 /* CONTROL SESIÓN */
-
 auth.onAuthStateChanged(async function(user){
-
-if(!user){
-mostrar("login");
-return;
-}
-
+if(!user){mostrar("login");return;}
 const doc=await db.collection("usuarios").doc(user.uid).get();
-
-if(!doc.exists || !doc.data().nombre){
-mostrar("perfil");
-}else{
-mostrar("menu");
-}
-
+if(!doc.exists || !doc.data().nombre){mostrar("perfil");}
+else{mostrar("menu");}
 });
 
 function mostrar(p){
@@ -291,7 +277,6 @@ document.getElementById("login").style.display="none";
 document.getElementById("perfilCompletar").style.display="none";
 document.getElementById("menu").style.display="none";
 document.getElementById("testNivel").style.display="none";
-
 if(p==="login")document.getElementById("login").style.display="block";
 if(p==="perfil")document.getElementById("perfilCompletar").style.display="block";
 if(p==="menu")document.getElementById("menu").style.display="block";
@@ -299,7 +284,6 @@ if(p==="test")document.getElementById("testNivel").style.display="block";
 }
 
 /* LOGIN / REGISTRO */
-
 async function registro(){
 const email=document.getElementById("email").value;
 const password=document.getElementById("password").value;
@@ -317,35 +301,47 @@ document.getElementById("msgAuth").innerText=e.message;
 }
 
 /* TEST NIVEL */
-
 function abrirTest(){mostrar("test")}
 function cerrarTest(){mostrar("perfil")}
 
+/* CÁLCULO MÁS ESTRICTO TIPO PLAYTOMIC */
 function calcularNivel(){
 
-let puntos=
-parseInt(p1.value)+
-parseInt(p2.value)+
-parseInt(p3.value)+
-parseInt(p4.value);
+let puntos =
+parseInt(p1.value) +
+parseInt(p2.value) +
+parseInt(p3.value) +
+parseInt(p4.value) +
+parseInt(p5.value) +
+parseInt(p6.value) +
+parseInt(p7.value) +
+parseInt(p8.value);
 
-let nivel=1;
+let nivel = 0.5;
 
-if(puntos<=2)nivel=1.5;
-else if(puntos<=5)nivel=2.5;
-else if(puntos<=8)nivel=3.5;
-else if(puntos<=10)nivel=4.5;
-else nivel=5.5;
+if(puntos <= 6) nivel = 0.75;
+else if(puntos <= 10) nivel = 1;
+else if(puntos <= 13) nivel = 1.25;
+else if(puntos <= 16) nivel = 1.5;
+else if(puntos <= 18) nivel = 1.75;
+else if(puntos <= 20) nivel = 2;
+else if(puntos <= 22) nivel = 2.25;
+else if(puntos <= 24) nivel = 2.5;
+else if(puntos <= 26) nivel = 2.75;
+else if(puntos <= 28) nivel = 3;
+else if(puntos <= 29) nivel = 3.25;
+else if(puntos <= 30) nivel = 3.5;
+else if(puntos <= 31) nivel = 4;
+else nivel = 4.5;
 
-document.getElementById("nivelManual").value=nivel;
-document.getElementById("nivelResultado").innerText="Nivel sugerido: "+nivel;
+document.getElementById("nivelManual").value = nivel;
+document.getElementById("nivelResultado").innerText =
+"Nivel sugerido: " + nivel;
 
 mostrar("perfil");
-
 }
 
 /* GUARDAR PERFIL */
-
 async function guardarPerfil(){
 
 const user=auth.currentUser;
@@ -356,26 +352,26 @@ const nivel=document.getElementById("nivelManual").value;
 const mano=document.getElementById("mano").value;
 const posicion=document.getElementById("posicion").value;
 
+document.getElementById("msgNombre").innerText="";
+document.getElementById("msgPerfil").innerText="";
+
 if(!nombre || !sexo || !nivel){
 document.getElementById("msgPerfil").innerText="Completa los campos obligatorios.";
 return;
 }
 
-/* comprobar nombre */
-
+/* comprobar nombre único */
 const query=await db.collection("usuarios")
 .where("nombre","==",nombre)
 .get();
 
 if(!query.empty){
-document.getElementById("msgNombre").innerText="Ese nombre ya existe.";
+document.getElementById("msgNombre").innerText="Ese nombre ya existe. Elige otro.";
 return;
 }
 
 /* guardar */
-
 await db.collection("usuarios").doc(user.uid).set({
-
 nombre:nombre,
 sexo:sexo,
 nivel:parseFloat(nivel),
@@ -389,15 +385,13 @@ puntualidad:5,
 companero:5,
 actitud:5,
 compromiso:5
-
 });
 
 mostrar("menu");
-
 }
 
 function logout(){auth.signOut();}
-
 </script>
+
 </body>
 </html>
