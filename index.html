@@ -81,7 +81,7 @@ color:white;
 }
 
 .btnRemove{
-background:#777;
+background:#e53935;
 color:white;
 }
 
@@ -106,7 +106,6 @@ border-radius:6px;
 <div class="title">Pádel Players Morvedre</div>
 </div>
 
-
 <div id="login" class="container">
 
 <input id="email" placeholder="email">
@@ -118,7 +117,6 @@ border-radius:6px;
 <p id="mensaje"></p>
 
 </div>
-
 
 <div id="menu" class="container">
 
@@ -132,7 +130,6 @@ border-radius:6px;
 
 </div>
 
-
 <div id="partidas" class="container">
 
 <h3>Crear partida</h3>
@@ -142,12 +139,10 @@ border-radius:6px;
 <input id="lugar" placeholder="Lugar">
 
 <select id="nivel">
-
 <option value="0-2">Nivel inferior (0 – 2)</option>
 <option value="2-4">Nivel medio (2 – 4)</option>
 <option value="4-7">Nivel superior (4 – 7)</option>
 <option value="cualquiera">Cualquier nivel</option>
-
 </select>
 
 <button class="btnBlue" onclick="crearPartida()">Crear partida</button>
@@ -180,7 +175,6 @@ firebase.initializeApp(firebaseConfig);
 
 const auth=firebase.auth();
 const db=firebase.firestore();
-
 
 auth.onAuthStateChanged(function(user){
 
@@ -276,144 +270,4 @@ const nivel=document.getElementById("nivel").value;
 
 await db.collection("partidas").add({
 
-creador:user.uid,
-fecha:fecha,
-hora:hora,
-lugar:lugar,
-nivel:nivel,
-jugadores:[],
-reservas:[],
-estado:"abierta"
-
-});
-
-cargarPartidas();
-
-}
-
-
-async function apuntarJugador(id){
-
-const user=auth.currentUser;
-
-const ref=db.collection("partidas").doc(id);
-const doc=await ref.get();
-
-let data=doc.data();
-
-if(data.jugadores.includes(user.uid) || data.reservas.includes(user.uid)){
-return;
-}
-
-if(data.jugadores.length>=4){
-alert("Jugadores completos");
-return;
-}
-
-data.jugadores.push(user.uid);
-
-await ref.update({jugadores:data.jugadores});
-
-cargarPartidas();
-
-}
-
-
-async function apuntarReserva(id){
-
-const user=auth.currentUser;
-
-const ref=db.collection("partidas").doc(id);
-const doc=await ref.get();
-
-let data=doc.data();
-
-if(data.jugadores.includes(user.uid) || data.reservas.includes(user.uid)){
-return;
-}
-
-if(data.reservas.length>=2){
-alert("Reservas completas");
-return;
-}
-
-data.reservas.push(user.uid);
-
-await ref.update({reservas:data.reservas});
-
-cargarPartidas();
-
-}
-
-
-async function desapuntar(id){
-
-const user=auth.currentUser;
-
-const ref=db.collection("partidas").doc(id);
-const doc=await ref.get();
-
-let data=doc.data();
-
-data.jugadores=data.jugadores.filter(u=>u!==user.uid);
-data.reservas=data.reservas.filter(u=>u!==user.uid);
-
-await ref.update({
-jugadores:data.jugadores,
-reservas:data.reservas
-});
-
-cargarPartidas();
-
-}
-
-
-async function cargarPartidas(){
-
-const contenedor=document.getElementById("listaPartidas");
-contenedor.innerHTML="";
-
-const snapshot=await db.collection("partidas").get();
-
-const user=auth.currentUser;
-
-snapshot.forEach(doc=>{
-
-const p=doc.data();
-
-let botones="";
-
-if(p.jugadores.includes(user.uid) || p.reservas.includes(user.uid)){
-
-botones="<button class='btnRemove' onclick='desapuntar(\""+doc.id+"\")'>Desapuntarme</button>";
-
-}else{
-
-botones=
-"<button class='btnBlue' onclick='apuntarJugador(\""+doc.id+"\")'>Apuntarme jugador</button>"+
-"<button class='btnYellow' onclick='apuntarReserva(\""+doc.id+"\")'>Apuntarme reserva</button>";
-
-}
-
-const div=document.createElement("div");
-
-div.className="partidaCard";
-
-div.innerHTML=
-"<b>"+p.lugar+"</b><br>"+
-p.fecha+" "+p.hora+"<br>"+
-"Nivel: "+p.nivel+"<br>"+
-"Jugadores: "+p.jugadores.length+"/4<br>"+
-"Reservas: "+p.reservas.length+"/2<br>"+
-botones;
-
-contenedor.appendChild(div);
-
-});
-
-}
-
-</script>
-
-</body>
-</html>
+cre
