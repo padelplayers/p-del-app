@@ -248,6 +248,7 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <script>
 const firebaseConfig={
@@ -263,6 +264,7 @@ firebase.initializeApp(firebaseConfig);
 
 const auth=firebase.auth();
 const db=firebase.firestore();
+const storage=firebase.storage();
 
 /* CONTROL SESIÓN */
 auth.onAuthStateChanged(async function(user){
