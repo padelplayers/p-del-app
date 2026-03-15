@@ -133,6 +133,10 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 
 </div>
 
+<label>foto de perfil</label>
+<imput type="file"
+id="fotoperfil" accept="image/*" capture="user">
+
 <!-- TEST NIVEL -->
 <div id="testNivel" class="container">
 
@@ -266,6 +270,22 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 const storage=firebase.storage();
 
+async function
+subirfotoperfil(file, uid){
+    
+const ref =  storage.ref("fotosPerfil/" + uid + ".jpg");  
+
+
+await ref.put(file);
+
+const url = await
+ref.getDownloadURL();
+
+return url;
+
+}
+
+
 /* CONTROL SESIÓN */
 auth.onAuthStateChanged(async function(user){
 if(!user){mostrar("login");return;}
@@ -346,20 +366,33 @@ mostrar("perfil");
 /* GUARDAR PERFIL */
 async function guardarPerfil(){
 
-const user=auth.currentUser;
+const user = auth.currentUser;
 
-const nombre=document.getElementById("nombre").value.trim();
-const sexo=document.getElementById("sexo").value;
-const nivel=document.getElementById("nivelManual").value;
-const mano=document.getElementById("mano").value;
-const posicion=document.getElementById("posicion").value;
+const nombre = document.getElementById("nombre").value.trim();
+const sexo = document.getElementById("sexo").value;
+const nivel = document.getElementById("nivelManual").value;
 
-document.getElementById("msgNombre").innerText="";
-document.getElementById("msgPerfil").innerText="";
+const file = document.getElementById("fotoPerfil").files[0];
 
-if(!nombre || !sexo || !nivel){
-document.getElementById("msgPerfil").innerText="Completa los campos obligatorios.";
-return;
+let urlFoto = "";
+
+if(file){
+urlFoto = await subirfotoperfil(file, user.uid);
+}
+
+await db.collection("usuarios").doc(user.uid).set({
+
+nombreUsuario: nombre,
+sexo: sexo,
+nivel: nivel,
+fotoPerfil: urlFoto,
+puntuacion: 0,
+partidos: 0
+
+});
+
+mostrar("menu");
+
 }
 
 /* comprobar nombre único */
