@@ -416,6 +416,68 @@ mostrar("perfilCompletar");
 
 }
 
+/* FIREBASE */
+
+const firebaseConfig = {
+apiKey: "AIzaSyDhKvVw6952bETTC4pjokbEmRFEQhcq6YU",
+authDomain: "padel-app-9e144.firebaseapp.com",
+projectId: "padel-app-9e144",
+storageBucket: "padel-app-9e144.appspot.com",
+messagingSenderId: "849083376311",
+appId: "1:849083376311:web:40e8f18a167745e806332"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+
+
+function registro(){
+
+let email=document.getElementById("email").value;
+let pass=document.getElementById("pass").value;
+
+auth.createUserWithEmailAndPassword(email,pass)
+.then(()=>{
+alert("Usuario creado");
+})
+.catch(e=>{
+alert(e.message);
+});
+
+}
+
+
+function login(){
+
+let email=document.getElementById("email").value;
+let pass=document.getElementById("pass").value;
+
+auth.signInWithEmailAndPassword(email,pass)
+.catch(e=>{
+alert(e.message);
+});
+
+}
+
+
+function logout(){
+auth.signOut();
+}
+
+
+auth.onAuthStateChanged(user=>{
+
+if(!user){
+mostrar("login");
+return;
+}
+
+mostrar("menu");
+
+});
+
+
 </script>
 
 </body>
