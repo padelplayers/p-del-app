@@ -6,56 +6,128 @@
 <title>Pádel Players Morvedre</title>
 
 <style>
-body{font-family:Arial;background:#ffffff;margin:0;text-align:center;}
+
+body{
+font-family:Arial;
+background:#ffffff;
+margin:0;
+text-align:center;
+}
+
 .header{
 background:linear-gradient(90deg,#1565C0 0%,#1565C0 45%,#FFC107 55%,#FFC107 100%);
-padding:18px 10px;color:white;
+padding:18px 10px;
+color:white;
 }
-.logo{width:200px;margin-bottom:5px;}
-.title{font-size:26px;font-weight:bold;}
+
+.logo{
+width:200px;
+margin-bottom:5px;
+}
+
+.title{
+font-size:26px;
+font-weight:bold;
+}
 
 .container{
-background:white;padding:20px;width:90%;max-width:420px;margin:20px auto;
-border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);
+background:white;
+padding:20px;
+width:90%;
+max-width:420px;
+margin:20px auto;
+border-radius:10px;
+box-shadow:0 4px 12px rgba(0,0,0,0.15);
 }
 
-label{display:block;text-align:left;margin:10px 4% 4px;font-size:14px}
+label{
+display:block;
+text-align:left;
+margin:10px 4% 4px;
+font-size:14px;
+}
 
 .req{
-color:#e53935;
+color:red;
 font-weight:bold;
 font-size:18px;
 margin-left:4px;
 }
 
 input,select{
-width:92%;padding:14px;margin:4px 0 8px;border:1px solid #ddd;
-border-radius:8px;font-size:16px;
+width:92%;
+padding:14px;
+margin:4px 0 8px;
+border:1px solid #ddd;
+border-radius:8px;
+font-size:16px;
 }
 
 button{
-padding:14px;margin:10px 0;cursor:pointer;border:none;
-border-radius:8px;font-size:16px;width:95%;
+padding:14px;
+margin:10px 0;
+cursor:pointer;
+border:none;
+border-radius:8px;
+font-size:16px;
+width:95%;
 }
 
-.btnBlue{background:#1565C0;color:white;}
-.btnYellow{background:#FFC107;}
-.logout{background:#f44336;color:white;}
+.btnBlue{
+background:#1565C0;
+color:white;
+}
+
+.btnYellow{
+background:#FFC107;
+}
+
+.logout{
+background:#f44336;
+color:white;
+}
 
 .menuButton{
-display:block;width:95%;margin:12px auto;padding:16px;
-font-size:18px;background:#1565C0;color:white;border-radius:10px;
+display:block;
+width:95%;
+margin:12px auto;
+padding:16px;
+font-size:18px;
+background:#1565C0;
+color:white;
+border-radius:10px;
 }
 
 #menu{display:none;}
 #perfilCompletar{display:none;}
 #testNivel{display:none;}
 
-.small{font-size:12px;color:#666;margin:0 4% 10px;text-align:left}
-.error{color:#e53935;font-size:13px;text-align:left;margin:0 4%}
-.ok{color:#2e7d32;font-size:13px;text-align:left;margin:0 4%}
+.small{
+font-size:12px;
+color:#666;
+margin:0 4% 10px;
+text-align:left
+}
 
-.pregunta{margin:12px 0;text-align:left}
+.error{
+color:#e53935;
+font-size:13px;
+text-align:left;
+margin:0 4%
+}
+
+.ok{
+color:#2e7d32;
+font-size:13px;
+text-align:left;
+margin:0 4%
+}
+
+.pregunta{
+margin:12px 0;
+text-align:left
+}
+
 </style>
 </head>
 
@@ -67,6 +139,7 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 </div>
 
 <!-- LOGIN -->
+
 <div id="login" class="container">
 
 <label>Email</label>
@@ -83,9 +156,12 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 </div>
 
 <!-- PERFIL -->
+
 <div id="perfilCompletar" class="container">
 
 <h3>Completar perfil</h3>
+
+<p class="small">Los campos con <span class="req">*</span> son obligatorios</p>
 
 <label>Foto</label>
 <input type="file" id="fotoPerfil" accept="image/*">
@@ -95,6 +171,7 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 <div id="msgNombre" class="error"></div>
 
 <label>Sexo <span class="req">*</span></label>
+
 <select id="sexo">
 <option value="">Seleccionar</option>
 <option value="hombre">Hombre</option>
@@ -134,11 +211,12 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 <option>7</option>
 </select>
 
-<button onclick="abrirTest()">Descubrir mi nivel</button>
+<button class="btnYellow" onclick="abrirTest()">Descubrir mi nivel</button>
 
-<div id="nivelResultado"></div>
+<div id="nivelResultado" class="ok"></div>
 
 <label>Mano</label>
+
 <select id="mano">
 <option value="">Seleccionar</option>
 <option value="derecha">Derecha</option>
@@ -146,45 +224,55 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 </select>
 
 <label>Posición</label>
+
 <select id="posicion">
 <option value="">Seleccionar</option>
 <option value="drive">Drive</option>
 <option value="reves">Revés</option>
 </select>
 
-<button onclick="guardarPerfil()">Guardar perfil</button>
+<button class="btnBlue" onclick="guardarPerfil()">Guardar perfil</button>
 
 </div>
 
 <!-- TEST NIVEL -->
+
 <div id="testNivel" class="container">
 
 <h3>Test de nivel</h3>
 
 <div class="pregunta">
-¿Hace cuánto juegas al pádel?
+
+¿Hace cuánto juegas?
+
 <select id="p1">
-<option value="0">Nunca he jugado</option>
+<option value="0">Nunca</option>
 <option value="1">Menos de 1 año</option>
 <option value="2">1-3 años</option>
 <option value="3">3-6 años</option>
 <option value="4">Más de 6 años</option>
 </select>
+
 </div>
 
 <div class="pregunta">
+
 ¿Con qué frecuencia juegas?
+
 <select id="p2">
-<option value="0">Muy ocasional</option>
+<option value="0">Muy poco</option>
 <option value="1">1 vez al mes</option>
-<option value="2">2-3 veces al mes</option>
-<option value="3">1 vez por semana</option>
-<option value="4">2 o más veces por semana</option>
+<option value="2">2-3 al mes</option>
+<option value="3">1 por semana</option>
+<option value="4">2 o más por semana</option>
 </select>
+
 </div>
 
 <div class="pregunta">
-¿Cómo es tu control de bola?
+
+Control de bola
+
 <select id="p3">
 <option value="0">Muchos errores</option>
 <option value="1">Peloteos cortos</option>
@@ -192,21 +280,27 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 <option value="3">Buen control</option>
 <option value="4">Control alto</option>
 </select>
+
 </div>
 
 <div class="pregunta">
-¿Utilizas las paredes?
+
+Uso de paredes
+
 <select id="p4">
-<option value="0">No las uso</option>
+<option value="0">No</option>
 <option value="1">A veces</option>
 <option value="2">Con seguridad</option>
-<option value="3">Estratégicamente</option>
-<option value="4">Domino rebotes complejos</option>
+<option value="3">Estratégico</option>
+<option value="4">Dominio total</option>
 </select>
+
 </div>
 
 <div class="pregunta">
-¿Realizas bandeja o víbora?
+
+Bandeja o víbora
+
 <select id="p5">
 <option value="0">No</option>
 <option value="1">Intento bandeja</option>
@@ -214,39 +308,49 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 <option value="3">Bandeja y víbora</option>
 <option value="4">Control ofensivo</option>
 </select>
+
 </div>
 
 <div class="pregunta">
-¿Sabes cuándo subir o bajar a la red?
+
+Subida a red
+
 <select id="p6">
 <option value="0">No</option>
 <option value="1">A veces</option>
-<option value="2">Normalmente sí</option>
+<option value="2">Normalmente</option>
 <option value="3">Buena lectura</option>
-<option value="4">Lectura táctica avanzada</option>
+<option value="4">Lectura avanzada</option>
 </select>
+
 </div>
 
 <div class="pregunta">
-¿Cómo te defiendes desde el fondo?
+
+Defensa
+
 <select id="p7">
-<option value="0">Pierdo rápido el punto</option>
-<option value="1">Devuelvo algunas bolas</option>
+<option value="0">Pierdo rápido</option>
+<option value="1">Devuelvo algunas</option>
 <option value="2">Defensa estable</option>
-<option value="3">Uso paredes bien</option>
+<option value="3">Uso paredes</option>
 <option value="4">Defensa avanzada</option>
 </select>
+
 </div>
 
 <div class="pregunta">
-¿Cómo te desenvuelves en la red?
+
+Juego en red
+
 <select id="p8">
 <option value="0">Evito subir</option>
 <option value="1">Subo pero fallo</option>
 <option value="2">Voleas correctas</option>
 <option value="3">Voleas ofensivas</option>
-<option value="4">Cierro muchos puntos</option>
+<option value="4">Cierro puntos</option>
 </select>
+
 </div>
 
 <button class="btnBlue" onclick="calcularNivel()">Calcular nivel</button>
@@ -255,6 +359,7 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 </div>
 
 <!-- MENU -->
+
 <div id="menu" class="container">
 
 <button class="menuButton">Partidas</button>
@@ -275,8 +380,6 @@ font-size:18px;background:#1565C0;color:white;border-radius:10px;
 
 <script>
 
-/* mostrar pantallas */
-
 function mostrar(p){
 
 document.getElementById("login").style.display="none";
@@ -288,135 +391,29 @@ document.getElementById(p).style.display="block";
 
 }
 
-/* firebase */
-
-const firebaseConfig={
-apiKey:"AIzaSyDhKVAw6952bEITC4pjoKbEMRFEQhcqgYU",
-authDomain:"padel-app-9e144.firebaseapp.com",
-projectId:"padel-app-9e144",
-storageBucket:"padel-app-9e144.firebasestorage.app",
-messagingSenderId:"849083376311",
-appId:"1:849083376311:web:40e8f10ac167745e806332"
-};
-
-firebase.initializeApp(firebaseConfig);
-
-const auth=firebase.auth();
-const db=firebase.firestore();
-const storage=firebase.storage();
-
-/* control sesión */
-
-auth.onAuthStateChanged(async user => {
-
-if(!user){
-mostrar("login");
-return;
-}
-
-const doc = await db.collection("usuarios").doc(user.uid).get();
-
-if(!doc.exists || !doc.data().nombre){
-mostrar("perfilCompletar");
-}
-else{
-mostrar("menu");
-}
-
-});
-
-/* registro */
-
-async function registro(){
-
-const email=document.getElementById("email").value;
-const password=document.getElementById("password").value;
-
-await auth.createUserWithEmailAndPassword(email,password);
-
-}
-
-/* login */
-
-function login(){
-
-auth.signInWithEmailAndPassword(
-document.getElementById("email").value,
-document.getElementById("password").value
-);
-
-}
-
-/* test */
-
-function abrirTest(){
-mostrar("testNivel");
-}
-
-function cerrarTest(){
-mostrar("perfilCompletar");
-}
+function abrirTest(){mostrar("testNivel")}
+function cerrarTest(){mostrar("perfilCompletar")}
 
 function calcularNivel(){
 
 let puntos=
 parseInt(p1.value)+
-parseInt(p2.value);
+parseInt(p2.value)+
+parseInt(p3.value)+
+parseInt(p4.value)+
+parseInt(p5.value)+
+parseInt(p6.value)+
+parseInt(p7.value)+
+parseInt(p8.value);
 
-let nivel=0.5;
+let nivel=(puntos/32)*7;
+nivel=nivel.toFixed(2);
 
-if(puntos>2) nivel=1.5;
-if(puntos>4) nivel=2.5;
-
-nivelManual.value=nivel;
-
-nivelResultado.innerText="Nivel sugerido: "+nivel;
+document.getElementById("nivelManual").value=nivel;
+document.getElementById("nivelResultado").innerText="Nivel sugerido: "+nivel;
 
 mostrar("perfilCompletar");
 
-}
-
-/* subir foto */
-
-async function subirfotoperfil(file,uid){
-
-const ref=storage.ref("fotosPerfil/"+uid+".jpg");
-
-await ref.put(file);
-
-return await ref.getDownloadURL();
-
-}
-
-/* guardar perfil */
-
-async function guardarPerfil(){
-
-const user=auth.currentUser;
-
-const nombre=document.getElementById("nombre").value;
-
-const file=document.getElementById("fotoPerfil").files[0];
-
-let foto="";
-
-if(file){
-foto=await subirfotoperfil(file,user.uid);
-}
-
-await db.collection("usuarios").doc(user.uid).set({
-nombre:nombre,
-fotoPerfil:foto
-});
-
-mostrar("menu");
-
-}
-
-/* logout */
-
-function logout(){
-auth.signOut();
 }
 
 </script>
