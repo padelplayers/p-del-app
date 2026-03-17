@@ -490,6 +490,18 @@ auth.onAuthStateChanged(user=>{
 
 });
 
+function guardarPerfil(){
+
+  const user = auth.currentUser;
+
+  const nombre = document.getElementById("nombre").value;
+  const sexo = document.getElementById("sexo").value;
+  const nivel = document.getElementById("nivelManual").value;
+
+  console.log("Guardando:", nombre, sexo, nivel);
+
+  mostrar("menu");
+}
 
 </script>
 
