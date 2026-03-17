@@ -140,7 +140,7 @@ text-align:left
 
 <!-- LOGIN -->
 
-<div id="login" class="container">
+"login" class="container">
 
 <label>Email</label>
 <input id="email">
@@ -366,6 +366,12 @@ Juego en red
 <div id="menu" class="container">
 
 <h3 id="saludo"></h3>
+
+<img id="fotoPerfil" width="120">
+
+<button onclick="cambiarFoto()">Cambiar foto</button>
+
+<input type="file" id="inputFoto" style="display:none" accept="image/*">
 
 <button class="menuButton">Partidas</button>
 <button class="menuButton">Chat jugadores</button>
