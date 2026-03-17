@@ -492,7 +492,7 @@ auth.onAuthStateChanged(user=>{
     db.collection("usuarios").doc(user.uid).get()
     .then(doc=>{
 
-      if(doc.exists){
+      if(doc.exists && doc.data().nombre){
 
         const data = doc.data();
 
@@ -516,9 +516,16 @@ auth.onAuthStateChanged(user=>{
 
 function guardarPerfil(){
 
+  document.getElementById("msgPerfil").innerText = "";
+
   const user = auth.currentUser;
 
-  const nombre = document.getElementById("nombre").value;
+  if(!user){
+  document.getElementById("msgPerfil").innerText = "Error de sesión";
+  return;
+}
+
+  const nombre = document.getElementById("nombre").value.trim().toLowerCase();
   const sexo = document.getElementById("sexo").value;
   const nivel = document.getElementById("nivelManual").value;
 
@@ -532,10 +539,12 @@ function guardarPerfil(){
     .get()
     .then(query=>{
 
-      if(!query.empty){
-        document.getElementById("msgPerfil").innerText = "Nombre ya en uso";
-        return;
-      }
+  console.log("Usuarios encontrados:", query.size);
+
+  if(!query.empty){
+    document.getElementById("msgPerfil").innerText = "Nombre ya en uso";
+    return;
+  }
 
       db.collection("usuarios").doc(user.uid).set({
         nombre: nombre,
