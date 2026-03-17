@@ -484,7 +484,18 @@ auth.signOut();
 auth.onAuthStateChanged(user=>{
 
   if(user){
-    mostrar("perfilCompletar");
+
+    db.collection("usuarios").doc(user.uid).get()
+    .then(doc=>{
+
+      if(doc.exists){
+        mostrar("menu");
+      }else{
+        mostrar("perfilCompletar");
+      }
+
+    });
+
     return;
   }
 
@@ -501,22 +512,34 @@ function guardarPerfil(){
   const nivel = document.getElementById("nivelManual").value;
 
   if(!nombre || !nivel){
-    document.getElementById("msgPerfil").innerText = "Completa los campos obligatorios";
+    document.getElementById("msgPerfil").innerText = "Completa los campos";
     return;
   }
 
-  db.collection("usuarios").doc(user.uid).set({
-    nombre: nombre,
-    sexo: sexo,
-    nivel: parseFloat(nivel)
-  })
-  .then(()=>{
-    mostrar("menu");
-  })
-  .catch(e=>{
-    console.log(e);
-    document.getElementById("msgPerfil").innerText = "Error al guardar";
-  });
+  db.collection("usuarios")
+    .where("nombre", "==", nombre)
+    .get()
+    .then(query=>{
+
+      if(!query.empty){
+        document.getElementById("msgPerfil").innerText = "Nombre ya en uso";
+        return;
+      }
+
+      db.collection("usuarios").doc(user.uid).set({
+        nombre: nombre,
+        sexo: sexo,
+        nivel: parseFloat(nivel)
+      })
+      .then(()=>{
+        mostrar("menu");
+      });
+
+    })
+    .catch(e=>{
+      console.log(e);
+      document.getElementById("msgPerfil").innerText = "Error";
+    });
 
 }
 
