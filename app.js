@@ -56,13 +56,22 @@ const posicion = document.getElementById("posicion").value;
     return;
   }
 
-      db.collection("usuarios").doc(user.uid).set({
-        nombre: nombre,
-        sexo: sexo,
-        nivel: parseFloat(nivel),
-        mano: mano,
-        posicion: posicion
-      })
+      let fotoDefault = "";
+
+if(sexo === "hombre"){
+  fotoDefault = "img/hombre.png";
+}else{
+  fotoDefault = "img/mujer.png";
+}
+
+db.collection("usuarios").doc(user.uid).set({
+  nombre: nombre,
+  sexo: sexo,
+  nivel: parseFloat(nivel),
+  mano: mano,
+  posicion: posicion,
+  foto: fotoDefault
+})
       .then(()=>{
         mostrar("menu");
       });
