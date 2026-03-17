@@ -468,12 +468,12 @@ auth.signOut();
 
 auth.onAuthStateChanged(user=>{
 
-if(!user){
-mostrar("login");
+if(user){
+mostrar("menu");
 return;
 }
 
-mostrar("menu");
+mostrar("login");
 
 });
 
