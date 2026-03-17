@@ -437,9 +437,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 
-function logout(){
-auth.signOut();
-}
+
 
 
 auth.onAuthStateChanged(user=>{

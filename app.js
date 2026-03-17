@@ -94,3 +94,7 @@ alert(e.message);
 });
 
 }
+
+function logout(){
+auth.signOut();
+}
