@@ -98,3 +98,32 @@ alert(e.message);
 function logout(){
 auth.signOut();
 }
+
+auth.onAuthStateChanged(user=>{
+
+  if(user){
+
+    db.collection("usuarios").doc(user.uid).get()
+    .then(doc=>{
+
+      if(doc.exists && doc.data().nombre){
+
+        const data = doc.data();
+
+        document.getElementById("saludo").innerText =
+          "Hola " + data.nombre;
+
+        mostrar("menu");
+
+      }else{
+        mostrar("perfilCompletar");
+      }
+
+    });
+
+    return;
+  }
+
+  mostrar("login");
+
+});
