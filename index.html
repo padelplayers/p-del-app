@@ -375,6 +375,7 @@ Juego en red
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
 <script>
 
@@ -428,6 +429,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
+const db = firebase.firestore();
 
 function registro(){
 
@@ -498,9 +500,24 @@ function guardarPerfil(){
   const sexo = document.getElementById("sexo").value;
   const nivel = document.getElementById("nivelManual").value;
 
-  console.log("Guardando:", nombre, sexo, nivel);
+  if(!nombre || !nivel){
+    document.getElementById("msgPerfil").innerText = "Completa los campos obligatorios";
+    return;
+  }
 
-  mostrar("menu");
+  db.collection("usuarios").doc(user.uid).set({
+    nombre: nombre,
+    sexo: sexo,
+    nivel: parseFloat(nivel)
+  })
+  .then(()=>{
+    mostrar("menu");
+  })
+  .catch(e=>{
+    console.log(e);
+    document.getElementById("msgPerfil").innerText = "Error al guardar";
+  });
+
 }
 
 </script>
