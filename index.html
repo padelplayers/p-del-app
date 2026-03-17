@@ -529,7 +529,10 @@ function guardarPerfil(){
   const sexo = document.getElementById("sexo").value;
   const nivel = document.getElementById("nivelManual").value;
 
-  if(!nombre || !nivel){
+  const mano = document.getElementById("mano").value;
+const posicion = document.getElementById("posicion").value;
+
+  if(!nombre || !nivel || !mano || !posicion){
     document.getElementById("msgPerfil").innerText = "Completa los campos";
     return;
   }
@@ -549,7 +552,9 @@ function guardarPerfil(){
       db.collection("usuarios").doc(user.uid).set({
         nombre: nombre,
         sexo: sexo,
-        nivel: parseFloat(nivel)
+        nivel: parseFloat(nivel),
+        mano: mano,
+        posicion: posicion
       })
       .then(()=>{
         mostrar("menu");
