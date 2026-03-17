@@ -481,12 +481,12 @@ auth.signOut();
 
 auth.onAuthStateChanged(user=>{
 
-if(user){
-mostrar("menu");
-return;
-}
+  if(user){
+    mostrar("perfilCompletar");
+    return;
+  }
 
-mostrar("login");
+  mostrar("login");
 
 });
 
