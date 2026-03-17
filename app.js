@@ -59,9 +59,9 @@ const posicion = document.getElementById("posicion").value;
       let fotoDefault = "";
 
 if(sexo === "hombre"){
-  fotoDefault = "img/hombre.png";
+  fotoDefault = "imagen/hombre.jpeg";
 }else{
-  fotoDefault = "img/mujer.png";
+  fotoDefault = "imagen/mujer.jpeg";
 }
 
 db.collection("usuarios").doc(user.uid).set({
