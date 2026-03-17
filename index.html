@@ -431,11 +431,18 @@ firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 
-
 function registro(){
 
-let email=document.getElementById("email").value;
-let pass=document.getElementById("pass").value;
+let emailInput = document.getElementById("email");
+let passInput = document.getElementById("pass");
+
+if(!emailInput || !passInput){
+alert("Error: inputs no encontrados");
+return;
+}
+
+let email = emailInput.value;
+let pass = passInput.value;
 
 auth.createUserWithEmailAndPassword(email,pass)
 .then(()=>{
@@ -450,8 +457,16 @@ alert(e.message);
 
 function login(){
 
-let email=document.getElementById("email").value;
-let pass=document.getElementById("pass").value;
+let emailInput = document.getElementById("email");
+let passInput = document.getElementById("pass");
+
+if(!emailInput || !passInput){
+alert("Error: inputs no encontrados");
+return;
+}
+
+let email = emailInput.value;
+let pass = passInput.value;
 
 auth.signInWithEmailAndPassword(email,pass)
 .catch(e=>{
