@@ -127,3 +127,12 @@ auth.onAuthStateChanged(user=>{
   mostrar("login");
 
 });
+
+function cambiarFoto(){
+  document.getElementById("inputFoto").click();
+}
+
+document.getElementById("inputFoto").addEventListener("change", function(e){
+  const archivo = e.target.files[0];
+  console.log("Archivo seleccionado:", archivo);
+});
