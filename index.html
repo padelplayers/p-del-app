@@ -367,20 +367,32 @@ Juego en red
 
 <h3 id="saludo"></h3>
 
-<img id="fotoPerfil" width="120">
-
-<button onclick="cambiarFoto()">Cambiar foto</button>
-
-<input type="file" id="inputFoto" style="display:none" accept="image/*">
-
 <button class="menuButton">Partidas</button>
 <button class="menuButton">Chat jugadores</button>
 <button class="menuButton">Clasificación</button>
-<button class="menuButton">Perfil</button>
+<button class="menuButton" onclick="mostrar('perfil')">Perfil</button>
 <button class="menuButton">Tutoriales</button>
 <button class="menuButton">Media Center</button>
 
 <button class="logout" onclick="logout()">Cerrar sesión</button>
+
+</div>
+
+<div id="perfil" class="container" style="display:none">
+
+  <h3>Perfil</h3>
+
+  <img id="fotoPerfil" width="120" style="border-radius:50%">
+
+  <br><br>
+
+  <button onclick="cambiarFoto()">Cambiar foto</button>
+
+  <input type="file" id="inputFoto" style="display:none" accept="image/*">
+
+  <br><br>
+
+  <button onclick="mostrar('menu')">Volver</button>
 
 </div>
 
