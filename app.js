@@ -73,7 +73,7 @@ db.collection("usuarios").doc(user.uid).set({
   nivel: parseFloat(nivel),
   mano: mano,
   posicion: posicion,
-  foto: fotoDefault,
+  fotoPerfil: fotoDefault,
   seguidores: [],
 siguiendo: [],
 })
@@ -179,7 +179,7 @@ function cambiarFoto(){
 
 document.getElementById("inputFoto").addEventListener("change", function(e){
  const archivo = e.target.files[0];
-fotoPerfil = URL.createObjectURL(archivo);
+fotoPerfil = archivo;
 });
 
 function mostrar(seccion){
@@ -270,7 +270,7 @@ function verPerfil(uid){
       // pintar datos
       document.getElementById("nombrePerfil").innerText = data.nombre;
       document.getElementById("puntosPerfil").innerText = data.nivel + " nivel";
-      document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
+      document.getElementById("fotoPerfil").src = data.fotoPerfil;
 
       document.getElementById("seguidores").innerText =
         (data.seguidores || []).length;
