@@ -237,3 +237,9 @@ button[onclick*="mostrar('menu')"]{
   font-weight:bold;
   margin:10px 0;
 }
+
+#seguidoresPerfil{
+  color:#1565C0;
+  font-size:13px;
+  font-weight:bold;
+}

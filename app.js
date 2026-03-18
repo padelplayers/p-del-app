@@ -72,7 +72,9 @@ db.collection("usuarios").doc(user.uid).set({
   nivel: parseFloat(nivel),
   mano: mano,
   posicion: posicion,
-  foto: fotoDefault
+  foto: fotoDefault,
+  seguidores: [],
+siguiendo: [],
 })
       .then(()=>{
         mostrar("menu");
@@ -127,6 +129,8 @@ auth.onAuthStateChanged(user=>{
         document.getElementById("nombrePerfil").innerText = data.nombre;
 document.getElementById("puntosPerfil").innerText = data.nivel + " nivel";
 document.getElementById("fotoPerfil").src = data.foto;
+document.getElementById("seguidoresPerfil").innerText =
+(data.seguidores || []).length + " seguidores";
 
 mostrar("perfil");
 
