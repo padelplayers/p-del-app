@@ -128,7 +128,7 @@ auth.onAuthStateChanged(user=>{
 document.getElementById("puntosPerfil").innerText = data.nivel + " nivel";
 document.getElementById("fotoPerfil").src = data.foto;
 
-mostrar("menu");
+mostrar("perfil");
 
       }else{
         mostrar("perfilCompletar");
