@@ -1,3 +1,5 @@
+
+
 function registro(){
 
 let emailInput = document.getElementById("email");
