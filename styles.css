@@ -251,3 +251,9 @@ button[onclick*="mostrar('menu')"]{
   margin:20px;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
+
+.perfil-info{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
