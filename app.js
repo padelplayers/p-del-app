@@ -1,4 +1,5 @@
 let fotoPerfil = null;
+let otroUid = null;
 
 function registro(){
 
@@ -72,7 +73,7 @@ db.collection("usuarios").doc(user.uid).set({
   nivel: parseFloat(nivel),
   mano: mano,
   posicion: posicion,
-  foto: fotoPerfil || fotoDefault,
+  foto: fotoDefault,
   seguidores: [],
 siguiendo: [],
 })
@@ -123,6 +124,31 @@ auth.onAuthStateChanged(user=>{
 
         const data = doc.data();
 
+        otroUid = doc.id;
+
+        const user = auth.currentUser;
+
+if(otroUid !== user.uid){
+  document.getElementById("btnSeguir").style.display = "block";
+}else{
+  document.getElementById("btnSeguir").style.display = "none";
+}
+
+db.collection("usuarios").doc(user.uid).get().then(miDoc => {
+
+  const sigo = (miDoc.data().siguiendo || []).includes(otroUid);
+
+  document.getElementById("btnSeguir").innerText =
+    sigo ? "Dejar de seguir" : "Seguir";
+
+});
+
+document.getElementById("seguidores").innerText =
+  (data.seguidores || []).length;
+
+document.getElementById("seguidos").innerText =
+  (data.siguiendo || []).length;
+
         document.getElementById("saludo").innerText =
           "Hola " + data.nombre;
 
@@ -168,5 +194,95 @@ function mostrar(seccion){
   }else{
     document.getElementById(seccion).style.display = "block";
   }
+
+}
+
+let otroUid = null;
+
+function toggleSeguir(){
+
+  const user = auth.currentUser;
+
+  const miRef = db.collection("usuarios").doc(user.uid);
+  const otroRef = db.collection("usuarios").doc(otroUid);
+
+  miRef.get().then(miDoc => {
+
+    const sigo = (miDoc.data().siguiendo || []).includes(otroUid);
+
+    if(sigo){
+
+      miRef.update({
+        siguiendo: firebase.firestore.FieldValue.arrayRemove(otroUid)
+      });
+
+      otroRef.update({
+        seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
+      });
+
+    }else{
+
+      miRef.update({
+        siguiendo: firebase.firestore.FieldValue.arrayUnion(otroUid)
+      });
+
+      otroRef.update({
+        seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
+      });
+
+    }
+
+    // refrescar perfil
+    verPerfil(otroUid);
+
+  });
+
+}
+
+function verPerfil(uid){
+
+  const user = auth.currentUser;
+
+  db.collection("usuarios").doc(uid).get().then(doc => {
+
+    if(doc.exists){
+
+      const data = doc.data();
+
+      otroUid = uid;
+
+      // botón seguir
+      if(uid !== user.uid){
+        document.getElementById("btnSeguir").style.display = "block";
+      }else{
+        document.getElementById("btnSeguir").style.display = "none";
+      }
+
+      // estado seguir
+      db.collection("usuarios").doc(user.uid).get().then(miDoc => {
+
+        const sigo = (miDoc.data().siguiendo || []).includes(uid);
+
+        document.getElementById("btnSeguir").innerText =
+          sigo ? "Dejar de seguir" : "Seguir";
+
+      });
+
+      // pintar datos
+      document.getElementById("nombrePerfil").innerText = data.nombre;
+      document.getElementById("puntosPerfil").innerText = data.nivel + " nivel";
+      document.getElementById("fotoPerfil").src = data.foto;
+
+      document.getElementById("seguidores").innerText =
+        (data.seguidores || []).length;
+
+      document.getElementById("seguidos").innerText =
+        (data.siguiendo || []).length;
+
+      mostrar("perfil");
+
+    }
+
+  });
 
 }
