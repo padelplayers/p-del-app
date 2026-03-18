@@ -152,8 +152,8 @@ function cambiarFoto(){
 }
 
 document.getElementById("inputFoto").addEventListener("change", function(e){
-  const archivo = e.target.files[0];
-  console.log("Archivo seleccionado:", archivo);
+ const archivo = e.target.files[0];
+fotoPerfil = URL.createObjectURL(archivo);
 });
 
 function mostrar(seccion){
