@@ -124,7 +124,11 @@ auth.onAuthStateChanged(user=>{
         document.getElementById("saludo").innerText =
           "Hola " + data.nombre;
 
-        mostrar("menu");
+        document.getElementById("nombrePerfil").innerText = data.nombre;
+document.getElementById("puntosPerfil").innerText = data.nivel + " nivel";
+document.getElementById("fotoPerfil").src = data.foto;
+
+mostrar("menu");
 
       }else{
         mostrar("perfilCompletar");
