@@ -120,9 +120,9 @@ text-align:left
 }
 
 .perfil-header{
-  background:#1565C0;
+  background:white;
   padding:20px;
-  color:white;
+  color:#1565C0;
   border-radius:0 0 20px 20px;
 }
 
@@ -242,4 +242,12 @@ button[onclick*="mostrar('menu')"]{
   color:#1565C0;
   font-size:13px;
   font-weight:bold;
+}
+
+#perfil{
+  background:white;
+  border-radius:20px;
+  padding:20px;
+  margin:20px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
