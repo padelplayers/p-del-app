@@ -197,7 +197,6 @@ function mostrar(seccion){
 
 }
 
-let otroUid = null;
 
 function toggleSeguir(){
 
