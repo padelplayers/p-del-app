@@ -155,7 +155,7 @@ document.getElementById("seguidos").innerText =
         document.getElementById("nombrePerfil").innerText = data.nombre;
 document.getElementById("puntosPerfil").innerText = data.nivel + " nivel";
 document.getElementById("fotoPerfil").src = data.foto;
-document.getElementById("seguidoresPerfil").innerText =
+document.getElementById("seguidores").innerText =
 (data.seguidores || []).length + " seguidores";
 
 mostrar("perfil");
