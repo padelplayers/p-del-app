@@ -268,6 +268,13 @@ function verPerfil(uid){
       });
 
       // pintar datos
+      console.log(
+  document.getElementById("nombrePerfil"),
+  document.getElementById("puntosPerfil"),
+  document.getElementById("fotoPerfil"),
+  document.getElementById("seguidores"),
+  document.getElementById("seguidos")
+);
       document.getElementById("nombrePerfil").innerText = data.nombre;
       document.getElementById("puntosPerfil").innerText = data.nivel + " nivel";
       document.getElementById("fotoPerfil").src = data.fotoPerfil;
