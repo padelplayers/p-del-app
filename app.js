@@ -151,3 +151,18 @@ document.getElementById("inputFoto").addEventListener("change", function(e){
   const archivo = e.target.files[0];
   console.log("Archivo seleccionado:", archivo);
 });
+
+function mostrar(seccion){
+
+  document.getElementById("login").style.display = "none";
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("perfilCompletar").style.display = "none";
+  document.getElementById("perfil").style.display = "none";
+
+  if(seccion === "perfil"){
+    document.getElementById("perfil").style.display = "block";
+  }else{
+    document.getElementById(seccion).style.display = "block";
+  }
+
+}
