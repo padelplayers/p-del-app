@@ -1,4 +1,4 @@
-
+let fotoPerfil = null;
 
 function registro(){
 
