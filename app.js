@@ -120,7 +120,7 @@ auth.onAuthStateChanged(user=>{
     db.collection("usuarios").doc(user.uid).get()
     .then(doc=>{
 
-      if(doc.exists && doc.data().nombre){
+     if(doc.exists){
 
         const data = doc.data();
 
@@ -270,7 +270,7 @@ function verPerfil(uid){
       // pintar datos
       document.getElementById("nombrePerfil").innerText = data.nombre;
       document.getElementById("puntosPerfil").innerText = data.nivel + " nivel";
-      document.getElementById("fotoPerfil").src = data.foto;
+      document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
 
       document.getElementById("seguidores").innerText =
         (data.seguidores || []).length;
