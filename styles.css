@@ -174,8 +174,8 @@ text-align:left
 }
 
 .puntos{
-  font-size:16px;
-  color:#FFC107;
+  color:#1565C0;
+  font-weight:bold;
 }
 
 .perfil-stats{
@@ -189,9 +189,15 @@ text-align:left
   flex:1;
 }
 
+.perfil-stats div div{
+  font-weight:bold;
+  color:#1565C0;
+}
+
 .perfil-stats span{
   font-size:12px;
-  color:#ddd;
+  color:#1565C0;
+font-weight:bold;
 }
 
 .perfil-botones{
@@ -216,4 +222,18 @@ text-align:left
 .perfil-botones .rojo{
   background:#e53935;
   color:white;
+}
+
+button{
+  cursor:pointer;
+}
+
+button[onclick*="mostrar('menu')"]{
+  background:#1565C0;
+  color:white;
+  border:none;
+  padding:12px 20px;
+  border-radius:10px;
+  font-weight:bold;
+  margin:10px 0;
 }
