@@ -72,7 +72,7 @@ db.collection("usuarios").doc(user.uid).set({
   nivel: parseFloat(nivel),
   mano: mano,
   posicion: posicion,
-  foto: fotoDefault,
+  foto: fotoPerfil || fotoDefault,
   seguidores: [],
 siguiendo: [],
 })

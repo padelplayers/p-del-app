@@ -248,9 +248,11 @@ button[onclick*="mostrar('menu')"]{
   background:white;
   border-radius:20px;
   padding:20px;
-  margin:20px;
+  margin:20px auto;
+  max-width:500px;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
+
 
 .perfil-info{
   display:flex;
