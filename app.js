@@ -286,3 +286,37 @@ function verPerfil(uid){
   });
 
 }
+
+function cargarJugadores(){
+
+  const contenedor = document.getElementById("listaJugadores");
+  contenedor.innerHTML = "";
+
+  db.collection("usuarios").get().then(snapshot => {
+
+    snapshot.forEach(doc => {
+
+      const data = doc.data();
+
+      const div = document.createElement("div");
+      div.className = "jugadorCard";
+
+     div.innerHTML = `
+  <img src="${data.foto || 'imagen/hombre.jpeg'}" width="50">
+  <span>${data.nombre}</span>
+`;
+
+      div.onclick = () => verPerfil(doc.id);
+
+      contenedor.appendChild(div);
+
+    });
+
+  });
+
+}
+
+function abrirJugadores(){
+  mostrar("jugadores");
+  cargarJugadores();
+}
