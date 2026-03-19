@@ -113,66 +113,70 @@ function logout(){
 auth.signOut();
 }
 
-auth.onAuthStateChanged(user=>{
+auth.onAuthStateChanged(user => {
 
-  if(user){
+  if (user) {
 
     db.collection("usuarios").doc(user.uid).get()
-    .then(doc=>{
+    .then(doc => {
 
-     if(doc.exists){
+      const userActual = auth.currentUser;
+
+      if (doc.exists) {
 
         const data = doc.data();
-
         otroUid = doc.id;
 
+        // botón seguir + visibilidad seguidores
+        if (otroUid !== userActual.uid) {
+          document.getElementById("btnSeguir").style.display = "block";
+          document.getElementById("seguidores").style.display = "block";
+        } else {
+          document.getElementById("btnSeguir").style.display = "none";
+          document.getElementById("seguidores").style.display = "none";
+        }
 
-if (otroUid !== user.uid) {
-  document.getElementById("btnSeguir").style.display = "block";
-  document.getElementById("seguidores").style.display = "block";
-} else {
-  document.getElementById("btnSeguir").style.display = "none";
-  document.getElementById("seguidores").style.display = "none";
-}
+        // comprobar si sigo al usuario
+        db.collection("usuarios").doc(userActual.uid).get().then(miDoc => {
 
-db.collection("usuarios").doc(user.uid).get().then(miDoc => {
+          const sigo = (miDoc.data().siguiendo || []).includes(otroUid);
 
-  const sigo = (miDoc.data().siguiendo || []).includes(otroUid);
+          document.getElementById("btnSeguir").innerText =
+            sigo ? "Dejar de seguir" : "Seguir";
 
-  document.getElementById("btnSeguir").innerText =
-    sigo ? "Dejar de seguir" : "Seguir";
+        });
 
-});
+        // datos perfil
+        document.getElementById("seguidores").innerText =
+          (data.seguidores || []).length + " seguidores";
 
-document.getElementById("seguidores").innerText =
-  (data.seguidores || []).length;
-
-document.getElementById("seguidos").innerText =
-  (data.siguiendo || []).length;
+        document.getElementById("seguidos").innerText =
+          (data.siguiendo || []).length;
 
         document.getElementById("saludo").innerText =
           "Hola " + data.nombre;
 
         document.getElementById("nombrePerfil").innerText = data.nombre;
-document.getElementById("puntosPerfil").innerText = data.nivel + " nivel";
-document.getElementById("fotoPerfil").src = data.fotoPerfil;
-document.getElementById("seguidores").innerText =
-(data.seguidores || []).length + " seguidores";
 
-mostrar("perfil");
+        document.getElementById("puntosPerfil").innerText =
+          data.nivel + " nivel";
 
-      }else{
+        document.getElementById("fotoPerfil").src = data.fotoPerfil;
+
+        mostrar("perfil");
+
+      } else {
         mostrar("perfilCompletar");
       }
 
-    });
+    }); // ← cierre del .then
 
     return;
   }
 
   mostrar("login");
 
-});
+}); // ← cierre final
 
 function cambiarFoto(){
   document.getElementById("inputFoto").click();
