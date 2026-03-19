@@ -322,12 +322,16 @@ function abrirJugadores(){
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("inputFoto").addEventListener("change", (e) => {
+
+  document.getElementById("inputFoto").addEventListener("change", function(e){
+
     archivo = e.target.files[0];
 
     if (archivo) {
       const url = URL.createObjectURL(archivo);
       document.getElementById("fotoPerfil").src = url;
     }
+
   });
+
 });
