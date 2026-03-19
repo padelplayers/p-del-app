@@ -246,52 +246,38 @@ function toggleSeguir(){
 
 function verPerfil(uid){
 
-  const user = auth.currentUser;
 
   db.collection("usuarios").doc(uid).get().then(doc => {
 
-    if(doc.exists){
+  if(doc.exists){
 
-      const data = doc.data();
+    const data = doc.data();
 
-      otroUid = uid;
+    document.getElementById("nombrePerfil").innerText = data.nombre;
+    document.getElementById("nivelPerfil").innerText = data.nivel + " nivel";
+    document.getElementById("fotoPerfil").src = data.fotoPerfil;
 
-      // botón seguir
-      if(uid !== user.uid){
-        document.getElementById("btnSeguir").style.display = "block";
-      }else{
-        document.getElementById("btnSeguir").style.display = "none";
-      }
+    document.getElementById("seguidores").innerText =
+      (data.seguidores || []).length + " seguidores";
 
-      // estado seguir
-      db.collection("usuarios").doc(user.uid).get().then(miDoc => {
+    document.getElementById("seguidos").innerText =
+      (data.siguiendo || []).length + " seguidos";
 
-        const sigo = (miDoc.data().siguiendo || []).includes(uid);
+    otroUid = uid;
 
-        document.getElementById("btnSeguir").innerText =
-          sigo ? "Dejar de seguir" : "Seguir";
+    const user = auth.currentUser;
 
-      });
-
-      // pintar datos
-      
-      document.getElementById("nombrePerfil").innerText = data.nombre;
-      document.getElementById("puntosPerfil").innerText = data.nivel + " nivel";
-      document.getElementById("fotoPerfil").src = data.fotoPerfil;
-
-      document.getElementById("seguidores").innerText =
-  (data.seguidores || []).length + " seguidores";
-
-document.getElementById("seguidos").innerText =
-  (data.siguiendo || []).length + " seguidos";
-
-      mostrar("perfil");
-
+    if(uid !== user.uid){
+      document.getElementById("btnSeguir").style.display = "block";
+    }else{
+      document.getElementById("btnSeguir").style.display = "none";
     }
 
-  });
+    mostrar("perfil");
 
-}
+  }
+
+});
 
 function cargarJugadores(){
 
