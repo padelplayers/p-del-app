@@ -120,15 +120,12 @@ auth.onAuthStateChanged(user => {
     db.collection("usuarios").doc(user.uid).get()
     .then(doc => {
 
-      const userActual = auth.currentUser;
-
       if (doc.exists) {
 
         const data = doc.data();
         otroUid = doc.id;
 
-        // botón seguir + visibilidad seguidores
-        if (otroUid !== userActual.uid) {
+        if (otroUid !== user.uid) {
           document.getElementById("btnSeguir").style.display = "block";
           document.getElementById("seguidores").style.display = "block";
         } else {
@@ -136,8 +133,7 @@ auth.onAuthStateChanged(user => {
           document.getElementById("seguidores").style.display = "none";
         }
 
-        // comprobar si sigo al usuario
-        db.collection("usuarios").doc(userActual.uid).get().then(miDoc => {
+        db.collection("usuarios").doc(user.uid).get().then(miDoc => {
 
           const sigo = (miDoc.data().siguiendo || []).includes(otroUid);
 
@@ -145,13 +141,6 @@ auth.onAuthStateChanged(user => {
             sigo ? "Dejar de seguir" : "Seguir";
 
         });
-
-        // datos perfil
-        document.getElementById("seguidores").innerText =
-          (data.seguidores || []).length + " seguidores";
-
-        document.getElementById("seguidos").innerText =
-          (data.siguiendo || []).length;
 
         document.getElementById("saludo").innerText =
           "Hola " + data.nombre;
@@ -163,20 +152,26 @@ auth.onAuthStateChanged(user => {
 
         document.getElementById("fotoPerfil").src = data.fotoPerfil;
 
+        document.getElementById("seguidores").innerText =
+          (data.seguidores || []).length + " seguidores";
+
+        document.getElementById("seguidos").innerText =
+          (data.siguiendo || []).length + " seguidos";
+
         mostrar("perfil");
 
       } else {
         mostrar("perfilCompletar");
       }
 
-    }); // ← cierre del .then
+    });
 
     return;
   }
 
   mostrar("login");
 
-}); // ← cierre final
+});
 
 function cambiarFoto(){
   document.getElementById("inputFoto").click();
@@ -250,38 +245,39 @@ function toggleSeguir(){
 
 function verPerfil(uid){
 
-
   db.collection("usuarios").doc(uid).get().then(doc => {
 
-  if(doc.exists){
+    if(doc.exists){
 
-    const data = doc.data();
+      const data = doc.data();
 
-    document.getElementById("nombrePerfil").innerText = data.nombre;
-    document.getElementById("nivelPerfil").innerText = data.nivel + " nivel";
-    document.getElementById("fotoPerfil").src = data.fotoPerfil;
+      document.getElementById("nombrePerfil").innerText = data.nombre;
+      document.getElementById("nivelPerfil").innerText = data.nivel + " nivel";
+      document.getElementById("fotoPerfil").src = data.fotoPerfil;
 
-    document.getElementById("seguidores").innerText =
-      (data.seguidores || []).length + " seguidores";
+      document.getElementById("seguidores").innerText =
+        (data.seguidores || []).length + " seguidores";
 
-    document.getElementById("seguidos").innerText =
-      (data.siguiendo || []).length + " seguidos";
+      document.getElementById("seguidos").innerText =
+        (data.siguiendo || []).length + " seguidos";
 
-    otroUid = uid;
+      otroUid = uid;
 
-    const user = auth.currentUser;
+      const user = auth.currentUser;
 
-    if(uid !== user.uid){
-      document.getElementById("btnSeguir").style.display = "block";
-    }else{
-      document.getElementById("btnSeguir").style.display = "none";
+      if(uid !== user.uid){
+        document.getElementById("btnSeguir").style.display = "block";
+      }else{
+        document.getElementById("btnSeguir").style.display = "none";
+      }
+
+      mostrar("perfil");
+
     }
 
-    mostrar("perfil");
+  });
 
-  }
-
-});
+} // ← cierre que faltaba
 
 function cargarJugadores(){
 
@@ -294,21 +290,15 @@ function cargarJugadores(){
 
       const data = doc.data();
 
-      console.log(
-  document.getElementById("nombrePerfil"),
-  document.getElementById("puntosPerfil"),
-  document.getElementById("fotoPerfil"),
-  document.getElementById("seguidores"),
-  document.getElementById("seguidos")
-);
-
       const div = document.createElement("div");
       div.className = "jugadorCard";
 
-     div.innerHTML = `
-  <img src="${data.fotoPerfil || 'imagen/hombre.jpeg'}" width="50">
-  <span>${data.nombre}</span>
-`;
+      div.innerHTML = 
+  <div>
+    <img src="${data.fotoPerfil || 'imagen/hombre.jpeg'}" width="50" />
+    <span>${data.nombre}</span>
+  </div>
+;
 
       div.onclick = () => verPerfil(doc.id);
 
