@@ -1,4 +1,4 @@
-let fotoPerfil = null;
+let archivo = null;
 let otroUid = null;
 
 function registro(){
@@ -154,7 +154,7 @@ document.getElementById("seguidos").innerText =
 
         document.getElementById("nombrePerfil").innerText = data.nombre;
 document.getElementById("puntosPerfil").innerText = data.nivel + " nivel";
-document.getElementById("fotoPerfil").src = data.foto;
+document.getElementById("fotoPerfil").src = data.fotoPerfil;
 document.getElementById("seguidores").innerText =
 (data.seguidores || []).length + " seguidores";
 
@@ -178,8 +178,13 @@ function cambiarFoto(){
 }
 
 document.getElementById("inputFoto").addEventListener("change", function(e){
- const archivo = e.target.files[0];
-fotoPerfil = archivo;
+archivo = e.target.files[0];
+
+if (archivo) {
+  const url = URL.createObjectURL(archivo);
+  document.getElementById("fotoPerfil").src = url;
+}
+
 });
 
 function mostrar(seccion){
@@ -310,7 +315,7 @@ function cargarJugadores(){
       div.className = "jugadorCard";
 
      div.innerHTML = `
-  <img src="${data.foto || 'imagen/hombre.jpeg'}" width="50">
+  <img src="${data.fotoPerfil || 'imagen/hombre.jpeg'}" width="50">
   <span>${data.nombre}</span>
 `;
 
@@ -328,3 +333,14 @@ function abrirJugadores(){
   mostrar("jugadores");
   cargarJugadores();
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("inputFoto").addEventListener("change", (e) => {
+    archivo = e.target.files[0];
+
+    if (archivo) {
+      const url = URL.createObjectURL(archivo);
+      document.getElementById("fotoPerfil").src = url;
+    }
+  });
+});
