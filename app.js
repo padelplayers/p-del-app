@@ -78,7 +78,7 @@ db.collection("usuarios").doc(user.uid).set({
 siguiendo: [],
 })
       .then(()=>{
-        mostrar("menu");
+        location.reload();
       });
 
     })
@@ -126,12 +126,13 @@ auth.onAuthStateChanged(user=>{
 
         otroUid = doc.id;
 
-        const user = auth.currentUser;
 
-if(otroUid !== user.uid){
+if (otroUid !== user.uid) {
   document.getElementById("btnSeguir").style.display = "block";
-}else{
+  document.getElementById("seguidores").style.display = "block";
+} else {
   document.getElementById("btnSeguir").style.display = "none";
+  document.getElementById("seguidores").style.display = "none";
 }
 
 db.collection("usuarios").doc(user.uid).get().then(miDoc => {
