@@ -266,6 +266,8 @@ function toggleSeguir(){
 
     }
 
+  
+
     // refrescar perfil
     verPerfil(uid);
 
@@ -303,10 +305,11 @@ function verPerfil(uid){
 });
 
       if(uid !== user.uid){
-        document.getElementById("btnSeguir").style.display = "block";
-      }else{
-        document.getElementById("btnSeguir").style.display = "none";
-      }
+  const btn = document.getElementById("btnSeguir");
+  btn.style.display = "block";
+}else{
+  document.getElementById("btnSeguir").style.display = "none";
+}
 
       mostrar("perfil");
 
