@@ -67,20 +67,48 @@ if(sexo === "hombre"){
   fotoDefault = "imagen/mujer.jpeg";
 }
 
-db.collection("usuarios").doc(user.uid).set({
-  nombre: nombre,
-  sexo: sexo,
-  nivel: parseFloat(nivel),
-  mano: mano,
-  posicion: posicion,
-  fotoPerfil: fotoDefault,
-  seguidores: [],
-siguiendo: [],
-})
-      .then(()=>{
-        location.reload();
-      });
+if (archivo) {
 
+  const storageRef = firebase.storage().ref();
+  const ruta = "perfiles/" + user.uid;
+
+  storageRef.child(ruta).put(archivo)
+  .then(snapshot => snapshot.ref.getDownloadURL())
+  .then(url => {
+
+    db.collection("usuarios").doc(user.uid).set({
+      nombre: nombre,
+      sexo: sexo,
+      nivel: parseFloat(nivel),
+      mano: mano,
+      posicion: posicion,
+      fotoPerfil: url,
+      seguidores: [],
+      siguiendo: [],
+    })
+    .then(()=>{
+      location.reload();
+    });
+
+  });
+
+} else {
+
+  db.collection("usuarios").doc(user.uid).set({
+    nombre: nombre,
+    sexo: sexo,
+    nivel: parseFloat(nivel),
+    mano: mano,
+    posicion: posicion,
+    fotoPerfil: fotoDefault,
+    seguidores: [],
+    siguiendo: [],
+  })
+  .then(()=>{
+    location.reload();
+  });
+
+}
     })
     .catch(e=>{
       console.log(e);
