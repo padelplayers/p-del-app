@@ -233,19 +233,21 @@ function mostrar(seccion){
 
 function toggleSeguir(){
 
+  const uid = otroUid;
+
   const user = auth.currentUser;
 
   const miRef = db.collection("usuarios").doc(user.uid);
-  const otroRef = db.collection("usuarios").doc(otroUid);
+  const otroRef = db.collection("usuarios").doc(uid);
 
   miRef.get().then(miDoc => {
 
-    const sigo = (miDoc.data().siguiendo || []).includes(otroUid);
+    const sigo = (miDoc.data().siguiendo || []).includes(uid);
 
     if(sigo){
 
       miRef.update({
-        siguiendo: firebase.firestore.FieldValue.arrayRemove(otroUid)
+        siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
       });
 
       otroRef.update({
@@ -255,7 +257,7 @@ function toggleSeguir(){
     }else{
 
       miRef.update({
-        siguiendo: firebase.firestore.FieldValue.arrayUnion(otroUid)
+        siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
       });
 
       otroRef.update({
@@ -265,7 +267,7 @@ function toggleSeguir(){
     }
 
     // refrescar perfil
-    verPerfil(otroUid);
+    verPerfil(uid);
 
   });
 
@@ -290,6 +292,15 @@ function verPerfil(uid){
       otroUid = uid;
 
       const user = auth.currentUser;
+
+      db.collection("usuarios").doc(user.uid).get().then(miDoc => {
+
+  const sigo = (miDoc.data().siguiendo || []).includes(uid);
+
+  document.getElementById("btnSeguir").innerText =
+    sigo ? "Dejar de seguir" : "Seguir";
+
+});
 
       if(uid !== user.uid){
         document.getElementById("btnSeguir").style.display = "block";
