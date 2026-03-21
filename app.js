@@ -151,7 +151,7 @@ auth.onAuthStateChanged(user => {
       if (doc.exists) {
 
         const data = doc.data();
-        otroUid = doc.id;
+        otroUid = user.uid;
 
         if (otroUid !== user.uid) {
           document.getElementById("btnSeguir").style.display = "block";
@@ -267,7 +267,7 @@ function toggleSeguir(){
 }
 
 const btn = document.getElementById("btnSeguir");
-btn.innerText = sigo ? "Dejar de seguir" : "Seguir";
+btn.innerText = sigo ? "Seguir" : "Dejar de seguir";
 
 verPerfil(uid);
   });
