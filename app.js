@@ -287,7 +287,7 @@ function verPerfil(uid){
       document.getElementById("fotoPerfil").src = data.fotoPerfil;
 
       document.getElementById("seguidores").innerText =
-        (data.seguidores || []).length + " seguidores";
+        (data.seguidores || []).length;
 
       otroUid = uid;
 
