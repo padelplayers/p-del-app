@@ -183,8 +183,7 @@ auth.onAuthStateChanged(user => {
         document.getElementById("seguidores").innerText =
           (data.seguidores || []).length + " seguidores";
 
-        document.getElementById("seguidos").innerText =
-          (data.siguiendo || []).length + " seguidos";
+        
 
         mostrar("perfil");
 
@@ -233,9 +232,8 @@ function mostrar(seccion){
 
 function toggleSeguir(){
 
-  const uid = otroUid;
-
   const user = auth.currentUser;
+  const uid = otroUid;
 
   const miRef = db.collection("usuarios").doc(user.uid);
   const otroRef = db.collection("usuarios").doc(uid);
@@ -244,36 +242,37 @@ function toggleSeguir(){
 
     const sigo = (miDoc.data().siguiendo || []).includes(uid);
 
+    
+
     if(sigo){
 
-      miRef.update({
-        siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
-      });
+  miRef.update({
+    siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
+  });
 
-      otroRef.update({
-        seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
-      });
+  otroRef.update({
+    seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
+  });
 
-    }else{
+}else{
 
-      miRef.update({
-        siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
-      });
+  miRef.update({
+    siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
+  });
 
-      otroRef.update({
-        seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
-      });
-
-    }
-
-  
-
-    // refrescar perfil
-    verPerfil(uid);
-
+  otroRef.update({
+    seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
   });
 
 }
+
+const btn = document.getElementById("btnSeguir");
+btn.innerText = sigo ? "Dejar de seguir" : "Seguir";
+
+verPerfil(uid);
+  });
+}
+
 
 function verPerfil(uid){
 
@@ -290,34 +289,34 @@ function verPerfil(uid){
       document.getElementById("seguidores").innerText =
         (data.seguidores || []).length + " seguidores";
 
-
       otroUid = uid;
 
       const user = auth.currentUser;
 
       db.collection("usuarios").doc(user.uid).get().then(miDoc => {
 
-  const sigo = (miDoc.data().siguiendo || []).includes(uid);
+        const sigo = (miDoc.data().siguiendo || []).includes(uid);
 
-  document.getElementById("btnSeguir").innerText =
-    sigo ? "Dejar de seguir" : "Seguir";
+        document.getElementById("btnSeguir").innerText =
+          sigo ? "Dejar de seguir" : "Seguir";
 
-});
+        if(uid !== user.uid){
+          document.getElementById("btnSeguir").style.display = "block";
+        }else{
+          document.getElementById("btnSeguir").style.display = "none";
+        }
 
-      if(uid !== user.uid){
-  const btn = document.getElementById("btnSeguir");
-  btn.style.display = "block";
-}else{
-  document.getElementById("btnSeguir").style.display = "none";
-}
+        mostrar("perfil");
 
-      mostrar("perfil");
+      });
 
     }
 
   });
 
-} // ← cierre que faltaba
+}
+
+
 
 function cargarJugadores(){
 
