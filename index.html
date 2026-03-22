@@ -24,34 +24,36 @@
       <div class="perfil-info">
         <div id="nombrePerfil" class="nombre"></div>
         <div id="puntosPerfil" class="puntos"></div>
+
+        <button id="btnSeguir" onclick="toggleSeguir()" style="display:none;">
+          Seguir
+        </button>
       </div>
     </div>
 
-    <button id="btnSeguir" onclick="toggleSeguir()" style="display:none;">
-      Seguir
-    </button>
-
     <button onclick="mostrar('menu')">Volver</button>
 
+    <!-- STATS -->
     <div class="perfil-stats">
 
-  <div class="stat">
-    <div id="partidos">0</div>
-    <span>Partidos</span>
-  </div>
+      <div class="stat">
+        <div id="partidos">0</div>
+        <span>Partidos</span>
+      </div>
 
-  <div class="stat">
-    <div id="seguidores">0</div>
-    <span>Seguidores</span>
-  </div>
+      <div class="stat">
+        <div id="seguidores">0</div>
+        <span>Seguidores</span>
+      </div>
 
-  <div class="stat">
-    <div id="seguidos">0</div>
-    <span>Seguidos</span>
-  </div>
+      <div class="stat">
+        <div id="seguidos">0</div>
+        <span>Seguidos</span>
+      </div>
 
-</div>
+    </div>
 
+    <!-- BOTONES -->
     <div class="perfil-botones">
       <button onclick="editarPerfil()">Editar perfil</button>
       <button class="rojo">Eliminar perfil</button>
@@ -60,6 +62,7 @@
   </div>
 
 </div>
+
 
 <!-- LOGIN -->
 
