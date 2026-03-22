@@ -262,7 +262,9 @@ button[onclick*="mostrar('menu')"]{
 
 .perfil-stats{
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
+  max-width: 300px;
+  margin: 0 auto;
   text-align: center;
 }
 
@@ -270,6 +272,7 @@ button[onclick*="mostrar('menu')"]{
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 80px;
 }
 
 .stat div{
