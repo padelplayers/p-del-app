@@ -1,92 +1,92 @@
 body{
-font-family:Arial;
-background:#ffffff;
-margin:0;
-text-align:center;
+  font-family:Arial;
+  background:#ffffff;
+  margin:0;
+  text-align:center;
 }
 
 .header{
-background:linear-gradient(90deg,#1565C0 0%,#1565C0 45%,#FFC107 55%,#FFC107 100%);
-padding:18px 10px;
-color:white;
+  background:linear-gradient(90deg,#1565C0 0%,#1565C0 45%,#FFC107 55%,#FFC107 100%);
+  padding:18px 10px;
+  color:white;
 }
 
 .logo{
-width:200px;
-margin-bottom:5px;
+  width:200px;
+  margin-bottom:5px;
 }
 
 .title{
-font-size:26px;
-font-weight:bold;
+  font-size:26px;
+  font-weight:bold;
 }
 
 .container{
-background:white;
-padding:20px;
-width:90%;
-max-width:420px;
-margin:20px auto;
-border-radius:10px;
-box-shadow:0 4px 12px rgba(0,0,0,0.15);
+  background:white;
+  padding:20px;
+  width:90%;
+  max-width:420px;
+  margin:20px auto;
+  border-radius:10px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
 }
 
 label{
-display:block;
-text-align:left;
-margin:10px 4% 4px;
-font-size:14px;
+  display:block;
+  text-align:left;
+  margin:10px 4% 4px;
+  font-size:14px;
 }
 
 .req{
-color:red;
-font-weight:bold;
-font-size:18px;
-margin-left:4px;
+  color:red;
+  font-weight:bold;
+  font-size:18px;
+  margin-left:4px;
 }
 
 input,select{
-width:92%;
-padding:14px;
-margin:4px 0 8px;
-border:1px solid #ddd;
-border-radius:8px;
-font-size:16px;
+  width:92%;
+  padding:14px;
+  margin:4px 0 8px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  font-size:16px;
 }
 
 button{
-padding:14px;
-margin:10px 0;
-cursor:pointer;
-border:none;
-border-radius:8px;
-font-size:16px;
-width:95%;
+  padding:14px;
+  margin:10px 0;
+  cursor:pointer;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  width:95%;
 }
 
 .btnBlue{
-background:#1565C0;
-color:white;
+  background:#1565C0;
+  color:white;
 }
 
 .btnYellow{
-background:#FFC107;
+  background:#FFC107;
 }
 
 .logout{
-background:#f44336;
-color:white;
+  background:#f44336;
+  color:white;
 }
 
 .menuButton{
-display:block;
-width:95%;
-margin:12px auto;
-padding:16px;
-font-size:18px;
-background:#1565C0;
-color:white;
-border-radius:10px;
+  display:block;
+  width:95%;
+  margin:12px auto;
+  padding:16px;
+  font-size:18px;
+  background:#1565C0;
+  color:white;
+  border-radius:10px;
 }
 
 #menu{display:none;}
@@ -94,30 +94,32 @@ border-radius:10px;
 #testNivel{display:none;}
 
 .small{
-font-size:12px;
-color:#666;
-margin:0 4% 10px;
-text-align:left
+  font-size:12px;
+  color:#666;
+  margin:0 4% 10px;
+  text-align:left;
 }
 
 .error{
-color:#e53935;
-font-size:13px;
-text-align:left;
-margin:0 4%
+  color:#e53935;
+  font-size:13px;
+  text-align:left;
+  margin:0 4%;
 }
 
 .ok{
-color:#2e7d32;
-font-size:13px;
-text-align:left;
-margin:0 4%
+  color:#2e7d32;
+  font-size:13px;
+  text-align:left;
+  margin:0 4%;
 }
 
 .pregunta{
-margin:12px 0;
-text-align:left
+  margin:12px 0;
+  text-align:left;
 }
+
+/* PERFIL */
 
 .perfil-header{
   background:white;
@@ -132,39 +134,19 @@ text-align:left
   gap:15px;
 }
 
-.fotoPerfil{
-  width:100px;
-  height:100px;
-  border-radius:20px;
-  object-fit:cover;
-  border:3px solid #FFC107;
-}
-
-.btnAmarillo{
-  background:#FFC107;
-  color:#1565C0;
-  font-weight:bold;
-  border:none;
-  border-radius:20px;
-  padding:10px;
-  margin-top:10px;
-}
-
-.perfil-top{
-  display:flex;
-  align-items:center;
-  gap:15px;
-}
-
 .foto-perfil{
   width:90px;
   height:90px;
   border-radius:20px;
   object-fit:cover;
   background:#ccc;
+  border:3px solid #FFC107;
 }
 
 .perfil-info{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
   text-align:left;
 }
 
@@ -178,27 +160,36 @@ text-align:left
   font-weight:bold;
 }
 
+/* STATS */
+
 .perfil-stats{
   display:flex;
-  justify-content:space-around;
-  margin-top:20px;
+  justify-content:space-between;
+  max-width:300px;
+  margin:20px auto 0;
   text-align:center;
 }
 
-.perfil-stats div{
-  flex:1;
+.stat{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:80px;
 }
 
-.perfil-stats div div{
+.stat div{
+  font-size:20px;
   font-weight:bold;
   color:#1565C0;
 }
 
-.perfil-stats span{
+.stat span{
   font-size:12px;
   color:#1565C0;
-font-weight:bold;
+  font-weight:bold;
 }
+
+/* BOTONES PERFIL */
 
 .perfil-botones{
   display:flex;
@@ -224,9 +215,7 @@ font-weight:bold;
   color:white;
 }
 
-button{
-  cursor:pointer;
-}
+/* BOTÓN VOLVER */
 
 button[onclick*="mostrar('menu')"]{
   background:#1565C0;
@@ -238,11 +227,7 @@ button[onclick*="mostrar('menu')"]{
   margin:10px 0;
 }
 
-#seguidoresPerfil{
-  color:#1565C0;
-  font-size:13px;
-  font-weight:bold;
-}
+/* CONTENEDOR PERFIL */
 
 #perfil{
   background:white;
@@ -251,35 +236,4 @@ button[onclick*="mostrar('menu')"]{
   margin:20px auto;
   max-width:500px;
   box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
-
-
-.perfil-info{
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-}
-
-.perfil-stats{
-  display: flex;
-  justify-content: space-between;
-  max-width: 300px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.stat{
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 80px;
-}
-
-.stat div{
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.stat span{
-  font-size: 12px;
 }
