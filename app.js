@@ -267,6 +267,8 @@ function toggleSeguir(){
   const btn = document.getElementById("btnSeguir");
   btn.innerText = sigo ? "Dejar de seguir" : "Seguir";
 
+  verPerfil (uid);
+
 });
 }
 
