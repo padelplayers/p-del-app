@@ -300,12 +300,11 @@ data.seguidores ? data.seguidores.length : 0;
         document.getElementById("btnSeguir").innerText =
           sigo ? "Dejar de seguir" : "Seguir";
 
-        if(uid !== user.uid){
-          document.getElementById("btnSeguir").style.display = "block";
-        }else{
-          document.getElementById("btnSeguir").style.display = "none";
-        }
-
+        if (uid !== user.uid) {
+  document.getElementById("btnSeguir").style.display = "block";
+} else {
+  document.getElementById("btnSeguir").style.display = "none";
+}
         mostrar("perfil");
 
       });
