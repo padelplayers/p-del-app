@@ -244,25 +244,25 @@ function toggleSeguir(){
 
   if(sigo){
 
-    miRef.update({
-      siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
-    });
+  miRef.update({
+    siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
+  });
 
-    otroRef.update({
-      seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
-    });
+  otroRef.set({
+    seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
+  }, { merge: true });
 
-  } else {
+} else {
 
-    miRef.update({
-      siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
-    });
+  miRef.update({
+    siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
+  });
 
-    otroRef.update({
-      seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
-    });
+  otroRef.set({
+    seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
+  }, { merge: true });
 
-  }
+}
 
   const btn = document.getElementById("btnSeguir");
   btn.innerText = sigo ? "Dejar de seguir" : "Seguir";
@@ -270,42 +270,42 @@ function toggleSeguir(){
 });
 }
 
-verPerfil(uid);
-
 function verPerfil(uid){
 
   db.collection("usuarios").doc(uid).get().then(doc => {
 
     if (!doc.exists) return;
 
-      const data = doc.data();
+    const data = doc.data();
 
-      document.getElementById("nombrePerfil").innerText = data.nombre;
-      document.getElementById("nivelPerfil").innerText = data.nivel + " nivel";
-      document.getElementById("fotoPerfil").src = data.fotoPerfil;
+    document.getElementById("nombrePerfil").innerText = data.nombre;
+    document.getElementById("nivelPerfil").innerText = data.nivel + " nivel";
+    document.getElementById("fotoPerfil").src = data.fotoPerfil;
 
-      document.getElementById("seguidores").innerText =
-data.seguidores ? data.seguidores.length : 0;
+    const seguidores = data.seguidores || [];
+    document.getElementById("seguidores").innerText = seguidores.length;
 
-      otroUid = uid;
+    otroUid = uid;
 
-      const user = auth.currentUser;
+    const user = auth.currentUser;
 
-      db.collection("usuarios").doc(user.uid).get().then(miDoc => {
+    db.collection("usuarios").doc(user.uid).get().then(miDoc => {
 
-        const sigo = (miDoc.data().siguiendo || []).includes(uid);
+      const sigo = (miDoc.data().siguiendo || []).includes(uid);
 
-        document.getElementById("btnSeguir").innerText =
-          sigo ? "Dejar de seguir" : "Seguir";
+      document.getElementById("btnSeguir").innerText =
+        sigo ? "Dejar de seguir" : "Seguir";
 
-        if (uid !== user.uid) {
-  document.getElementById("btnSeguir").style.display = "block";
-} else {
-  document.getElementById("btnSeguir").style.display = "none";
-}
-       mostrar("perfil");
+      if (uid !== user.uid) {
+        document.getElementById("btnSeguir").style.display = "block";
+      } else {
+        document.getElementById("btnSeguir").style.display = "none";
+      }
 
-});
+      mostrar("perfil");
+
+    });
+
   });
 
 }
