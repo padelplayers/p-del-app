@@ -278,7 +278,7 @@ function verPerfil(uid){
 
   db.collection("usuarios").doc(uid).get().then(doc => {
 
-    if(doc.exists){
+    if (!doc.exists) return;
 
       const data = doc.data();
 
@@ -287,7 +287,7 @@ function verPerfil(uid){
       document.getElementById("fotoPerfil").src = data.fotoPerfil;
 
       document.getElementById("seguidores").innerText =
-        (data.seguidores || []).length;
+data.seguidores ? data.seguidores.length : 0;
 
       otroUid = uid;
 
