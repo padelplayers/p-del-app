@@ -265,14 +265,14 @@ function toggleSeguir(){
   });
 
 }
+});
+}
+
 
 const btn = document.getElementById("btnSeguir");
 btn.innerText = sigo ? "Seguir" : "Dejar de seguir";
 
 verPerfil(uid);
-  });
-}
-
 
 function verPerfil(uid){
 
@@ -308,8 +308,9 @@ data.seguidores ? data.seguidores.length : 0;
        mostrar("perfil");
 
 });
+  });
 
-});
+}
 
 
 
