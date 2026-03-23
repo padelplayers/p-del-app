@@ -240,37 +240,35 @@ function toggleSeguir(){
 
   miRef.get().then(miDoc => {
 
-    const sigo = (miDoc.data().siguiendo || []).includes(uid);
+  const sigo = (miDoc.data().siguiendo || []).includes(uid);
 
-    
+  if(sigo){
 
-    if(sigo){
+    miRef.update({
+      siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
+    });
 
-  miRef.update({
-    siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
-  });
+    otroRef.update({
+      seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
+    });
 
-  otroRef.update({
-    seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
-  });
+  } else {
 
-}else{
+    miRef.update({
+      siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
+    });
 
-  miRef.update({
-    siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
-  });
+    otroRef.update({
+      seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
+    });
 
-  otroRef.update({
-    seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
-  });
+  }
 
-}
+  const btn = document.getElementById("btnSeguir");
+  btn.innerText = sigo ? "Dejar de seguir" : "Seguir";
+
 });
 }
-
-
-const btn = document.getElementById("btnSeguir");
-btn.innerText = sigo ? "Seguir" : "Dejar de seguir";
 
 verPerfil(uid);
 
