@@ -233,43 +233,44 @@ function mostrar(seccion){
 function toggleSeguir(){
 
   const user = auth.currentUser;
-  const uid = otroUid;
+  const uid = document.getElementById("perfil").dataset.uid;
 
   const miRef = db.collection("usuarios").doc(user.uid);
   const otroRef = db.collection("usuarios").doc(uid);
 
   miRef.get().then(miDoc => {
 
-  const sigo = (miDoc.data().siguiendo || []).includes(uid);
+    const sigo = (miDoc.data().siguiendo || []).includes(uid);
 
-  if(sigo){
+    if (sigo) {
 
-  miRef.update({
-    siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
+      miRef.update({
+        siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
+      });
+
+      otroRef.set({
+        seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
+      }, { merge: true });
+
+    } else {
+
+      miRef.update({
+        siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
+      });
+
+      otroRef.set({
+        seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
+      }, { merge: true });
+
+    }
+
+    const btn = document.getElementById("btnSeguir");
+    btn.innerText = sigo ? "Seguir" : "Dejar de seguir";
+
+    verPerfil(uid);
+
   });
 
-  otroRef.set({
-    seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
-  }, { merge: true });
-
-} else {
-
-  miRef.update({
-    siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
-  });
-
-  otroRef.set({
-    seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
-  }, { merge: true });
-
-}
-
-  const btn = document.getElementById("btnSeguir");
-  btn.innerText = sigo ? "Dejar de seguir" : "Seguir";
-
-  verPerfil (uid);
-
-});
 }
 
 function verPerfil(uid){
@@ -279,6 +280,9 @@ function verPerfil(uid){
     if (!doc.exists) return;
 
     const data = doc.data();
+
+document.getElementById("perfil").dataset.uid = uid;
+
 
     document.getElementById("nombrePerfil").innerText = data.nombre;
     document.getElementById("nivelPerfil").innerText = data.nivel + " nivel";
