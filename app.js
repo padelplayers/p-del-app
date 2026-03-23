@@ -305,15 +305,11 @@ data.seguidores ? data.seguidores.length : 0;
 } else {
   document.getElementById("btnSeguir").style.display = "none";
 }
-        mostrar("perfil");
+       mostrar("perfil");
 
-      });
+});
 
-    }
-
-  });
-
-}
+});
 
 
 
