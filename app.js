@@ -202,6 +202,8 @@ function mostrar(seccion){
   document.getElementById("menu").style.display = "none";
   document.getElementById("perfilCompletar").style.display = "none";
   document.getElementById("perfil").style.display = "none";
+  document.getElementById("jugadores").style.display = "none";
+
 
   if(seccion === "perfil"){
     document.getElementById("perfil").style.display = "block";
