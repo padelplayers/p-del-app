@@ -157,7 +157,7 @@ auth.onAuthStateChanged(user => {
 
         document.getElementById("nombrePerfil").innerText = data.nombre;
 
-        document.getElementById("puntosPerfil").innerText =
+        document.getElementById("nivelPerfil").innerText =
           data.nivel + " nivel";
 
         document.getElementById("fotoPerfil").src = data.fotoPerfil;
