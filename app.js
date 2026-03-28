@@ -369,15 +369,3 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
-
-function volverMiPerfil(){
-  const user = auth.currentUser;
-  if(!user) return;
-
-  // CAMBIO CLAVE
-  mostrar("menu");
-
-  setTimeout(() => {
-    verPerfil(user.uid);
-  }, 50);
-}
