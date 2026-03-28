@@ -236,3 +236,8 @@ button[onclick*="mostrar('menu')"]{
   color:#1565C0;
   font-weight:bold;
 }
+
+.perfil-stats .stat{
+  flex:1;
+  min-width:0;
+}

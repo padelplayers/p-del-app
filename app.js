@@ -151,25 +151,7 @@ auth.onAuthStateChanged(user => {
       if (doc.exists) {
 
         const data = doc.data();
-        otroUid = user.uid;
-
-        if (otroUid !== user.uid) {
-          document.getElementById("btnSeguir").style.display = "block";
-          document.getElementById("seguidores").style.display = "block";
-        } else {
-          document.getElementById("btnSeguir").style.display = "none";
-          document.getElementById("seguidores").style.display = "none";
-        }
-
-        db.collection("usuarios").doc(user.uid).get().then(miDoc => {
-
-          const sigo = (miDoc.data().siguiendo || []).includes(otroUid);
-
-          document.getElementById("btnSeguir").innerText =
-            sigo ? "Dejar de seguir" : "Seguir";
-
-        });
-
+       
         document.getElementById("saludo").innerText =
           "Hola " + data.nombre;
 
@@ -240,34 +222,48 @@ function toggleSeguir(){
 
   miRef.get().then(miDoc => {
 
-    const sigo = (miDoc.data().siguiendo || []).includes(uid);
+    const sigo = ((miDoc.data() && miDoc.data().siguiendo) || []).includes(uid);
+
+    let promesas = [];
 
     if (sigo) {
 
-      miRef.update({
-        siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
-      });
+      promesas.push(
+        miRef.update({
+          siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
+        })
+      );
 
-      otroRef.set({
-        seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
-      }, { merge: true });
+      promesas.push(
+        otroRef.update({
+          seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
+        })
+      );
 
     } else {
 
-      miRef.update({
-        siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
-      });
+      promesas.push(
+        miRef.update({
+          siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
+        })
+      );
 
-      otroRef.set({
-        seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
-      }, { merge: true });
+      promesas.push(
+        otroRef.update({
+          seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
+        })
+      );
 
     }
 
-    const btn = document.getElementById("btnSeguir");
-    btn.innerText = sigo ? "Seguir" : "Dejar de seguir";
+    Promise.all(promesas).then(() => {
 
-    verPerfil(uid);
+      const btn = document.getElementById("btnSeguir");
+      btn.innerText = sigo ? "Dejar de seguir" : "Seguir";
+
+      verPerfil(uid);
+
+    });
 
   });
 
@@ -285,11 +281,13 @@ document.getElementById("perfil").dataset.uid = uid;
 
 
     document.getElementById("nombrePerfil").innerText = data.nombre;
-    document.getElementById("nivelPerfil").innerText = data.nivel + " nivel";
+    document.getElementById("puntosPerfil").innerText = data.nivel + " nivel";
     document.getElementById("fotoPerfil").src = data.fotoPerfil;
 
     const seguidores = data.seguidores || [];
-    document.getElementById("seguidores").innerText = seguidores.length;
+    document.getElementById("seguidores").innerText =
+  Array.isArray(data.seguidores) ? data.seguidores.length : 0;
+
 
     otroUid = uid;
 
