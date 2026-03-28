@@ -293,22 +293,25 @@ document.getElementById("perfil").dataset.uid = uid;
 
     const user = auth.currentUser;
 
-    db.collection("usuarios").doc(user.uid).get().then(miDoc => {
+db.collection("usuarios").doc(user.uid).get().then(miDoc => {
 
-      const sigo = (miDoc.data().siguiendo || []).includes(uid);
+  const sigo = ((miDoc.data() && miDoc.data().siguiendo) || []).includes(uid);
 
-      document.getElementById("btnSeguir").innerText =
-        sigo ? "Dejar de seguir" : "Seguir";
+  const btnSeguir = document.getElementById("btnSeguir");
+  const botones = document.querySelector(".perfil-botones");
 
-      if (uid !== user.uid) {
-        document.getElementById("btnSeguir").style.display = "block";
-      } else {
-        document.getElementById("btnSeguir").style.display = "none";
-      }
+  if (uid === user.uid) {
+    btnSeguir.style.display = "none";
+    botones.style.display = "flex";
+  } else {
+    btnSeguir.style.display = "block";
+    botones.style.display = "none";
+    btnSeguir.innerText = sigo ? "Dejar de seguir" : "Seguir";
+  }
 
-      mostrar("perfil");
+  mostrar("perfil");
 
-    });
+});
 
   });
 
@@ -366,3 +369,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
+
+function volverMiPerfil(){
+  const user = auth.currentUser;
+  verPerfil(user.uid);
+}
