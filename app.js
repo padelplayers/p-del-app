@@ -372,5 +372,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function volverMiPerfil(){
   const user = auth.currentUser;
+
+  if(!user) return;
+
+  // limpia estado previo
+  document.getElementById("perfil").dataset.uid = user.uid;
+
+  // recarga perfil
   verPerfil(user.uid);
 }
