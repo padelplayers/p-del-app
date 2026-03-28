@@ -372,12 +372,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function volverMiPerfil(){
   const user = auth.currentUser;
-
   if(!user) return;
 
-  // limpia estado previo
-  document.getElementById("perfil").dataset.uid = user.uid;
+  // CAMBIO CLAVE
+  mostrar("menu");
 
-  // recarga perfil
-  verPerfil(user.uid);
+  setTimeout(() => {
+    verPerfil(user.uid);
+  }, 50);
 }
