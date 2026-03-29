@@ -43,14 +43,19 @@ if (user.uid === uid) {
       const btnSeguir = document.getElementById("btnSeguir");
       const botones = document.querySelector(".perfil-botones");
 
-      if (uid === user.uid) {
-        btnSeguir.style.display = "none";
-        botones.style.display = "flex";
-      } else {
-        btnSeguir.style.display = "block";
-        botones.style.display = "none";
-        btnSeguir.innerText = sigo ? "Dejar de seguir" : "Seguir";
-      }
+      const editarBtn = botones.children[0];
+const eliminarBtn = botones.children[2];
+
+
+     if (uid === user.uid) {
+  btnSeguir.style.display = "none";
+  editarBtn.style.display = "block";
+  eliminarBtn.style.display = "block";
+} else {
+  btnSeguir.style.display = "block";
+  editarBtn.style.display = "none";
+  eliminarBtn.style.display = "none";
+}
 
     });
 
