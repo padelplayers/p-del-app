@@ -35,7 +35,8 @@ if (user.uid === uid) {
 
 
     // lógica seguir
-    db.collection("usuarios").doc(user.uid).get().then(miDoc => {
+    db.collection("usuarios").doc(user.uid).onSnapshot(miDoc => {
+
 
       const siguiendo = (miDoc.data()?.siguiendo) || [];
       const sigo = siguiendo.includes(uid);
