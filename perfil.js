@@ -64,7 +64,7 @@ function toggleSeguir(){
   miRef.get().then(miDoc => {
 
     const siguiendo = miDoc.data()?.siguiendo || [];
-const sigo = siguiendo.includes(uid);
+    const sigo = siguiendo.includes(uid);
 
     let promesas = [];
 
@@ -98,19 +98,7 @@ const sigo = siguiendo.includes(uid);
 
     }
 
-   Promise.all(promesas).then(async () => {
-
-
-      const btn = document.getElementById("btnSeguir");
-      btn.innerText = sigo ? "Seguir" : "Dejar de seguir";
-
-      
-
-      await new Promise(r => setTimeout(r, 100));
-
-      verPerfil(uid);
-
-    });
+    Promise.all(promesas);
 
   });
 
