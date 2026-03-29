@@ -188,6 +188,7 @@ button{
   color:white;
 }
 
+
 /* BOTÓN VOLVER */
 
 button[onclick*="mostrar('menu')"]{
