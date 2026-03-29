@@ -5,6 +5,14 @@ function verPerfil(uid){
 
   const user = auth.currentUser;
 
+  const btn = document.getElementById("btnSeguir");
+
+if (user.uid === uid) {
+  btn.style.display = "none";
+} else {
+  btn.style.display = "block";
+}
+
   db.collection("usuarios").doc(uid).get().then(doc => {
 
     if (!doc.exists) return;
