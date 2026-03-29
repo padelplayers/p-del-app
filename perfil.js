@@ -4,6 +4,16 @@ function verPerfil(uid){
   mostrar("perfil");
 
   const user = auth.currentUser;
+  const btnSeguir = document.getElementById("btnSeguir");
+
+db.collection("usuarios").doc(user.uid).get().then(miDoc => {
+
+  const siguiendo = miDoc.data()?.siguiendo || [];
+  const sigo = siguiendo.includes(uid);
+
+  btnSeguir.innerText = sigo ? "Dejar de seguir" : "Seguir";
+
+});
 
   const btn = document.getElementById("btnSeguir");
 
