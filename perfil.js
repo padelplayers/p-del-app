@@ -116,6 +116,8 @@ const sigo = siguiendo.includes(uid);
 
       await new Promise(r => setTimeout(r, 100));
 
+      verPerfil(uid);
+
     });
 
   });
