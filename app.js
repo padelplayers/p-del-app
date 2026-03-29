@@ -151,23 +151,11 @@ auth.onAuthStateChanged(user => {
       if (doc.exists) {
 
         const data = doc.data();
-       
+
         document.getElementById("saludo").innerText =
           "Hola " + data.nombre;
 
-        document.getElementById("nombrePerfil").innerText = data.nombre;
-
-        document.getElementById("nivelPerfil").innerText =
-          data.nivel + " nivel";
-
-        document.getElementById("fotoPerfil").src = data.fotoPerfil;
-
-        document.getElementById("seguidores").innerText =
-          (data.seguidores || []).length;
-
-        
-
-        mostrar("perfil");
+        mostrar("menu");
 
       } else {
         mostrar("perfilCompletar");
@@ -187,13 +175,12 @@ function cambiarFoto(){
 }
 
 document.getElementById("inputFoto").addEventListener("change", function(e){
-archivo = e.target.files[0];
+  archivo = e.target.files[0];
 
-if (archivo) {
-  const url = URL.createObjectURL(archivo);
-  document.getElementById("fotoPerfil").src = url;
-}
-
+  if (archivo) {
+    const url = URL.createObjectURL(archivo);
+    document.getElementById("fotoPerfil").src = url;
+  }
 });
 
 function mostrar(seccion){
