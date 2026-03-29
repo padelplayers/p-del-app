@@ -111,7 +111,7 @@ function toggleSeguir(){
 
 
       const btn = document.getElementById("btnSeguir");
-      btn.innerText = sigo ? "Dejar de seguir" : "Seguir";
+      btn.innerText = sigo ? "Seguir" : "Dejar de seguir";
 
       await new Promise(r => setTimeout(r, 100));
 verPerfil(uid);
