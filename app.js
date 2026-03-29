@@ -155,6 +155,13 @@ auth.onAuthStateChanged(user => {
         document.getElementById("saludo").innerText =
           "Hola " + data.nombre;
 
+          document.getElementById("seguidores").innerText =
+  Array.isArray(data.seguidores) ? data.seguidores.length : 0;
+
+document.getElementById("seguidos").innerText =
+  Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
+
+
         mostrar("menu");
 
       } else {
