@@ -38,9 +38,6 @@ if (user.uid === uid) {
     db.collection("usuarios").doc(user.uid).onSnapshot(miDoc => {
 
 
-      const siguiendo = (miDoc.data()?.siguiendo) || [];
-      const sigo = siguiendo.includes(uid);
-
       const btnSeguir = document.getElementById("btnSeguir");
       const botones = document.querySelector(".perfil-botones");
 
@@ -74,7 +71,8 @@ function toggleSeguir(){
 
   miRef.get().then(miDoc => {
 
-    const sigo = ((miDoc.data() && miDoc.data().siguiendo) || []).includes(uid);
+    const siguiendo = miDoc.data()?.siguiendo || [];
+const sigo = siguiendo.includes(uid);
 
     let promesas = [];
 
@@ -112,10 +110,11 @@ function toggleSeguir(){
 
 
       const btn = document.getElementById("btnSeguir");
+      btn.innerText = sigo ? "Seguir" : "Dejar de seguir";
+
       
 
       await new Promise(r => setTimeout(r, 100));
-verPerfil(uid);
 
     });
 
