@@ -245,12 +245,14 @@ function toggleSeguir(){
 
     }
 
-    Promise.all(promesas).then(() => {
+   Promise.all(promesas).then(async () => {
+
 
       const btn = document.getElementById("btnSeguir");
       btn.innerText = sigo ? "Dejar de seguir" : "Seguir";
 
-      verPerfil(uid);
+      await new Promise(r => setTimeout(r, 100));
+verPerfil(uid);
 
     });
 
@@ -282,6 +284,9 @@ function verPerfil(uid){
     // seguidores
     document.getElementById("seguidores").innerText =
       Array.isArray(data.seguidores) ? data.seguidores.length : 0;
+      document.getElementById("seguidos").innerText =
+  Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
+
 
     // lógica seguir
     db.collection("usuarios").doc(user.uid).get().then(miDoc => {
