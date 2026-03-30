@@ -103,7 +103,25 @@ function toggleSeguir(){
 
     }
 
-    Promise.all(promesas);
+    Promise.all(promesas).then(() => {
+
+  const seguidoresElem = document.getElementById("seguidores");
+  const seguidosElem = document.getElementById("seguidos");
+
+  let seguidores = parseInt(seguidoresElem.innerText) || 0;
+  let seguidos = parseInt(seguidosElem.innerText) || 0;
+
+  if (sigo) {
+    // estabas siguiendo → ahora dejas de seguir
+    seguidoresElem.innerText = seguidores - 1;
+    seguidosElem.innerText = seguidos - 1;
+  } else {
+    // no seguías → ahora sigues
+    seguidoresElem.innerText = seguidores + 1;
+    seguidosElem.innerText = seguidos + 1;
+  }
+
+});
 
   });
 
