@@ -31,16 +31,22 @@ function guardarPerfil(){
   const user = auth.currentUser;
 
   if(!user){
-  document.getElementById("msgPerfil").innerText = "Error de sesión";
-  return;
-}
+    document.getElementById("msgPerfil").innerText = "Error de sesión";
+    return;
+  }
+
+  // 🔴 BLOQUEO NIVEL SI NO HA ACEPTADO AVISO
+  if (!localStorage.getItem("avisoNivelAceptado")) {
+    mostrarAvisoNivel();
+    return;
+  }
 
   const nombre = document.getElementById("nombre").value.trim().toLowerCase();
   const sexo = document.getElementById("sexo").value;
   const nivel = document.getElementById("nivelManual").value;
 
   const mano = document.getElementById("mano").value;
-const posicion = document.getElementById("posicion").value;
+  const posicion = document.getElementById("posicion").value;
 
   if(!nombre || !nivel || !mano || !posicion){
     document.getElementById("msgPerfil").innerText = "Completa los campos";
@@ -52,63 +58,64 @@ const posicion = document.getElementById("posicion").value;
     .get()
     .then(query=>{
 
-  console.log("Usuarios encontrados:", query.size);
+      console.log("Usuarios encontrados:", query.size);
 
-  if(!query.empty){
-    document.getElementById("msgPerfil").innerText = "Nombre ya en uso";
-    return;
-  }
+      if(!query.empty){
+        document.getElementById("msgPerfil").innerText = "Nombre ya en uso";
+        return;
+      }
 
       let fotoDefault = "";
 
-if(sexo === "hombre"){
-  fotoDefault = "imagen/hombre.jpeg";
-}else{
-  fotoDefault = "imagen/mujer.jpeg";
-}
+      if(sexo === "hombre"){
+        fotoDefault = "imagen/hombre.jpeg";
+      }else{
+        fotoDefault = "imagen/mujer.jpeg";
+      }
 
-if (archivo) {
+      if (archivo) {
 
-  const storageRef = firebase.storage().ref();
-  const ruta = "perfiles/" + user.uid;
+        const storageRef = firebase.storage().ref();
+        const ruta = "perfiles/" + user.uid;
 
-  storageRef.child(ruta).put(archivo)
-  .then(snapshot => snapshot.ref.getDownloadURL())
-  .then(url => {
+        storageRef.child(ruta).put(archivo)
+        .then(snapshot => snapshot.ref.getDownloadURL())
+        .then(url => {
 
-    db.collection("usuarios").doc(user.uid).set({
-      nombre: nombre,
-      sexo: sexo,
-      nivel: parseFloat(nivel),
-      mano: mano,
-      posicion: posicion,
-      fotoPerfil: url,
-      seguidores: [],
-      siguiendo: [],
-    })
-    .then(()=>{
-      location.reload();
-    });
+          db.collection("usuarios").doc(user.uid).set({
+            nombre: nombre,
+            sexo: sexo,
+            nivel: parseFloat(nivel),
+            mano: mano,
+            posicion: posicion,
+            fotoPerfil: url,
+            seguidores: [],
+            siguiendo: [],
+          })
+          .then(()=>{
+            location.reload();
+          });
 
-  });
+        });
 
-} else {
+      } else {
 
-  db.collection("usuarios").doc(user.uid).set({
-    nombre: nombre,
-    sexo: sexo,
-    nivel: parseFloat(nivel),
-    mano: mano,
-    posicion: posicion,
-    fotoPerfil: fotoDefault,
-    seguidores: [],
-    siguiendo: [],
-  })
-  .then(()=>{
-    location.reload();
-  });
+        db.collection("usuarios").doc(user.uid).set({
+          nombre: nombre,
+          sexo: sexo,
+          nivel: parseFloat(nivel),
+          mano: mano,
+          posicion: posicion,
+          fotoPerfil: fotoDefault,
+          seguidores: [],
+          siguiendo: [],
+        })
+        .then(()=>{
+          location.reload();
+        });
 
-}
+      }
+
     })
     .catch(e=>{
       console.log(e);
