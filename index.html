@@ -60,7 +60,7 @@
   Seguir
 </button>
      
-      <button id="btnEliminar" class="rojo">Eliminar perfil</button>
+      <button id="btnEliminar" class="rojo" onclick="eliminarPerfil()">Eliminar perfil</button>
 
     </div>
 
@@ -111,7 +111,8 @@
 
 <label>Nivel <span class="req">*</span></label>
 
-<select id="nivelManual">
+<select id="nivelManual" onclick="checkAvisoNivel(event)">
+
 <option value="">Elegir</option>
 <option>0.5</option>
 <option>0.75</option>
@@ -142,7 +143,8 @@
 <option>7</option>
 </select>
 
-<button class="btnYellow" onclick="abrirTest()">Descubrir mi nivel</button>
+<button class="btnYellow" onclick="checkAvisoNivel(event)">Descubrir mi nivel</button>
+
 
 <div id="nivelResultado" class="ok"></div>
 
@@ -403,6 +405,13 @@ const db = firebase.firestore();
 
 <script src="jugadores.js"></script>
 
+<div id="modalNivel" class="modal-nivel">
+  <div class="modal-contenido">
+    <p>⚠️ El nivel que elijas no se podrá modificar después, si no estás seguro puedes realizar el test.</p>
+    <p>Asegúrate de elegir correctamente.</p>
+    <button onclick="aceptarAvisoNivel()">Entendido</button>
+  </div>
+</div>
 
 </body>
 </html>
