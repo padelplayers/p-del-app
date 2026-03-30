@@ -12,6 +12,19 @@ function verPerfil(uid){
   const user = auth.currentUser;
   document.getElementById("perfil").dataset.uid = uid;
 
+  const uidActual = uid;
+
+  if (user.uid === uidActual) {
+
+  btnSeguir.style.display = "none";
+  editarBtn.style.display = "block";
+  eliminarBtn.style.display = "block";
+} else {
+  btnSeguir.style.display = "block";
+  editarBtn.style.display = "none";
+  eliminarBtn.style.display = "none";
+}
+
   const btnSeguir = document.getElementById("btnSeguir");
 
   // LISTENER PERFIL (seguidores en tiempo real)
@@ -26,16 +39,7 @@ const eliminarBtn = document.getElementById("btnEliminar");
 
 const uidActual = document.getElementById("perfil").dataset.uid;
 
-if (user.uid === uidActual) {
 
-  btnSeguir.style.display = "none";
-  editarBtn.style.display = "block";
-  eliminarBtn.style.display = "block";
-} else {
-  btnSeguir.style.display = "block";
-  editarBtn.style.display = "none";
-  eliminarBtn.style.display = "none";
-}
 
     document.getElementById("nombrePerfil").innerText = data.nombre || "";
     document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
