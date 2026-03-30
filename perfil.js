@@ -23,7 +23,8 @@ function verPerfil(uid){
   }
 
   // cargar datos del perfil
-  db.collection("usuarios").doc(uid).get().then(doc => {
+  db.collection("usuarios").doc(uid).onSnapshot(doc => {
+
 
     if (!doc.exists) return;
 
