@@ -58,6 +58,9 @@ function verPerfil(uid){
 
     if (!miDoc.exists) return;
 
+    const perfilActual = document.getElementById("perfil").dataset.uid;
+if (perfilActual !== uid) return;
+
     const siguiendo = miDoc.data()?.siguiendo || [];
     const sigo = siguiendo.includes(uid);
 
