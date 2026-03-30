@@ -35,37 +35,6 @@ function mostrarAvisoNivel() {
   if (modal) modal.style.display = "flex";
 }
 
-function checkAvisoNivel(e) {
-  const aceptado = localStorage.getItem("avisoNivelAceptado");
-
-  if (!aceptado) {
-    e.preventDefault();
-    mostrarAvisoNivel();
-    return false;
-  }
-
-  if (e && e.target && e.target.innerText.includes("Descubrir")) {
-    abrirTest();
-  }
-}
-
-function aceptarAvisoNivel() {
-  localStorage.setItem("avisoNivelAceptado", "true");
-  document.getElementById("modalNivel").style.display = "none";
-}
-
-function abrirTestSeguro(e) {
-
-  const aceptado = localStorage.getItem("avisoNivelAceptado");
-
-  if (!aceptado) {
-    e.preventDefault();
-    mostrarAvisoNivel();
-    return;
-  }
-
-  abrirTest();
-}
 
 
 function verPerfil(uid){
