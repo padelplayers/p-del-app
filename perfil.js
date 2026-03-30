@@ -1,3 +1,7 @@
+let unsubscribePerfil = null;
+let unsubscribeSeguimiento = null;
+
+
 function verPerfil(uid){
 
   mostrar("perfil");
