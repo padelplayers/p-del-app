@@ -83,23 +83,25 @@ function toggleSeguir(){
 
     if (sigo) {
 
-      miRef.update({
-        siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
-      });
-
-      otroRef.update({
-        seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
-      });
+      return Promise.all([
+        miRef.update({
+          siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
+        }),
+        otroRef.update({
+          seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
+        })
+      ]);
 
     } else {
 
-      miRef.update({
-        siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
-      });
-
-      otroRef.update({
-        seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
-      });
+      return Promise.all([
+        miRef.update({
+          siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
+        }),
+        otroRef.update({
+          seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
+        })
+      ]);
 
     }
 
