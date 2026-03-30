@@ -10,9 +10,6 @@ function verPerfil(uid){
   mostrar("perfil");
 
   const user = auth.currentUser;
-  document.getElementById("perfil").dataset.uid = uid;
-
-  const uidActual = uid;
 
   if (user.uid === uidActual) {
 
@@ -26,6 +23,13 @@ function verPerfil(uid){
 }
 
   const btnSeguir = document.getElementById("btnSeguir");
+  if (!btnSeguir) return;
+
+  document.getElementById("perfil").dataset.uid = uid;
+
+  const uidActual = uid;
+
+  
 
   // LISTENER PERFIL (seguidores en tiempo real)
   unsubscribePerfil = db.collection("usuarios").doc(uid).onSnapshot(doc => {
@@ -56,10 +60,14 @@ const uidActual = document.getElementById("perfil").dataset.uid;
   // LISTENER USUARIO (estado seguir en tiempo real)
   unsubscribeUser = db.collection("usuarios").doc(user.uid).onSnapshot(miDoc => {
 
+    if (!miDoc.exists) return;
+
     const siguiendo = miDoc.data()?.siguiendo || [];
     const sigo = siguiendo.includes(uid);
 
     btnSeguir.innerText = sigo ? "Dejar de seguir" : "Seguir";
+
+    btnSeguir.classList.toggle("btnYellow", !sigo);
 
   });
 
