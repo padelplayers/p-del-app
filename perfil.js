@@ -3,7 +3,6 @@ let unsubscribeUser = null;
 
 function verPerfil(uid){
 
-  // cancelar listeners anteriores
   if (unsubscribePerfil) unsubscribePerfil();
   if (unsubscribeUser) unsubscribeUser();
 
@@ -12,29 +11,27 @@ function verPerfil(uid){
   const user = auth.currentUser;
   if (!user) return;
 
-  // BOTONES (DEFINIDOS ANTES DE USAR)
+  document.getElementById("perfil").dataset.uid = uid;
+
   const btnSeguir = document.getElementById("btnSeguir");
   const editarBtn = document.getElementById("btnEditar");
   const eliminarBtn = document.getElementById("btnEliminar");
 
-  if (!btnSeguir || !editarBtn || !eliminarBtn) return;
-
-  // MOSTRAR / OCULTAR BOTONES (CORRECTO)
-  if (user.uid === uid) {
-    btnSeguir.style.display = "none";
-    editarBtn.style.display = "block";
-    eliminarBtn.style.display = "block";
-  } else {
-    btnSeguir.style.display = "block";
-    editarBtn.style.display = "none";
-    eliminarBtn.style.display = "none";
+  if (btnSeguir) {
+    btnSeguir.onclick = toggleSeguir;
   }
 
-  btnSeguir.onclick = toggleSeguir;
+  // SOLO CONTROL VISUAL (sin bloquear nada)
+  if (user.uid === uid) {
+    if (btnSeguir) btnSeguir.style.display = "none";
+    if (editarBtn) editarBtn.style.display = "block";
+    if (eliminarBtn) eliminarBtn.style.display = "block";
+  } else {
+    if (btnSeguir) btnSeguir.style.display = "block";
+    if (editarBtn) editarBtn.style.display = "none";
+    if (eliminarBtn) eliminarBtn.style.display = "none";
+  }
 
-  document.getElementById("perfil").dataset.uid = uid;
-
-  // LISTENER PERFIL
   unsubscribePerfil = db.collection("usuarios").doc(uid).onSnapshot(doc => {
 
     if (!doc.exists) return;
@@ -45,7 +42,7 @@ function verPerfil(uid){
     document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
 
     document.getElementById("fotoPerfil").src =
-      data.fotoPerfil ? data.fotoPerfil : "https://via.placeholder.com/150";
+      data.fotoPerfil || "https://via.placeholder.com/150";
 
     document.getElementById("seguidores").innerText =
       Array.isArray(data.seguidores) ? data.seguidores.length : 0;
@@ -55,7 +52,6 @@ function verPerfil(uid){
 
   });
 
-  // LISTENER USUARIO (estado seguir)
   unsubscribeUser = db.collection("usuarios").doc(user.uid).onSnapshot(miDoc => {
 
     if (!miDoc.exists) return;
@@ -63,8 +59,10 @@ function verPerfil(uid){
     const siguiendo = miDoc.data()?.siguiendo || [];
     const sigo = siguiendo.includes(uid);
 
-    btnSeguir.innerText = sigo ? "Dejar de seguir" : "Seguir";
-    btnSeguir.classList.toggle("btnYellow", !sigo);
+    if (btnSeguir) {
+      btnSeguir.innerText = sigo ? "Dejar de seguir" : "Seguir";
+      btnSeguir.classList.toggle("btnYellow", !sigo);
+    }
 
   });
 
