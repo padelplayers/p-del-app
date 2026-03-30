@@ -11,27 +11,28 @@ function verPerfil(uid){
   const user = auth.currentUser;
   if (!user) return;
 
-  document.getElementById("perfil").dataset.uid = uid;
+  const perfilEl = document.getElementById("perfil");
+  if (perfilEl) perfilEl.dataset.uid = uid;
 
   const btnSeguir = document.getElementById("btnSeguir");
   const editarBtn = document.getElementById("btnEditar");
   const eliminarBtn = document.getElementById("btnEliminar");
 
+  // CONTROL BOTONES
+  if (editarBtn) {
+    editarBtn.style.display = (user.uid === uid) ? "block" : "none";
+  }
+
+  if (eliminarBtn) {
+    eliminarBtn.style.display = (user.uid === uid) ? "block" : "none";
+  }
+
   if (btnSeguir) {
+    btnSeguir.style.display = (user.uid !== uid) ? "block" : "none";
     btnSeguir.onclick = toggleSeguir;
   }
 
-  // SOLO CONTROL VISUAL (sin bloquear nada)
-  if (user.uid === uid) {
-    if (btnSeguir) btnSeguir.style.display = "none";
-    if (editarBtn) editarBtn.style.display = "block";
-    if (eliminarBtn) eliminarBtn.style.display = "block";
-  } else {
-    if (btnSeguir) btnSeguir.style.display = "block";
-    if (editarBtn) editarBtn.style.display = "none";
-    if (eliminarBtn) eliminarBtn.style.display = "none";
-  }
-
+  // LISTENER PERFIL
   unsubscribePerfil = db.collection("usuarios").doc(uid).onSnapshot(doc => {
 
     if (!doc.exists) return;
@@ -42,7 +43,7 @@ function verPerfil(uid){
     document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
 
     document.getElementById("fotoPerfil").src =
-      data.fotoPerfil || "https://via.placeholder.com/150";
+      data.fotoPerfil || "imagen/hombre.jpeg";
 
     document.getElementById("seguidores").innerText =
       Array.isArray(data.seguidores) ? data.seguidores.length : 0;
@@ -52,6 +53,7 @@ function verPerfil(uid){
 
   });
 
+  // LISTENER USUARIO
   unsubscribeUser = db.collection("usuarios").doc(user.uid).onSnapshot(miDoc => {
 
     if (!miDoc.exists) return;
@@ -69,12 +71,15 @@ function verPerfil(uid){
 }
 
 
+
 function toggleSeguir(){
 
   const btnSeguir = document.getElementById("btnSeguir");
-  btnSeguir.disabled = true;
+  if (btnSeguir) btnSeguir.disabled = true;
 
   const user = auth.currentUser;
+  if (!user) return;
+
   const uid = document.getElementById("perfil").dataset.uid;
 
   const miRef = db.collection("usuarios").doc(user.uid);
@@ -94,11 +99,7 @@ function toggleSeguir(){
         otroRef.update({
           seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
         })
-      ]).then(() => {
-        btnSeguir.disabled = false;
-      }).catch(() => {
-        btnSeguir.disabled = false;
-      });
+      ]);
 
     } else {
 
@@ -109,14 +110,12 @@ function toggleSeguir(){
         otroRef.update({
           seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
         })
-      ]).then(() => {
-        btnSeguir.disabled = false;
-      }).catch(() => {
-        btnSeguir.disabled = false;
-      });
+      ]);
 
     }
 
+  }).finally(() => {
+    if (btnSeguir) btnSeguir.disabled = false;
   });
 
 }
