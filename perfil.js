@@ -54,6 +54,19 @@ function aceptarAvisoNivel() {
   document.getElementById("modalNivel").style.display = "none";
 }
 
+function abrirTestSeguro(e) {
+
+  const aceptado = localStorage.getItem("avisoNivelAceptado");
+
+  if (!aceptado) {
+    e.preventDefault();
+    mostrarAvisoNivel();
+    return;
+  }
+
+  abrirTest();
+}
+
 
 function verPerfil(uid){
 

@@ -111,7 +111,8 @@
 
 <label>Nivel <span class="req">*</span></label>
 
-<select id="nivelManual" onclick="checkAvisoNivel(event)">
+<select id="nivelManual" onchange="checkAvisoNivel(event)">
+
 
 <option value="">Elegir</option>
 <option>0.5</option>
@@ -143,7 +144,8 @@
 <option>7</option>
 </select>
 
-<button class="btnYellow" onclick="checkAvisoNivel(event)">Descubrir mi nivel</button>
+<button class="btnYellow" onclick="abrirTestSeguro(event)">Descubrir mi nivel</button>
+
 
 
 <div id="nivelResultado" class="ok"></div>
