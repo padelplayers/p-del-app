@@ -47,16 +47,7 @@ function verPerfil(uid){
   });
 
   // estado seguir (TIEMPO REAL)
-  db.collection("usuarios").doc(user.uid).onSnapshot(miDoc => {
-
-    const siguiendo = miDoc.data()?.siguiendo || [];
-    const sigo = siguiendo.includes(uid);
-
-    btnSeguir.innerText = sigo ? "Dejar de seguir" : "Seguir";
-
-  });
-
-}
+  
 
 function toggleSeguir(){
 
