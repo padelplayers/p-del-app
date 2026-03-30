@@ -21,6 +21,22 @@ function verPerfil(uid){
 
     const data = doc.data();
 
+    const editarBtn = document.getElementById("btnEditar");
+const eliminarBtn = document.getElementById("btnEliminar");
+
+const uidActual = document.getElementById("perfil").dataset.uid;
+
+if (user.uid === uidActual) {
+
+  btnSeguir.style.display = "none";
+  editarBtn.style.display = "block";
+  eliminarBtn.style.display = "block";
+} else {
+  btnSeguir.style.display = "block";
+  editarBtn.style.display = "none";
+  eliminarBtn.style.display = "none";
+}
+
     document.getElementById("nombrePerfil").innerText = data.nombre || "";
     document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
     document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
@@ -43,12 +59,7 @@ function verPerfil(uid){
 
   });
 
-  // mostrar / ocultar botón
-  if (user.uid === uid) {
-    btnSeguir.style.display = "none";
-  } else {
-    btnSeguir.style.display = "block";
-  }
+  
 
 }
 
