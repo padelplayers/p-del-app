@@ -11,7 +11,12 @@ function verPerfil(uid){
 
   const user = auth.currentUser;
 
-  if (user.uid === uidActual) {
+if (!user) return;
+
+const uidActual = uid;
+
+if (user.uid === uidActual) {
+
 
   btnSeguir.style.display = "none";
   editarBtn.style.display = "block";
@@ -23,11 +28,14 @@ function verPerfil(uid){
 }
 
   const btnSeguir = document.getElementById("btnSeguir");
+
   if (!btnSeguir) return;
+
+  btnSeguir.onclick = toggleSeguir;
+
 
   document.getElementById("perfil").dataset.uid = uid;
 
-  const uidActual = uid;
 
   
 
@@ -78,41 +86,50 @@ const uidActual = document.getElementById("perfil").dataset.uid;
 
 function toggleSeguir(){
 
+  const btnSeguir = document.getElementById("btnSeguir");
+btnSeguir.disabled = true;
+
   const user = auth.currentUser;
   const uid = document.getElementById("perfil").dataset.uid;
 
   const miRef = db.collection("usuarios").doc(user.uid);
   const otroRef = db.collection("usuarios").doc(uid);
 
-  miRef.get().then(miDoc => {
+return miRef.get().then(miDoc => {
 
     const siguiendo = miDoc.data()?.siguiendo || [];
     const sigo = siguiendo.includes(uid);
 
     if (sigo) {
 
-      return Promise.all([
-        miRef.update({
-          siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
-        }),
-        otroRef.update({
-          seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
-        })
-      ]);
+  return Promise.all([
+    miRef.update({
+      siguiendo: firebase.firestore.FieldValue.arrayRemove(uid)
+    }),
+    otroRef.update({
+      seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
+    })
+  ]).then(() => {
+    btnSeguir.disabled = false;
+  }).catch(() => {
+    btnSeguir.disabled = false;
+  });
 
-    } else {
+} else {
 
-      return Promise.all([
-        miRef.update({
-          siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
-        }),
-        otroRef.update({
-          seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
-        })
-      ]);
-
-    }
-
+  return Promise.all([
+    miRef.update({
+      siguiendo: firebase.firestore.FieldValue.arrayUnion(uid)
+    }),
+    otroRef.update({
+      seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
+    })
+  ]).then(() => {
+    btnSeguir.disabled = false;
+  }).catch(() => {
+    btnSeguir.disabled = false;
   });
 
 }
+
+});
