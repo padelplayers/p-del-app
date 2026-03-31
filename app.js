@@ -228,4 +228,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   });
 
+const selectNivel = document.getElementById("nivelManual");
+const btnTest = document.getElementById("btnTestNivel");
+
+if (selectNivel && !localStorage.getItem("avisoNivelAceptado")) {
+  selectNivel.disabled = true;
+}
+
+if (selectNivel) {
+  selectNivel.addEventListener("click", (e) => {
+    if (!localStorage.getItem("avisoNivelAceptado")) {
+      e.preventDefault();
+      mostrarAvisoNivel();
+    }
+  });
+}
+
+if (btnTest) {
+  btnTest.addEventListener("click", (e) => {
+    if (!localStorage.getItem("avisoNivelAceptado")) {
+      e.preventDefault();
+      mostrarAvisoNivel();
+      return;
+    }
+    abrirTest();
+  });
+}
+
 });
