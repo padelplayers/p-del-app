@@ -104,10 +104,10 @@ unsubscribeUser = db.collection("usuarios").doc(user.uid).onSnapshot(miDoc => {
   if (!miDoc.exists) return;
 
   const perfilActual = document.getElementById("perfil").dataset.uid;
-  if (perfilActual !== uidPerfil) return;
+  if (!perfilActual) return;
 
   const siguiendo = miDoc.data()?.siguiendo || [];
-  const sigo = siguiendo.includes(uidPerfil);
+  const sigo = siguiendo.includes(perfilActual);
 
   if (btnSeguir) {
     btnSeguir.innerText = sigo ? "Dejar de seguir" : "Seguir";
