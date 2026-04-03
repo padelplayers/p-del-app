@@ -192,24 +192,39 @@ function mostrar(seccion){
 
 function guardarPerfil(){
 
+  console.log("CLICK GUARDAR");
+
   const user = auth.currentUser;
-  if (!user) return;
-
-  const mano = document.getElementById("mano").value;
-  const posicion = document.getElementById("posicion").value;
-
-  // BLOQUEO SI VACÍO
-  if (mano === "" || posicion === "") {
-    console.log("NO GUARDA: valores vacíos");
+  if (!user) {
+    console.log("NO USER");
     return;
   }
+
+  const manoEl = document.getElementById("mano");
+  const posicionEl = document.getElementById("posicion");
+
+  console.log("ELEMENTOS:", manoEl, posicionEl);
+
+  if (!manoEl || !posicionEl) {
+    console.log("ERROR: no encuentra selects");
+    return;
+  }
+
+  const mano = manoEl.value;
+  const posicion = posicionEl.value;
+
+  console.log("VALORES:", mano, posicion);
 
   db.collection("usuarios").doc(user.uid).update({
     mano: mano,
     posicion: posicion
+  })
+  .then(() => {
+    console.log("GUARDADO OK");
+    mostrar("perfil");
+  })
+  .catch(err => {
+    console.error("ERROR GUARDANDO:", err);
   });
 
-  console.log("GUARDADO:", mano, posicion);
-
-  mostrar("perfil");
 }
