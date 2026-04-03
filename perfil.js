@@ -58,6 +58,7 @@ if (selectNivel && user.uid === uid) {
 
   const btnSeguir = document.getElementById("btnSeguir");
   const editarBtn = document.getElementById("btnEditar");
+  console.log("BTN EDITAR:", editarBtn);
   const eliminarBtn = document.getElementById("btnEliminar");
 
   // CONTROL BOTONES
