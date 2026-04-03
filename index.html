@@ -301,17 +301,19 @@ Juego en red
   <h3>Editar perfil</h3>
 
   <label>Mano</label>
-  <select id="mano">
-    <option value="derecha">Derecha</option>
-    <option value="izquierda">Izquierda</option>
-  </select>
+<select id="mano">
+  <option value="">Seleccionar</option>
+  <option value="derecha">Derecha</option>
+  <option value="izquierda">Izquierda</option>
+</select>
 
-  <label>Posición</label>
-  <select id="posicion">
-    <option value="derecha">Derecha</option>
-    <option value="revés">Revés</option>
-  </select>
-
+<label>Posición</label>
+<select id="posicion">
+  <option value="">Seleccionar</option>
+  <option value="drive">Drive</option>
+  <option value="reves">Revés</option>
+  <option value="cualquiera">Cualquiera</option>
+</select>
  <button onclick="guardarPerfil()">Guardar</button>
   <button onclick="mostrar('perfil')">Cancelar</button>
 
