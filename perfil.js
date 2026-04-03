@@ -96,6 +96,20 @@ function verPerfil(uid = auth.currentUser?.uid){
 
 }
 
+function editarPerfil(){
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  // activar campos editables
+  const mano = document.getElementById("mano");
+  const posicion = document.getElementById("posicion");
+
+  if (mano) mano.disabled = false;
+  if (posicion) posicion.disabled = false;
+
+}
+
 
 function toggleSeguir(){
 
