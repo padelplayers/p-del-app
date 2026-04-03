@@ -98,7 +98,7 @@ unsubscribePerfil = db.collection("usuarios").doc(perfilActual).onSnapshot(doc =
 
 
 // GUARDAR UID DEL PERFIL
-const uidPerfil = uid;
+
 
 
 // LISTENER USUARIO
