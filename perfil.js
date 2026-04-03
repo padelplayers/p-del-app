@@ -30,26 +30,18 @@ function eliminarPerfil() {
     });
 }
 
-
-
-
-
 function verPerfil(uid = auth.currentUser?.uid){
 
+  const user = auth.currentUser;
+  if (!user || !uid) return;
+
+  // limpiar listeners anteriores
   if (unsubscribePerfil) unsubscribePerfil();
   if (unsubscribeUser) unsubscribeUser();
 
   mostrar("perfil");
 
-  const user = auth.currentUser;
-  if (!user) return;
-
-  const selectNivel = document.getElementById("nivelManual");
-
-  if (selectNivel && user.uid === uid) {
-    selectNivel.disabled = true;
-  }
-
+  // guardar uid activo
   const perfilEl = document.getElementById("perfil");
   if (perfilEl) perfilEl.dataset.uid = uid;
 
@@ -57,71 +49,52 @@ function verPerfil(uid = auth.currentUser?.uid){
   const editarBtn = document.getElementById("btnEditar");
   const eliminarBtn = document.getElementById("btnEliminar");
 
-  // CONTROL BOTONES
-  if (editarBtn) {
-    editarBtn.style.display = (user.uid === uid) ? "block" : "none";
-  }
-
-  if (eliminarBtn) {
-    eliminarBtn.style.display = (user.uid === uid) ? "block" : "none";
-  }
-
+  // control botones
+  if (editarBtn) editarBtn.style.display = (user.uid === uid) ? "block" : "none";
+  if (eliminarBtn) eliminarBtn.style.display = (user.uid === uid) ? "block" : "none";
   if (btnSeguir) {
     btnSeguir.style.display = (user.uid !== uid) ? "block" : "none";
     btnSeguir.onclick = toggleSeguir;
   }
-}
 
   // LISTENER PERFIL
-const perfilActual = document.getElementById("perfil").dataset.uid;
+  unsubscribePerfil = db.collection("usuarios").doc(uid).onSnapshot(doc => {
 
-unsubscribePerfil = db.collection("usuarios").doc(perfilActual).onSnapshot(doc => {
+    if (!doc.exists) return;
 
+    const data = doc.data();
 
-  if (!doc.exists) return;
+    document.getElementById("nombrePerfil").innerText = data.nombre || "";
+    document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
+    document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
 
-  const data = doc.data();
+    document.getElementById("seguidores").innerText =
+      Array.isArray(data.seguidores) ? data.seguidores.length : 0;
 
-  document.getElementById("nombrePerfil").innerText = data.nombre || "";
-  document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
+    document.getElementById("seguidos").innerText =
+      Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
 
-  document.getElementById("fotoPerfil").src =
-    data.fotoPerfil || "imagen/hombre.jpeg";
+  });
 
-  document.getElementById("seguidores").innerText =
-    Array.isArray(data.seguidores) ? data.seguidores.length : 0;
+  // LISTENER USUARIO (estado seguir)
+  unsubscribeUser = db.collection("usuarios").doc(user.uid).onSnapshot(miDoc => {
 
-  document.getElementById("seguidos").innerText =
-    Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
+    if (!miDoc.exists) return;
 
-});
+    const perfilActual = document.getElementById("perfil").dataset.uid;
+    if (!perfilActual) return;
 
+    const siguiendo = miDoc.data()?.siguiendo || [];
+    const sigo = siguiendo.includes(perfilActual);
 
-// GUARDAR UID DEL PERFIL
+    if (btnSeguir) {
+      btnSeguir.innerText = sigo ? "Dejar de seguir" : "Seguir";
+      btnSeguir.classList.toggle("btnYellow", !sigo);
+    }
 
+  });
 
-
-// LISTENER USUARIO
-
-const user = auth.currentUser;
-
-unsubscribeUser = db.collection("usuarios").doc(user.uid).onSnapshot(miDoc => {
-
-  if (!miDoc.exists) return;
-
-  const perfilActual = document.getElementById("perfil").dataset.uid;
-  if (!perfilActual) return;
-
-  const siguiendo = miDoc.data()?.siguiendo || [];
-  const sigo = siguiendo.includes(perfilActual);
-
-  if (btnSeguir) {
-    btnSeguir.innerText = sigo ? "Dejar de seguir" : "Seguir";
-    btnSeguir.classList.toggle("btnYellow", !sigo);
-  }
-
-});
-
+}
 
 
 function toggleSeguir(){
