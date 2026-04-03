@@ -64,6 +64,13 @@ function verPerfil(uid = auth.currentUser?.uid){
 
     const data = doc.data();
 
+    const manoSelect = document.getElementById("mano");
+const posicionSelect = document.getElementById("posicion");
+
+if (manoSelect) manoSelect.value = data.mano || "";
+if (posicionSelect) posicionSelect.value = data.posicion || "";
+
+
     document.getElementById("nombrePerfil").innerText = data.nombre || "";
     document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
     document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
