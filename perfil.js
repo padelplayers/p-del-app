@@ -67,8 +67,8 @@ function verPerfil(uid = auth.currentUser?.uid){
     const manoSelect = document.getElementById("mano");
 const posicionSelect = document.getElementById("posicion");
 
-if (manoSelect) manoSelect.value = data.mano || "";
-if (posicionSelect) posicionSelect.value = data.posicion || "";
+if (manoSelect && data.mano) manoSelect.value = data.mano;
+if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
 
 
     document.getElementById("nombrePerfil").innerText = data.nombre || "";
@@ -223,8 +223,9 @@ posicionEl.disabled = false;
   
 
 
-  const mano = manoEl.options[manoEl.selectedIndex].value;
-  const posicion = posicionEl.options[posicionEl.selectedIndex].value;
+ const mano = manoEl.value;
+const posicion = posicionEl.value;
+
 
   console.log("VALORES:", mano, posicion);
 
