@@ -30,10 +30,7 @@ function eliminarPerfil() {
     });
 }
 
-function mostrarAvisoNivel() {
-  const modal = document.getElementById("modalNivel");
-  if (modal) modal.style.display = "flex";
-}
+
 
 
 
@@ -58,8 +55,10 @@ if (selectNivel && user.uid === uid) {
 
   const btnSeguir = document.getElementById("btnSeguir");
   const editarBtn = document.getElementById("btnEditar");
-  console.log("BTN EDITAR:", editarBtn);
   const eliminarBtn = document.getElementById("btnEliminar");
+  if (editarBtn) {
+  editarBtn.onclick = () => verPerfil(user.uid);
+}
 
   // CONTROL BOTONES
   if (editarBtn) {
