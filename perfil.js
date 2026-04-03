@@ -101,12 +101,7 @@ function editarPerfil(){
   const user = auth.currentUser;
   if (!user) return;
 
-  // activar campos editables
-  const mano = document.getElementById("mano");
-  const posicion = document.getElementById("posicion");
-
-  if (mano) mano.disabled = false;
-  if (posicion) posicion.disabled = false;
+  mostrar("perfilEditar");
 
 }
 
@@ -156,5 +151,20 @@ function toggleSeguir(){
   }).finally(() => {
     if (btnSeguir) btnSeguir.disabled = false;
   });
+
+}
+
+function mostrar(seccion){
+
+  document.getElementById("login").style.display = "none";
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("perfilCompletar").style.display = "none";
+  document.getElementById("perfil").style.display = "none";
+  document.getElementById("jugadores").style.display = "none";
+
+  const editar = document.getElementById("perfilEditar");
+  if (editar) editar.style.display = "none";
+
+  document.getElementById(seccion).style.display = "block";
 
 }

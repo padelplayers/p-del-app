@@ -296,6 +296,27 @@ Juego en red
 
 </div>
 
+<div id="perfilEditar" class="container" style="display:none;">
+
+  <h3>Editar perfil</h3>
+
+  <label>Mano</label>
+  <select id="mano">
+    <option value="derecha">Derecha</option>
+    <option value="izquierda">Izquierda</option>
+  </select>
+
+  <label>Posición</label>
+  <select id="posicion">
+    <option value="derecha">Derecha</option>
+    <option value="revés">Revés</option>
+  </select>
+
+  <button onclick="mostrar('perfil')">Guardar</button>
+  <button onclick="mostrar('perfil')">Cancelar</button>
+
+</div>
+
 <!-- MENU -->
 
 <div id="menu" class="container">
@@ -407,13 +428,7 @@ const db = firebase.firestore();
 
 <script src="jugadores.js"></script>
 
-<div id="modalNivel" class="modal-nivel">
-  <div class="modal-contenido">
-    <p>⚠️ El nivel que elijas no se podrá modificar después, si no estás seguro puedes realizar el test.</p>
-    <p>Asegúrate de elegir correctamente.</p>
-    <button onclick="aceptarAvisoNivel()">Entendido</button>
-  </div>
-</div>
+
 
 </body>
 </html>
