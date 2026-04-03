@@ -108,6 +108,12 @@ function editarPerfil(){
   const user = auth.currentUser;
   if (!user) return;
 
+  const mano = document.getElementById("mano");
+const posicion = document.getElementById("posicion");
+
+if (mano) mano.disabled = false;
+if (posicion) posicion.disabled = false;
+
   const docRef = db.collection("usuarios").doc(user.uid);
 
 docRef.get().then(doc => {
