@@ -1,6 +1,42 @@
 let unsubscribePerfil = null;
 let unsubscribeUser = null;
 
+function eliminarPerfil() {
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const uid = user.uid;
+
+  // borrar de Firestore
+  db.collection("usuarios").doc(uid).delete()
+
+    .then(() => {
+      // borrar usuario de Auth
+      return user.delete();
+    })
+
+    .then(() => {
+      alert("Perfil eliminado");
+      mostrar("login");
+    })
+
+    .catch((error) => {
+      console.error(error);
+
+      if (error.code === "auth/requires-recent-login") {
+        alert("Vuelve a iniciar sesión para eliminar la cuenta");
+      }
+    });
+}
+
+function mostrarAvisoNivel() {
+  const modal = document.getElementById("modalNivel");
+  if (modal) modal.style.display = "flex";
+}
+
+
+
 function verPerfil(uid){
 
   if (unsubscribePerfil) unsubscribePerfil();
@@ -10,6 +46,12 @@ function verPerfil(uid){
 
   const user = auth.currentUser;
   if (!user) return;
+
+  const selectNivel = document.getElementById("nivelManual");
+
+if (selectNivel && user.uid === uid) {
+  selectNivel.disabled = true;
+}
 
   const perfilEl = document.getElementById("perfil");
   if (perfilEl) perfilEl.dataset.uid = uid;
