@@ -168,3 +168,20 @@ function mostrar(seccion){
   document.getElementById(seccion).style.display = "block";
 
 }
+
+function guardarPerfil(){
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const mano = document.getElementById("mano").value;
+  const posicion = document.getElementById("posicion").value;
+
+  db.collection("usuarios").doc(user.uid).update({
+    mano: mano,
+    posicion: posicion
+  });
+
+  mostrar("perfil");
+
+}
