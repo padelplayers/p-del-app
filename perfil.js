@@ -198,11 +198,18 @@ function guardarPerfil(){
   const mano = document.getElementById("mano").value;
   const posicion = document.getElementById("posicion").value;
 
+  // BLOQUEO SI VACÍO
+  if (mano === "" || posicion === "") {
+    console.log("NO GUARDA: valores vacíos");
+    return;
+  }
+
   db.collection("usuarios").doc(user.uid).update({
     mano: mano,
     posicion: posicion
   });
 
-  mostrar("perfil");
+  console.log("GUARDADO:", mano, posicion);
 
+  mostrar("perfil");
 }
