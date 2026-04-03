@@ -220,8 +220,7 @@ posicionEl.disabled = false;
     return;
   }
 
-  manoEl.selectedIndex = manoEl.selectedIndex || 1;
-posicionEl.selectedIndex = posicionEl.selectedIndex || 1;
+  
 
 
   const mano = manoEl.options[manoEl.selectedIndex].value;
