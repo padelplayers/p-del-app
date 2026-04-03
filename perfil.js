@@ -111,7 +111,6 @@ if (perfilActual !== uid) return;
 
   });
 
-}
 
 
 
