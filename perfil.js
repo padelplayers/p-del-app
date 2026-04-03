@@ -108,6 +108,20 @@ function editarPerfil(){
   const user = auth.currentUser;
   if (!user) return;
 
+  const docRef = db.collection("usuarios").doc(user.uid);
+
+docRef.get().then(doc => {
+  if (!doc.exists) return;
+
+  const data = doc.data();
+
+  const mano = document.getElementById("mano");
+  const posicion = document.getElementById("posicion");
+
+  if (mano) mano.value = data.mano || "";
+  if (posicion) posicion.value = data.posicion || "";
+});
+
   mostrar("perfilEditar");
 
 }
