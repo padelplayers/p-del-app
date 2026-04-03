@@ -73,44 +73,48 @@ function verPerfil(uid = auth.currentUser?.uid){
 }
 
   // LISTENER PERFIL
-  unsubscribePerfil = db.collection("usuarios").doc(uid).onSnapshot(doc => {
+unsubscribePerfil = db.collection("usuarios").doc(uid).onSnapshot(doc => {
 
-    if (!doc.exists) return;
+  if (!doc.exists) return;
 
-    const data = doc.data();
+  const data = doc.data();
 
-    document.getElementById("nombrePerfil").innerText = data.nombre || "";
-    document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
+  document.getElementById("nombrePerfil").innerText = data.nombre || "";
+  document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
 
-    document.getElementById("fotoPerfil").src =
-      data.fotoPerfil || "imagen/hombre.jpeg";
+  document.getElementById("fotoPerfil").src =
+    data.fotoPerfil || "imagen/hombre.jpeg";
 
-    document.getElementById("seguidores").innerText =
-      Array.isArray(data.seguidores) ? data.seguidores.length : 0;
+  document.getElementById("seguidores").innerText =
+    Array.isArray(data.seguidores) ? data.seguidores.length : 0;
 
-    document.getElementById("seguidos").innerText =
-      Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
+  document.getElementById("seguidos").innerText =
+    Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
 
-  });
+});
 
-  // LISTENER USUARIO
-  unsubscribeUser = db.collection("usuarios").doc(user.uid).onSnapshot(miDoc => {
 
-    if (!miDoc.exists) return;
+// GUARDAR UID DEL PERFIL
+const uidPerfil = uid;
 
-    const perfilActual = document.getElementById("perfil").dataset.uid;
-if (perfilActual !== uid) return;
 
-    const siguiendo = miDoc.data()?.siguiendo || [];
-    const sigo = siguiendo.includes(uid);
+// LISTENER USUARIO
+unsubscribeUser = db.collection("usuarios").doc(user.uid).onSnapshot(miDoc => {
 
-    if (btnSeguir) {
-      btnSeguir.innerText = sigo ? "Dejar de seguir" : "Seguir";
-      btnSeguir.classList.toggle("btnYellow", !sigo);
-    }
+  if (!miDoc.exists) return;
 
-  });
+  const perfilActual = document.getElementById("perfil").dataset.uid;
+  if (perfilActual !== uidPerfil) return;
 
+  const siguiendo = miDoc.data()?.siguiendo || [];
+  const sigo = siguiendo.includes(uidPerfil);
+
+  if (btnSeguir) {
+    btnSeguir.innerText = sigo ? "Dejar de seguir" : "Seguir";
+    btnSeguir.classList.toggle("btnYellow", !sigo);
+  }
+
+});
 
 
 
