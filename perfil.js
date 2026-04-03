@@ -37,7 +37,7 @@ function mostrarAvisoNivel() {
 
 
 
-function verPerfil(uid){
+function verPerfil(uid = auth.currentUser?.uid){
 
   if (unsubscribePerfil) unsubscribePerfil();
   if (unsubscribeUser) unsubscribeUser();
