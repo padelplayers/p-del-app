@@ -73,7 +73,10 @@ function verPerfil(uid = auth.currentUser?.uid){
 }
 
   // LISTENER PERFIL
-unsubscribePerfil = db.collection("usuarios").doc(uid).onSnapshot(doc => {
+const perfilActual = document.getElementById("perfil").dataset.uid;
+
+unsubscribePerfil = db.collection("usuarios").doc(perfilActual).onSnapshot(doc => {
+
 
   if (!doc.exists) return;
 
