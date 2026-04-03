@@ -216,8 +216,8 @@ function guardarPerfil(){
     return;
   }
 
-  const mano = manoEl.value;
-  const posicion = posicionEl.value;
+  const mano = manoEl.options[manoEl.selectedIndex].value;
+  const posicion = posicionEl.options[posicionEl.selectedIndex].value;
 
   console.log("VALORES:", mano, posicion);
 
