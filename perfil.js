@@ -46,9 +46,9 @@ function verPerfil(uid = auth.currentUser?.uid){
 
   const selectNivel = document.getElementById("nivelManual");
 
-if (selectNivel && user.uid === uid) {
-  selectNivel.disabled = true;
-}
+  if (selectNivel && user.uid === uid) {
+    selectNivel.disabled = true;
+  }
 
   const perfilEl = document.getElementById("perfil");
   if (perfilEl) perfilEl.dataset.uid = uid;
@@ -56,9 +56,6 @@ if (selectNivel && user.uid === uid) {
   const btnSeguir = document.getElementById("btnSeguir");
   const editarBtn = document.getElementById("btnEditar");
   const eliminarBtn = document.getElementById("btnEliminar");
-  if (editarBtn) {
-  editarBtn.onclick = () => verPerfil(user.uid);
-}
 
   // CONTROL BOTONES
   if (editarBtn) {
@@ -73,6 +70,7 @@ if (selectNivel && user.uid === uid) {
     btnSeguir.style.display = (user.uid !== uid) ? "block" : "none";
     btnSeguir.onclick = toggleSeguir;
   }
+}
 
   // LISTENER PERFIL
   unsubscribePerfil = db.collection("usuarios").doc(uid).onSnapshot(doc => {
