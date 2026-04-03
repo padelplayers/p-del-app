@@ -219,7 +219,7 @@ function guardarPerfil(){
   const mano = manoEl.options[manoEl.selectedIndex].value;
   const posicion = posicionEl.options[posicionEl.selectedIndex].value;
 
-  console.log("VALORES:", mano, posicion);
+  if (!mano || !posicion) return
 
   db.collection("usuarios").doc(user.uid).update({
     mano: mano,
