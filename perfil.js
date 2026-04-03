@@ -104,7 +104,7 @@ unsubscribePerfil = db.collection("usuarios").doc(perfilActual).onSnapshot(doc =
 // LISTENER USUARIO
 
 const user = auth.currentUser;
-if (!user) return;
+
 unsubscribeUser = db.collection("usuarios").doc(user.uid).onSnapshot(miDoc => {
 
   if (!miDoc.exists) return;
