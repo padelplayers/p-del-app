@@ -209,8 +209,7 @@ function guardarPerfil(){
   const manoEl = document.getElementById("mano");
   const posicionEl = document.getElementById("posicion");
 
-  manoEl.disabled = false;
-posicionEl.disabled = false;
+
 
 
   console.log("ELEMENTOS:", manoEl, posicionEl);
@@ -229,7 +228,6 @@ const posicion = posicionEl.value;
 
   console.log("VALORES:", mano, posicion);
 
-  console.log("INDEX:", manoEl.selectedIndex, posicionEl.selectedIndex);
 
 
   if (!mano || !posicion) return
