@@ -211,8 +211,8 @@ function guardarPerfil(){
     return;
   }
 
-  const manoEl = document.getElementById("mano");
-  const posicionEl = document.getElementById("posicion");
+  const manoEl = document.getElementById("manoEditar");
+  const posicionEl = document.getElementById("posicionEditar");
 
 
 
