@@ -229,6 +229,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   });
 
+  });
+
 const selectNivel = document.getElementById("nivelManual");
 const btnTest = document.getElementById("btnTestNivel");
 
