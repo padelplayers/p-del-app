@@ -64,6 +64,12 @@ function verPerfil(uid = auth.currentUser?.uid){
 
     const data = doc.data();
 
+    const manoSelect = document.getElementById("manoEditar");
+const posicionSelect = document.getElementById("posicionEditar");
+
+if (manoSelect && data.mano) manoSelect.value = data.mano;
+if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
+
     const manoSelect = document.getElementById("mano");
 const posicionSelect = document.getElementById("posicion");
 
