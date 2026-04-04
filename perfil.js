@@ -283,3 +283,32 @@ const posicion = posicionEl.value;
   });
 
 }
+
+function cargarPerfil(uid){
+
+  unsubscribePerfil && unsubscribePerfil();
+
+  unsubscribePerfil = db.collection("usuarios")
+    .doc(uid)
+    .onSnapshot(doc => {
+
+      if (!doc.exists) return;
+
+      const data = doc.data();
+
+      document.getElementById("nombrePerfil").innerText = data.nombre || "";
+      document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
+      document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
+
+      document.getElementById("manoPerfil").innerText = data.mano || "-";
+      document.getElementById("posicionPerfil").innerText = data.posicion || "-";
+    });
+}
+
+function irPerfil(){
+  const user = auth.currentUser;
+  if (!user) return;
+
+  mostrar("perfil");
+  cargarPerfil(user.uid);
+}
