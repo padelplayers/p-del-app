@@ -303,6 +303,11 @@ function cargarPerfil(uid){
 
       document.getElementById("manoPerfil").innerText = data.mano || "-";
       document.getElementById("posicionPerfil").innerText = data.posicion || "-";
+      const manoSelect = document.getElementById("manoEditar");
+const posicionSelect = document.getElementById("posicionEditar");
+
+if (manoSelect && data.mano) manoSelect.value = data.mano;
+if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
     });
 }
 
