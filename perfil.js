@@ -60,9 +60,13 @@ function verPerfil(uid = auth.currentUser?.uid){
   // LISTENER PERFIL
   unsubscribePerfil = db.collection("usuarios").doc(uid).onSnapshot(doc => {
 
-    if (!doc.exists) return;
+if (!doc.exists) {
+  console.log("NO EXISTE DOC");
+  return;
+}
 
-    const data = doc.data();
+const data = doc.data();
+console.log("DATA:", data);
 
     const manoSelect = document.getElementById("manoEditar");
 const posicionSelect = document.getElementById("posicionEditar");
