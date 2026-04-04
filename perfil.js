@@ -70,16 +70,7 @@ const posicionSelect = document.getElementById("posicionEditar");
 if (manoSelect && data.mano) manoSelect.value = data.mano;
 if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
 
-    const manoSelect = document.getElementById("mano");
-const posicionSelect = document.getElementById("posicion");
-
-if (document.activeElement !== manoSelect && data.mano) {
-  manoSelect.value = data.mano;
-}
-
-if (document.activeElement !== posicionSelect && data.posicion) {
-  posicionSelect.value = data.posicion;
-}
+  
 
 
     document.getElementById("nombrePerfil").innerText = data.nombre || "";
@@ -250,7 +241,7 @@ const posicion = posicionEl.value;
   .then(() => {
     console.log("GUARDADO OK");
     unsubscribePerfil && unsubscribePerfil();
-    verPerfil(user.uid);
+    mostrar("perfil");
   })
   .catch(err => {
     console.error("ERROR GUARDANDO:", err);
