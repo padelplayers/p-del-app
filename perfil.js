@@ -140,20 +140,7 @@ docRef.get().then(doc => {
 
 }
 
-const user = auth.currentUser;
-if (!user) return;
 
-db.collection("usuarios").doc(user.uid).get().then(doc => {
-  if (!doc.exists) return;
-
-  const data = doc.data();
-
-  const manoSelect = document.getElementById("manoEditar");
-  const posicionSelect = document.getElementById("posicionEditar");
-
-  if (manoSelect && data.mano) manoSelect.value = data.mano;
-  if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
-});
 
 function toggleSeguir(){
 
