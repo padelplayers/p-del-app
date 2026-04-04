@@ -371,12 +371,19 @@ Juego en red
 
 function mostrar(p){
 
-document.getElementById("login").style.display="none";
-document.getElementById("perfilCompletar").style.display="none";
-document.getElementById("menu").style.display="none";
-document.getElementById("testNivel").style.display="none";
+  document.getElementById("login").style.display="none";
+  document.getElementById("perfilCompletar").style.display="none";
+  document.getElementById("menu").style.display="none";
+  document.getElementById("testNivel").style.display="none";
 
-document.getElementById(p).style.display="block";
+  document.getElementById(p).style.display="block";
+
+  if (p === "perfil") {
+    const user = auth.currentUser;
+    if (user && typeof verPerfil === "function") {
+      verPerfil(user.uid);
+    }
+  }
 
 }
 
