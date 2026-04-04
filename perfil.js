@@ -277,7 +277,9 @@ const posicion = posicionEl.value;
   .then(() => {
     console.log("GUARDADO OK");
     unsubscribePerfil && unsubscribePerfil();
-    verPerfil(user.uid);
+    cargarPerfil(user.uid);
+    mostrar("perfil");
+
   })
   .catch(err => {
     console.error("ERROR GUARDANDO:", err);
