@@ -35,13 +35,7 @@ function guardarPerfil(){
     return;
   }
 
-  // 🔴 BLOQUEO NIVEL SI NO HA ACEPTADO AVISO
-  if (!localStorage.getItem("avisoNivelAceptado")) {
-  const ok = confirm("El nivel no se podrá cambiar después. ¿Continuar?");
-  if (!ok) return;
-
-  localStorage.setItem("avisoNivelAceptado", "true");
-}
+  
 
   const nombre = document.getElementById("nombre").value.trim().toLowerCase();
   const sexo = document.getElementById("sexo").value;
@@ -50,10 +44,15 @@ function guardarPerfil(){
   const mano = document.getElementById("mano").value;
   const posicion = document.getElementById("posicion").value;
 
-  if(!nombre || !nivel || !mano || !posicion){
-    document.getElementById("msgPerfil").innerText = "Completa los campos";
-    return;
-  }
+ if(!nombre || !mano || !posicion){
+  document.getElementById("msgPerfil").innerText = "Completa los campos";
+  return;
+}
+
+if(!nivel){
+  document.getElementById("msgPerfil").innerText = "Debes elegir o calcular tu nivel";
+  return;
+}
 
   db.collection("usuarios")
     .where("nombre", "==", nombre)
