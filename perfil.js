@@ -79,6 +79,8 @@ if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
 
     document.getElementById("nombrePerfil").innerText = data.nombre || "";
     document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
+    document.getElementById("manoPerfil").innerText = data.mano || "-";
+    document.getElementById("posicionPerfil").innerText = data.posicion || "-";
     document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
 
     document.getElementById("seguidores").innerText =
