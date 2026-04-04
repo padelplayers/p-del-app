@@ -212,6 +212,29 @@ function mostrar(seccion){
     document.getElementById(seccion).style.display = "block";
   }
 
+  if (seccion === "perfil") {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  unsubscribePerfil && unsubscribePerfil();
+
+  unsubscribePerfil = db.collection("usuarios")
+    .doc(user.uid)
+    .onSnapshot(doc => {
+
+      if (!doc.exists) return;
+
+      const data = doc.data();
+
+      document.getElementById("nombrePerfil").innerText = data.nombre || "";
+      document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
+      document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
+
+      document.getElementById("manoPerfil").innerText = data.mano || "-";
+      document.getElementById("posicionPerfil").innerText = data.posicion || "-";
+    });
+}
+
 }
 
 
