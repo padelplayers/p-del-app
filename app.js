@@ -37,9 +37,11 @@ function guardarPerfil(){
 
   // 🔴 BLOQUEO NIVEL SI NO HA ACEPTADO AVISO
   if (!localStorage.getItem("avisoNivelAceptado")) {
-    mostrarAvisoNivel();
-    return;
-  }
+  const ok = confirm("El nivel no se podrá cambiar después. ¿Continuar?");
+  if (!ok) return;
+
+  localStorage.setItem("avisoNivelAceptado", "true");
+}
 
   const nombre = document.getElementById("nombre").value.trim().toLowerCase();
   const sexo = document.getElementById("sexo").value;
@@ -244,16 +246,16 @@ if (selectNivel) {
   });
 }
 
-if (btnTest) {
-  btnTest.addEventListener("click", (e) => {
-    if (!localStorage.getItem("avisoNivelAceptado")) {
-      e.preventDefault();
-      mostrarAvisoNivel();
-      return;
-    }
-    abrirTest();
-  });
-}
+btnTest.addEventListener("click", (e) => {
+
+  if (!localStorage.getItem("avisoNivelAceptado")) {
+    const ok = confirm("El nivel no se podrá cambiar después. ¿Continuar?");
+    if (!ok) return;
+
+    localStorage.setItem("avisoNivelAceptado", "true");
+  }
+
+  abrirTest();
 
 });
 
