@@ -263,3 +263,20 @@ button[onclick*="mostrar('menu')"]{
   max-width: 400px;
   text-align: center;
 }
+
+/* BOTONES EDITAR PERFIL */
+.btnGuardar {
+  background-color: #FFC107;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.btnCancelar {
+  background-color: #1565C0;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+}
