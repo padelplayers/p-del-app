@@ -256,3 +256,7 @@ if (btnTest) {
 }
 
 });
+
+function abrirTest(){
+  mostrar("testNivel");
+}
