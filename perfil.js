@@ -200,6 +200,35 @@ function mostrar(seccion){
 
   document.getElementById(seccion).style.display = "block";
 
+  // CARGAR PERFIL
+  if (seccion === "perfil") {
+    const user = auth.currentUser;
+    if (user) {
+
+      unsubscribePerfil && unsubscribePerfil();
+
+      unsubscribePerfil = db.collection("usuarios")
+        .doc(user.uid)
+        .onSnapshot(doc => {
+
+          if (!doc.exists) return;
+
+          const data = doc.data();
+
+          document.getElementById("nombrePerfil").innerText = data.nombre || "";
+          document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
+          document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
+
+          document.getElementById("seguidores").innerText =
+            Array.isArray(data.seguidores) ? data.seguidores.length : 0;
+
+          document.getElementById("seguidos").innerText =
+            Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
+
+        });
+    }
+  }
+
 }
 
 function guardarPerfil(){
