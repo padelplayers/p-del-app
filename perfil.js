@@ -67,8 +67,13 @@ function verPerfil(uid = auth.currentUser?.uid){
     const manoSelect = document.getElementById("mano");
 const posicionSelect = document.getElementById("posicion");
 
-if (manoSelect && data.mano) manoSelect.value = data.mano;
-if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
+if (document.activeElement !== manoSelect && data.mano) {
+  manoSelect.value = data.mano;
+}
+
+if (document.activeElement !== posicionSelect && data.posicion) {
+  posicionSelect.value = data.posicion;
+}
 
 
     document.getElementById("nombrePerfil").innerText = data.nombre || "";
