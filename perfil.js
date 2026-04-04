@@ -229,6 +229,8 @@ const posicion = posicionEl.value;
 
   console.log("VALORES:", mano, posicion);
 
+  console.log("INDEX:", manoEl.selectedIndex, posicionEl.selectedIndex);
+
 
   if (!mano || !posicion) return
 
