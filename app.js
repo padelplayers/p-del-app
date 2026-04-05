@@ -26,6 +26,9 @@ alert(e.message);
 
 function guardarPerfil(){
 
+  console.log("CLICK GUARDAR PERFIL");
+
+
   document.getElementById("msgPerfil").innerText = "";
 
   const user = auth.currentUser;
