@@ -231,32 +231,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   });
 
+  let avisoNivelGlobalMostrado = false;
+
 const selectNivel = document.getElementById("nivelManual");
 const btnTest = document.getElementById("btnTestNivel");
 
 if (btnTest) {
-  let avisoTestMostrado = false;
 
-btnTest.onclick = function(){
+  btnTest.onclick = function(){
 
-  if (!avisoTestMostrado) {
-    alert("El nivel no se podrá cambiar después. Elige correctamente antes de continuar");
-    avisoTestMostrado = true;
-  }
+    if (!avisoNivelGlobalMostrado) {
+      alert("El nivel no se podrá cambiar después. Elige correctamente antes de continuar");
+      avisoNivelGlobalMostrado = true;
+    }
 
-  mostrar("testNivel");
-};
+    mostrar("testNivel");
+  };
 }
 
-
-let avisoNivelMostrado = false;
 
 document.addEventListener("click", (e) => {
   if (e.target && e.target.id === "nivelManual") {
 
-    if (!avisoNivelMostrado) {
-      alert("El nivel no se podrá cambiar después. Elige correctamente antes de continuar");
-      avisoNivelMostrado = true;
+    if (!avisoNivelGlobalMostrado) {
+      alert("El nivel no se podrá cambiar después. Elige correctamente antes de continuar, puedes ayudarte del test pulsando descubre mi nivel");
+      avisoNivelGlobalMostrado = true;
     }
 
   }
