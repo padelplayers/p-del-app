@@ -271,3 +271,11 @@ document.addEventListener("click", (e) => {
 function abrirTest(){
   mostrar("testNivel");
 }
+
+function crearPartida(jugadores) {
+  return db.collection("partidas").add({
+    jugadores: jugadores, // array de uid
+    resultado: null,
+    fecha: new Date()
+  });
+}
