@@ -24,7 +24,7 @@ alert(e.message);
 
 }
 
-function guardarPerfil(){
+function guardarPerfilRegistro(){
 
   console.log("CLICK GUARDAR PERFIL");
 
