@@ -237,17 +237,13 @@ const btnTest = document.getElementById("btnTestNivel");
 if (btnTest) {
   btnTest.onclick = function(){
 
-    const confirmar = confirm("El nivel no se podrá cambiar después. ¿Continuar?");
-    if (!confirmar) return;
+  alert("El nivel no se podrá cambiar después.");
 
-    mostrar("testNivel");
+  mostrar("testNivel");
 
-  };
+};
 }
 
-if (selectNivel && !localStorage.getItem("avisoNivelAceptado")) {
-  selectNivel.disabled = true;
-}
 
 if (selectNivel) {
   selectNivel.addEventListener("change", () => {
