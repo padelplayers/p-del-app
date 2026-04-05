@@ -95,6 +95,7 @@ if(!nivel){
             fotoPerfil: url,
             seguidores: [],
             siguiendo: [],
+            partidos: 0,
           })
           .then(()=>{
             location.reload();
@@ -113,6 +114,7 @@ if(!nivel){
           fotoPerfil: fotoDefault,
           seguidores: [],
           siguiendo: [],
+          partidos: 0,
         })
         .then(()=>{
           location.reload();
