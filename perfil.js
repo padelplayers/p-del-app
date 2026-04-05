@@ -8,8 +8,27 @@ function eliminarPerfil() {
 
   const uid = user.uid;
 
-  // borrar de Firestore
-  db.collection("usuarios").doc(uid).delete()
+  // limpiar referencias en otros usuarios
+db.collection("usuarios").get().then(snapshot => {
+  snapshot.forEach(doc => {
+    const data = doc.data();
+
+    if (data.siguiendo && data.siguiendo.includes(uid)) {
+      db.collection("usuarios").doc(doc.id).update({
+        siguiendo: data.siguiendo.filter(id => id !== uid)
+      });
+    }
+
+    if (data.seguidores && data.seguidores.includes(uid)) {
+      db.collection("usuarios").doc(doc.id).update({
+        seguidores: data.seguidores.filter(id => id !== uid)
+      });
+    }
+  });
+});
+
+// borrar de Firestore
+db.collection("usuarios").doc(uid).delete()
 
     .then(() => {
       // borrar usuario de Auth
