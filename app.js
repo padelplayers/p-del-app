@@ -250,6 +250,7 @@ if (selectNivel && !localStorage.getItem("avisoNivelAceptado")) {
 }
 
 if (selectNivel) {
+
   selectNivel.addEventListener("change", (e) => {
 
   if (!localStorage.getItem("avisoNivelAceptado")) {
@@ -265,6 +266,8 @@ if (selectNivel) {
   }
 
 });
+
+}
 
 btnTest.addEventListener("click", (e) => {
 
