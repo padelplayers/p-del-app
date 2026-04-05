@@ -245,7 +245,7 @@ if (btnTest) {
 }
 
 
-document.addEventListener("change", (e) => {
+document.addEventListener("click", (e) => {
   if (e.target && e.target.id === "nivelManual") {
     alert("El nivel no se podrá cambiar después. Elige correctamente antes de continuar");
   }
