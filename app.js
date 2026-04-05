@@ -250,13 +250,14 @@ if (selectNivel && !localStorage.getItem("avisoNivelAceptado")) {
 }
 
 if (selectNivel) {
-  selectNivel.addEventListener("click", (e) => {
+  selectNivel.addEventListener("change", (e) => {
 
   if (!localStorage.getItem("avisoNivelAceptado")) {
 
     const confirmar = confirm("El nivel no se podrá cambiar después. ¿Continuar?");
+    
     if (!confirmar) {
-      e.preventDefault();
+      selectNivel.value = ""; // resetea selección
       return;
     }
 
