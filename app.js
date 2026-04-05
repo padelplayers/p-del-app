@@ -250,33 +250,16 @@ if (selectNivel && !localStorage.getItem("avisoNivelAceptado")) {
 }
 
 if (selectNivel) {
+  selectNivel.addEventListener("change", () => {
 
-  selectNivel.addEventListener("change", (e) => {
+    alert("El nivel no se podrá cambiar después.");
 
-  if (!localStorage.getItem("avisoNivelAceptado")) {
-
-    const confirmar = confirm("El nivel no se podrá cambiar después. ¿Continuar?");
-    
-    if (!confirmar) {
-      selectNivel.value = ""; // resetea selección
-      return;
-    }
-
-    localStorage.setItem("avisoNivelAceptado", "true");
-  }
-
-});
-
+  });
 }
 
-btnTest.addEventListener("click", (e) => {
+btnTest.addEventListener("click", () => {
 
-  if (!localStorage.getItem("avisoNivelAceptado")) {
-    const ok = confirm("El nivel no se podrá cambiar después. ¿Continuar?");
-    if (!ok) return;
-
-    localStorage.setItem("avisoNivelAceptado", "true");
-  }
+  alert("El nivel no se podrá cambiar después.");
 
   abrirTest();
 
