@@ -235,19 +235,30 @@ const selectNivel = document.getElementById("nivelManual");
 const btnTest = document.getElementById("btnTestNivel");
 
 if (btnTest) {
-  btnTest.onclick = function(){
+  let avisoTestMostrado = false;
 
-  alert("El nivel no se podrá cambiar después. Elige correctamente antes de continuar");
+btnTest.onclick = function(){
+
+  if (!avisoTestMostrado) {
+    alert("El nivel no se podrá cambiar después. Elige correctamente antes de continuar");
+    avisoTestMostrado = true;
+  }
 
   mostrar("testNivel");
-
 };
 }
 
 
+let avisoNivelMostrado = false;
+
 document.addEventListener("click", (e) => {
   if (e.target && e.target.id === "nivelManual") {
-    alert("El nivel no se podrá cambiar después. Elige correctamente antes de continuar");
+
+    if (!avisoNivelMostrado) {
+      alert("El nivel no se podrá cambiar después. Elige correctamente antes de continuar");
+      avisoNivelMostrado = true;
+    }
+
   }
 });
 
