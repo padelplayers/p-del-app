@@ -237,7 +237,7 @@ const btnTest = document.getElementById("btnTestNivel");
 if (btnTest) {
   btnTest.onclick = function(){
 
-  alert("El nivel no se podrá cambiar después.");
+  alert("El nivel no se podrá cambiar después. Elige correctamente antes de continuar");
 
   mostrar("testNivel");
 
@@ -245,21 +245,13 @@ if (btnTest) {
 }
 
 
-if (selectNivel) {
-  selectNivel.addEventListener("change", () => {
-
-    alert("El nivel no se podrá cambiar después.");
-
-  });
-}
-
-btnTest.addEventListener("click", () => {
-
-  alert("El nivel no se podrá cambiar después.");
-
-  abrirTest();
-
+document.addEventListener("change", (e) => {
+  if (e.target && e.target.id === "nivelManual") {
+    alert("El nivel no se podrá cambiar después. Elige correctamente antes de continuar");
+  }
 });
+
+
 
 function abrirTest(){
   mostrar("testNivel");
