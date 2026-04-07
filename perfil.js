@@ -182,15 +182,17 @@ function toggleSeguir(){
     const sigo = siguiendo.includes(uid);
 
     if (btnSeguir) {
-  if (sigo) {
-    btnSeguir.innerText = "Dejar de seguir";
-    btnSeguir.classList.remove("btnSeguir");
-    btnSeguir.classList.add("btnSiguiendo");
-  } else {
-    btnSeguir.innerText = "Seguir";
-    btnSeguir.classList.remove("btnSiguiendo");
-    btnSeguir.classList.add("btnSeguir");
-  }
+  if (!sigo) {
+  // vas a empezar a seguir
+  btnSeguir.innerText = "Dejar de seguir";
+  btnSeguir.classList.remove("btnSeguir");
+  btnSeguir.classList.add("btnSiguiendo");
+} else {
+  // vas a dejar de seguir
+  btnSeguir.innerText = "Seguir";
+  btnSeguir.classList.remove("btnSiguiendo");
+  btnSeguir.classList.add("btnSeguir");
+}
 }
 
     if (sigo) {
