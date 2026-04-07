@@ -76,6 +76,24 @@ function verPerfil(uid = auth.currentUser?.uid){
     btnSeguir.onclick = toggleSeguir;
   }
 
+  if (btnSeguir && user.uid !== uid) {
+  db.collection("usuarios").doc(user.uid).get().then(miDoc => {
+
+    const siguiendo = miDoc.data()?.siguiendo || [];
+
+    if (siguiendo.includes(uid)) {
+      btnSeguir.innerText = "Dejar de seguir";
+      btnSeguir.classList.remove("btnSeguir");
+      btnSeguir.classList.add("btnSiguiendo");
+    } else {
+      btnSeguir.innerText = "Seguir";
+      btnSeguir.classList.remove("btnSiguiendo");
+      btnSeguir.classList.add("btnSeguir");
+    }
+
+  });
+}
+
   // LISTENER PERFIL
   unsubscribePerfil = db.collection("usuarios").doc(uid).onSnapshot(doc => {
 
