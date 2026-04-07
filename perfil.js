@@ -163,6 +163,8 @@ docRef.get().then(doc => {
 
 function toggleSeguir(){
 
+ 
+
   const btnSeguir = document.getElementById("btnSeguir");
   if (btnSeguir) btnSeguir.disabled = true;
 
@@ -178,6 +180,18 @@ function toggleSeguir(){
 
     const siguiendo = miDoc.data()?.siguiendo || [];
     const sigo = siguiendo.includes(uid);
+
+    if (btnSeguir) {
+  if (sigo) {
+    btnSeguir.innerText = "Dejar de seguir";
+    btnSeguir.classList.remove("btnSeguir");
+    btnSeguir.classList.add("btnSiguiendo");
+  } else {
+    btnSeguir.innerText = "Seguir";
+    btnSeguir.classList.remove("btnSiguiendo");
+    btnSeguir.classList.add("btnSeguir");
+  }
+}
 
     if (sigo) {
 

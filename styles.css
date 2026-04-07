@@ -280,3 +280,13 @@ button[onclick*="mostrar('menu')"]{
   padding: 10px;
   border-radius: 8px;
 }
+
+.btnSeguir {
+  background-color: #FFC107;
+  color: #000;
+}
+
+.btnSiguiendo {
+  background-color: #1565C0;
+  color: #fff;
+}
