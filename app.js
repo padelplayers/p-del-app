@@ -312,6 +312,7 @@ const indoor = document.getElementById("indoor").value;
 const outdoor = document.getElementById("outdoor").value;
 const precioManana = document.getElementById("precioManana").value;
 const precioTarde = document.getElementById("precioTarde").value;
+const precioFestivo = document.getElementById("precioFestivo").value;
 const lat = document.getElementById("lat").value;
 const lng = document.getElementById("lng").value;
 const reserva = document.getElementById("reserva").value;
@@ -337,6 +338,8 @@ if (
   outdoor === "" ||
   precioManana === "" ||
   precioTarde === "" ||
+  precioFestivo === "" ||
+
   !lat ||
   !lng ||
   !reserva
