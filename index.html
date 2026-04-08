@@ -79,6 +79,48 @@
 
 </div>
 
+<!-- =========================
+     SECCIÓN PISTAS (MAPA + BD)
+     ========================= -->
+
+<div id="pistas" class="container" style="display:none;">
+
+  <h2>Pistas</h2>
+
+  <div id="listaPistas"></div>
+
+  <button id="btnNuevaPista" class="btnYellow">Añadir pista</button>
+
+  <div id="formPista" style="display:none;">
+    
+    <h3>Nueva pista</h3>
+
+    <input type="text" id="nombrePista" placeholder="Nombre del club">
+    <input type="text" id="localidadPista" placeholder="Localidad">
+    <input type="text" id="direccionPista" placeholder="Dirección">
+
+    <select id="tipoPista">
+      <option value="">Tipo</option>
+      <option value="club">Club</option>
+      <option value="publica">Pública</option>
+    </select>
+
+    <input type="number" id="indoor" placeholder="Pistas indoor">
+    <input type="number" id="outdoor" placeholder="Pistas outdoor">
+
+    <input type="number" id="precioManana" placeholder="Precio mañana">
+    <input type="number" id="precioTarde" placeholder="Precio tarde">
+
+    <input type="text" id="lat" placeholder="Latitud">
+    <input type="text" id="lng" placeholder="Longitud">
+
+    <input type="text" id="reserva" placeholder="URL o teléfono reserva">
+
+    <button id="guardarPista" class="btnYellow">Guardar</button>
+
+  </div>
+
+</div>
 
 <!-- LOGIN -->
 
@@ -336,6 +378,7 @@ Juego en red
 
 <h3 id="saludo"></h3>
 
+<button onclick="mostrar('pistas')">Pistas</button>
 <button class="menuButton">Partidas</button>
 <button class="menuButton" onclick="abrirJugadores()">jugadores</button>
 <button class="menuButton">Clasificación</button>
@@ -425,6 +468,8 @@ document.getElementById("testNivel").style.display = "none";
 
 
 }
+
+
 
 /* FIREBASE */
 

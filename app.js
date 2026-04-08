@@ -1,6 +1,14 @@
 let archivo = null;
 let otroUid = null;
 
+function normalizarTexto(texto){
+  return texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
 function registro(){
 
 let emailInput = document.getElementById("email");
@@ -217,6 +225,9 @@ function mostrar(seccion){
   }else{
     document.getElementById(seccion).style.display = "block";
   }
+if (seccion === "pistas") {
+  cargarPistas();
+}
 
 }
 
@@ -278,4 +289,104 @@ function crearPartida(jugadores) {
     resultado: null,
     fecha: new Date()
   });
+}
+
+const btnNuevaPista = document.getElementById("btnNuevaPista");
+const formPista = document.getElementById("formPista");
+const btnGuardarPista = document.getElementById("guardarPista");
+
+if (btnNuevaPista) {
+  btnNuevaPista.onclick = () => {
+    formPista.style.display = "block";
+  };
+}
+
+if (btnGuardarPista) {
+  btnGuardarPista.onclick = async () => {
+
+    const nombre = document.getElementById("nombrePista").value;
+    const localidad = document.getElementById("localidadPista").value;
+
+    if (!nombre || !localidad) {
+      alert("Nombre y localidad obligatorios");
+      return;
+    }
+
+    const nombreNorm = normalizarTexto(nombre);
+    const localidadNorm = normalizarTexto(localidad);
+
+    const snapshot = await db.collection("pistas").get();
+
+    let existe = false;
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (
+        data.nombreNorm === nombreNorm &&
+        data.localidadNorm === localidadNorm
+      ) {
+        existe = true;
+      }
+    });
+
+    if (existe) {
+      alert("Esta pista ya existe");
+      return;
+    }
+
+    await db.collection("pistas").add({
+      nombre: nombre,
+      nombreNorm: nombreNorm,
+      localidad: localidad,
+      localidadNorm: localidadNorm,
+      direccion: document.getElementById("direccionPista").value || "",
+      tipo: document.getElementById("tipoPista").value || "",
+      indoor: Number(document.getElementById("indoor").value) || 0,
+      outdoor: Number(document.getElementById("outdoor").value) || 0,
+      precioManana: Number(document.getElementById("precioManana").value) || 0,
+      precioTarde: Number(document.getElementById("precioTarde").value) || 0,
+      lat: document.getElementById("lat").value || "",
+      lng: document.getElementById("lng").value || "",
+      reserva: document.getElementById("reserva").value || "",
+      creadaPor: auth.currentUser ? auth.currentUser.uid : null,
+      verificada: false
+    });
+
+    alert("Pista guardada");
+    formPista.style.display = "none";
+
+  };
+}
+
+async function cargarPistas() {
+
+  const lista = document.getElementById("listaPistas");
+  if (!lista) return;
+
+  lista.innerHTML = "";
+
+  try {
+
+    const snapshot = await db.collection("pistas").get();
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+
+      const div = document.createElement("div");
+      div.className = "cardPista";
+
+      div.innerHTML =
+        "<strong>" + (data.nombre || "") + "</strong><br>" +
+        (data.localidad || "") + "<br>" +
+        (data.tipo || "") + "<br>" +
+        "Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "<br>" +
+        (data.precioManana || 0) + "€ mañana / " + (data.precioTarde || 0) + "€ tarde";
+
+      lista.appendChild(div);
+    });
+
+  } catch (error) {
+    console.error("Error cargando pistas:", error);
+  }
+
 }
