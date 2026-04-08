@@ -355,22 +355,27 @@ if (
     }
 
     await db.collection("pistas").add({
-      nombre: nombre,
-      nombreNorm: nombreNorm,
-      localidad: localidad,
-      localidadNorm: localidadNorm,
-      direccion: document.getElementById("direccionPista").value || "",
-      tipo: document.getElementById("tipoPista").value || "",
-      indoor: Number(document.getElementById("indoor").value) || 0,
-      outdoor: Number(document.getElementById("outdoor").value) || 0,
-      precioManana: Number(document.getElementById("precioManana").value) || 0,
-      precioTarde: Number(document.getElementById("precioTarde").value) || 0,
-      lat: document.getElementById("lat").value || "",
-      lng: document.getElementById("lng").value || "",
-      reserva: document.getElementById("reserva").value || "",
-      creadaPor: auth.currentUser ? auth.currentUser.uid : null,
-      verificada: false
-    });
+  nombre: nombre,
+  nombreNorm: nombreNorm,
+  localidad: localidad,
+  localidadNorm: localidadNorm,
+  direccion: document.getElementById("direccionPista").value,
+  tipo: tipo,
+
+  indoor: Number(indoor),
+  outdoor: Number(outdoor),
+
+  precioManana: Number(precioManana),
+  precioTarde: Number(precioTarde),
+
+  lat: Number(lat),
+  lng: Number(lng),
+
+  reserva: reserva,
+
+  creadaPor: auth.currentUser.uid,
+  verificada: false
+});
 
     alert("Pista guardada");
     formPista.style.display = "none";
