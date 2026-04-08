@@ -401,11 +401,12 @@ async function cargarPistas() {
       div.className = "cardPista";
 
       div.innerHTML =
-        "<strong>" + (data.nombre || "") + "</strong><br>" +
-        (data.localidad || "") + "<br>" +
-        (data.tipo || "") + "<br>" +
-        "Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "<br>" +
-        (data.precioManana || 0) + "€ mañana / " + (data.precioTarde || 0) + "€ tarde";
+  (data.foto ? '<img src="' + data.foto + '" style="width:100%; border-radius:10px; margin-bottom:8px;">' : '') +
+  "<strong>" + (data.nombre || "") + "</strong><br>" +
+  (data.localidad || "") + "<br>" +
+  (data.tipo || "") + "<br>" +
+  "Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "<br>" +
+  (data.precioManana || 0) + "€ mañana / " + (data.precioTarde || 0) + "€ tarde";
 
       lista.appendChild(div);
     });
