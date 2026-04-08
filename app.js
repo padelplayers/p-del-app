@@ -307,10 +307,30 @@ if (btnGuardarPista) {
     const nombre = document.getElementById("nombrePista").value;
     const localidad = document.getElementById("localidadPista").value;
 
-    if (!nombre || !localidad) {
-      alert("Nombre y localidad obligatorios");
-      return;
-    }
+    const tipo = document.getElementById("tipoPista").value;
+const indoor = document.getElementById("indoor").value;
+const outdoor = document.getElementById("outdoor").value;
+const precioManana = document.getElementById("precioManana").value;
+const precioTarde = document.getElementById("precioTarde").value;
+const lat = document.getElementById("lat").value;
+const lng = document.getElementById("lng").value;
+const reserva = document.getElementById("reserva").value;
+
+if (
+  !nombre ||
+  !localidad ||
+  !tipo ||
+  indoor === "" ||
+  outdoor === "" ||
+  precioManana === "" ||
+  precioTarde === "" ||
+  !lat ||
+  !lng ||
+  !reserva
+) {
+  alert("Todos los campos son obligatorios");
+  return;
+}
 
     const nombreNorm = normalizarTexto(nombre);
     const localidadNorm = normalizarTexto(localidad);
