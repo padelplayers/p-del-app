@@ -383,6 +383,7 @@ if (
 
   precioManana: Number(precioManana),
   precioTarde: Number(precioTarde),
+  precioFestivo: Number(precioFestivo),
 
   lat: Number(lat),
   lng: Number(lng),
@@ -425,7 +426,10 @@ async function cargarPistas() {
   (data.localidad || "") + "<br>" +
   (data.tipo || "") + "<br>" +
   "Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "<br>" +
-  (data.precioManana || 0) + "€ mañana / " + (data.precioTarde || 0) + "€ tarde";
+  (data.precioManana || 0) + "€ mañana / " + 
+(data.precioTarde || 0) + "€ tarde / " + 
+(data.precioFestivo || 0) + "€ festivo";
+
 
       lista.appendChild(div);
     });
