@@ -316,6 +316,19 @@ const lat = document.getElementById("lat").value;
 const lng = document.getElementById("lng").value;
 const reserva = document.getElementById("reserva").value;
 
+let fotoBase64 = "";
+
+const inputFoto = document.getElementById("fotoPista");
+if (inputFoto.files.length > 0) {
+  const file = inputFoto.files[0];
+
+  fotoBase64 = await new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
+}
+
 if (
   !nombre ||
   !localidad ||
@@ -372,6 +385,7 @@ if (
   lng: Number(lng),
 
   reserva: reserva,
+  foto: fotoBase64,
 
   creadaPor: auth.currentUser.uid,
   verificada: false
