@@ -394,6 +394,8 @@ if (
     alert("Pista guardada");
     formPista.style.display = "none";
 
+    cargarPistas();
+
   };
 }
 
