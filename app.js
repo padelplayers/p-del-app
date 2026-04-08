@@ -398,6 +398,21 @@ if (
     alert("Pista guardada");
     formPista.style.display = "none";
 
+    document.getElementById("nombrePista").value = "";
+document.getElementById("localidadPista").value = "";
+document.getElementById("direccionPista").value = "";
+document.getElementById("tipoPista").value = "";
+document.getElementById("indoor").value = "";
+document.getElementById("outdoor").value = "";
+document.getElementById("precioManana").value = "";
+document.getElementById("precioTarde").value = "";
+document.getElementById("precioFestivo").value = "";
+document.getElementById("lat").value = "";
+document.getElementById("lng").value = "";
+document.getElementById("reserva").value = "";
+document.getElementById("inputFoto").value = "";
+
+
     cargarPistas();
 
   };
