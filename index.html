@@ -96,14 +96,48 @@
     <h3>Nueva pista</h3>
 
     <input type="text" id="nombrePista" placeholder="Nombre del club">
-    <input type="text" id="localidadPista" placeholder="Localidad">
+    <select id="localidadPista">
+  <option value="">Selecciona localidad</option>
+
+  <!-- Camp de Morvedre -->
+  <option>Sagunto</option>
+  <option>Puerto de Sagunto</option>
+  <option>Canet d'en Berenguer</option>
+  <option>Faura</option>
+  <option>Benifairó de les Valls</option>
+  <option>Quart de les Valls</option>
+  <option>Quartell</option>
+  <option>Gilet</option>
+  <option>Petrés</option>
+  <option>Albalat dels Tarongers</option>
+  <option>Estivella</option>
+  <option>Segart</option>
+  <option>Torres Torres</option>
+  <option>Algar de Palancia</option>
+  <option>Alfara de la Baronia</option>
+  <option>Algimia de Alfara</option>
+
+  <!-- Radio ~15 km -->
+  <option>Puçol</option>
+  <option>El Puig de Santa Maria</option>
+  <option>La Pobla de Farnals</option>
+  <option>Massamagrell</option>
+  <option>Rafelbunyol</option>
+  <option>Náquera</option>
+  <option>Serra</option>
+  <option>Almenara</option>
+  <option>La Vall d'Uixó</option>
+  <option>Moncofa</option>
+  <option>Xilxes (Chilches)</option>
+</select>
     <input type="text" id="direccionPista" placeholder="Dirección">
 
     <select id="tipoPista">
-      <option value="">Tipo</option>
-      <option value="club">Club</option>
-      <option value="publica">Pública</option>
-    </select>
+  <option value="">Tipo</option>
+  <option value="club">Club</option>
+  <option value="polideportivo">Polideportivo</option>
+  <option value="privada">Privada / Comunidad</option>
+</select>
 
     <input type="number" id="indoor" placeholder="Pistas indoor">
     <input type="number" id="outdoor" placeholder="Pistas outdoor">
