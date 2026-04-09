@@ -321,31 +321,20 @@ function guardarPerfil(){
     mano: mano,
     posicion: posicion
   })
-  .then(async () => {
+  .then(() => {
 
-  const user = auth.currentUser;
-  if (!user) return;
+    if (unsubscribePerfil) unsubscribePerfil();
 
-  // FORZAR ACTUALIZACIÓN INMEDIATA
-  const doc = await db.collection("usuarios").doc(user.uid).get();
-  if (!doc.exists) return;
+    mostrar("perfil");
+    cargarPerfil(user.uid);
 
-  const data = doc.data();
+  })
+  .catch(err => {
+    console.error(err);
+  });
 
-  const img = document.getElementById("fotoPerfil");
-  if (img) img.src = data.fotoPerfil || "imagen/hombre.jpeg";
-
-  const nombre = document.getElementById("nombrePerfil");
-  if (nombre) nombre.innerText = data.nombre || "";
-
-  const nivel = document.getElementById("nivelPerfil");
-  if (nivel) nivel.innerText = (data.nivel || 0) + " nivel";
-
-  // luego ya vuelves a perfil
-  mostrar("perfil");
-verPerfil();
-})
 }
+
 
 function cargarPerfil(uid){
 
@@ -365,16 +354,20 @@ function cargarPerfil(uid){
 
       document.getElementById("manoPerfil").innerText = data.mano || "-";
       document.getElementById("posicionPerfil").innerText = data.posicion || "-";
-     document.getElementById("partidos").innerText = data.partidos || 0;
-document.getElementById("seguidores").innerText = data.seguidores ? data.seguidores.length : 0;
-document.getElementById("seguidos").innerText = data.siguiendo ? data.siguiendo.length : 0;
-      const manoSelect = document.getElementById("manoEditar");
-const posicionSelect = document.getElementById("posicionEditar");
 
-if (manoSelect && data.mano) manoSelect.value = data.mano;
-if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
+      document.getElementById("partidos").innerText = data.partidos || 0;
+      document.getElementById("seguidores").innerText = data.seguidores ? data.seguidores.length : 0;
+      document.getElementById("seguidos").innerText = data.siguiendo ? data.siguiendo.length : 0;
+
+      const manoSelect = document.getElementById("manoEditar");
+      const posicionSelect = document.getElementById("posicionEditar");
+
+      if (manoSelect && data.mano) manoSelect.value = data.mano;
+      if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
+
     });
 }
+
 
 function irPerfil(){
   const user = auth.currentUser;
