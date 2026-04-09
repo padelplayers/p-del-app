@@ -217,8 +217,17 @@ document.getElementById("inputFoto").addEventListener("change", async function(e
   const doc = await docRef.get();
   const data = doc.data();
 
-  // borrar imagen anterior (si existe)
-  if (data && data.fotoPerfil) {
+  // PREVIEW INMEDIATO (CLAVE)
+  const preview = URL.createObjectURL(file);
+
+  const imgPerfil = document.getElementById("fotoPerfil");
+  if (imgPerfil) imgPerfil.src = preview;
+
+  const imgEditar = document.getElementById("fotoPerfilEditar");
+  if (imgEditar) imgEditar.src = preview;
+
+  // borrar imagen anterior (solo si es URL real)
+  if (data && data.fotoPerfil && data.fotoPerfil.startsWith("https")) {
     await borrarImagen(data.fotoPerfil);
   }
 
@@ -226,11 +235,7 @@ document.getElementById("inputFoto").addEventListener("change", async function(e
   const ruta = "perfiles/" + user.uid + "_" + Date.now();
   const url = await subirImagen(ruta, file);
 
-  // actualizar visual inmediatamente
-  const img = document.getElementById("fotoPerfil");
-  if (img) img.src = url;
-
-  // guardar en base de datos
+  // actualizar en base de datos
   await docRef.update({
     fotoPerfil: url
   });

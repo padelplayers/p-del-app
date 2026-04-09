@@ -155,7 +155,7 @@ function editarPerfil(){
   const user = auth.currentUser;
   if (!user) return;
 
-  // MOSTRAR PRIMERO (clave)
+  // mostrar pantalla primero
   mostrar("perfilEditar");
 
   const manoEl = document.getElementById("mano");
@@ -164,7 +164,8 @@ function editarPerfil(){
   if (manoEl) manoEl.disabled = false;
   if (posicionEl) posicionEl.disabled = false;
 
-  const foto = document.getElementById("fotoPerfil");
+  // FOTO CORRECTA (editar)
+  const fotoEditar = document.getElementById("fotoPerfilEditar");
 
   db.collection("usuarios").doc(user.uid).get().then(doc => {
 
@@ -172,9 +173,8 @@ function editarPerfil(){
 
     const data = doc.data();
 
-    if (foto) {
-      foto.style.display = "block";
-      foto.src = data.fotoPerfil || "imagen/hombre.jpeg";
+    if (fotoEditar) {
+      fotoEditar.src = data.fotoPerfil || "imagen/hombre.jpeg";
     }
 
     if (manoEl) manoEl.value = data.mano || "";
@@ -186,6 +186,7 @@ function editarPerfil(){
   if (btnFoto) btnFoto.style.display = "block";
 
 }
+
 
 
 function toggleSeguir(){
