@@ -290,3 +290,9 @@ button[onclick*="mostrar('menu')"]{
   background-color: #1565C0;
   color: #fff;
 }
+
+#btnNuevaPista {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
