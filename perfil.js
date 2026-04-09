@@ -266,38 +266,48 @@ function mostrar(seccion){
 
   document.getElementById(seccion).style.display = "block";
 
-  // CARGAR PERFIL
-  if (seccion === "perfil") {
-    const user = auth.currentUser;
-    if (user) {
+ // CARGAR PERFIL
+if (seccion === "perfil") {
 
-      unsubscribePerfil && unsubscribePerfil();
+  const user = auth.currentUser;
+  if (!user) return;
 
-      unsubscribePerfil = db.collection("usuarios")
-        .doc(user.uid)
-        .onSnapshot(doc => {
+  unsubscribePerfil && unsubscribePerfil();
 
-          if (!doc.exists) return;
+  unsubscribePerfil = db.collection("usuarios")
+    .doc(user.uid)
+    .onSnapshot(doc => {
 
-          const data = doc.data();
+      if (!doc.exists) return;
 
-          document.getElementById("nombrePerfil").innerText = data.nombre || "";
-          document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
-          const pantalla = document.getElementById("perfilEditar");
-if (pantalla && pantalla.style.display === "block") return;
+      const data = doc.data();
 
-document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
+      console.log("DATA PERFIL:", data);
 
-          document.getElementById("seguidores").innerText =
-            Array.isArray(data.seguidores) ? data.seguidores.length : 0;
+      // NO actualizar si estás en editar perfil
+      const pantalla = document.getElementById("perfilEditar");
+      if (pantalla && pantalla.style.display === "block") return;
 
-          document.getElementById("seguidos").innerText =
-            Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
+      const nombre = document.getElementById("nombrePerfil");
+      if (nombre) nombre.innerText = data.nombre || "";
 
-        });
-    }
-  }
+      const nivel = document.getElementById("nivelPerfil");
+      if (nivel) nivel.innerText = (data.nivel || 0) + " nivel";
 
+      const foto = document.getElementById("fotoPerfil");
+      if (foto) foto.src = data.fotoPerfil || "imagen/hombre.jpeg";
+
+      const seguidores = document.getElementById("seguidores");
+      if (seguidores) {
+        seguidores.innerText = Array.isArray(data.seguidores) ? data.seguidores.length : 0;
+      }
+
+      const seguidos = document.getElementById("seguidos");
+      if (seguidos) {
+        seguidos.innerText = Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
+      }
+
+    });
 }
 
 function guardarPerfil(){
@@ -372,6 +382,6 @@ function irPerfil(){
   const user = auth.currentUser;
   if (!user) return;
 
-  mostrar("perfil");
   cargarPerfil(user.uid);
+  mostrar("perfil");
 }
