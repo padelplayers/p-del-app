@@ -265,6 +265,7 @@ function mostrar(seccion){
   if (editar) editar.style.display = "none";
 
   document.getElementById(seccion).style.display = "block";
+}
 
  // CARGAR PERFIL
 if (seccion === "perfil") {
@@ -382,6 +383,6 @@ function irPerfil(){
   const user = auth.currentUser;
   if (!user) return;
 
-  cargarPerfil(user.uid);
   mostrar("perfil");
+  cargarPerfil(user.uid);
 }
