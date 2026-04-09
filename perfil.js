@@ -265,58 +265,57 @@ function mostrar(seccion){
   if (editar) editar.style.display = "none";
 
   document.getElementById(seccion).style.display = "block";
-}
 
- // CARGAR PERFIL
-if (seccion === "perfil") {
+  // CARGAR PERFIL
+  if (seccion === "perfil") {
 
-  const user = auth.currentUser;
-  if (!user) return;
+    const user = auth.currentUser;
+    if (!user) return;
 
-  if (typeof unsubscribePerfil === "function") unsubscribePerfil();
+    if (typeof unsubscribePerfil === "function") unsubscribePerfil();
 
+    unsubscribePerfil = db.collection("usuarios")
+      .doc(user.uid)
+      .onSnapshot(doc => {
 
-  unsubscribePerfil = db.collection("usuarios")
-    .doc(user.uid)
-    .onSnapshot(doc => {
+        if (!doc.exists) return;
 
-      if (!doc.exists) return;
+        const data = doc.data();
 
-      const data = doc.data();
+        console.log("DATA PERFIL:", data);
 
-      console.log("DATA PERFIL:", data);
+        console.log("ELEMENTOS:",
+          document.getElementById("nombrePerfil"),
+          document.getElementById("nivelPerfil"),
+          document.getElementById("fotoPerfil")
+        );
 
-      console.log("ELEMENTOS:",
-  document.getElementById("nombrePerfil"),
-  document.getElementById("nivelPerfil"),
-  document.getElementById("fotoPerfil")
-);
+        // NO actualizar si estás en editar perfil
+        const pantalla = document.getElementById("perfilEditar");
+        if (pantalla && pantalla.style.display === "block") return;
 
+        const nombre = document.getElementById("nombrePerfil");
+        if (nombre) nombre.innerText = data.nombre || "";
 
-      // NO actualizar si estás en editar perfil
-      const pantalla = document.getElementById("perfilEditar");
-      if (pantalla && pantalla.style.display === "block") return;
+        const nivel = document.getElementById("nivelPerfil");
+        if (nivel) nivel.innerText = (data.nivel || 0) + " nivel";
 
-      const nombre = document.getElementById("nombrePerfil");
-      if (nombre) nombre.innerText = data.nombre || "";
+        const foto = document.getElementById("fotoPerfil");
+        if (foto) foto.src = data.fotoPerfil || "imagen/hombre.jpeg";
 
-      const nivel = document.getElementById("nivelPerfil");
-      if (nivel) nivel.innerText = (data.nivel || 0) + " nivel";
+        const seguidores = document.getElementById("seguidores");
+        if (seguidores) {
+          seguidores.innerText = Array.isArray(data.seguidores) ? data.seguidores.length : 0;
+        }
 
-      const foto = document.getElementById("fotoPerfil");
-      if (foto) foto.src = data.fotoPerfil || "imagen/hombre.jpeg";
+        const seguidos = document.getElementById("seguidos");
+        if (seguidos) {
+          seguidos.innerText = Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
+        }
 
-      const seguidores = document.getElementById("seguidores");
-      if (seguidores) {
-        seguidores.innerText = Array.isArray(data.seguidores) ? data.seguidores.length : 0;
-      }
+      });
+  }
 
-      const seguidos = document.getElementById("seguidos");
-      if (seguidos) {
-        seguidos.innerText = Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
-      }
-
-    });
 }
 
 function guardarPerfil(){
