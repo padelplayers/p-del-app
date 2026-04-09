@@ -213,29 +213,29 @@ document.getElementById("inputFoto").addEventListener("change", async function(e
   const user = auth.currentUser;
   if (!user) return;
 
+  // PREVISUALIZACIÓN INSTANTÁNEA
+  const previewURL = URL.createObjectURL(file);
+
+  const imgEditar = document.getElementById("fotoPerfilEditar");
+  if (imgEditar) imgEditar.src = previewURL;
+
+  const imgPerfil = document.getElementById("fotoPerfil");
+  if (imgPerfil) imgPerfil.src = previewURL;
+
   const docRef = db.collection("usuarios").doc(user.uid);
   const doc = await docRef.get();
   const data = doc.data();
 
-  // PREVIEW INMEDIATO (CLAVE)
-  const preview = URL.createObjectURL(file);
-
-  const imgPerfil = document.getElementById("fotoPerfil");
-  if (imgPerfil) imgPerfil.src = preview;
-
-  const imgEditar = document.getElementById("fotoPerfilEditar");
-  if (imgEditar) imgEditar.src = preview;
-
-  // borrar imagen anterior (solo si es URL real)
-  if (data && data.fotoPerfil && data.fotoPerfil.startsWith("https")) {
+  // borrar anterior
+  if (data && data.fotoPerfil) {
     await borrarImagen(data.fotoPerfil);
   }
 
-  // subir nueva imagen
+  // subir nueva
   const ruta = "perfiles/" + user.uid + "_" + Date.now();
   const url = await subirImagen(ruta, file);
 
-  // actualizar en base de datos
+  // guardar en BD
   await docRef.update({
     fotoPerfil: url
   });
