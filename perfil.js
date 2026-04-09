@@ -164,7 +164,7 @@ function editarPerfil(){
 
     const data = doc.data();
 
-    const foto = document.getElementById("fotoPerfil");
+    const foto = document.getElementById("fotoPerfilEditar");
     if (foto) foto.src = data.fotoPerfil || "imagen/hombre.jpeg";
 
     const manoEl = document.getElementById("manoEditar");
