@@ -155,37 +155,33 @@ function editarPerfil(){
   const user = auth.currentUser;
   if (!user) return;
 
-  // activar selects
+  // MOSTRAR PRIMERO (clave)
+  mostrar("perfilEditar");
+
   const manoEl = document.getElementById("mano");
   const posicionEl = document.getElementById("posicion");
 
   if (manoEl) manoEl.disabled = false;
   if (posicionEl) posicionEl.disabled = false;
 
-  // cargar datos actuales
+  const foto = document.getElementById("fotoPerfil");
+
   db.collection("usuarios").doc(user.uid).get().then(doc => {
 
     if (!doc.exists) return;
 
     const data = doc.data();
 
-    // FOTO (clave del problema)
-    const foto = document.getElementById("fotoPerfil");
     if (foto) {
       foto.style.display = "block";
       foto.src = data.fotoPerfil || "imagen/hombre.jpeg";
     }
 
-    // VALORES SELECT
     if (manoEl) manoEl.value = data.mano || "";
     if (posicionEl) posicionEl.value = data.posicion || "";
 
   });
 
-  // mostrar pantalla
-  mostrar("perfilEditar");
-
-  // mostrar botón cambiar foto
   const btnFoto = document.getElementById("btnCambiarFoto");
   if (btnFoto) btnFoto.style.display = "block";
 
@@ -286,7 +282,10 @@ function mostrar(seccion){
 
           document.getElementById("nombrePerfil").innerText = data.nombre || "";
           document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
-          document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
+          const pantalla = document.getElementById("perfilEditar");
+if (pantalla && pantalla.style.display === "block") return;
+
+document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
 
           document.getElementById("seguidores").innerText =
             Array.isArray(data.seguidores) ? data.seguidores.length : 0;
