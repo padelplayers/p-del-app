@@ -342,7 +342,8 @@ function guardarPerfil(){
   if (nivel) nivel.innerText = (data.nivel || 0) + " nivel";
 
   // luego ya vuelves a perfil
-  verPerfil();
+  mostrar("perfil");
+verPerfil();
 })
 
 function cargarPerfil(uid){
