@@ -217,14 +217,20 @@ document.getElementById("inputFoto").addEventListener("change", async function(e
   const doc = await docRef.get();
   const data = doc.data();
 
-  // borrar imagen anterior
-  await borrarImagen(data.fotoPerfil);
+  // borrar imagen anterior (si existe)
+  if (data && data.fotoPerfil) {
+    await borrarImagen(data.fotoPerfil);
+  }
 
   // subir nueva imagen
   const ruta = "perfiles/" + user.uid + "_" + Date.now();
   const url = await subirImagen(ruta, file);
 
-  // guardar nueva url
+  // actualizar visual inmediatamente
+  const img = document.getElementById("fotoPerfil");
+  if (img) img.src = url;
+
+  // guardar en base de datos
   await docRef.update({
     fotoPerfil: url
   });
@@ -233,73 +239,35 @@ document.getElementById("inputFoto").addEventListener("change", async function(e
 
 function mostrar(seccion){
 
-  document.getElementById("btnCambiarFoto") && (document.getElementById("btnCambiarFoto").style.display = "none");
-
   console.log("SECCION:", seccion);
 
+  // ocultar botón cambiar foto siempre al cambiar de pantalla
+  const btnFoto = document.getElementById("btnCambiarFoto");
+  if (btnFoto) btnFoto.style.display = "none";
+
+  // ocultar TODAS las secciones
   document.getElementById("login").style.display = "none";
   document.getElementById("menu").style.display = "none";
   document.getElementById("perfilCompletar").style.display = "none";
   document.getElementById("perfil").style.display = "none";
+  document.getElementById("perfilEditar") && (document.getElementById("perfilEditar").style.display = "none");
   document.getElementById("jugadores").style.display = "none";
+  document.getElementById("pistas") && (document.getElementById("pistas").style.display = "none");
+  document.getElementById("testNivel") && (document.getElementById("testNivel").style.display = "none");
 
-
+  // mostrar sección
   if(seccion === "perfil"){
     document.getElementById("perfil").style.display = "block";
   }else{
     document.getElementById(seccion).style.display = "block";
   }
-if (seccion === "pistas") {
-  cargarPistas();
-}
 
-}
-
-
-document.addEventListener("DOMContentLoaded", () => {
-
-  document.getElementById("inputFoto").addEventListener("change", function(e){
-
-    archivo = e.target.files[0];
-
-    if (archivo) {
-      const url = URL.createObjectURL(archivo);
-      document.getElementById("fotoPerfil").src = url;
-    }
-
-  });
-
-  });
-
-  let avisoNivelGlobalMostrado = false;
-
-const selectNivel = document.getElementById("nivelManual");
-const btnTest = document.getElementById("btnTestNivel");
-
-if (btnTest) {
-
-  btnTest.onclick = function(){
-
-    if (!avisoNivelGlobalMostrado) {
-      alert("El nivel no se podrá cambiar después. Elige correctamente antes de continuar");
-      avisoNivelGlobalMostrado = true;
-    }
-
-    mostrar("testNivel");
-  };
-}
-
-
-document.addEventListener("click", (e) => {
-  if (e.target && e.target.id === "nivelManual") {
-
-    if (!avisoNivelGlobalMostrado) {
-      alert("El nivel no se podrá cambiar después. Elige correctamente antes de continuar, puedes ayudarte del test pulsando descubre mi nivel");
-      avisoNivelGlobalMostrado = true;
-    }
-
+  // cargar pistas SOLO cuando toca
+  if (seccion === "pistas") {
+    cargarPistas();
   }
-});
+
+}
 
 
 

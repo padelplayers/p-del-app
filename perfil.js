@@ -169,6 +169,8 @@ docRef.get().then(doc => {
 
   const data = doc.data();
 
+  document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
+
   const mano = document.getElementById("mano");
   const posicion = document.getElementById("posicion");
 
@@ -294,51 +296,32 @@ function mostrar(seccion){
 
 function guardarPerfil(){
 
-  document.getElementById("btnCambiarFoto").style.display = "none";
-
   console.log("CLICK GUARDAR");
 
   const user = auth.currentUser;
-  if (!user) {
-    console.log("NO USER");
-    return;
-  }
+  if (!user) return;
 
   const manoEl = document.getElementById("manoEditar");
   const posicionEl = document.getElementById("posicionEditar");
 
+  if (!manoEl || !posicionEl) return;
 
+  const mano = manoEl.value;
+  const posicion = posicionEl.value;
 
-
-  console.log("ELEMENTOS:", manoEl, posicionEl);
-
-  if (!manoEl || !posicionEl) {
-    console.log("ERROR: no encuentra selects");
-    return;
-  }
-
-  
-
-
- const mano = manoEl.value;
-const posicion = posicionEl.value;
-
-
-  console.log("VALORES:", mano, posicion);
-
-
-
-  if (!mano || !posicion) return
+  if (!mano || !posicion) return;
 
   db.collection("usuarios").doc(user.uid).update({
     mano: mano,
     posicion: posicion
   })
   .then(() => {
-    console.log("GUARDADO OK");
-    unsubscribePerfil && unsubscribePerfil();
-    cargarPerfil(user.uid);
-    mostrar("perfil");
+
+    // limpiar listeners antiguos
+    if (unsubscribePerfil) unsubscribePerfil();
+
+    // recargar perfil correctamente
+    verPerfil();
 
   })
   .catch(err => {
