@@ -242,6 +242,22 @@ document.getElementById("inputFoto").addEventListener("change", async function(e
 
 });
 
+function borrarImagen(url) {
+  try {
+    const storage = firebase.storage();
+
+    // convertir URL → ruta válida de Firebase
+    const ruta = decodeURIComponent(
+      url.split("/o/")[1].split("?")[0]
+    );
+
+    return storage.ref(ruta).delete();
+
+  } catch (error) {
+    console.error("Error borrando imagen:", error);
+  }
+}
+
 function mostrar(seccion){
 
   console.log("SECCION:", seccion);
