@@ -233,6 +233,8 @@ document.getElementById("inputFoto").addEventListener("change", async function(e
 
 function mostrar(seccion){
 
+  document.getElementById("btnCambiarFoto") && (document.getElementById("btnCambiarFoto").style.display = "none");
+
   console.log("SECCION:", seccion);
 
   document.getElementById("login").style.display = "none";
