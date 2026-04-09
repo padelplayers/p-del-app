@@ -321,9 +321,8 @@ function guardarPerfil(){
     mano: mano,
     posicion: posicion
   })
+  
   .then(() => {
-
-    if (unsubscribePerfil) unsubscribePerfil();
 
     mostrar("perfil");
     cargarPerfil(user.uid);
