@@ -152,7 +152,6 @@ if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
 
 function editarPerfil(){
 
-  document.getElementById("btnCambiarFoto").style.display = "block";
 
   const user = auth.currentUser;
   if (!user) return;
