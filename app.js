@@ -244,36 +244,30 @@ document.getElementById("inputFoto").addEventListener("change", async function(e
 
 function mostrar(seccion){
 
-  console.log("SECCION:", seccion);
+  document.getElementById("btnCambiarFoto") && (document.getElementById("btnCambiarFoto").style.display = "none");
 
-  // ocultar botón cambiar foto siempre al cambiar de pantalla
-  const btnFoto = document.getElementById("btnCambiarFoto");
-  if (btnFoto) btnFoto.style.display = "none";
-
-  // ocultar TODAS las secciones
   document.getElementById("login").style.display = "none";
   document.getElementById("menu").style.display = "none";
   document.getElementById("perfilCompletar").style.display = "none";
   document.getElementById("perfil").style.display = "none";
-  document.getElementById("perfilEditar") && (document.getElementById("perfilEditar").style.display = "none");
   document.getElementById("jugadores").style.display = "none";
-  document.getElementById("pistas") && (document.getElementById("pistas").style.display = "none");
-  document.getElementById("testNivel") && (document.getElementById("testNivel").style.display = "none");
+  document.getElementById("perfilEditar").style.display = "none";
 
-  // mostrar sección
   if(seccion === "perfil"){
     document.getElementById("perfil").style.display = "block";
+
+    if (typeof verPerfil === "function") {
+      verPerfil();
+    }
+
   }else{
     document.getElementById(seccion).style.display = "block";
   }
 
-  // cargar pistas SOLO cuando toca
   if (seccion === "pistas") {
     cargarPistas();
   }
-
 }
-
 
 
 function abrirTest(){
