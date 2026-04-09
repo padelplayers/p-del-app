@@ -179,6 +179,8 @@ docRef.get().then(doc => {
 
   mostrar("perfilEditar");
 
+  document.getElementById("btnCambiarFoto").style.display = "block";
+
 }
 
 
