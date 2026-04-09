@@ -51,6 +51,8 @@ db.collection("usuarios").doc(uid).delete()
 
 function verPerfil(uid = auth.currentUser?.uid){
 
+  document.getElementById("btnCambiarFoto").style.display = "none";
+
   const user = auth.currentUser;
   if (!user || !uid) return;
 
