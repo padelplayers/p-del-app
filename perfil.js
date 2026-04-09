@@ -273,7 +273,8 @@ if (seccion === "perfil") {
   const user = auth.currentUser;
   if (!user) return;
 
-  unsubscribePerfil && unsubscribePerfil();
+  if (typeof unsubscribePerfil === "function") unsubscribePerfil();
+
 
   unsubscribePerfil = db.collection("usuarios")
     .doc(user.uid)
@@ -284,6 +285,13 @@ if (seccion === "perfil") {
       const data = doc.data();
 
       console.log("DATA PERFIL:", data);
+
+      console.log("ELEMENTOS:",
+  document.getElementById("nombrePerfil"),
+  document.getElementById("nivelPerfil"),
+  document.getElementById("fotoPerfil")
+);
+
 
       // NO actualizar si estás en editar perfil
       const pantalla = document.getElementById("perfilEditar");
