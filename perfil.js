@@ -276,9 +276,11 @@ function mostrar(seccion){
 
     unsubscribePerfil = db.collection("usuarios")
       .doc(user.uid)
-      .onSnapshot(doc => {
+      .onSnapshot({ includeMetadataChanges: true }, doc => {
 
-        if (!doc.exists) return;
+  if (doc.metadata.hasPendingWrites) return;
+
+  if (!doc.exists) return;
 
         const data = doc.data();
 
