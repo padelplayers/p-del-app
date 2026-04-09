@@ -152,38 +152,44 @@ if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
 
 function editarPerfil(){
 
-
   const user = auth.currentUser;
   if (!user) return;
 
-  const mano = document.getElementById("mano");
-const posicion = document.getElementById("posicion");
+  // activar selects
+  const manoEl = document.getElementById("mano");
+  const posicionEl = document.getElementById("posicion");
 
-if (mano) mano.disabled = false;
-if (posicion) posicion.disabled = false;
+  if (manoEl) manoEl.disabled = false;
+  if (posicionEl) posicionEl.disabled = false;
 
-  const docRef = db.collection("usuarios").doc(user.uid);
+  // cargar datos actuales
+  db.collection("usuarios").doc(user.uid).get().then(doc => {
 
-docRef.get().then(doc => {
-  if (!doc.exists) return;
+    if (!doc.exists) return;
 
-  const data = doc.data();
+    const data = doc.data();
 
-  document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
+    // FOTO (clave del problema)
+    const foto = document.getElementById("fotoPerfil");
+    if (foto) {
+      foto.style.display = "block";
+      foto.src = data.fotoPerfil || "imagen/hombre.jpeg";
+    }
 
-  const mano = document.getElementById("mano");
-  const posicion = document.getElementById("posicion");
+    // VALORES SELECT
+    if (manoEl) manoEl.value = data.mano || "";
+    if (posicionEl) posicionEl.value = data.posicion || "";
 
-  if (mano) mano.value = data.mano || "";
-  if (posicion) posicion.value = data.posicion || "";
-});
+  });
 
+  // mostrar pantalla
   mostrar("perfilEditar");
 
-  document.getElementById("btnCambiarFoto").style.display = "block";
+  // mostrar botón cambiar foto
+  const btnFoto = document.getElementById("btnCambiarFoto");
+  if (btnFoto) btnFoto.style.display = "block";
 
 }
-
 
 
 function toggleSeguir(){
