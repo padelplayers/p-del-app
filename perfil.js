@@ -157,36 +157,32 @@ function editarPerfil(){
 
   mostrar("perfilEditar");
 
-  setTimeout(async () => {
+  const manoEl = document.getElementById("mano");
+  const posicionEl = document.getElementById("posicion");
 
-    const doc = await db.collection("usuarios").doc(user.uid).get();
-    if (!doc.exists) return;
+  if (manoEl) manoEl.disabled = false;
+  if (posicionEl) posicionEl.disabled = false;
 
-    const data = doc.data();
+  const btnFoto = document.getElementById("btnCambiarFoto");
+  if (btnFoto) btnFoto.style.display = "block";
 
-    const foto = document.getElementById("fotoPerfilEditar");
-    if (foto) foto.src = data.fotoPerfil || "imagen/hombre.jpeg";
+  // ESCUCHA EN TIEMPO REAL (igual que perfil)
+  db.collection("usuarios").doc(user.uid)
+    .onSnapshot(doc => {
 
-    const manoEl = document.getElementById("manoEditar");
-    const posicionEl = document.getElementById("posicionEditar");
+      if (!doc.exists) return;
 
-    if (manoEl) {
-      manoEl.disabled = false;
-      manoEl.value = data.mano || "";
-    }
+      const data = doc.data();
 
-    if (posicionEl) {
-      posicionEl.disabled = false;
-      posicionEl.value = data.posicion || "";
-    }
+      const foto = document.getElementById("fotoPerfilEditar");
+      if (foto) foto.src = data.fotoPerfil || "imagen/hombre.jpeg";
 
-    const btnFoto = document.getElementById("btnCambiarFoto");
-    if (btnFoto) btnFoto.style.display = "block";
+      if (manoEl) manoEl.value = data.mano || "";
+      if (posicionEl) posicionEl.value = data.posicion || "";
 
-  }, 0);
+    });
 
 }
-
 
 
 function toggleSeguir(){
