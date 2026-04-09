@@ -339,11 +339,9 @@ function guardarPerfil(){
     mano: mano,
     posicion: posicion
   })
-
   .then(() => {
 
     mostrar("perfil");
-    cargarPerfil(user.uid);
 
   })
   .catch(err => {
