@@ -1,6 +1,9 @@
 let archivo = null;
 let otroUid = null;
 
+let unsubscribePistas = null;
+
+
 function normalizarTexto(texto){
   return texto
     .toLowerCase()
@@ -418,39 +421,41 @@ document.getElementById("inputFoto").value = "";
   };
 }
 
-async function cargarPistas() {
+function cargarPistas() {
 
   const lista = document.getElementById("listaPistas");
   if (!lista) return;
 
-  lista.innerHTML = "";
+  // limpiar listener anterior si existe
+  if (unsubscribePistas) unsubscribePistas();
 
-  try {
+  // escuchar cambios en tiempo real
+  unsubscribePistas = db.collection("pistas")
+    .onSnapshot(snapshot => {
 
-    const snapshot = await db.collection("pistas").get();
+      lista.innerHTML = "";
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
+      snapshot.forEach(doc => {
+        const data = doc.data();
 
-      const div = document.createElement("div");
-      div.className = "cardPista";
+        const div = document.createElement("div");
+        div.className = "cardPista";
 
-      div.innerHTML =
-  (data.foto ? '<img src="' + data.foto + '" style="width:100%; border-radius:10px; margin-bottom:8px;">' : '') +
-  "<strong>" + (data.nombre || "") + "</strong><br>" +
-  (data.localidad || "") + "<br>" +
-  (data.tipo || "") + "<br>" +
-  "Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "<br>" +
-  (data.precioManana || 0) + "€ mañana / " + 
-(data.precioTarde || 0) + "€ tarde / " + 
-(data.precioFestivo || 0) + "€ festivo";
+        div.innerHTML =
+          (data.foto ? '<img src="' + data.foto + '" style="width:100%; border-radius:10px; margin-bottom:8px;">' : '') +
+          "<strong>" + (data.nombre || "") + "</strong><br>" +
+          (data.localidad || "") + "<br>" +
+          (data.tipo || "") + "<br>" +
+          "Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "<br>" +
+          (data.precioManana || 0) + "€ mañana / " +
+          (data.precioTarde || 0) + "€ tarde / " +
+          (data.precioFestivo || 0) + "€ festivo";
 
+        lista.appendChild(div);
+      });
 
-      lista.appendChild(div);
+    }, error => {
+      console.error("Error cargando pistas:", error);
     });
-
-  } catch (error) {
-    console.error("Error cargando pistas:", error);
-  }
 
 }
