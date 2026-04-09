@@ -233,7 +233,7 @@ function mostrar(seccion){
 if (seccion === "pistas") {
   cargarPistas();
 }
-console.log("ENTRANDO A PISTAS");
+
 }
 
 
