@@ -345,6 +345,7 @@ function guardarPerfil(){
   mostrar("perfil");
 verPerfil();
 })
+}
 
 function cargarPerfil(uid){
 
