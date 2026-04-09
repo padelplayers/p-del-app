@@ -152,6 +152,9 @@ if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
 
 function editarPerfil(){
 
+  if (typeof unsubscribePerfil === "function") unsubscribePerfil();
+
+
   const user = auth.currentUser;
   if (!user) return;
 
