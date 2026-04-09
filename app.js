@@ -216,6 +216,8 @@ document.getElementById("inputFoto").addEventListener("change", function(e){
 
 function mostrar(seccion){
 
+  console.log("SECCION:", seccion);
+
   document.getElementById("login").style.display = "none";
   document.getElementById("menu").style.display = "none";
   document.getElementById("perfilCompletar").style.display = "none";
