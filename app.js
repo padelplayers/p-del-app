@@ -422,6 +422,8 @@ document.getElementById("inputFoto").value = "";
 }
 
 function cargarPistas() {
+  console.log("CARGANDO PISTAS");
+
 
   const lista = document.getElementById("listaPistas");
   if (!lista) return;
