@@ -205,13 +205,30 @@ function cambiarFoto(){
   document.getElementById("inputFoto").click();
 }
 
-document.getElementById("inputFoto").addEventListener("change", function(e){
-  archivo = e.target.files[0];
+document.getElementById("inputFoto").addEventListener("change", async function(e){
 
-  if (archivo) {
-    const url = URL.createObjectURL(archivo);
-    document.getElementById("fotoPerfil").src = url;
-  }
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const docRef = db.collection("usuarios").doc(user.uid);
+  const doc = await docRef.get();
+  const data = doc.data();
+
+  // borrar imagen anterior
+  await borrarImagen(data.fotoPerfil);
+
+  // subir nueva imagen
+  const ruta = "perfiles/" + user.uid + "_" + Date.now();
+  const url = await subirImagen(ruta, file);
+
+  // guardar nueva url
+  await docRef.update({
+    fotoPerfil: url
+  });
+
 });
 
 function mostrar(seccion){
@@ -461,5 +478,29 @@ function cargarPistas() {
     }, error => {
       console.error("Error cargando pistas:", error);
     });
+
+}
+
+async function subirImagen(ruta, archivo) {
+
+  const ref = firebase.storage().ref().child(ruta);
+
+  await ref.put(archivo);
+
+  const url = await ref.getDownloadURL();
+
+  return url;
+}
+
+async function borrarImagen(url) {
+
+  if (!url) return;
+
+  try {
+    const ref = firebase.storage().refFromURL(url);
+    await ref.delete();
+  } catch (e) {
+    console.log("No se pudo borrar");
+  }
 
 }
