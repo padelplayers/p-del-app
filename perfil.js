@@ -321,20 +321,29 @@ function guardarPerfil(){
     mano: mano,
     posicion: posicion
   })
-  .then(() => {
+  .then(async () => {
 
-    // limpiar listeners antiguos
-    if (unsubscribePerfil) unsubscribePerfil();
+  const user = auth.currentUser;
+  if (!user) return;
 
-    // recargar perfil correctamente
-    verPerfil();
+  // FORZAR ACTUALIZACIÓN INMEDIATA
+  const doc = await db.collection("usuarios").doc(user.uid).get();
+  if (!doc.exists) return;
 
-  })
-  .catch(err => {
-    console.error("ERROR GUARDANDO:", err);
-  });
+  const data = doc.data();
 
-}
+  const img = document.getElementById("fotoPerfil");
+  if (img) img.src = data.fotoPerfil || "imagen/hombre.jpeg";
+
+  const nombre = document.getElementById("nombrePerfil");
+  if (nombre) nombre.innerText = data.nombre || "";
+
+  const nivel = document.getElementById("nivelPerfil");
+  if (nivel) nivel.innerText = (data.nivel || 0) + " nivel";
+
+  // luego ya vuelves a perfil
+  verPerfil();
+})
 
 function cargarPerfil(uid){
 
