@@ -155,35 +155,35 @@ function editarPerfil(){
   const user = auth.currentUser;
   if (!user) return;
 
-  // mostrar pantalla primero
   mostrar("perfilEditar");
 
-  const manoEl = document.getElementById("mano");
-  const posicionEl = document.getElementById("posicion");
+  setTimeout(async () => {
 
-  if (manoEl) manoEl.disabled = false;
-  if (posicionEl) posicionEl.disabled = false;
-
-  // FOTO CORRECTA (editar)
-  const fotoEditar = document.getElementById("fotoPerfilEditar");
-
-  db.collection("usuarios").doc(user.uid).get().then(doc => {
-
+    const doc = await db.collection("usuarios").doc(user.uid).get();
     if (!doc.exists) return;
 
     const data = doc.data();
 
-    if (fotoEditar) {
-      fotoEditar.src = data.fotoPerfil || "imagen/hombre.jpeg";
+    const foto = document.getElementById("fotoPerfil");
+    if (foto) foto.src = data.fotoPerfil || "imagen/hombre.jpeg";
+
+    const manoEl = document.getElementById("manoEditar");
+    const posicionEl = document.getElementById("posicionEditar");
+
+    if (manoEl) {
+      manoEl.disabled = false;
+      manoEl.value = data.mano || "";
     }
 
-    if (manoEl) manoEl.value = data.mano || "";
-    if (posicionEl) posicionEl.value = data.posicion || "";
+    if (posicionEl) {
+      posicionEl.disabled = false;
+      posicionEl.value = data.posicion || "";
+    }
 
-  });
+    const btnFoto = document.getElementById("btnCambiarFoto");
+    if (btnFoto) btnFoto.style.display = "block";
 
-  const btnFoto = document.getElementById("btnCambiarFoto");
-  if (btnFoto) btnFoto.style.display = "block";
+  }, 0);
 
 }
 
@@ -321,7 +321,7 @@ function guardarPerfil(){
     mano: mano,
     posicion: posicion
   })
-  
+
   .then(() => {
 
     mostrar("perfil");
