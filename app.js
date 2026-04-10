@@ -498,3 +498,13 @@ async function borrarImagen(url) {
   }
 
 }
+
+document.getElementById("btnNuevaPista").onclick = () => {
+  document.getElementById("formPista").style.display = "block";
+  document.getElementById("listaPistas").style.display = "none";
+};
+
+document.getElementById("guardarPista").onclick = () => {
+  document.getElementById("formPista").style.display = "none";
+  document.getElementById("listaPistas").style.display = "block";
+};
