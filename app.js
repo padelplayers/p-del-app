@@ -275,6 +275,8 @@ function mostrar(seccion){
   document.getElementById("jugadores").style.display = "none";
   document.getElementById("pistas") && (document.getElementById("pistas").style.display = "none");
   document.getElementById("testNivel") && (document.getElementById("testNivel").style.display = "none");
+  document.getElementById("crearPista").style.display = "none";
+
 
   // mostrar sección
   if(seccion === "perfil"){
