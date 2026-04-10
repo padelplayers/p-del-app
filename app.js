@@ -284,7 +284,7 @@ function mostrar(seccion){
   }
 
   // cargar pistas SOLO cuando toca
-  if (seccion === "pistas") {
+  if (seccion === "crearPista") {
     cargarPistas();
   }
 
