@@ -457,7 +457,7 @@ function cargarPistas() {
          (data.fotoPista || data.foto ? 
   '<img src="' + (data.fotoPista || data.foto) + '" style="width:100%; border-radius:10px; margin-bottom:8px;">' 
   : ''
-)
+) +
           "<strong>" + (data.nombre || "") + "</strong><br>" +
           (data.localidad || "") + "<br>" +
           (data.tipo || "") + "<br>" +
