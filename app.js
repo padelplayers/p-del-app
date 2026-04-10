@@ -454,7 +454,7 @@ function cargarPistas() {
         div.className = "cardPista";
 
         div.innerHTML =
-          (data.fotoPista ? '<img src="' + data.fotpista + '" style="width:100%; border-radius:10px; margin-bottom:8px;">' : '') +
+          (data.fotoPista ? '<img src="' + data.fotoPista + '" style="width:100%; border-radius:10px; margin-bottom:8px;">' : '') +
           "<strong>" + (data.nombre || "") + "</strong><br>" +
           (data.localidad || "") + "<br>" +
           (data.tipo || "") + "<br>" +
