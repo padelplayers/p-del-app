@@ -424,12 +424,21 @@ Juego en red
       <option value="privada">Privada / Comunidad</option>
     </select>
 
-    <input type="number" id="indoor" placeholder="Pistas indoor">
-    <input type="number" id="outdoor" placeholder="Pistas outdoor">
+    <select id="indoor">
+  <option value="">Indoor</option>
+  <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+  <option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+</select>
 
-    <input type="number" id="precioManana" placeholder="Precio mañana">
-    <input type="number" id="precioTarde" placeholder="Precio tarde">
-    <input type="number" id="precioFestivo" placeholder="Precio festivo">
+<select id="outdoor">
+  <option value="">Outdoor</option>
+  <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+  <option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+</select>
+
+  <input type="number" id="precioManana" min="0" step="0.5" placeholder="Precio mañana">
+<input type="number" id="precioTarde" min="0" step="0.5" placeholder="Precio tarde">
+<input type="number" id="precioFestivo" min="0" step="0.5" placeholder="Precio festivo">
 
     <input type="text" id="lat" placeholder="Latitud">
     <input type="text" id="lng" placeholder="Longitud">
