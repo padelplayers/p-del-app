@@ -86,82 +86,6 @@
 
 <div id="pistas" class="container" style="display:none;">
 
-  <h2>Pistas</h2>
-
-
-  <button id="btnNuevaPista" class="btnYellow">Añadir pista</button>
-
-  <button onclick="mostrar('menu')" class="btnBlue">Volver</button>
-
-  <div id="listaPistas"></div>
-
-  <div id="formPista" style="display:none;">
-    
-    <h3>Nueva pista</h3>
-
-    <input type="text" id="nombrePista" placeholder="Nombre del club">
-    <select id="localidadPista">
-  <option value="">Selecciona localidad</option>
-
-  <!-- Camp de Morvedre -->
-  <option>Sagunto</option>
-  <option>Puerto de Sagunto</option>
-  <option>Canet d'en Berenguer</option>
-  <option>Faura</option>
-  <option>Benifairó de les Valls</option>
-  <option>Quart de les Valls</option>
-  <option>Quartell</option>
-  <option>Gilet</option>
-  <option>Petrés</option>
-  <option>Albalat dels Tarongers</option>
-  <option>Estivella</option>
-  <option>Segart</option>
-  <option>Torres Torres</option>
-  <option>Algar de Palancia</option>
-  <option>Alfara de la Baronia</option>
-  <option>Algimia de Alfara</option>
-
-  <!-- Radio ~15 km -->
-  <option>Puçol</option>
-  <option>El Puig de Santa Maria</option>
-  <option>La Pobla de Farnals</option>
-  <option>Massamagrell</option>
-  <option>Rafelbunyol</option>
-  <option>Náquera</option>
-  <option>Serra</option>
-  <option>Almenara</option>
-  <option>La Vall d'Uixó</option>
-  <option>Moncofa</option>
-  <option>Xilxes (Chilches)</option>
-</select>
-    <input type="text" id="direccionPista" placeholder="Dirección">
-
-    <select id="tipoPista">
-  <option value="">Tipo</option>
-  <option value="club">Club</option>
-  <option value="polideportivo">Polideportivo</option>
-  <option value="privada">Privada / Comunidad</option>
-</select>
-
-    <input type="number" id="indoor" placeholder="Pistas indoor">
-    <input type="number" id="outdoor" placeholder="Pistas outdoor">
-
-    <input type="number" id="precioManana" placeholder="Precio mañana">
-    <input type="number" id="precioTarde" placeholder="Precio tarde">
-    <input type="number" id="precioFestivo" placeholder="Precio fin de semana / festivo">
-
-    <input type="text" id="lat" placeholder="Latitud">
-    <input type="text" id="lng" placeholder="Longitud">
-
-    <input type="text" id="reserva" placeholder="URL o teléfono reserva">
-    <label for="inputFoto">Foto de la pista</label>
-<input type="file" id="inputFoto" accept="image/*">
-
-
-    <button id="guardarPista" class="btnYellow">Guardar</button>
-
-  </div>
-
 </div>
 
 <!-- LOGIN -->
@@ -440,6 +364,89 @@ Juego en red
 
 </div>
 
+<!-- SECCION PISTAS -->
+<div id="pistas" class="container" style="display:none;"></div>
+
+<!-- SECCION CREAR PISTA -->
+<div id="crearPista" class="container" style="display:none;">
+
+  <h2>Pistas</h2>
+
+  <button id="btnNuevaPista" class="btnYellow">Añadir pista</button>
+
+  <button onclick="mostrar('menu')" class="btnBlue">Volver</button>
+
+  <div id="listaPistas"></div>
+
+  <div id="formPista" style="display:none;">
+    
+    <h3>Nueva pista</h3>
+
+    <input type="text" id="nombrePista" placeholder="Nombre del club">
+
+    <select id="localidadPista">
+      <option value="">Selecciona localidad</option>
+      <option>Sagunto</option>
+      <option>Puerto de Sagunto</option>
+      <option>Canet d'en Berenguer</option>
+      <option>Faura</option>
+      <option>Benifairó de les Valls</option>
+      <option>Quart de les Valls</option>
+      <option>Quartell</option>
+      <option>Gilet</option>
+      <option>Petrés</option>
+      <option>Albalat dels Tarongers</option>
+      <option>Estivella</option>
+      <option>Segart</option>
+      <option>Torres Torres</option>
+      <option>Algar de Palancia</option>
+      <option>Alfara de la Baronia</option>
+      <option>Algimia de Alfara</option>
+      <option>Puçol</option>
+      <option>El Puig de Santa Maria</option>
+      <option>La Pobla de Farnals</option>
+      <option>Massamagrell</option>
+      <option>Rafelbunyol</option>
+      <option>Náquera</option>
+      <option>Serra</option>
+      <option>Almenara</option>
+      <option>La Vall d'Uixó</option>
+      <option>Moncofa</option>
+      <option>Xilxes (Chilches)</option>
+    </select>
+
+    <input type="text" id="direccionPista" placeholder="Dirección">
+
+    <select id="tipoPista">
+      <option value="">Tipo</option>
+      <option value="club">Club</option>
+      <option value="polideportivo">Polideportivo</option>
+      <option value="privada">Privada / Comunidad</option>
+    </select>
+
+    <input type="number" id="indoor" placeholder="Pistas indoor">
+    <input type="number" id="outdoor" placeholder="Pistas outdoor">
+
+    <input type="number" id="precioManana" placeholder="Precio mañana">
+    <input type="number" id="precioTarde" placeholder="Precio tarde">
+    <input type="number" id="precioFestivo" placeholder="Precio festivo">
+
+    <input type="text" id="lat" placeholder="Latitud">
+    <input type="text" id="lng" placeholder="Longitud">
+
+    <input type="text" id="reserva" placeholder="URL o teléfono reserva">
+
+    <label for="inputFoto">Foto de la pista</label>
+    <input type="file" id="inputFoto" accept="image/*">
+
+    <button id="guardarPista" class="btnYellow">Guardar</button>
+
+  </div>
+
+</div>
+
+
+
 <div id="jugadores" class="container" style="display:none;">
 
   <h2>Jugadores</h2>
@@ -549,3 +556,4 @@ const db = firebase.firestore();
 
 </body>
 </html>
+
