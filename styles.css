@@ -296,3 +296,11 @@ button[onclick*="mostrar('menu')"]{
   top: 0;
   z-index: 10;
 }
+
+.inputEuro select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
