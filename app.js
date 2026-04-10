@@ -508,3 +508,8 @@ document.getElementById("guardarPista").onclick = () => {
   document.getElementById("formPista").style.display = "none";
   document.getElementById("listaPistas").style.display = "block";
 };
+
+document.getElementById("cancelarPista").onclick = () => {
+  document.getElementById("formPista").style.display = "none";
+  document.getElementById("listaPistas").style.display = "block";
+};
