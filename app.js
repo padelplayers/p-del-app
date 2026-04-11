@@ -525,16 +525,28 @@ async function borrarImagen(url) {
 
 }
 
-
-
-
-
 document.getElementById("cancelarPista").onclick = () => {
+
+  // LIMPIAR FORMULARIO
+  document.getElementById("nombrePista").value = "";
+  document.getElementById("localidadPista").value = "";
+  document.getElementById("direccionPista").value = "";
+  document.getElementById("tipoPista").value = "";
+  document.getElementById("indoor").value = "";
+  document.getElementById("outdoor").value = "";
+  document.getElementById("precioManana").value = "";
+  document.getElementById("precioTarde").value = "";
+  document.getElementById("precioFestivo").value = "";
+  document.getElementById("lat").value = "";
+  document.getElementById("lng").value = "";
+  document.getElementById("reserva").value = "";
+  document.getElementById("inputFoto").value = "";
+
   document.getElementById("formPista").style.display = "none";
   document.getElementById("listaPistas").style.display = "block";
 
   document.getElementById("btnNuevaPista").style.display = "block";
 
   const btnVolver = document.getElementById("btnVolverPistas");
-if (btnVolver) btnVolver.style.display = "block";
+  if (btnVolver) btnVolver.style.display = "block";
 };
