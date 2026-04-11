@@ -313,6 +313,10 @@ const btnGuardarPista = document.getElementById("guardarPista");
 if (btnNuevaPista) {
   btnNuevaPista.onclick = () => {
     formPista.style.display = "block";
+
+    document.getElementById("listaPistas").style.display = "none";
+    document.getElementById("btnNuevaPista").style.display = "none";
+    document.querySelector("#pistas .btnBlue").style.display = "none";
   };
 }
 
@@ -501,10 +505,7 @@ async function borrarImagen(url) {
 
 }
 
-document.getElementById("btnNuevaPista").onclick = () => {
-  document.getElementById("formPista").style.display = "block";
-  document.getElementById("listaPistas").style.display = "none";
-};
+
 
 document.getElementById("guardarPista").onclick = () => {
   document.getElementById("formPista").style.display = "none";
