@@ -25,13 +25,13 @@ return;
 let email = emailInput.value;
 let pass = passInput.value;
 
-auth.createUserWithEmailAndPassword(email,pass)
-.then(()=>{
-alert("Usuario creado");
-})
-.catch(e=>{
-alert(e.message);
-});
+auth.createUserWithEmailAndPassword(email, pass)
+  .then(() => {
+    mostrar("perfil");
+  })
+  .catch(e => {
+    alert(e.message);
+  });
 
 }
 
@@ -154,10 +154,13 @@ return;
 let email = emailInput.value;
 let pass = passInput.value;
 
-auth.signInWithEmailAndPassword(email,pass)
-.catch(e=>{
-alert(e.message);
-});
+auth.signInWithEmailAndPassword(email, pass)
+  .then(() => {
+    mostrar("perfil"); // o la pantalla principal que uses
+  })
+  .catch(e => {
+    alert(e.message);
+  });
 
 }
 
