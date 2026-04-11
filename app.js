@@ -317,8 +317,8 @@ if (btnNuevaPista) {
   document.getElementById("listaPistas").style.display = "none";
   document.getElementById("btnNuevaPista").style.display = "none";
 
-  const btnVolver = document.querySelector("#pistas .btnBlue");
-  if (btnVolver) btnVolver.style.display = "none";
+  const btnVolver = document.getElementById("btnVolverPistas");
+if (btnVolver) btnVolver.style.display = "none";
 };
 }
 
@@ -443,8 +443,8 @@ if (btnGuardarPista) {
     document.getElementById("listaPistas").style.display = "block";
     document.getElementById("btnNuevaPista").style.display = "block";
 
-    const btnVolver = document.querySelector("#pistas .btnBlue");
-    if (btnVolver) btnVolver.style.display = "block";
+    const btnVolver = document.getElementById("btnVolverPistas");
+if (btnVolver) btnVolver.style.display = "block";
   };
 }
 
@@ -529,6 +529,6 @@ document.getElementById("cancelarPista").onclick = () => {
 
   document.getElementById("btnNuevaPista").style.display = "block";
 
-  const btnVolver = document.querySelector("#pistas .btnBlue");
-  if (btnVolver) btnVolver.style.display = "block";
+  const btnVolver = document.getElementById("btnVolverPistas");
+if (btnVolver) btnVolver.style.display = "block";
 };
