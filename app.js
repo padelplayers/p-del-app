@@ -312,12 +312,14 @@ const btnGuardarPista = document.getElementById("guardarPista");
 
 if (btnNuevaPista) {
   btnNuevaPista.onclick = () => {
-    formPista.style.display = "block";
+  formPista.style.display = "block";
 
-    document.getElementById("listaPistas").style.display = "none";
-    document.getElementById("btnNuevaPista").style.display = "none";
-    document.querySelector("#pistas .btnBlue").style.display = "none";
-  };
+  document.getElementById("listaPistas").style.display = "none";
+  document.getElementById("btnNuevaPista").style.display = "none";
+
+  const btnVolver = document.querySelector("#pistas .btnBlue");
+  if (btnVolver) btnVolver.style.display = "none";
+};
 }
 
 if (btnGuardarPista) {
@@ -327,45 +329,47 @@ if (btnGuardarPista) {
     const localidad = document.getElementById("localidadPista").value;
 
     const tipo = document.getElementById("tipoPista").value;
-const indoor = document.getElementById("indoor").value;
-const outdoor = document.getElementById("outdoor").value;
-const precioManana = Number(document.getElementById("precioManana").value);
-const precioTarde = Number(document.getElementById("precioTarde").value);
-const precioFestivo = Number(document.getElementById("precioFestivo").value);
-const lat = document.getElementById("lat").value;
-const lng = document.getElementById("lng").value;
-const reserva = document.getElementById("reserva").value;
+    const indoor = document.getElementById("indoor").value;
+    const outdoor = document.getElementById("outdoor").value;
 
-let fotoBase64 = "";
+    const precioManana = Number(document.getElementById("precioManana").value);
+    const precioTarde = Number(document.getElementById("precioTarde").value);
+    const precioFestivo = Number(document.getElementById("precioFestivo").value);
 
-const inputFoto = document.getElementById("fotoPista");
-if (inputFoto.files.length > 0) {
-  const file = inputFoto.files[0];
+    const lat = document.getElementById("lat").value;
+    const lng = document.getElementById("lng").value;
+    const reserva = document.getElementById("reserva").value;
 
-  fotoBase64 = await new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.readAsDataURL(file);
-  });
-}
+    let fotoBase64 = "";
 
-if (
-  !nombre ||
-  !localidad ||
-  !tipo ||
-  indoor === "" ||
-  outdoor === "" ||
-  precioManana === "" ||
-  precioTarde === "" ||
-  precioFestivo === "" ||
+    const inputFoto = document.getElementById("inputFoto");
+    if (inputFoto.files.length > 0) {
+      const file = inputFoto.files[0];
 
-  !lat ||
-  !lng ||
-  !reserva
-) {
-  alert("Todos los campos son obligatorios");
-  return;
-}
+      fotoBase64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // VALIDACIÓN CORREGIDA (números incluidos)
+    if (
+      !nombre ||
+      !localidad ||
+      !tipo ||
+      indoor === "" ||
+      outdoor === "" ||
+      isNaN(precioManana) ||
+      isNaN(precioTarde) ||
+      isNaN(precioFestivo) ||
+      !lat ||
+      !lng ||
+      !reserva
+    ) {
+      alert("Todos los campos son obligatorios");
+      return;
+    }
 
     const nombreNorm = normalizarTexto(nombre);
     const localidadNorm = normalizarTexto(localidad);
@@ -390,50 +394,57 @@ if (
     }
 
     await db.collection("pistas").add({
-  nombre: nombre,
-  nombreNorm: nombreNorm,
-  localidad: localidad,
-  localidadNorm: localidadNorm,
-  direccion: document.getElementById("direccionPista").value,
-  tipo: tipo,
+      nombre: nombre,
+      nombreNorm: nombreNorm,
+      localidad: localidad,
+      localidadNorm: localidadNorm,
+      direccion: document.getElementById("direccionPista").value,
+      tipo: tipo,
 
-  indoor: Number(indoor),
-  outdoor: Number(outdoor),
+      indoor: Number(indoor),
+      outdoor: Number(outdoor),
 
-  precioManana: Number(precioManana),
-  precioTarde: Number(precioTarde),
-  precioFestivo: Number(precioFestivo),
+      precioManana: precioManana,
+      precioTarde: precioTarde,
+      precioFestivo: precioFestivo,
 
-  lat: Number(lat),
-  lng: Number(lng),
+      lat: Number(lat),
+      lng: Number(lng),
 
-  reserva: reserva,
-  foto: fotoBase64,
+      reserva: reserva,
+      foto: fotoBase64,
 
-  creadaPor: auth.currentUser.uid,
-  verificada: false
-});
+      creadaPor: auth.currentUser.uid,
+      verificada: false
+    });
 
     alert("Pista guardada");
-    formPista.style.display = "none";
 
+    // LIMPIAR FORM
     document.getElementById("nombrePista").value = "";
-document.getElementById("localidadPista").value = "";
-document.getElementById("direccionPista").value = "";
-document.getElementById("tipoPista").value = "";
-document.getElementById("indoor").value = "";
-document.getElementById("outdoor").value = "";
-document.getElementById("precioManana").value = "";
-document.getElementById("precioTarde").value = "";
-document.getElementById("precioFestivo").value = "";
-document.getElementById("lat").value = "";
-document.getElementById("lng").value = "";
-document.getElementById("reserva").value = "";
-document.getElementById("inputFoto").value = "";
+    document.getElementById("localidadPista").value = "";
+    document.getElementById("direccionPista").value = "";
+    document.getElementById("tipoPista").value = "";
+    document.getElementById("indoor").value = "";
+    document.getElementById("outdoor").value = "";
+    document.getElementById("precioManana").value = "";
+    document.getElementById("precioTarde").value = "";
+    document.getElementById("precioFestivo").value = "";
+    document.getElementById("lat").value = "";
+    document.getElementById("lng").value = "";
+    document.getElementById("reserva").value = "";
+    document.getElementById("inputFoto").value = "";
 
-
+    // RECARGAR LISTA
     cargarPistas();
 
+    // RESTAURAR UI (LO QUE FALTABA)
+    document.getElementById("formPista").style.display = "none";
+    document.getElementById("listaPistas").style.display = "block";
+    document.getElementById("btnNuevaPista").style.display = "block";
+
+    const btnVolver = document.querySelector("#pistas .btnBlue");
+    if (btnVolver) btnVolver.style.display = "block";
   };
 }
 
@@ -515,4 +526,9 @@ document.getElementById("guardarPista").onclick = () => {
 document.getElementById("cancelarPista").onclick = () => {
   document.getElementById("formPista").style.display = "none";
   document.getElementById("listaPistas").style.display = "block";
+
+  document.getElementById("btnNuevaPista").style.display = "block";
+
+  const btnVolver = document.querySelector("#pistas .btnBlue");
+  if (btnVolver) btnVolver.style.display = "block";
 };
