@@ -446,11 +446,16 @@ if (esAdmin) {
 
 // editar o crear
 if (window.pistaEditando) {
-  await db.collection("pistas").doc(window.pistaEditando).update(datos);
+  await db.collection("pistas").doc(window.pistaEditando).update({
+    ...datos,
+    verificada: true
+  });
   window.pistaEditando = null;
 } else {
-
-  await db.collection("pistas").add(datos);
+  await db.collection("pistas").add({
+    ...datos,
+    verificada: esAdmin === true
+  });
 }
 
     alert("Pista guardada");
@@ -520,7 +525,7 @@ if (user) {
   '<img src="' + (data.fotoPista || data.foto) + '" style="width:100%; border-radius:10px; margin-bottom:8px;">' 
   : ''
 ) +
-          "<strong>" + (data.nombre || "") + (data.verificada ? " ✔" : "") + "</strong><br>" +
+          "<strong>" + (data.nombre || "") + (data.verificada === true ? ' <span style="color:green;">✔ Verificada</span>' : "") + "</strong><br>" +
           (data.localidad || "") + "<br>" +
           (data.tipo || "") + "<br>" +
           "Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "<br>" +
