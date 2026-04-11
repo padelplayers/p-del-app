@@ -3,6 +3,14 @@ let otroUid = null;
 
 let unsubscribePistas = null;
 
+auth.onAuthStateChanged(user => {
+  if (user) {
+    mostrar("menu");
+  } else {
+    mostrar("login");
+  }
+});
+
 
 function normalizarTexto(texto){
   return texto
