@@ -355,29 +355,30 @@ if (btnGuardarPista) {
 
     // VALIDACIÓN CORREGIDA (números incluidos)
     if (
-      !nombre ||
-      !localidad ||
-      !tipo ||
-      indoor === "" ||
-      outdoor === "" ||
-      isNaN(precioManana) ||
-      isNaN(precioTarde) ||
-      isNaN(precioFestivo) ||
-      !lat ||
-      !lng ||
-      !reserva
-    ) {
-      alert("Todos los campos son obligatorios");
-      document.getElementById("formPista").style.display = "block";
-document.getElementById("listaPistas").style.display = "none";
+  !nombre.trim() ||
+  !localidad ||
+  !tipo ||
+  indoor === "" ||
+  outdoor === "" ||
+  isNaN(precioManana) ||
+  isNaN(precioTarde) ||
+  isNaN(precioFestivo) ||
+  !lat ||
+  !lng ||
+  !reserva
+) {
+  alert("Todos los campos son obligatorios");
 
-document.getElementById("btnNuevaPista").style.display = "none";
+  document.getElementById("formPista").style.display = "block";
+  document.getElementById("listaPistas").style.display = "none";
 
-const btnVolver = document.getElementById("btnVolverPistas");
-if (btnVolver) btnVolver.style.display = "none";
+  document.getElementById("btnNuevaPista").style.display = "none";
 
-      return;
-    }
+  const btnVolver = document.getElementById("btnVolverPistas");
+  if (btnVolver) btnVolver.style.display = "none";
+
+  return;
+}
 
     const nombreNorm = normalizarTexto(nombre);
     const localidadNorm = normalizarTexto(localidad);
