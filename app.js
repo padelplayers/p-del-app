@@ -529,13 +529,13 @@ if (user) {
           (data.precioFestivo || 0) + "€ festivo";
 
          if (esAdmin) {
-  div.innerHTML += 
-    <div style="margin-top:10px;">
-      <button onclick="editarPista('${doc.id}')">Editar</button>
-      <button onclick="eliminarPista('${doc.id}')">Eliminar</button>
-      <button onclick="verificarPista('${doc.id}')">Verificar</button>
-    </div>
-  ;
+  div.innerHTML +=`
+  <div style="margin-top:10px;">
+    <button onclick="editarPista('${doc.id}')">Editar</button>
+    <button onclick="eliminarPista('${doc.id}')">Eliminar</button>
+    <button onclick="verificarPista('${doc.id}')">Verificar</button>
+  </div>
+`;
 }
 
         lista.appendChild(div);
