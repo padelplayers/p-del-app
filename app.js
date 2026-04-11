@@ -402,30 +402,43 @@ if (btnGuardarPista) {
       return;
     }
 
-    await db.collection("pistas").add({
-      nombre: nombre,
-      nombreNorm: nombreNorm,
-      localidad: localidad,
-      localidadNorm: localidadNorm,
-      direccion: document.getElementById("direccionPista").value,
-      tipo: tipo,
+    const datos = {
+  nombre: nombre,
+  nombreNorm: nombreNorm,
+  localidad: localidad,
+  localidadNorm: localidadNorm,
+  direccion: document.getElementById("direccionPista").value,
+  tipo: tipo,
 
-      indoor: Number(indoor),
-      outdoor: Number(outdoor),
+  indoor: Number(indoor),
+  outdoor: Number(outdoor),
 
-      precioManana: precioManana,
-      precioTarde: precioTarde,
-      precioFestivo: precioFestivo,
+  precioManana: precioManana,
+  precioTarde: precioTarde,
+  precioFestivo: precioFestivo,
 
-      lat: Number(lat),
-      lng: Number(lng),
+  lat: Number(lat),
+  lng: Number(lng),
 
-      reserva: reserva,
-      foto: fotoBase64,
+  reserva: reserva,
+  foto: fotoBase64,
 
-      creadaPor: auth.currentUser.uid,
-      verificada: false
-    });
+  creadaPor: auth.currentUser.uid
+};
+
+// si es admin → verificada automática
+if (esAdmin) {
+  datos.verificada = true;
+}
+
+// editar o crear
+if (window.pistaEditando) {
+  await db.collection("pistas").doc(window.pistaEditando).update(datos);
+  window.pistaEditando = null;
+} else {
+
+  await db.collection("pistas").add(datos);
+}
 
     alert("Pista guardada");
 
@@ -457,8 +470,18 @@ if (btnVolver) btnVolver.style.display = "block";
   };
 }
 
-function cargarPistas() {
+async function cargarPistas() {
   console.log("CARGANDO PISTAS");
+
+  let esAdmin = false;
+
+const user = auth.currentUser;
+if (user) {
+  const docUser = await db.collection("usuarios").doc(user.uid).get();
+  if (docUser.exists && docUser.data().admin === true) {
+    esAdmin = true;
+  }
+}
 
 
   const lista = document.getElementById("listaPistas");
@@ -484,13 +507,23 @@ function cargarPistas() {
   '<img src="' + (data.fotoPista || data.foto) + '" style="width:100%; border-radius:10px; margin-bottom:8px;">' 
   : ''
 ) +
-          "<strong>" + (data.nombre || "") + "</strong><br>" +
+          "<strong>" + (data.nombre || "") + (data.verificada ? " ✔" : "") + "</strong><br>" +
           (data.localidad || "") + "<br>" +
           (data.tipo || "") + "<br>" +
           "Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "<br>" +
           (data.precioManana || 0) + "€ mañana / " +
           (data.precioTarde || 0) + "€ tarde / " +
           (data.precioFestivo || 0) + "€ festivo";
+
+         if (esAdmin) {
+  div.innerHTML += 
+    <div style="margin-top:10px;">
+      <button onclick="editarPista('${doc.id}')">Editar</button>
+      <button onclick="eliminarPista('${doc.id}')">Eliminar</button>
+      <button onclick="verificarPista('${doc.id}')">Verificar</button>
+    </div>
+  ;
+}
 
         lista.appendChild(div);
       });
@@ -550,3 +583,9 @@ document.getElementById("cancelarPista").onclick = () => {
   const btnVolver = document.getElementById("btnVolverPistas");
   if (btnVolver) btnVolver.style.display = "block";
 };
+
+async function verificarPista(id) {
+  await db.collection("pistas").doc(id).update({
+    verificada: true
+  });
+}
