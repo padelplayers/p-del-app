@@ -368,6 +368,14 @@ if (btnGuardarPista) {
       !reserva
     ) {
       alert("Todos los campos son obligatorios");
+      document.getElementById("formPista").style.display = "block";
+document.getElementById("listaPistas").style.display = "none";
+
+document.getElementById("btnNuevaPista").style.display = "none";
+
+const btnVolver = document.getElementById("btnVolverPistas");
+if (btnVolver) btnVolver.style.display = "none";
+
       return;
     }
 
