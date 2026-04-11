@@ -34,10 +34,11 @@ let email = emailInput.value;
 let pass = passInput.value;
 
 auth.createUserWithEmailAndPassword(email, pass)
-  .then(() => {
-    mostrar("perfil");
+  .then(user => {
+    console.log("REGISTRO OK", user);
   })
   .catch(e => {
+    console.log("ERROR REGISTRO", e);
     alert(e.message);
   });
 
@@ -163,10 +164,11 @@ let email = emailInput.value;
 let pass = passInput.value;
 
 auth.signInWithEmailAndPassword(email, pass)
-  .then(() => {
-    mostrar("perfil"); // o la pantalla principal que uses
+  .then(user => {
+    console.log("LOGIN OK", user);
   })
   .catch(e => {
+    console.log("ERROR LOGIN", e);
     alert(e.message);
   });
 
