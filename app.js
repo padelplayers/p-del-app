@@ -378,6 +378,12 @@ if (btnGuardarPista) {
         urlImagen = await subirImagen(ruta, file);
       }
 
+      if (!urlImagen && window.pistaEditando) {
+  const doc = await db.collection("pistas").doc(window.pistaEditando).get();
+  const dataActual = doc.data();
+  urlImagen = dataActual.imagen || "";
+}
+
       // VALIDACIÓN CORRECTA (faltaban ||)
       if (
         !nombre.trim() ||
