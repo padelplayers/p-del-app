@@ -57,7 +57,6 @@ function guardarPerfilRegistro(){
 
   console.log("CLICK GUARDAR PERFIL");
 
-
   document.getElementById("msgPerfil").innerText = "";
 
   const user = auth.currentUser;
@@ -67,29 +66,28 @@ function guardarPerfilRegistro(){
     return;
   }
 
-  
-
   const nombre = document.getElementById("nombre").value.trim().toLowerCase();
   const sexo = document.getElementById("sexo").value;
   const nivel = document.getElementById("nivelManual").value;
-
   const mano = document.getElementById("mano").value;
   const posicion = document.getElementById("posicion").value;
 
- if(!nombre || !mano || !posicion){
-  document.getElementById("msgPerfil").innerText = "Completa los campos";
-  return;
-}
+  const archivo = document.getElementById("inputFotoPerfil").files[0];
 
-if(!nivel){
-  document.getElementById("msgPerfil").innerText = "Debes elegir o calcular tu nivel";
-  return;
-}
+  if(!nombre || !mano || !posicion){
+    document.getElementById("msgPerfil").innerText = "Completa los campos";
+    return;
+  }
+
+  if(!nivel){
+    document.getElementById("msgPerfil").innerText = "Debes elegir o calcular tu nivel";
+    return;
+  }
 
   db.collection("usuarios")
     .where("nombre", "==", nombre)
     .get()
-    .then(query=>{
+    .then(async query=>{
 
       console.log("Usuarios encontrados:", query.size);
 
@@ -98,58 +96,30 @@ if(!nivel){
         return;
       }
 
-      let fotoDefault = "";
-
-      if(sexo === "hombre"){
-        fotoDefault = "imagen/hombre.jpeg";
-      }else{
-        fotoDefault = "imagen/mujer.jpeg";
-      }
+      let fotoDefault = sexo === "hombre" ? "imagen/hombre.jpeg" : "imagen/mujer.jpeg";
+      let urlImagen = fotoDefault;
 
       if (archivo) {
-
         const storageRef = firebase.storage().ref();
-       const ruta = "usuarios/" + user.uid + "/foto.jpg";
+        const ruta = "usuarios/" + user.uid + "/foto.jpg";
 
-        storageRef.child(ruta).put(archivo)
-        .then(snapshot => snapshot.ref.getDownloadURL())
-        .then(url => {
-
-          db.collection("usuarios").doc(user.uid).set({
-            nombre: nombre,
-            sexo: sexo,
-            nivel: parseFloat(nivel),
-            mano: mano,
-            posicion: posicion,
-            fotoPerfil: archivo ? url : fotoDefault,
-            seguidores: [],
-            siguiendo: [],
-            partidos: 0,
-          })
-          .then(()=>{
-            location.reload();
-          });
-
-        });
-
-      } else {
-
-        db.collection("usuarios").doc(user.uid).set({
-          nombre: nombre,
-          sexo: sexo,
-          nivel: parseFloat(nivel),
-          mano: mano,
-          posicion: posicion,
-          fotoPerfil: fotoDefault,
-          seguidores: [],
-          siguiendo: [],
-          partidos: 0,
-        })
-        .then(()=>{
-          location.reload();
-        });
-
+        await storageRef.child(ruta).put(archivo);
+        urlImagen = await storageRef.child(ruta).getDownloadURL();
       }
+
+      await db.collection("usuarios").doc(user.uid).set({
+        nombre: nombre,
+        sexo: sexo,
+        nivel: parseFloat(nivel),
+        mano: mano,
+        posicion: posicion,
+        fotoPerfil: urlImagen,
+        seguidores: [],
+        siguiendo: [],
+        partidos: 0,
+      });
+
+      location.reload();
 
     })
     .catch(e=>{
