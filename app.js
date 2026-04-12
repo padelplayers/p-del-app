@@ -314,25 +314,13 @@ function mostrar(seccion){
     cargarPistas();
   }
 
-  if (seccion === "perfilCompletar") {
-
-  const selectNivel = document.getElementById("nivelManual");
-
-  if (selectNivel && !selectNivel.dataset.listener) {
-
-    selectNivel.addEventListener("change", () => {
-      alert("Elige bien tu nivel. No podrás cambiarlo después.");
-    });
-
-    selectNivel.dataset.listener = "ok";
-  }
-}
 
 }
 
 
 
 function abrirTest(){
+  alert("Elige bien tu nivel. No podrás cambiarlo después.");
   mostrar("testNivel");
 }
 
@@ -682,3 +670,11 @@ window.eliminarPista = async function(id) {
   alert("Pista eliminada");
 };
 }
+
+document.addEventListener("change", function(e) {
+
+  if (e.target && e.target.id === "nivelManual") {
+    alert("Elige bien tu nivel. No podrás cambiarlo después.");
+  }
+
+});
