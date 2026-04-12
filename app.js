@@ -421,6 +421,8 @@ if (urlImagen) {
 }
 
     const datos = {
+
+      
   nombre: nombre,
   nombreNorm: nombreNorm,
   localidad: localidad,
@@ -439,11 +441,12 @@ if (urlImagen) {
   lng: Number(lng),
 
   reserva: reserva,
-  imagen: urlImagen,
 
   creadaPor: auth.currentUser.uid
 };
-
+if (urlImagen) {
+    datos.imagen = urlImagen;
+}
 // si es admin → verificada automática
 if (esAdmin) {
   datos.verificada = true;
