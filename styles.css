@@ -340,3 +340,8 @@ button[onclick*="mostrar('menu')"]{
 .btnVerificar:hover {
   opacity: 0.85;
 }
+
+.verificada {
+  color: green;
+  font-weight: bold;
+}

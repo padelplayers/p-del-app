@@ -547,7 +547,7 @@ const mostrarBotonVerificar = !data.verificada;
        div.innerHTML =
 "<img src='" + (data.imagen || "") + "' style='width:100%;'>" +
 "<strong>" + (data.nombre || "") + "</strong><br>" +
-"<div>" + verificadaTexto + "</div>" +
+"<div class='verificada'>" + verificadaTexto + "</div>"
 (data.localidad || "") + "<br>" +
 (data.tipo || "") + "<br>" +
 "Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "<br>" +
