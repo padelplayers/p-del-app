@@ -635,7 +635,7 @@ async function verificarPista(id) {
   });
 }
 
-async function editarPista(id) {
+window.editarPista = async function(id) {
   const doc = await db.collection("pistas").doc(id).get();
   const data = doc.data();
 
