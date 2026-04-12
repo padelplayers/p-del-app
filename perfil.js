@@ -1,52 +1,61 @@
 let unsubscribePerfil = null;
 let unsubscribeUser = null;
 
-function eliminarPerfil() {
+async function eliminarPerfil() {
 
   const user = auth.currentUser;
   if (!user) return;
 
   const uid = user.uid;
 
-  // limpiar referencias en otros usuarios
-db.collection("usuarios").get().then(snapshot => {
-  snapshot.forEach(doc => {
-    const data = doc.data();
+  try {
 
-    if (data.siguiendo && data.siguiendo.includes(uid)) {
-      db.collection("usuarios").doc(doc.id).update({
-        siguiendo: data.siguiendo.filter(id => id !== uid)
-      });
-    }
+    // 1. limpiar referencias
+    const snapshot = await db.collection("usuarios").get();
 
-    if (data.seguidores && data.seguidores.includes(uid)) {
-      db.collection("usuarios").doc(doc.id).update({
-        seguidores: data.seguidores.filter(id => id !== uid)
-      });
-    }
-  });
-});
+    const updates = [];
 
-// borrar de Firestore
-db.collection("usuarios").doc(uid).delete()
+    snapshot.forEach(doc => {
+      const data = doc.data();
 
-    .then(() => {
-      // borrar usuario de Auth
-      return user.delete();
-    })
+      if (data.siguiendo && data.siguiendo.includes(uid)) {
+        updates.push(
+          db.collection("usuarios").doc(doc.id).update({
+            siguiendo: data.siguiendo.filter(id => id !== uid)
+          })
+        );
+      }
 
-    .then(() => {
-      alert("Perfil eliminado");
-      mostrar("login");
-    })
-
-    .catch((error) => {
-      console.error(error);
-
-      if (error.code === "auth/requires-recent-login") {
-        alert("Vuelve a iniciar sesión para eliminar la cuenta");
+      if (data.seguidores && data.seguidores.includes(uid)) {
+        updates.push(
+          db.collection("usuarios").doc(doc.id).update({
+            seguidores: data.seguidores.filter(id => id !== uid)
+          })
+        );
       }
     });
+
+    await Promise.all(updates);
+
+    // 2. borrar Firestore
+    await db.collection("usuarios").doc(uid).delete();
+
+    // 3. borrar Auth
+    await user.delete();
+
+    alert("Perfil eliminado");
+    mostrar("login");
+
+  } catch (error) {
+
+    console.error(error);
+
+    if (error.code === "auth/requires-recent-login") {
+      alert("Vuelve a iniciar sesión para eliminar la cuenta");
+      await auth.signOut();
+    }
+
+  }
 }
 
 function verPerfil(uid = auth.currentUser?.uid){
