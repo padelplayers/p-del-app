@@ -61,7 +61,7 @@ async function guardarPerfilRegistro(){
   const mano = document.getElementById("mano").value;
   const posicion = document.getElementById("posicion").value;
 
-  const archivo = document.getElementById("inputFotoPerfil").files[0];
+  const archivo = document.getElementById("inputFoto").files[0];
 
   if (!nombre || !mano || !posicion) {
     document.getElementById("msgPerfil").innerText = "Completa los campos";
@@ -77,12 +77,11 @@ async function guardarPerfilRegistro(){
 
   // SOLO si hay archivo
   if (archivo) {
-    try {
-      fotoURL = await subirImagenPerfil(archivo);
-    } catch (e) {
-      console.error("Error subiendo imagen:", e);
-      fotoURL = "";
-    }
+    let fotoURL = "";
+
+if (archivo) {
+  fotoURL = "imagen/hombre.jpeg";
+}
   }
 
   // Guardado SIEMPRE se ejecuta
