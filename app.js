@@ -553,7 +553,7 @@ const mostrarBotonVerificar = !data.verificada;
 "Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "<br>" +
 (data.precioManana || 0) + "€ mañana / " +
 (data.precioTarde || 0) + "€ tarde / " +
-(data.precioFestivo || 0) + "€ festivo";
+(data.precioFestivo || 0) + "€ finde / festivo";
       
 
 if (esAdmin) {
