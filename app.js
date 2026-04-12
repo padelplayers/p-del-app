@@ -671,9 +671,10 @@ window.eliminarPista = async function(id) {
 };
 }
 
-document.addEventListener("change", function(e) {
 
-  if (e.target && e.target.id === "nivelManual") {
+document.addEventListener("click", function(e) {
+
+  if (e.target && e.target.closest("#nivelManual")) {
     alert("Elige bien tu nivel. No podrás cambiarlo después.");
   }
 
