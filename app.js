@@ -448,7 +448,9 @@ if (btnGuardarPista) {
         creadaPor: auth.currentUser.uid
       };
 
-      datos.imagen = urlImagen || "";
+      if (urlImagen) {
+  datos.imagen = urlImagen;
+}
 
       datos.verificada = esAdmin === true;
       
