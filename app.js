@@ -512,6 +512,7 @@ if (esAdmin) {
 lista.appendChild(div);
 });
     });
+    
 
 window.subirImagen = async function(ruta, archivo) {
 
@@ -618,3 +619,10 @@ document.addEventListener("click", function(e) {
   }
 
 });
+
+let fotoURL = "imagen/hombre.jpeg";
+
+if (archivo) {
+  const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
+  fotoURL = await subirImagen(ruta, archivo);
+}
