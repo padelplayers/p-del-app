@@ -367,6 +367,10 @@ if (inputFoto.files.length > 0) {
   urlImagen = await subirImagen(ruta, file);
 }
 
+if (urlImagen) {
+    datos.imagen = urlImagen;
+}
+
     // VALIDACIÓN CORREGIDA (números incluidos)
     if (
   !nombre.trim() ||
