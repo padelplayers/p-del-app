@@ -314,6 +314,20 @@ function mostrar(seccion){
     cargarPistas();
   }
 
+  if (seccion === "perfilCompletar") {
+
+  const selectNivel = document.getElementById("nivelManual");
+
+  if (selectNivel && !selectNivel.dataset.listener) {
+
+    selectNivel.addEventListener("change", () => {
+      alert("Elige bien tu nivel. No podrás cambiarlo después.");
+    });
+
+    selectNivel.dataset.listener = "ok";
+  }
+}
+
 }
 
 
