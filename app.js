@@ -73,16 +73,13 @@ async function guardarPerfilRegistro(){
     return;
   }
 
-  let fotoURL = "";
-
-  // SOLO si hay archivo
-  if (archivo) {
-    let fotoURL = "";
+ let fotoURL = "imagen/hombre.jpeg";
 
 if (archivo) {
-  fotoURL = "imagen/hombre.jpeg";
+  const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
+  fotoURL = await subirImagen(ruta, archivo);
 }
-  }
+  
 
   // Guardado SIEMPRE se ejecuta
   db.collection("usuarios").doc(auth.currentUser.uid).set({
@@ -516,7 +513,7 @@ lista.appendChild(div);
 });
     });
 
-async function subirImagen(ruta, archivo) {
+window.subirImagen = async function(ruta, archivo) {
 
   const ref = firebase.storage().ref().child(ruta);
 
