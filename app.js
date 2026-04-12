@@ -533,11 +533,11 @@ if (user) {
 
          if (esAdmin) {
   div.innerHTML += 
-  '<div style="margin-top:10px;">' +
-    '<button onclick="editarPista(\'' + doc.id + '\')">Editar</button>' +
-    '<button onclick="eliminarPista(\'' + doc.id + '\')">Eliminar</button>' +
-    '<button onclick="verificarPista(\'' + doc.id + '\')">Verificar</button>' +
-  '</div>';
+  "<div style='margin-top:10px;'>" +
+"<button class='btnEditar' onclick=\"editarPista('" + doc.id + "')\">Editar</button>" +
+"<button class='btnEliminar' onclick=\"eliminarPista('" + doc.id + "')\">Eliminar</button>" +
+"<button class='btnVerificar' onclick=\"verificarPista('" + doc.id + "')\">Verificar</button>" +
+"</div>";
 }
 
         lista.appendChild(div);
@@ -600,8 +600,12 @@ document.getElementById("cancelarPista").onclick = () => {
 };
 
 async function verificarPista(id) {
+  if (!esAdmin) return;
+
   await db.collection("pistas").doc(id).update({
-    verificada: true
+    verificada: true,
+    verificadaPor: auth.currentUser.uid,
+    fechaVerificada: firebase.firestore.FieldValue.serverTimestamp()
   });
 }
 

@@ -304,3 +304,39 @@ button[onclick*="mostrar('menu')"]{
   border: 1px solid #ccc;
   font-size: 16px;
 }
+
+.btnEditar,
+.btnEliminar,
+.btnVerificar {
+  border: none;
+  padding: 10px;
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+/* COLORES */
+.btnEditar {
+  background-color: #FFC107;
+  color: #000;
+}
+
+.btnEliminar {
+  background-color: #f44336;
+  color: #fff;
+}
+
+.btnVerificar {
+  background-color: #1565C0;
+  color: #fff;
+}
+
+/* HOVER */
+.btnEditar:hover,
+.btnEliminar:hover,
+.btnVerificar:hover {
+  opacity: 0.85;
+}
