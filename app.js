@@ -448,9 +448,8 @@ if (btnGuardarPista) {
 
       datos.imagen = urlImagen || "";
 
-      if (esAdmin) {
-        datos.verificada = true;
-      }
+      datos.verificada = esAdmin === true;
+      
 
       if (window.pistaEditando) {
         await db.collection("pistas").doc(window.pistaEditando).update({
@@ -543,13 +542,19 @@ if (user) {
 (data.precioFestivo || 0) + "€ festivo";
 
          if (esAdmin) {
-  div.innerHTML += 
-  "<div style='margin-top:10px;'>" +
+
+ div.innerHTML +=
+"<div style='margin-top:10px;'>" +
 "<button class='btnEditar' onclick=\"editarPista('" + doc.id + "')\">Editar</button>" +
-"<button class='btnEliminar' onclick=\"eliminarPista('" + doc.id + "')\">Eliminar</button>" +
-"<button class='btnVerificar' onclick=\"verificarPista('" + doc.id + "')\">Verificar</button>" +
-"</div>";
+"<button class='btnEliminar' onclick=\"eliminarPista('" + doc.id + "')\">Eliminar</button>";
+
+if (!data.verificada) {
+  div.innerHTML +=
+  "<button class='btnVerificar' onclick=\"verificarPista('" + doc.id + "')\">Verificar</button>";
 }
+
+div.innerHTML += "</div>";
+         }
 
         lista.appendChild(div);
       });
