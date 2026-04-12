@@ -1,11 +1,20 @@
 let archivo = null;
 let otroUid = null;
 
+let esAdmin = false;
+
 let unsubscribePistas = null;
 
-auth.onAuthStateChanged(user => {
+auth.onAuthStateChanged(async user => {
   if (user) {
+
+    const doc = await db.collection("usuarios").doc(user.uid).get();
+    const data = doc.data();
+
+    esAdmin = data && data.rol === "admin";
+
     mostrar("menu");
+
   } else {
     mostrar("login");
   }
@@ -437,9 +446,7 @@ if (btnGuardarPista) {
         creadaPor: auth.currentUser.uid
       };
 
-      if (urlImagen) {
-        datos.imagen = urlImagen;
-      }
+      datos.imagen = urlImagen || "";
 
       if (esAdmin) {
         datos.verificada = true;
@@ -634,5 +641,6 @@ async function editarPista(id) {
 
   document.getElementById("formPista").style.display = "block";
   document.getElementById("listaPistas").style.display = "none";
-  document.getElementById("btnGuardarPista").textContent = "Guardar cambios";
+  const btn = document.getElementById("btnGuardarPista");
+if (btn) btn.textContent = "Guardar cambios";
 }
