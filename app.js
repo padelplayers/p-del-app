@@ -100,7 +100,7 @@ if(!nivel){
       if (archivo) {
 
         const storageRef = firebase.storage().ref();
-        const ruta = "perfiles/" + user.uid;
+       const ruta = "usuarios/" + user.uid + "/foto.jpg";
 
         storageRef.child(ruta).put(archivo)
         .then(snapshot => snapshot.ref.getDownloadURL())
@@ -112,7 +112,7 @@ if(!nivel){
             nivel: parseFloat(nivel),
             mano: mano,
             posicion: posicion,
-            fotoPerfil: url,
+            fotoPerfil: archivo ? url : fotoDefault,
             seguidores: [],
             siguiendo: [],
             partidos: 0,
@@ -245,7 +245,7 @@ document.getElementById("inputFoto").addEventListener("change", async function(e
   }
 
   // subir nueva
-  const ruta = "perfiles/" + user.uid + "_" + Date.now();
+  const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
   const url = await subirImagen(ruta, file);
 
   // guardar en BD
@@ -260,11 +260,13 @@ function borrarImagen(url) {
     const storage = firebase.storage();
 
     // convertir URL → ruta válida de Firebase
-    const ruta = decodeURIComponent(
-      url.split("/o/")[1].split("?")[0]
-    );
+   if (!url || !url.includes("firebasestorage")) return;
 
-    return storage.ref(ruta).delete();
+const ruta = decodeURIComponent(
+  url.split("/o/")[1].split("?")[0]
+);
+
+return storage.ref(ruta).delete();
 
   } catch (error) {
     console.error("Error borrando imagen:", error);
@@ -353,18 +355,17 @@ if (btnGuardarPista) {
     const lng = document.getElementById("lng").value;
     const reserva = document.getElementById("reserva").value;
 
-    let fotoBase64 = "";
+    let urlImagen = "";
 
-    const inputFoto = document.getElementById("inputFoto");
-    if (inputFoto.files.length > 0) {
-      const file = inputFoto.files[0];
+const inputFoto = document.getElementById("inputFoto");
 
-      fotoBase64 = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.readAsDataURL(file);
-      });
-    }
+if (inputFoto.files.length > 0) {
+  const file = inputFoto.files[0];
+
+  const ruta = "pistas/" + Date.now() + ".jpg";
+  
+  urlImagen = await subirImagen(ruta, file);
+}
 
     // VALIDACIÓN CORREGIDA (números incluidos)
     if (
@@ -434,7 +435,7 @@ if (btnGuardarPista) {
   lng: Number(lng),
 
   reserva: reserva,
-  foto: fotoBase64,
+  imagen: urlImagen,
 
   creadaPor: auth.currentUser.uid
 };
@@ -520,18 +521,15 @@ if (user) {
         const div = document.createElement("div");
         div.className = "cardPista";
 
-        div.innerHTML =
-         (data.fotoPista || data.foto ? 
-  '<img src="' + (data.fotoPista || data.foto) + '" style="width:100%; border-radius:10px; margin-bottom:8px;">' 
-  : ''
-) +
-          "<strong>" + (data.nombre || "") + (data.verificada === true ? ' <span style="color:green;">✔ Verificada</span>' : "") + "</strong><br>" +
-          (data.localidad || "") + "<br>" +
-          (data.tipo || "") + "<br>" +
-          "Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "<br>" +
-          (data.precioManana || 0) + "€ mañana / " +
-          (data.precioTarde || 0) + "€ tarde / " +
-          (data.precioFestivo || 0) + "€ festivo";
+       div.innerHTML =
+"<img src='" + (data.imagen || "") + "' style='width:100%;'>" +
+"<strong>" + (data.nombre || "") + "</strong><br>" +
+(data.localidad || "") + "<br>" +
+(data.tipo || "") + "<br>" +
+"Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "<br>" +
+(data.precioManana || 0) + "€ mañana / " +
+(data.precioTarde || 0) + "€ tarde / " +
+(data.precioFestivo || 0) + "€ festivo";
 
          if (esAdmin) {
   div.innerHTML += 

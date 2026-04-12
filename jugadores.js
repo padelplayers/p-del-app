@@ -12,12 +12,11 @@ function cargarJugadores(){
       const div = document.createElement("div");
       div.className = "jugadorCard";
 
-      div.innerHTML = `
-  <div>
-    <img src="${data.fotoPerfil || 'imagen/hombre.jpeg'}" width="50" />
-    <span>${data.nombre}</span>
-  </div>
-`;
+      div.innerHTML =
+"<div>" +
+"<img src='" + (data.fotoPerfil || "imagen/hombre.jpeg") + "' width='50' />" +
+"<span>" + (data.nombre || "") + "</span>" +
+"</div>";
 
       div.onclick = () => verPerfil(doc.id);
 
