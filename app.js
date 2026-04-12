@@ -659,3 +659,11 @@ async function editarPista(id) {
   const btn = document.getElementById("btnGuardarPista");
 if (btn) btn.textContent = "Guardar cambios";
 }
+
+window.eliminarPista = async function(id) {
+  if (!confirm("¿Eliminar pista?")) return;
+
+  await db.collection("pistas").doc(id).delete();
+
+  alert("Pista eliminada");
+};
