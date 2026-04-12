@@ -645,8 +645,8 @@ window.editarPista = async function(id) {
   document.getElementById("localidadPista").value = data.localidad || "";
   document.getElementById("direccionPista").value = data.direccion || "";
   document.getElementById("tipoPista").value = data.tipo || "";
-  document.getElementById("indoor").value = data.indoor || "";
-  document.getElementById("outdoor").value = data.outdoor || "";
+  document.getElementById("indoor").value = (data.indoor !== undefined) ? data.indoor : "";
+  document.getElementById("outdoor").value = (data.outdoor !== undefined) ? data.outdoor : "";
   document.getElementById("precioManana").value = data.precioManana || "";
   document.getElementById("precioTarde").value = data.precioTarde || "";
   document.getElementById("precioFestivo").value = data.precioFestivo || "";
