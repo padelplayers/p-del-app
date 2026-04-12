@@ -63,6 +63,13 @@ async function guardarPerfilRegistro(){
 
   const archivo = document.getElementById("inputFoto").files[0];
 
+  let fotoURL = "imagen/hombre.jpeg";
+
+if (archivo) {
+  const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
+  fotoURL = await subirImagen(ruta, archivo);
+}
+
   if (!nombre || !mano || !posicion) {
     document.getElementById("msgPerfil").innerText = "Completa los campos";
     return;
@@ -73,13 +80,6 @@ async function guardarPerfilRegistro(){
     return;
   }
 
- let fotoURL = "imagen/hombre.jpeg";
-
-if (archivo) {
-  const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
-  fotoURL = await subirImagen(ruta, archivo);
-}
-  
 
   // Guardado SIEMPRE se ejecuta
   db.collection("usuarios").doc(auth.currentUser.uid).set({
@@ -620,9 +620,3 @@ document.addEventListener("click", function(e) {
 
 });
 
-let fotoURL = "imagen/hombre.jpeg";
-
-if (archivo) {
-  const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
-  fotoURL = await subirImagen(ruta, archivo);
-}
