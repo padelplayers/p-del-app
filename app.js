@@ -340,6 +340,8 @@ if (btnVolver) btnVolver.style.display = "none";
 if (btnGuardarPista) {
   btnGuardarPista.onclick = async () => {
 
+    try{
+
     const nombre = document.getElementById("nombrePista").value;
     const localidad = document.getElementById("localidadPista").value;
 
