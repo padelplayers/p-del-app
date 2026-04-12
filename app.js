@@ -538,6 +538,9 @@ if (user) {
       snapshot.forEach(doc => {
         const data = doc.data();
 
+        const verificadaTexto = data.verificada ? "✔ Verificada" : "";
+const mostrarBotonVerificar = !data.verificada;
+
         const div = document.createElement("div");
         div.className = "cardPista";
 
