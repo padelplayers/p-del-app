@@ -545,7 +545,7 @@ const mostrarBotonVerificar = !data.verificada;
         div.className = "cardPista";
 
        div.innerHTML =
-"<img src='" + (data.imagen || "") + "' style='width:100%;'>" +
+"<img src='" + (data.imagen || "") + "'>" +
 "<strong>" + (data.nombre || "") + "</strong><br>" +
 "<div class='verificada'>" + verificadaTexto + "</div>" +
 (data.localidad || "") + "<br>" +

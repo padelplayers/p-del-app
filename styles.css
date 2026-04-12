@@ -345,3 +345,10 @@ button[onclick*="mostrar('menu')"]{
   color: green;
   font-weight: bold;
 }
+
+.cardPista img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
