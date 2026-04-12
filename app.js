@@ -547,6 +547,7 @@ const mostrarBotonVerificar = !data.verificada;
        div.innerHTML =
 "<img src='" + (data.imagen || "") + "' style='width:100%;'>" +
 "<strong>" + (data.nombre || "") + "</strong><br>" +
+"<div>" + verificadaTexto + "</div>" +
 (data.localidad || "") + "<br>" +
 (data.tipo || "") + "<br>" +
 "Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "<br>" +
@@ -554,29 +555,23 @@ const mostrarBotonVerificar = !data.verificada;
 (data.precioTarde || 0) + "€ tarde / " +
 (data.precioFestivo || 0) + "€ festivo";
 
-         if (esAdmin) {
+if (esAdmin) {
 
  div.innerHTML +=
-"<div style='margin-top:10px;'>" +
-"<button class='btnEditar' onclick=\"editarPista('" + doc.id + "')\">Editar</button>" +
-"<button class='btnEliminar' onclick=\"eliminarPista('" + doc.id + "')\">Eliminar</button>";
+ "<div style='margin-top:10px;'>" +
+ "<button class='btnEditar' onclick=\"editarPista('" + doc.id + "')\">Editar</button>" +
+ "<button class='btnEliminar' onclick=\"eliminarPista('" + doc.id + "')\">Eliminar</button>";
 
-if (!data.verificada) {
+ if (mostrarBotonVerificar) {
   div.innerHTML +=
   "<button class='btnVerificar' onclick=\"verificarPista('" + doc.id + "')\">Verificar</button>";
+ }
+
+ div.innerHTML += "</div>";
 }
 
-div.innerHTML += "</div>";
-         }
-
-        lista.appendChild(div);
-      });
-
-    }, error => {
-      console.error("Error cargando pistas:", error);
-    });
-
-}
+lista.appendChild(div);
+});
 
 async function subirImagen(ruta, archivo) {
 
@@ -669,4 +664,7 @@ window.eliminarPista = async function(id) {
   await db.collection("pistas").doc(id).delete();
 
   alert("Pista eliminada");
-};
+
+}, error => {
+ console.error(error);
+});
