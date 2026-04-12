@@ -368,12 +368,12 @@ if (btnGuardarPista) {
 
       let urlImagen = "";
 
-      const inputFoto = document.getElementById("inputFoto");
+      const inputFotoPista = document.getElementById("inputFotoPista");
 
-      console.log(inputFoto.files);
+      console.log(inputFotoPista.files);
 
-      if (inputFoto.files.length > 0) {
-        const file = inputFoto.files[0];
+      if (inputFotoPista.files.length > 0) {
+        const file = inputFotoPista.files[0];
         const ruta = "pistas/" + Date.now() + ".jpg";
         urlImagen = await subirImagen(ruta, file);
       }
@@ -489,7 +489,7 @@ if (btnGuardarPista) {
       document.getElementById("lat").value = "";
       document.getElementById("lng").value = "";
       document.getElementById("reserva").value = "";
-      document.getElementById("inputFoto").value = "";
+      document.getElementById("inputFotoPista").value = "";
 
       // RECARGAR LISTA
       cargarPistas();
@@ -614,7 +614,7 @@ document.getElementById("cancelarPista").onclick = () => {
   document.getElementById("lat").value = "";
   document.getElementById("lng").value = "";
   document.getElementById("reserva").value = "";
-  document.getElementById("inputFoto").value = "";
+  document.getElementById("inputFotoPista").value = "";
 
   document.getElementById("formPista").style.display = "none";
   document.getElementById("listaPistas").style.display = "block";
