@@ -415,10 +415,10 @@ if (urlImagen) {
       }
     });
 
-    if (existe) {
-      alert("Esta pista ya existe");
-      return;
-    }
+    if (existe && !window.pistaEditando) {
+    alert("Esta pista ya existe");
+    return;
+}
 
     const datos = {
   nombre: nombre,
