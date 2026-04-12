@@ -554,6 +554,7 @@ const mostrarBotonVerificar = !data.verificada;
 (data.precioManana || 0) + "€ mañana / " +
 (data.precioTarde || 0) + "€ tarde / " +
 (data.precioFestivo || 0) + "€ festivo";
+      
 
 if (esAdmin) {
 
@@ -572,6 +573,7 @@ if (esAdmin) {
 
 lista.appendChild(div);
 });
+    });
 
 async function subirImagen(ruta, archivo) {
 
@@ -664,7 +666,5 @@ window.eliminarPista = async function(id) {
   await db.collection("pistas").doc(id).delete();
 
   alert("Pista eliminada");
-
-}, error => {
- console.error(error);
-});
+};
+}
