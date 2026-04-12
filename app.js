@@ -53,18 +53,7 @@ auth.createUserWithEmailAndPassword(email, pass)
 
 }
 
-function guardarPerfilRegistro(){
-
-  console.log("CLICK GUARDAR PERFIL");
-
-  document.getElementById("msgPerfil").innerText = "";
-
-  const user = auth.currentUser;
-
-  if(!user){
-    document.getElementById("msgPerfil").innerText = "Error de sesión";
-    return;
-  }
+async function guardarPerfilRegistro(){
 
   const nombre = document.getElementById("nombre").value.trim().toLowerCase();
   const sexo = document.getElementById("sexo").value;
@@ -74,58 +63,39 @@ function guardarPerfilRegistro(){
 
   const archivo = document.getElementById("inputFotoPerfil").files[0];
 
-  if(!nombre || !mano || !posicion){
+  if (!nombre || !mano || !posicion) {
     document.getElementById("msgPerfil").innerText = "Completa los campos";
     return;
   }
 
-  if(!nivel){
+  if (!nivel) {
     document.getElementById("msgPerfil").innerText = "Debes elegir o calcular tu nivel";
     return;
   }
 
-  db.collection("usuarios")
-    .where("nombre", "==", nombre)
-    .get()
-    .then(async query=>{
+  let fotoURL = "";
 
-      console.log("Usuarios encontrados:", query.size);
+  // SOLO si hay archivo
+  if (archivo) {
+    try {
+      fotoURL = await subirImagenPerfil(archivo);
+    } catch (e) {
+      console.error("Error subiendo imagen:", e);
+      fotoURL = "";
+    }
+  }
 
-      if(!query.empty){
-        document.getElementById("msgPerfil").innerText = "Nombre ya en uso";
-        return;
-      }
-
-      let fotoDefault = sexo === "hombre" ? "imagen/hombre.jpeg" : "imagen/mujer.jpeg";
-      let urlImagen = fotoDefault;
-
-      if (archivo) {
-        const storageRef = firebase.storage().ref();
-        const ruta = "usuarios/" + user.uid + "/foto.jpg";
-
-        await storageRef.child(ruta).put(archivo);
-        urlImagen = await storageRef.child(ruta).getDownloadURL();
-      }
-
-      await db.collection("usuarios").doc(user.uid).set({
-        nombre: nombre,
-        sexo: sexo,
-        nivel: parseFloat(nivel),
-        mano: mano,
-        posicion: posicion,
-        fotoPerfil: urlImagen,
-        seguidores: [],
-        siguiendo: [],
-        partidos: 0,
-      });
-
-      location.reload();
-
-    })
-    .catch(e=>{
-      console.log(e);
-      document.getElementById("msgPerfil").innerText = "Error";
-    });
+  // Guardado SIEMPRE se ejecuta
+  db.collection("usuarios").doc(auth.currentUser.uid).set({
+    nombre: nombre,
+    sexo: sexo,
+    nivel: nivel,
+    mano: mano,
+    posicion: posicion,
+    foto: fotoURL || "imagen/hombre.jpeg" // o mujer según sexo
+  }).then(() => {
+    mostrar("menu");
+  });
 
 }
 
