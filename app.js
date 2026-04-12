@@ -370,6 +370,8 @@ if (btnGuardarPista) {
 
       const inputFoto = document.getElementById("inputFoto");
 
+      console.log(inputFoto.files);
+
       if (inputFoto.files.length > 0) {
         const file = inputFoto.files[0];
         const ruta = "pistas/" + Date.now() + ".jpg";
