@@ -129,7 +129,10 @@ if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
     document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
     document.getElementById("manoPerfil").innerText = data.mano || "-";
     document.getElementById("posicionPerfil").innerText = data.posicion || "-";
-    document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
+    document.getElementById("fotoPerfil").src =
+  data.fotoPerfil && data.fotoPerfil.startsWith("http")
+    ? data.fotoPerfil
+    : (data.sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg");
 
     document.getElementById("seguidores").innerText =
       Array.isArray(data.seguidores) ? data.seguidores.length : 0;
