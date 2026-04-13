@@ -129,6 +129,7 @@ if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
     document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
     document.getElementById("manoPerfil").innerText = data.mano || "-";
     document.getElementById("posicionPerfil").innerText = data.posicion || "-";
+    console.log("FOTO PERFIL:", data.fotoPerfil);
     document.getElementById("fotoPerfil").src =
   data.fotoPerfil && data.fotoPerfil.startsWith("http")
     ? data.fotoPerfil
