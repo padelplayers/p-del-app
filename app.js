@@ -16,9 +16,9 @@ let esAdmin = false;
 
 let unsubscribePistas = null;
 
-// ======================
+
 // FUNCIONES GLOBALES
-// ======================
+
 
 window.subirImagen = async function(ruta, archivo) {
 
@@ -44,7 +44,6 @@ async function borrarImagen(url) {
 
 }
 
-// ======================
 
 auth.onAuthStateChanged(async user => {
   if (user) {
@@ -93,9 +92,9 @@ auth.createUserWithEmailAndPassword(email, pass)
 
 }
 
-// ======================
+
 // REGISTRO PERFIL
-// ======================
+
 async function guardarPerfilRegistro(){
 
   const nombre = document.getElementById("nombre").value.trim().toLowerCase();
@@ -290,9 +289,9 @@ function crearPartida(jugadores) {
   });
 }
 
-// ======================
+
 // PISTAS (SIN CAMBIOS)
-// ======================
+
 
 const btnNuevaPista = document.getElementById("btnNuevaPista");
 const formPista = document.getElementById("formPista");
