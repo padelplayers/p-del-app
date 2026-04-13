@@ -384,6 +384,22 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDhKVAw6952bEITC4pjoKbEMRFEQhcqgYU",
+  authDomain: "padel-app-9e144.firebaseapp.com",
+  projectId: "padel-app-9e144",
+  storageBucket: "padel-app-9e144.firebasestorage.app",
+  messagingSenderId: "849083376311",
+  appId: "1:849083376311:web:40e8f10ac167745e806332"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+</script>
+
 <script src="perfil.js"></script>
 <script src="jugadores.js"></script>
 <script src="app.js"></script>
