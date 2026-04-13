@@ -131,14 +131,14 @@ async function guardarPerfilRegistro(){
   let fotoURL = sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
 
   if (archivo) {
-    try {
-      const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
-      fotoURL = await subirImagen(ruta, archivo);
-      console.log("Imagen subida:", fotoURL);
-    } catch (e) {
-      console.error("Error subiendo imagen:", e);
-    }
-  }
+  const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
+
+  subirImagen(ruta, archivo).then(url => {
+    db.collection("usuarios").doc(auth.currentUser.uid).update({
+      fotoPerfil: url
+    });
+  });
+}
 
   await db.collection("usuarios").doc(auth.currentUser.uid).set({
     nombre: nombre,
@@ -228,10 +228,10 @@ function cambiarFoto(){
   document.getElementById("inputFotoEditar").click();
 }
 
-const inputFotoGlobal = document.getElementById("inputFoto");
-if (inputFotoGlobal) {
+const inputFotoGlobal = document.getElementById("inputFotoEditar");
 
-document.getElementById("inputFoto").addEventListener("change", async function(e){
+if (inputFotoGlobal) {
+  inputFotoGlobal.addEventListener("change", async (e) => {
 
   const file = e.target.files[0];
   if (!file) return;
