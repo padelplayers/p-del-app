@@ -1,3 +1,14 @@
+window.subirImagen = async function(ruta, archivo) {
+
+  const ref = firebase.storage().ref().child(ruta);
+
+  await ref.put(archivo);
+
+  const url = await ref.getDownloadURL();
+
+  return url;
+}
+
 let archivo = null;
 let otroUid = null;
 
@@ -63,11 +74,15 @@ async function guardarPerfilRegistro(){
 
   const archivo = document.getElementById("inputFoto").files[0];
 
-  let fotoURL = "imagen/hombre.jpeg";
+  let fotoURL = sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
 
 if (archivo) {
-  const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
-  fotoURL = await subirImagen(ruta, archivo);
+  try {
+    const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
+    fotoURL = await subirImagen(ruta, archivo);
+  } catch (e) {
+    console.error("Error subiendo imagen:", e);
+  }
 }
 
   if (!nombre || !mano || !posicion) {
@@ -513,17 +528,6 @@ lista.appendChild(div);
 });
     });
     
-
-window.subirImagen = async function(ruta, archivo) {
-
-  const ref = firebase.storage().ref().child(ruta);
-
-  await ref.put(archivo);
-
-  const url = await ref.getDownloadURL();
-
-  return url;
-}
 
 async function borrarImagen(url) {
 
