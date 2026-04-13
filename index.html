@@ -162,10 +162,128 @@
 </div>
 
 <!-- TEST NIVEL -->
+
 <div id="testNivel" class="container">
+
 <h3>Test de nivel</h3>
-<button class="btnBlue" onclick="calcularNivel()">Calcular nivel</button>
+
+<div class="pregunta">
+
+¿Hace cuánto juegas?
+
+<select id="p1">
+<option value="0">Nunca</option>
+<option value="1">Menos de 1 año</option>
+<option value="2">1-3 años</option>
+<option value="3">3-6 años</option>
+<option value="4">Más de 6 años</option>
+</select>
+
 </div>
+
+<div class="pregunta">
+
+¿Con qué frecuencia juegas?
+
+<select id="p2">
+<option value="0">Muy poco</option>
+<option value="1">1 vez al mes</option>
+<option value="2">2-3 al mes</option>
+<option value="3">1 por semana</option>
+<option value="4">2 o más por semana</option>
+</select>
+
+</div>
+
+<div class="pregunta">
+
+Control de bola
+
+<select id="p3">
+<option value="0">Muchos errores</option>
+<option value="1">Peloteos cortos</option>
+<option value="2">Peloteos medios</option>
+<option value="3">Buen control</option>
+<option value="4">Control alto</option>
+</select>
+
+</div>
+
+<div class="pregunta">
+
+Uso de paredes
+
+<select id="p4">
+<option value="0">No</option>
+<option value="1">A veces</option>
+<option value="2">Con seguridad</option>
+<option value="3">Estratégico</option>
+<option value="4">Dominio total</option>
+</select>
+
+</div>
+
+<div class="pregunta">
+
+Bandeja o víbora
+
+<select id="p5">
+<option value="0">No</option>
+<option value="1">Intento bandeja</option>
+<option value="2">Bandeja estable</option>
+<option value="3">Bandeja y víbora</option>
+<option value="4">Control ofensivo</option>
+</select>
+
+</div>
+
+<div class="pregunta">
+
+Subida a red
+
+<select id="p6">
+<option value="0">No</option>
+<option value="1">A veces</option>
+<option value="2">Normalmente</option>
+<option value="3">Buena lectura</option>
+<option value="4">Lectura avanzada</option>
+</select>
+
+</div>
+
+<div class="pregunta">
+
+Defensa
+
+<select id="p7">
+<option value="0">Pierdo rápido</option>
+<option value="1">Devuelvo algunas</option>
+<option value="2">Defensa estable</option>
+<option value="3">Uso paredes</option>
+<option value="4">Defensa avanzada</option>
+</select>
+
+</div>
+
+<div class="pregunta">
+
+Juego en red
+
+<select id="p8">
+<option value="0">Evito subir</option>
+<option value="1">Subo pero fallo</option>
+<option value="2">Voleas correctas</option>
+<option value="3">Voleas ofensivas</option>
+<option value="4">Cierro puntos</option>
+</select>
+
+</div>
+
+<button class="btnBlue" onclick="calcularNivel()">Calcular nivel</button>
+
+
+</div>
+
 
 <!-- EDITAR PERFIL -->
 <div id="perfilEditar" class="container" style="display:none;">
