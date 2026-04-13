@@ -210,7 +210,8 @@ auth.onAuthStateChanged(user => {
         mostrar("menu");
 
       } else {
-        mostrar("perfilCompletar");
+        avisoNivelMostrado = false;
+      mostrar("perfilCompletar");
       }
 
     });
