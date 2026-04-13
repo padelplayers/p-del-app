@@ -593,3 +593,16 @@ window.eliminarPista = async function(id) {
   alert("Pista eliminada");
 };
 }
+
+document.addEventListener("change", function(e){
+
+  if (e.target && e.target.id === "nivelManual") {
+
+    if (mostrarAvisoNivel()) {
+      e.target.selectedIndex = 0;
+      return;
+    }
+
+  }
+
+});
