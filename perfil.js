@@ -171,6 +171,22 @@ function editarPerfil(){
   const user = auth.currentUser;
   if (!user) return;
 
+  const imgEditar = document.getElementById("fotoPerfilEditar");
+
+if (imgEditar && auth.currentUser) {
+  db.collection("usuarios").doc(auth.currentUser.uid).get().then(doc => {
+    if (doc.exists) {
+      const data = doc.data();
+
+      let defaultImg = data.sexo === "mujer"
+        ? "imagen/mujer.jpeg"
+        : "imagen/hombre.jpeg";
+
+      imgEditar.src = (data.fotoPerfil || defaultImg) + "?t=" + Date.now();
+    }
+  });
+}
+
   mostrar("perfilEditar");
 
   const manoEl = document.getElementById("mano");
