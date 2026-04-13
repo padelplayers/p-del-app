@@ -61,9 +61,10 @@ async function guardarPerfilRegistro(){
   const mano = document.getElementById("mano").value;
   const posicion = document.getElementById("posicion").value;
 
-  const archivo = document.getElementById("inputFoto").files[0];
+  const inputFoto = document.getElementById("inputFoto");
+const archivo = inputFoto ? inputFoto.files[0] : null;
 
-  let fotoURL = "imagen/hombre.jpeg";
+  let fotoURL = sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
 
 if (archivo) {
   const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
@@ -163,6 +164,9 @@ function cambiarFoto(){
   document.getElementById("inputFoto").click();
 }
 
+const inputFotoGlobal = document.getElementById("inputFoto");
+if (inputFotoGlobal) {
+
 document.getElementById("inputFoto").addEventListener("change", async function(e){
 
   const file = e.target.files[0];
@@ -199,6 +203,7 @@ document.getElementById("inputFoto").addEventListener("change", async function(e
   });
 
 });
+}
 
 function borrarImagen(url) {
   try {

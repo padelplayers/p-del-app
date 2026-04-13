@@ -314,11 +314,11 @@ Juego en red
 
   <img id="fotoPerfilEditar" style="width:100px; height:100px; border-radius:50%; display:block; margin-bottom:10px;">
 
-  <button id="btnCambiarFoto" class="btnYellow" onclick="cambiarFoto()" style="display:none;">
+  <button id="btnCambiarFoto" class="btnYellow" onclick="document.getElementById('inputFotoEditar').click()" style="display:none;">
   Cambiar foto
 </button>
 
-<input type="file" id="inputFoto" accept="image/*" style="display:none;">
+<input type="file" id="inputFotoEditar" accept="image/*" style="display:none;">
 
   <h3>Editar perfil</h3>
 
@@ -520,23 +520,7 @@ Juego en red
 
 </div>
 
-<div id="perfil" class="container" style="display:none">
 
-  <h3>Perfil</h3>
-
-  <img id="fotoPerfil" width="120" style="border-radius:50%">
-
-  <br><br>
-
-  <button onclick="cambiarFoto()">Cambiar foto</button>
-
-  <input type="file" id="inputFoto" style="display:none" accept="image/*">
-
-  <br><br>
-
-  <button onclick="mostrar('menu')">Volver</button>
-
-</div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
