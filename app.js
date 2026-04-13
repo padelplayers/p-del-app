@@ -594,12 +594,12 @@ window.eliminarPista = async function(id) {
 };
 }
 
-document.addEventListener("change", function(e){
+document.addEventListener("mousedown", function(e){
 
   if (e.target && e.target.id === "nivelManual") {
 
     if (mostrarAvisoNivel()) {
-      e.target.selectedIndex = 0;
+      e.preventDefault();
       return;
     }
 
