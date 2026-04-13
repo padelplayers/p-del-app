@@ -9,6 +9,17 @@ window.subirImagen = async function(ruta, archivo) {
   return url;
 }
 
+let avisoNivelMostrado = false;
+
+function mostrarAvisoNivel(){
+  if (!avisoNivelMostrado) {
+    avisoNivelMostrado = true;
+    alert("Elige bien tu nivel. No podrás cambiarlo después.");
+    return true;
+  }
+  return false;
+}
+
 let archivo = null;
 let otroUid = null;
 
@@ -581,17 +592,3 @@ window.eliminarPista = async function(id) {
   alert("Pista eliminada");
 };
 }
-
-
-let avisoNivelMostrado = false;
-
-document.addEventListener("click", function(e) {
-
-  if (e.target && e.target.closest("#nivelManual") && !avisoNivelMostrado) {
-    avisoNivelMostrado = true;
-    alert("Elige bien tu nivel. No podrás cambiarlo después.");
-  }
-
-});
-
-
