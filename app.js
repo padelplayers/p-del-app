@@ -106,7 +106,6 @@ async function guardarPerfilRegistro(){
   const inputFoto = document.getElementById("inputFoto");
   const archivo = inputFoto ? inputFoto.files[0] : null;
 
-  // VALIDACIÓN
   if (!nombre || !mano || !posicion) {
     document.getElementById("msgPerfil").innerText = "Completa los campos";
     return;
@@ -117,10 +116,8 @@ async function guardarPerfilRegistro(){
     return;
   }
 
-  // FOTO POR DEFECTO
   let fotoURL = sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
 
-  // SUBIDA REAL
   if (archivo) {
     try {
       const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
@@ -131,7 +128,6 @@ async function guardarPerfilRegistro(){
     }
   }
 
-  // GUARDADO COMPLETO
   await db.collection("usuarios").doc(auth.currentUser.uid).set({
     nombre: nombre,
     sexo: sexo,
@@ -140,7 +136,7 @@ async function guardarPerfilRegistro(){
     posicion: posicion,
     fotoPerfil: fotoURL,
 
-    // CAMPOS BASE
+    // estructura base obligatoria
     partidos: 0,
     seguidores: [],
     siguiendo: [],
