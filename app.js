@@ -103,20 +103,10 @@ async function guardarPerfilRegistro(){
   const mano = document.getElementById("mano").value;
   const posicion = document.getElementById("posicion").value;
 
-const inputFoto = document.getElementById("inputFoto");
-const archivo = inputFoto ? inputFoto.files[0] : null;
+  const inputFoto = document.getElementById("inputFoto");
+  const archivo = inputFoto ? inputFoto.files[0] : null;
 
-let fotoURL = sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
-
-if (archivo) {
-  try {
-    const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
-    fotoURL = await subirImagen(ruta, archivo);
-  } catch (e) {
-    console.error("Error subiendo imagen:", e);
-  }
-}
-
+  // VALIDACIÓN
   if (!nombre || !mano || !posicion) {
     document.getElementById("msgPerfil").innerText = "Completa los campos";
     return;
@@ -127,21 +117,36 @@ if (archivo) {
     return;
   }
 
+  // FOTO POR DEFECTO
+  let fotoURL = sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
 
-
+  // SUBIDA REAL
   if (archivo) {
-    const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
-    fotoURL = await subirImagen(ruta, archivo);
+    try {
+      const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
+      fotoURL = await subirImagen(ruta, archivo);
+      console.log("Imagen subida:", fotoURL);
+    } catch (e) {
+      console.error("Error subiendo imagen:", e);
+    }
   }
 
+  // GUARDADO COMPLETO
   await db.collection("usuarios").doc(auth.currentUser.uid).set({
     nombre: nombre,
     sexo: sexo,
     nivel: nivel,
     mano: mano,
     posicion: posicion,
-    fotoPerfil: fotoURL
-  });
+    fotoPerfil: fotoURL,
+
+    // CAMPOS BASE
+    partidos: 0,
+    seguidores: [],
+    siguiendo: [],
+    admin: false
+
+  }, { merge: true });
 
   mostrar("menu");
 }
