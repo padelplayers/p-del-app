@@ -114,7 +114,7 @@ async function guardarPerfilRegistro(){
   const mano = document.getElementById("mano").value;
   const posicion = document.getElementById("posicion").value;
 
-  const inputFoto = document.getElementById("inputFoto");
+  const inputFoto = document.getElementById("inputFotoRegistro");
   const archivo = inputFoto ? inputFoto.files[0] : null;
   console.log("ARCHIVO:", archivo);
 
