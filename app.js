@@ -116,6 +116,7 @@ async function guardarPerfilRegistro(){
 
   const inputFoto = document.getElementById("inputFoto");
   const archivo = inputFoto ? inputFoto.files[0] : null;
+  console.log("ARCHIVO:", archivo);
 
   if (!nombre || !mano || !posicion) {
     document.getElementById("msgPerfil").innerText = "Completa los campos";
