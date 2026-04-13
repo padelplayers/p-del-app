@@ -14,6 +14,7 @@
 <div class="title">Pádel Players Morvedre</div>
 </div>
 
+<!-- PERFIL -->
 <div id="perfil" class="container" style="display:none;">
 
   <div class="perfil-header">
@@ -24,66 +25,48 @@
       <div class="perfil-info">
         <div style="display:flex; flex-direction:column; gap:5px;">
 
-  <div style="display:flex; gap:10px; align-items:center;">
-    <div id="nombrePerfil" class="nombre"></div>
-    <div>· Mano: <span id="manoPerfil"></span></div>
-  </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <div id="nombrePerfil" class="nombre"></div>
+            <div>· Mano: <span id="manoPerfil"></span></div>
+          </div>
 
-  <div style="display:flex; gap:10px; align-items:center;">
-    <div id="nivelPerfil" class="puntos"></div>
-    <div>· Posición: <span id="posicionPerfil"></span></div>
-  </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <div id="nivelPerfil" class="puntos"></div>
+            <div>· Posición: <span id="posicionPerfil"></span></div>
+          </div>
 
-</div>
-
-       
+        </div>
       </div>
-
     </div>
 
     <button onclick="mostrar('menu')">Volver</button>
 
-
-    <!-- STATS -->
     <div class="perfil-stats">
-
       <div class="stat">
         <div id="partidos">0</div>
         <span>Partidos</span>
       </div>
-
       <div class="stat">
         <div id="seguidores">0</div>
         <span>Seguidores</span>
       </div>
-
       <div class="stat">
         <div id="seguidos">0</div>
         <span>Seguidos</span>
       </div>
-
     </div>
 
-    <!-- BOTONES -->
     <div class="perfil-botones">
-
       <button id="btnEditar" onclick="editarPerfil()">Editar perfil</button>
-      <button id="btnSeguir" class="btnYellow" style="display:none;">
-  Seguir
-</button>
-     
+      <button id="btnSeguir" class="btnYellow" style="display:none;">Seguir</button>
       <button id="btnEliminar" class="rojo" onclick="eliminarPerfil()">Eliminar perfil</button>
-
     </div>
 
   </div>
 
 </div>
 
-
-
 <!-- LOGIN -->
-
 <div id="login" class="container">
 
 <label>Email</label>
@@ -99,8 +82,7 @@
 
 </div>
 
-<!-- PERFIL -->
-
+<!-- PERFIL COMPLETAR -->
 <div id="perfilCompletar" class="container">
 
 <h3>Completar perfil</h3>
@@ -108,14 +90,13 @@
 <p class="small">Los campos con <span class="req">*</span> son obligatorios</p>
 
 <label>Foto</label>
-<input type="file" id="inputFoto" accept="image/*">
+<input type="file" id="inputFotoRegistro" accept="image/*">
 
 <label>Nombre <span class="req">*</span></label>
 <input id="nombre">
 <div id="msgNombre" class="error"></div>
 
 <label>Sexo <span class="req">*</span></label>
-
 <select id="sexo">
 <option value="">Seleccionar</option>
 <option value="hombre">Hombre</option>
@@ -125,8 +106,6 @@
 <label>Nivel <span class="req">*</span></label>
 
 <select id="nivelManual">
-
-
 <option value="">Elegir</option>
 <option>0.5</option>
 <option>0.75</option>
@@ -159,21 +138,16 @@
 
 <button class="btnYellow" id="btnTestNivel" onclick="abrirTest()">Descubrir mi nivel</button>
 
-
-
-
 <div id="nivelResultado" class="ok"></div>
 
-<label>Mano <span style="color:red">*</span></label>
-
+<label>Mano <span class="req">*</span></label>
 <select id="mano">
 <option value="">Seleccionar</option>
 <option value="derecha">Derecha</option>
 <option value="izquierda">Izquierda</option>
 </select>
 
-<label>Posición <span style="color:red">*</span></label>
-
+<label>Posición <span class="req">*</span></label>
 <select id="posicion">
 <option value="">Seleccionar</option>
 <option value="drive">Drive</option>
@@ -188,171 +162,54 @@
 </div>
 
 <!-- TEST NIVEL -->
-
 <div id="testNivel" class="container">
-
 <h3>Test de nivel</h3>
-
-<div class="pregunta">
-
-¿Hace cuánto juegas?
-
-<select id="p1">
-<option value="0">Nunca</option>
-<option value="1">Menos de 1 año</option>
-<option value="2">1-3 años</option>
-<option value="3">3-6 años</option>
-<option value="4">Más de 6 años</option>
-</select>
-
-</div>
-
-<div class="pregunta">
-
-¿Con qué frecuencia juegas?
-
-<select id="p2">
-<option value="0">Muy poco</option>
-<option value="1">1 vez al mes</option>
-<option value="2">2-3 al mes</option>
-<option value="3">1 por semana</option>
-<option value="4">2 o más por semana</option>
-</select>
-
-</div>
-
-<div class="pregunta">
-
-Control de bola
-
-<select id="p3">
-<option value="0">Muchos errores</option>
-<option value="1">Peloteos cortos</option>
-<option value="2">Peloteos medios</option>
-<option value="3">Buen control</option>
-<option value="4">Control alto</option>
-</select>
-
-</div>
-
-<div class="pregunta">
-
-Uso de paredes
-
-<select id="p4">
-<option value="0">No</option>
-<option value="1">A veces</option>
-<option value="2">Con seguridad</option>
-<option value="3">Estratégico</option>
-<option value="4">Dominio total</option>
-</select>
-
-</div>
-
-<div class="pregunta">
-
-Bandeja o víbora
-
-<select id="p5">
-<option value="0">No</option>
-<option value="1">Intento bandeja</option>
-<option value="2">Bandeja estable</option>
-<option value="3">Bandeja y víbora</option>
-<option value="4">Control ofensivo</option>
-</select>
-
-</div>
-
-<div class="pregunta">
-
-Subida a red
-
-<select id="p6">
-<option value="0">No</option>
-<option value="1">A veces</option>
-<option value="2">Normalmente</option>
-<option value="3">Buena lectura</option>
-<option value="4">Lectura avanzada</option>
-</select>
-
-</div>
-
-<div class="pregunta">
-
-Defensa
-
-<select id="p7">
-<option value="0">Pierdo rápido</option>
-<option value="1">Devuelvo algunas</option>
-<option value="2">Defensa estable</option>
-<option value="3">Uso paredes</option>
-<option value="4">Defensa avanzada</option>
-</select>
-
-</div>
-
-<div class="pregunta">
-
-Juego en red
-
-<select id="p8">
-<option value="0">Evito subir</option>
-<option value="1">Subo pero fallo</option>
-<option value="2">Voleas correctas</option>
-<option value="3">Voleas ofensivas</option>
-<option value="4">Cierro puntos</option>
-</select>
-
-</div>
-
 <button class="btnBlue" onclick="calcularNivel()">Calcular nivel</button>
-
-
 </div>
 
+<!-- EDITAR PERFIL -->
 <div id="perfilEditar" class="container" style="display:none;">
 
-  <img id="fotoPerfilEditar" style="width:100px; height:100px; border-radius:50%; display:block; margin-bottom:10px;">
+  <img id="fotoPerfilEditar" style="width:100px; height:100px; border-radius:50%; margin-bottom:10px;">
 
-  <button id="btnCambiarFoto" class="btnYellow" onclick="cambiarFoto()" style="display:none;">
+<button id="btnCambiarFoto" class="btnYellow" onclick="document.getElementById('inputFotoEditar').click()">
   Cambiar foto
 </button>
 
-<input type="file" id="inputFoto" accept="image/*" style="display:none;">
+<input type="file" id="inputFotoEditar" accept="image/*" style="display:none;">
 
   <h3>Editar perfil</h3>
 
   <label>Mano</label>
-<select id="manoEditar">
-  <option value="">Seleccionar</option>
-  <option value="derecha">Derecha</option>
-  <option value="izquierda">Izquierda</option>
-</select>
+  <select id="manoEditar">
+    <option value="">Seleccionar</option>
+    <option value="derecha">Derecha</option>
+    <option value="izquierda">Izquierda</option>
+  </select>
 
-<label>Posición</label>
-<select id="posicionEditar">
-  <option value="">Seleccionar</option>
-  <option value="drive">Drive</option>
-  <option value="reves">Revés</option>
-  <option value="cualquiera">Cualquiera</option>
-</select>
- <button class="btnGuardar" onclick="guardarPerfil()">Guardar</button>
-<button class="btnCancelar" onclick="mostrar('perfil')">Cancelar</button>
+  <label>Posición</label>
+  <select id="posicionEditar">
+    <option value="">Seleccionar</option>
+    <option value="drive">Drive</option>
+    <option value="reves">Revés</option>
+    <option value="cualquiera">Cualquiera</option>
+  </select>
+
+  <button class="btnGuardar" onclick="guardarPerfil()">Guardar</button>
+  <button class="btnCancelar" onclick="mostrar('perfil')">Cancelar</button>
+
 </div>
 
 <!-- MENU -->
-
 <div id="menu" class="container">
 
 <h3 id="saludo"></h3>
 
 <button class="menuButton" onclick="mostrar('crearPista')">Pistas</button>
 <button class="menuButton">Partidas</button>
-<button class="menuButton" onclick="abrirJugadores()">jugadores</button>
+<button class="menuButton" onclick="abrirJugadores()">Jugadores</button>
 <button class="menuButton">Clasificación</button>
 <button class="menuButton" onclick="irPerfil()">Perfil</button>
-<button class="menuButton">Tutoriales</button>
-<button class="menuButton">Media Center</button>
 
 <button class="logout" onclick="logout()">Cerrar sesión</button>
 
@@ -520,92 +377,14 @@ Juego en red
 
 </div>
 
-<div id="perfil" class="container" style="display:none">
 
-  <h3>Perfil</h3>
-
-  <img id="fotoPerfil" width="120" style="border-radius:50%">
-
-  <br><br>
-
-  <button onclick="cambiarFoto()">Cambiar foto</button>
-
-  <input type="file" id="inputFoto" style="display:none" accept="image/*">
-
-  <br><br>
-
-  <button onclick="mostrar('menu')">Volver</button>
-
-</div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
 <script>
-
-function mostrar(p){
-
-  document.getElementById("login").style.display="none";
-  document.getElementById("perfilCompletar").style.display="none";
-  document.getElementById("menu").style.display="none";
-  document.getElementById("testNivel").style.display="none";
-
-  document.getElementById(p).style.display="block";
-
-  if (p === "perfil") {
-    const user = auth.currentUser;
-    if (user && typeof verPerfil === "function") {
-      verPerfil(user.uid);
-    }
-  }
-
-}
-
-function abrirTest(){mostrar("testNivel")}
-function cerrarTest(){mostrar("perfilCompletar")}
-
-function calcularNivel(){
-
-let puntos=
-parseInt(p1.value)+
-parseInt(p2.value)+
-parseInt(p3.value)+
-parseInt(p4.value)+
-parseInt(p5.value)+
-parseInt(p6.value)+
-parseInt(p7.value)+
-parseInt(p8.value);
-
-let nivel = (puntos/32)*7;
-nivel = parseFloat(nivel.toFixed(2));
-
-const niveles = [0.5,0.75,1,1.25,1.5,1.75,2,2.25,2.5,2.75,3,3.25,3.5,3.75,4,4.25,4.5];
-
-let masCercano = niveles[0];
-let diferencia = Math.abs(nivel - masCercano);
-
-for (let i = 1; i < niveles.length; i++) {
-  const diff = Math.abs(nivel - niveles[i]);
-  if (diff < diferencia) {
-    diferencia = diff;
-    masCercano = niveles[i];
-  }
-}
-
-document.getElementById("nivelManual").value = masCercano;
-document.getElementById("nivelResultado").innerText="Nivel sugerido: "+nivel;
-
-mostrar("perfilCompletar");
-document.getElementById("testNivel").style.display = "none";
-
-
-}
-
-
-
-/* FIREBASE */
-
 const firebaseConfig = {
   apiKey: "AIzaSyDhKVAw6952bEITC4pjoKbEMRFEQhcqgYU",
   authDomain: "padel-app-9e144.firebaseapp.com",
@@ -619,17 +398,11 @@ firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.firestore();
-
 </script>
 
-
 <script src="perfil.js"></script>
-
 <script src="jugadores.js"></script>
-
 <script src="app.js"></script>
-
 
 </body>
 </html>
-

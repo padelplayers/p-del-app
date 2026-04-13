@@ -16,6 +16,36 @@ let esAdmin = false;
 
 let unsubscribePistas = null;
 
+// ======================
+// FUNCIONES GLOBALES
+// ======================
+
+window.subirImagen = async function(ruta, archivo) {
+
+  const ref = firebase.storage().ref().child(ruta);
+
+  await ref.put(archivo);
+
+  const url = await ref.getDownloadURL();
+
+  return url;
+}
+
+async function borrarImagen(url) {
+
+  if (!url) return;
+
+  try {
+    const ref = firebase.storage().refFromURL(url);
+    await ref.delete();
+  } catch (e) {
+    console.log("No se pudo borrar");
+  }
+
+}
+
+// ======================
+
 auth.onAuthStateChanged(async user => {
   if (user) {
 
@@ -30,7 +60,6 @@ auth.onAuthStateChanged(async user => {
     mostrar("login");
   }
 });
-
 
 function normalizarTexto(texto){
   return texto
@@ -64,6 +93,9 @@ auth.createUserWithEmailAndPassword(email, pass)
 
 }
 
+// ======================
+// REGISTRO PERFIL
+// ======================
 async function guardarPerfilRegistro(){
 
   const nombre = document.getElementById("nombre").value.trim().toLowerCase();
@@ -72,9 +104,10 @@ async function guardarPerfilRegistro(){
   const mano = document.getElementById("mano").value;
   const posicion = document.getElementById("posicion").value;
 
-  const archivo = document.getElementById("inputFoto").files[0];
+const inputFoto = document.getElementById("inputFoto");
+const archivo = inputFoto ? inputFoto.files[0] : null;
 
-  let fotoURL = sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
+let fotoURL = sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
 
 if (archivo) {
   try {
@@ -96,19 +129,24 @@ if (archivo) {
   }
 
 
-  // Guardado SIEMPRE se ejecuta
-  db.collection("usuarios").doc(auth.currentUser.uid).set({
+
+  if (archivo) {
+    const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
+    fotoURL = await subirImagen(ruta, archivo);
+  }
+
+  await db.collection("usuarios").doc(auth.currentUser.uid).set({
     nombre: nombre,
     sexo: sexo,
     nivel: nivel,
     mano: mano,
     posicion: posicion,
-    foto: fotoURL || "imagen/hombre.jpeg" // o mujer según sexo
-  }).then(() => {
-    mostrar("menu");
+    fotoPerfil: fotoURL
   });
 
+  mostrar("menu");
 }
+// ======================
 
 function login(){
 
@@ -152,12 +190,11 @@ auth.onAuthStateChanged(user => {
         document.getElementById("saludo").innerText =
           "Hola " + data.nombre;
 
-          document.getElementById("seguidores").innerText =
-  Array.isArray(data.seguidores) ? data.seguidores.length : 0;
+        document.getElementById("seguidores").innerText =
+          Array.isArray(data.seguidores) ? data.seguidores.length : 0;
 
-document.getElementById("seguidos").innerText =
-  Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
-
+        document.getElementById("seguidos").innerText =
+          Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
 
         mostrar("menu");
 
@@ -175,8 +212,11 @@ document.getElementById("seguidos").innerText =
 });
 
 function cambiarFoto(){
-  document.getElementById("inputFoto").click();
+  document.getElementById("inputFotoEditar").click();
 }
+
+const inputFotoGlobal = document.getElementById("inputFoto");
+if (inputFotoGlobal) {
 
 document.getElementById("inputFoto").addEventListener("change", async function(e){
 
@@ -186,7 +226,6 @@ document.getElementById("inputFoto").addEventListener("change", async function(e
   const user = auth.currentUser;
   if (!user) return;
 
-  // PREVISUALIZACIÓN INSTANTÁNEA
   const previewURL = URL.createObjectURL(file);
 
   const imgEditar = document.getElementById("fotoPerfilEditar");
@@ -199,49 +238,27 @@ document.getElementById("inputFoto").addEventListener("change", async function(e
   const doc = await docRef.get();
   const data = doc.data();
 
-  // borrar anterior
-  if (data && data.fotoPerfil) {
+  if (data && data.fotoPerfil && data.fotoPerfil.includes("firebasestorage")) {
     await borrarImagen(data.fotoPerfil);
   }
 
-  // subir nueva
   const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
   const url = await subirImagen(ruta, file);
 
-  // guardar en BD
   await docRef.update({
     fotoPerfil: url
   });
 
 });
-
-function borrarImagen(url) {
-  try {
-    const storage = firebase.storage();
-
-    // convertir URL → ruta válida de Firebase
-   if (!url || !url.includes("firebasestorage")) return;
-
-const ruta = decodeURIComponent(
-  url.split("/o/")[1].split("?")[0]
-);
-
-return storage.ref(ruta).delete();
-
-  } catch (error) {
-    console.error("Error borrando imagen:", error);
-  }
 }
+
+// ======================
 
 function mostrar(seccion){
 
-  console.log("SECCION:", seccion);
-
-  // ocultar botón cambiar foto siempre al cambiar de pantalla
   const btnFoto = document.getElementById("btnCambiarFoto");
   if (btnFoto) btnFoto.style.display = "none";
 
-  // ocultar TODAS las secciones
   document.getElementById("login").style.display = "none";
   document.getElementById("menu").style.display = "none";
   document.getElementById("perfilCompletar").style.display = "none";
@@ -252,23 +269,13 @@ function mostrar(seccion){
   document.getElementById("testNivel") && (document.getElementById("testNivel").style.display = "none");
   document.getElementById("crearPista").style.display = "none";
 
+  document.getElementById(seccion).style.display = "block";
 
-  // mostrar sección
-  if(seccion === "perfil"){
-    document.getElementById("perfil").style.display = "block";
-  }else{
-    document.getElementById(seccion).style.display = "block";
-  }
-
-  // cargar pistas SOLO cuando toca
   if (seccion === "crearPista") {
     cargarPistas();
   }
 
-
 }
-
-
 
 function abrirTest(){
   alert("Elige bien tu nivel. No podrás cambiarlo después.");
@@ -277,11 +284,15 @@ function abrirTest(){
 
 function crearPartida(jugadores) {
   return db.collection("partidas").add({
-    jugadores: jugadores, // array de uid
+    jugadores: jugadores,
     resultado: null,
     fecha: new Date()
   });
 }
+
+// ======================
+// PISTAS (SIN CAMBIOS)
+// ======================
 
 const btnNuevaPista = document.getElementById("btnNuevaPista");
 const formPista = document.getElementById("formPista");
@@ -289,14 +300,13 @@ const btnGuardarPista = document.getElementById("guardarPista");
 
 if (btnNuevaPista) {
   btnNuevaPista.onclick = () => {
-  formPista.style.display = "block";
+    formPista.style.display = "block";
+    document.getElementById("listaPistas").style.display = "none";
+    document.getElementById("btnNuevaPista").style.display = "none";
 
-  document.getElementById("listaPistas").style.display = "none";
-  document.getElementById("btnNuevaPista").style.display = "none";
-
-  const btnVolver = document.getElementById("btnVolverPistas");
-if (btnVolver) btnVolver.style.display = "none";
-};
+    const btnVolver = document.getElementById("btnVolverPistas");
+    if (btnVolver) btnVolver.style.display = "none";
+  };
 }
 
 if (btnGuardarPista) {
@@ -323,8 +333,6 @@ if (btnGuardarPista) {
 
       const inputFotoPista = document.getElementById("inputFotoPista");
 
-      console.log(inputFotoPista.files);
-
       if (inputFotoPista.files.length > 0) {
         const file = inputFotoPista.files[0];
         const ruta = "pistas/" + Date.now() + ".jpg";
@@ -332,12 +340,11 @@ if (btnGuardarPista) {
       }
 
       if (!urlImagen && window.pistaEditando) {
-  const doc = await db.collection("pistas").doc(window.pistaEditando).get();
-  const dataActual = doc.data();
-  urlImagen = dataActual.imagen || "";
-}
+        const doc = await db.collection("pistas").doc(window.pistaEditando).get();
+        const dataActual = doc.data();
+        urlImagen = dataActual.imagen || "";
+      }
 
-      // VALIDACIÓN CORRECTA (faltaban ||)
       if (
         !nombre.trim() ||
         !localidad ||
@@ -352,14 +359,6 @@ if (btnGuardarPista) {
         !reserva
       ) {
         alert("Todos los campos son obligatorios");
-
-        document.getElementById("formPista").style.display = "block";
-        document.getElementById("listaPistas").style.display = "none";
-        document.getElementById("btnNuevaPista").style.display = "none";
-
-        const btnVolver = document.getElementById("btnVolverPistas");
-        if (btnVolver) btnVolver.style.display = "none";
-
         return;
       }
 
@@ -392,27 +391,22 @@ if (btnGuardarPista) {
         localidadNorm: localidadNorm,
         direccion: document.getElementById("direccionPista").value,
         tipo: tipo,
-
         indoor: Number(indoor),
         outdoor: Number(outdoor),
-
         precioManana: precioManana,
         precioTarde: precioTarde,
         precioFestivo: precioFestivo,
-
         lat: Number(lat),
         lng: Number(lng),
-
         reserva: reserva,
         creadaPor: auth.currentUser.uid
       };
 
       if (urlImagen) {
-  datos.imagen = urlImagen;
-}
+        datos.imagen = urlImagen;
+      }
 
       datos.verificada = esAdmin === true;
-      
 
       if (window.pistaEditando) {
         await db.collection("pistas").doc(window.pistaEditando).update({
@@ -428,38 +422,14 @@ if (btnGuardarPista) {
       }
 
       alert("Pista guardada");
-
-      // LIMPIAR FORM
-      document.getElementById("nombrePista").value = "";
-      document.getElementById("localidadPista").value = "";
-      document.getElementById("direccionPista").value = "";
-      document.getElementById("tipoPista").value = "";
-      document.getElementById("indoor").value = "";
-      document.getElementById("outdoor").value = "";
-      document.getElementById("precioManana").value = "";
-      document.getElementById("precioTarde").value = "";
-      document.getElementById("precioFestivo").value = "";
-      document.getElementById("lat").value = "";
-      document.getElementById("lng").value = "";
-      document.getElementById("reserva").value = "";
-      document.getElementById("inputFotoPista").value = "";
-
-      // RECARGAR LISTA
       cargarPistas();
-
-      // RESTAURAR UI
-      document.getElementById("formPista").style.display = "none";
-      document.getElementById("listaPistas").style.display = "block";
-      document.getElementById("btnNuevaPista").style.display = "block";
-
-      const btnVolver = document.getElementById("btnVolverPistas");
-      if (btnVolver) btnVolver.style.display = "block";
 
     } catch (error) {
       console.error("ERROR REAL:", error);
     }
 
   };
+
 }
 
 async function cargarPistas() {
@@ -623,4 +593,5 @@ document.addEventListener("click", function(e) {
   }
 
 });
+
 
