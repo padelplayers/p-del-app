@@ -436,6 +436,7 @@ if (btnGuardarPista) {
 
       alert("Pista guardada");
       cargarPistas();
+      mostrar("pistas");
 
     } catch (error) {
       console.error("ERROR REAL:", error);
@@ -559,6 +560,7 @@ async function verificarPista(id) {
     verificadaPor: auth.currentUser.uid,
     fechaVerificada: firebase.firestore.FieldValue.serverTimestamp()
   });
+  cargarPistas();
 }
 
 window.editarPista = async function(id) {
