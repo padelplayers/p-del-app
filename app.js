@@ -284,7 +284,7 @@ function mostrar(seccion){
 
   document.getElementById(seccion).style.display = "block";
 
-  if (seccion === "crearPista") {
+  if (seccion === "pistas") {
     cargarPistas();
   }
 
@@ -434,7 +434,6 @@ if (btnGuardarPista) {
         });
       }
 
-      alert("Pista guardada");
       cargarPistas();
       mostrar("pistas");
 
@@ -553,14 +552,14 @@ document.getElementById("cancelarPista").onclick = () => {
 };
 
 async function verificarPista(id) {
-  if (!esAdmin) return;
-
   await db.collection("pistas").doc(id).update({
     verificada: true,
     verificadaPor: auth.currentUser.uid,
     fechaVerificada: firebase.firestore.FieldValue.serverTimestamp()
   });
-  cargarPistas();
+
+  await cargarPistas();
+  mostrar("pistas");
 }
 
 window.editarPista = async function(id) {
