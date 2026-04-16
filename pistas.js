@@ -162,15 +162,31 @@ const user = auth.currentUser;
         div.className = "cardPista";
 
         div.innerHTML =
-          "<img src='" + (data.imagen || "") + "'>" +
-          "<strong>" + (data.nombre || "") + "</strong><br>" +
-          (data.verificada ? "<div class='verificada'>✔️ Verificada</div>" : "") +
-          (data.localidad || "") + "<br>" +
-          (data.tipo || "") + "<br>" +
-          "Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "<br>" +
-          (data.precioManana || 0) + "€ mañana / " +
-          (data.precioTarde || 0) + "€ tarde / " +
-          (data.precioFestivo || 0) + "€ finde / festivo";
+"<img src='" + (data.imagen || "") + "'>" +
+
+"<strong>" + (data.nombre || "") + "</strong> " +
+(data.verificada ? "<span class='verificada'>✔️ Verificada</span>" : "") + "<br>" +
+
+"<div>" + (data.tipo || "") + "</div>" +
+
+"<div>" + (data.localidad || "") +
+(data.direccion ? " | " + data.direccion : "") +
+"</div>" +
+
+"<div>Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0) + "</div>" +
+
+"<div>" +
+(data.precioManana || 0) + "€ mañana | " +
+(data.precioTarde || 0) + "€ tarde | " +
+(data.precioFestivo || 0) + "€ finde/festivo" +
+"</div>";
+
+if (data.lat && data.lng) {
+  div.innerHTML +=
+  "<div style='margin-top:10px;'>" +
+  "<button class='btnBlue' onclick=\"abrirMapa(" + data.lat + "," + data.lng + ")\">Cómo llegar</button>" +
+  "</div>";
+}
 
         if (esAdmin) {
           div.innerHTML +=
@@ -248,3 +264,10 @@ window.verificarPista = async function(id) {
 
   cargarPistas();
 }
+
+// ===== GOOGLE MAPS - CÓMO LLEGAR =====
+window.abrirMapa = function(lat, lng) {
+  const url = "https://www.google.com/maps?q=" + lat + "," + lng;
+  window.open(url, "_blank");
+}
+
