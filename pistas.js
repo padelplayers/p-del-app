@@ -138,9 +138,11 @@ const user = auth.currentUser;
   const lista = document.getElementById("listaPistas");
   if (!lista) return;
 
-  if (unsubscribePistas) unsubscribePistas();
+  if (window.unsubscribePistas) {
+  window.unsubscribePistas();
+}
 
-  unsubscribePistas = db.collection("pistas")
+ window.unsubscribePistas = db.collection("pistas")
     .onSnapshot(snapshot => {
 
       lista.innerHTML = "";
