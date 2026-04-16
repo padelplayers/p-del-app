@@ -338,7 +338,7 @@ Juego en red
 <div id="pistas" class="container" style="display:none;">
   <h2>Pistas</h2>
 
-  <button id="btnNuevaPista" class="btnYellow">Añadir pista</button>
+  <button id="btnNuevaPista" class="btnYellow" onclick="mostrar('crearPista')">Añadir pista</button>
   <button id="btnVolverPistas" onclick="mostrar('menu')" class="btnBlue">Volver</button>
 
   <div id="listaPistas"></div>
@@ -348,9 +348,11 @@ Juego en red
 <div id="crearPista" class="container" style="display:none;">
 
   
-  <div id="formPista" style="display:none;">
+  <div id="formPista">
     
     <h3>Nueva pista</h3>
+
+    <button class="btnBlue" onclick="mostrar('pistas')">Volver</button>
 
     <input type="text" id="nombrePista" placeholder="Nombre del club">
 
