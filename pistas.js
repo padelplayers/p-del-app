@@ -210,35 +210,7 @@ async function borrarImagen(url) {
   }
 }
 
-function mostrar(seccion){
 
-  const btnFoto = document.getElementById("btnCambiarFoto");
-  if (btnFoto) btnFoto.style.display = "none";
-
-  document.getElementById("login").style.display = "none";
-  document.getElementById("menu").style.display = "none";
-  document.getElementById("perfilCompletar").style.display = "none";
-  document.getElementById("perfil").style.display = "none";
-
-  const perfilEditar = document.getElementById("perfilEditar");
-  if (perfilEditar) perfilEditar.style.display = "none";
-
-  document.getElementById("jugadores").style.display = "none";
-
-  const pistas = document.getElementById("pistas");
-  if (pistas) pistas.style.display = "none";
-
-  const testNivel = document.getElementById("testNivel");
-  if (testNivel) testNivel.style.display = "none";
-
-  document.getElementById("crearPista").style.display = "none";
-
-  document.getElementById(seccion).style.display = "block";
-
-  if (seccion === "pistas") {
-    cargarPistas();
-  }
-}
 
 window.verificarPista = async function(id) {
 
