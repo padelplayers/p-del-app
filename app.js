@@ -278,7 +278,8 @@ function mostrar(seccion){
   document.getElementById("perfil").style.display = "none";
   document.getElementById("perfilEditar") && (document.getElementById("perfilEditar").style.display = "none");
   document.getElementById("jugadores").style.display = "none";
-  document.getElementById("pistas") && (document.getElementById("pistas").style.display = "none");
+  const pistas = document.getElementById("pistas");
+if (pistas) pistas.style.display = "none";
   document.getElementById("testNivel") && (document.getElementById("testNivel").style.display = "none");
   document.getElementById("crearPista").style.display = "none";
 
