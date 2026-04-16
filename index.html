@@ -489,18 +489,137 @@ Juego en red
 <div id="editarPista" class="container" style="display:none;">
 
   <div id="formEditarPista">
-
+    
     <h3>Editar pista</h3>
 
     <button class="btnBlue" onclick="mostrar('pistas')">Volver</button>
 
-    <input type="text" id="editarNombrePista">
+    <input type="text" id="editarNombrePista" placeholder="Nombre del club">
 
-    <select id="editarLocalidadPista"></select>
+    <select id="editarLocalidadPista">
+      <option value="">Selecciona localidad</option>
+      <option>Sagunto</option>
+      <option>Puerto de Sagunto</option>
+      <option>Canet d'en Berenguer</option>
+      <option>Faura</option>
+      <option>Benifairó de les Valls</option>
+      <option>Quart de les Valls</option>
+      <option>Quartell</option>
+      <option>Gilet</option>
+      <option>Petrés</option>
+      <option>Albalat dels Tarongers</option>
+      <option>Estivella</option>
+      <option>Segart</option>
+      <option>Torres Torres</option>
+      <option>Algar de Palancia</option>
+      <option>Alfara de la Baronia</option>
+      <option>Algimia de Alfara</option>
+      <option>Puçol</option>
+      <option>El Puig de Santa Maria</option>
+      <option>La Pobla de Farnals</option>
+      <option>Massamagrell</option>
+      <option>Rafelbunyol</option>
+      <option>Náquera</option>
+      <option>Serra</option>
+      <option>Almenara</option>
+      <option>La Vall d'Uixó</option>
+      <option>Moncofa</option>
+      <option>Xilxes (Chilches)</option>
+    </select>
 
-    <!-- añade aquí el resto de campos igual que crear -->
+    <input type="text" id="editarDireccionPista" placeholder="Dirección">
+
+    <select id="editarTipoPista">
+      <option value="">Tipo</option>
+      <option value="club">Club</option>
+      <option value="polideportivo">Polideportivo</option>
+      <option value="privada">Privada / Comunidad</option>
+    </select>
+
+    <select id="editarIndoor">
+      <option value="">Indoor</option>
+      <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+      <option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+    </select>
+
+    <select id="editarOutdoor">
+      <option value="">Outdoor</option>
+      <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+      <option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+    </select>
+
+    <!-- PRECIOS -->
+
+    <label>Precio mañana</label>
+    <select id="editarPrecioManana">
+      <option value="">Seleccionar</option>
+      <option value="0">0€</option>
+      <option value="1">1€</option>
+      <option value="2">2€</option>
+      <option value="3">3€</option>
+      <option value="4">4€</option>
+      <option value="5">5€</option>
+      <option value="6">6€</option>
+      <option value="7">7€</option>
+      <option value="8">8€</option>
+      <option value="9">9€</option>
+      <option value="10">10€</option>
+      <option value="12">12€</option>
+      <option value="15">15€</option>
+      <option value="18">18€</option>
+      <option value="20">20€</option>
+    </select>
+
+    <label>Precio tarde</label>
+    <select id="editarPrecioTarde">
+      <option value="">Seleccionar</option>
+      <option value="0">0€</option>
+      <option value="1">1€</option>
+      <option value="2">2€</option>
+      <option value="3">3€</option>
+      <option value="4">4€</option>
+      <option value="5">5€</option>
+      <option value="6">6€</option>
+      <option value="7">7€</option>
+      <option value="8">8€</option>
+      <option value="9">9€</option>
+      <option value="10">10€</option>
+      <option value="12">12€</option>
+      <option value="15">15€</option>
+      <option value="18">18€</option>
+      <option value="20">20€</option>
+    </select>
+
+    <label>Precio finde / festivo</label>
+    <select id="editarPrecioFestivo">
+      <option value="">Seleccionar</option>
+      <option value="0">0€</option>
+      <option value="1">1€</option>
+      <option value="2">2€</option>
+      <option value="3">3€</option>
+      <option value="4">4€</option>
+      <option value="5">5€</option>
+      <option value="6">6€</option>
+      <option value="7">7€</option>
+      <option value="8">8€</option>
+      <option value="9">9€</option>
+      <option value="10">10€</option>
+      <option value="12">12€</option>
+      <option value="15">15€</option>
+      <option value="18">18€</option>
+      <option value="20">20€</option>
+    </select>
+
+    <input type="text" id="editarLat" placeholder="Latitud">
+    <input type="text" id="editarLng" placeholder="Longitud">
+
+    <input type="text" id="editarReserva" placeholder="URL o teléfono reserva">
+
+    <label for="editarInputFotoPista">Foto de la pista</label>
+    <input type="file" id="editarInputFotoPista" accept="image/*">
 
     <button id="btnActualizarPista" class="btnYellow">Guardar cambios</button>
+    <button class="btnBlue" onclick="mostrar('pistas')">Cancelar</button>
 
   </div>
 
