@@ -284,9 +284,10 @@ function mostrar(seccion){
 
   document.getElementById(seccion).style.display = "block";
 
-  if (seccion === "pistas") {
-    cargarPistas();
-  }
+  if (seccion === "pistas" && !window.pistasCargadas) {
+  cargarPistas();
+  window.pistasCargadas = true;
+}
 
 }
 
