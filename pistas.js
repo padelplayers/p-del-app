@@ -4,16 +4,6 @@ const btnGuardarPista = document.getElementById("guardarPista");
 
 // PISTAS
 
-if (btnNuevaPista) {
-  btnNuevaPista.onclick = () => {
-    formPista.style.display = "block";
-    document.getElementById("listaPistas").style.display = "none";
-    document.getElementById("btnNuevaPista").style.display = "none";
-
-    const btnVolver = document.getElementById("btnVolverPistas");
-    if (btnVolver) btnVolver.style.display = "none";
-  };
-}
 
 if (btnGuardarPista) {
   btnGuardarPista.onclick = async () => {
