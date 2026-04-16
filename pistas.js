@@ -271,3 +271,29 @@ window.abrirMapa = function(lat, lng) {
   window.open(url, "_blank");
 }
 
+// ===== PISTAS - EDITAR =====
+window.editarPista = async function(id) {
+  const doc = await db.collection("pistas").doc(id).get();
+  const data = doc.data();
+
+  window.pistaEditando = id;
+
+  document.getElementById("nombrePista").value = data.nombre || "";
+  document.getElementById("localidadPista").value = data.localidad || "";
+  document.getElementById("direccionPista").value = data.direccion || "";
+  document.getElementById("tipoPista").value = data.tipo || "";
+  document.getElementById("indoor").value = data.indoor !== undefined ? data.indoor : "";
+  document.getElementById("outdoor").value = data.outdoor !== undefined ? data.outdoor : "";
+  document.getElementById("precioManana").value = data.precioManana || "";
+  document.getElementById("precioTarde").value = data.precioTarde || "";
+  document.getElementById("precioFestivo").value = data.precioFestivo || "";
+  document.getElementById("lat").value = data.lat || "";
+  document.getElementById("lng").value = data.lng || "";
+  document.getElementById("reserva").value = data.reserva || "";
+
+  document.getElementById("formPista").style.display = "block";
+  document.getElementById("listaPistas").style.display = "none";
+
+  const btn = document.getElementById("guardarPista");
+  if (btn) btn.textContent = "Guardar cambios";
+}
