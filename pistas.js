@@ -261,32 +261,6 @@ window.abrirMapa = function(lat, lng) {
   window.open(url, "_blank");
 }
 
-// ===== PISTAS - EDITAR =====
-window.editarPista = async function(id) {
-  const doc = await db.collection("pistas").doc(id).get();
-  const data = doc.data();
-
-  window.pistaEditando = id;
-
-  document.getElementById("nombrePista").value = data.nombre || "";
-  document.getElementById("localidadPista").value = data.localidad || "";
-  document.getElementById("direccionPista").value = data.direccion || "";
-  document.getElementById("tipoPista").value = data.tipo || "";
-  document.getElementById("indoor").value = data.indoor !== undefined ? data.indoor : "";
-  document.getElementById("outdoor").value = data.outdoor !== undefined ? data.outdoor : "";
-  document.getElementById("precioManana").value = data.precioManana || "";
-  document.getElementById("precioTarde").value = data.precioTarde || "";
-  document.getElementById("precioFestivo").value = data.precioFestivo || "";
-  document.getElementById("lat").value = data.lat || "";
-  document.getElementById("lng").value = data.lng || "";
-  document.getElementById("reserva").value = data.reserva || "";
-
-  document.getElementById("formPista").style.display = "block";
-  document.getElementById("listaPistas").style.display = "none";
-
-  const btn = document.getElementById("guardarPista");
-  if (btn) btn.textContent = "Guardar cambios";
-}
 
 // ===== PISTAS - ABRIR EDITAR =====
 window.abrirEditarPista = async function(id) {
@@ -294,13 +268,23 @@ window.abrirEditarPista = async function(id) {
   const doc = await db.collection("pistas").doc(id).get();
   const data = doc.data();
 
+  // TEXTO
   document.getElementById("editarNombrePista").value = data.nombre || "";
-  document.getElementById("editarLocalidadPista").value = data.localidad || "";
+  document.getElementById("editarDireccionPista").value = data.direccion || "";
+  document.getElementById("editarLat").value = data.lat || "";
+  document.getElementById("editarLng").value = data.lng || "";
+  document.getElementById("editarReserva").value = data.reserva || "";
 
-  // si tienes más campos, mismo patrón:
-  // document.getElementById("editarTipoPista").value = data.tipo || "";
-  // document.getElementById("editarIndoor").value = data.indoor || 0;
-  // document.getElementById("editarOutdoor").value = data.outdoor || 0;
+  // SELECTS
+  document.getElementById("editarLocalidadPista").value = data.localidad || "";
+  document.getElementById("editarTipoPista").value = data.tipo || "";
+
+  document.getElementById("editarIndoor").value = data.indoor !== undefined ? data.indoor : "";
+  document.getElementById("editarOutdoor").value = data.outdoor !== undefined ? data.outdoor : "";
+
+  document.getElementById("editarPrecioManana").value = data.precioManana || "";
+  document.getElementById("editarPrecioTarde").value = data.precioTarde || "";
+  document.getElementById("editarPrecioFestivo").value = data.precioFestivo || "";
 
   window.idPistaEditando = id;
 
@@ -314,10 +298,24 @@ if (btnActualizar) {
   btnActualizar.onclick = async () => {
 
     await db.collection("pistas").doc(window.idPistaEditando).update({
-      nombre: document.getElementById("editarNombrePista").value,
-      localidad: document.getElementById("editarLocalidadPista").value
 
-      // añadir aquí el resto de campos si existen
+      nombre: document.getElementById("editarNombrePista").value,
+      localidad: document.getElementById("editarLocalidadPista").value,
+      direccion: document.getElementById("editarDireccionPista").value,
+      tipo: document.getElementById("editarTipoPista").value,
+
+      indoor: Number(document.getElementById("editarIndoor").value),
+      outdoor: Number(document.getElementById("editarOutdoor").value),
+
+      precioManana: Number(document.getElementById("editarPrecioManana").value),
+      precioTarde: Number(document.getElementById("editarPrecioTarde").value),
+      precioFestivo: Number(document.getElementById("editarPrecioFestivo").value),
+
+      lat: document.getElementById("editarLat").value,
+      lng: document.getElementById("editarLng").value,
+      reserva: document.getElementById("editarReserva").value,
+
+      verificada: true
     });
 
     mostrar("pistas");
