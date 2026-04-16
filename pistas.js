@@ -287,3 +287,40 @@ window.editarPista = async function(id) {
   const btn = document.getElementById("guardarPista");
   if (btn) btn.textContent = "Guardar cambios";
 }
+
+// ===== PISTAS - ABRIR EDITAR =====
+window.abrirEditarPista = async function(id) {
+
+  const doc = await db.collection("pistas").doc(id).get();
+  const data = doc.data();
+
+  document.getElementById("editarNombrePista").value = data.nombre || "";
+  document.getElementById("editarLocalidadPista").value = data.localidad || "";
+
+  // si tienes más campos, mismo patrón:
+  // document.getElementById("editarTipoPista").value = data.tipo || "";
+  // document.getElementById("editarIndoor").value = data.indoor || 0;
+  // document.getElementById("editarOutdoor").value = data.outdoor || 0;
+
+  window.idPistaEditando = id;
+
+  mostrar("editarPista");
+};
+
+// ===== PISTAS - GUARDAR EDICIÓN =====
+const btnActualizar = document.getElementById("btnActualizarPista");
+
+if (btnActualizar) {
+  btnActualizar.onclick = async () => {
+
+    await db.collection("pistas").doc(window.idPistaEditando).update({
+      nombre: document.getElementById("editarNombrePista").value,
+      localidad: document.getElementById("editarLocalidadPista").value
+
+      // añadir aquí el resto de campos si existen
+    });
+
+    mostrar("pistas");
+    cargarPistas();
+  };
+}
