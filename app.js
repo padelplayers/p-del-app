@@ -551,14 +551,21 @@ document.getElementById("cancelarPista").onclick = () => {
   if (btnVolver) btnVolver.style.display = "block";
 };
 
-async function verificarPista(id) {
-  if (!esAdmin) return;
+window.verificarPista = async function(id) {
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const docUser = await db.collection("usuarios").doc(user.uid).get();
+  if (!docUser.exists || docUser.data().admin !== true) return;
 
   await db.collection("pistas").doc(id).update({
     verificada: true,
-    verificadaPor: auth.currentUser.uid,
+    verificadaPor: user.uid,
     fechaVerificada: firebase.firestore.FieldValue.serverTimestamp()
   });
+
+  cargarPistas();
 }
 
 window.editarPista = async function(id) {
