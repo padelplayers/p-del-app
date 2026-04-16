@@ -180,9 +180,9 @@ if (data.lat && data.lng) {
 
         if (esAdmin) {
           div.innerHTML +=
-            "<div style='margin-top:10px;'>" +
-            "<button class='btnEditar' onclick=\"editarPista('" + doc.id + "')\">Editar</button>" +
-            "<button class='btnEliminar' onclick=\"eliminarPista('" + doc.id + "')\">Eliminar</button>";
+  "<div style='margin-top:10px;'>" +
+  "<button class='btnEditar' onclick=\"abrirEditarPista('" + doc.id + "')\">Editar</button>" +
+  "<button class='btnEliminar' onclick=\"eliminarPista('" + doc.id + "')\">Eliminar</button>";
 
           if (!data.verificada) {
             div.innerHTML +=
