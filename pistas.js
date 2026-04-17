@@ -380,7 +380,14 @@ window.limpiarFiltros = function() {
 
   window.filtrosActivos = false;
 
+  const filtros = document.getElementById("filtrosPistas");
+  if (filtros) filtros.style.display = "none";
+
+  const btn = document.querySelector(".btnGreen");
+  if (btn) btn.style.display = "block";
+
   cargarPistas();
+
 };
 
 window.toggleFiltros = function() {
