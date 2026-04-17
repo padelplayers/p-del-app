@@ -285,22 +285,34 @@ function mostrar(seccion){
     "crearPista",
     "chat",
     "mediaCenter",
-    "instrucciones"
+    "instrucciones",
+    "partidas",
+    "clasificacion"
   ];
 
+  // OCULTAR TODO
   secciones.forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.style.display = "none";
+    if (el) {
+      el.style.display = "none";
+      el.style.visibility = "hidden";
+      el.style.opacity = "0";
+    }
   });
 
+  // MOSTRAR SOLO LA ACTIVA
   const actual = document.getElementById(seccion);
-  if (actual) actual.style.display = "block";
+  if (actual) {
+    actual.style.display = "block";
+    actual.style.visibility = "visible";
+    actual.style.opacity = "1";
+  }
 
+  // CARGA PISTAS SOLO UNA VEZ
   if (seccion === "pistas" && !window.pistasCargadas) {
     cargarPistas();
     window.pistasCargadas = true;
   }
-
 }
 
 function abrirTest(){
