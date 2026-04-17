@@ -321,15 +321,25 @@ Juego en red
 <!-- MENU -->
 <div id="menu" class="container">
 
-<h3 id="saludo"></h3>
+  <h3 id="saludo"></h3>
 
-<button class="menuButton" onclick="mostrar('pistas')">Pistas</button>
-<button class="menuButton">Partidas</button>
-<button class="menuButton" onclick="abrirJugadores()">Jugadores</button>
-<button class="menuButton">Clasificación</button>
-<button class="menuButton" onclick="irPerfil()">Perfil</button>
+  <button class="menuButton" onclick="mostrar('pistas')">Pistas</button>
 
-<button class="logout" onclick="logout()">Cerrar sesión</button>
+  <button class="menuButton" onclick="mostrar('partidas')">Partidas</button>
+
+  <button class="menuButton" onclick="abrirJugadores()">Jugadores</button>
+
+  <button class="menuButton" onclick="mostrar('clasificacion')">Clasificación</button>
+
+  <button class="menuButton" onclick="irPerfil()">Perfil</button>
+
+  <button class="menuButton" onclick="mostrar('chat')">Chat</button>
+
+  <button class="menuButton" onclick="mostrar('mediaCenter')">Media Center</button>
+
+  <button class="menuButton" onclick="mostrar('instrucciones')">Instrucciones</button>
+
+  <button class="logout" onclick="logout()">Cerrar sesión</button>
 
 </div>
 
@@ -701,7 +711,33 @@ Juego en red
 
 </div>
 
+<!-- CHAT -->
+<div id="chat" class="container" style="display:none;">
+  <h2>Chat</h2>
+  <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
+</div>
 
+<!-- MEDIA CENTER -->
+<div id="mediaCenter" class="container" style="display:none;">
+  <h2>Media Center</h2>
+  <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
+</div>
+
+<!-- INSTRUCCIONES -->
+<div id="instrucciones" class="container" style="display:none;">
+  <h2>Cómo funciona</h2>
+
+  <div class="card">
+    <p><strong>Crear partida:</strong> Selecciona pista, fecha y únete.</p>
+    <p><strong>Completar partida:</strong> Con 4 jugadores pasa a completa.</p>
+    <p><strong>Reserva:</strong> Según pista (gratis o pago).</p>
+    <p><strong>Resultado:</strong> Un jugador lo introduce.</p>
+    <p><strong>Validación:</strong> Todos confirman.</p>
+    <p><strong>Cierre:</strong> Se actualiza ranking.</p>
+  </div>
+
+  <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
