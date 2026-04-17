@@ -154,16 +154,28 @@ if (window.filtrosActivos) {
 
   if (ordenPrecio) {
     docs.sort((a, b) => {
-      const da = a.data();
-      const db = b.data();
+  const da = a.data();
+  const db = b.data();
 
-      const precioA = da.precioManana || 0;
-      const precioB = db.precioManana || 0;
+  const a1 = da.precioManana || 0;
+  const b1 = db.precioManana || 0;
 
-      return ordenPrecio === "asc"
-        ? precioA - precioB
-        : precioB - precioA;
-    });
+  if (a1 !== b1) {
+    return ordenPrecio === "asc" ? a1 - b1 : b1 - a1;
+  }
+
+  const a2 = da.precioTarde || 0;
+  const b2 = db.precioTarde || 0;
+
+  if (a2 !== b2) {
+    return ordenPrecio === "asc" ? a2 - b2 : b2 - a2;
+  }
+
+  const a3 = da.precioFestivo || 0;
+  const b3 = db.precioFestivo || 0;
+
+  return ordenPrecio === "asc" ? a3 - b3 : b3 - a3;
+});
   }
 }
 
