@@ -358,3 +358,11 @@ function activarFiltros() {
     });
   });
 }
+
+window.toggleFiltros = function() {
+  const filtros = document.getElementById("filtrosPistas");
+  if (!filtros) return;
+
+  filtros.style.display =
+    filtros.style.display === "none" ? "block" : "none";
+};
