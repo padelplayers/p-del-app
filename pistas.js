@@ -346,9 +346,18 @@ window.limpiarFiltros = function() {
 };
 
 window.toggleFiltros = function() {
-  const filtros = document.getElementById("filtrosPistas");
+
+  const filtros = document.getElementById("buscadorPistas");
+  const btn = document.querySelector(".btnGreen");
+
   if (!filtros) return;
 
-  filtros.style.display =
-    filtros.style.display === "none" ? "block" : "none";
+  if (filtros.style.display === "none" || filtros.style.display === "") {
+    filtros.style.display = "block";
+    if (btn) btn.style.display = "none";
+  } else {
+    filtros.style.display = "none";
+    if (btn) btn.style.display = "block";
+  }
+
 };
