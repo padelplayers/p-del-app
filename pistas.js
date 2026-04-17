@@ -150,6 +150,8 @@ const user = auth.currentUser;
       snapshot.forEach(doc => {
         const data = doc.data();
 
+
+
         // ===== FILTROS =====
 const texto = document.getElementById("buscarTexto").value.toLowerCase();
 const localidadFiltro = document.getElementById("filtroLocalidad").value;
@@ -232,6 +234,7 @@ if (data.lat && data.lng) {
         lista.appendChild(div);
       });
     });
+    activarFiltros();
 }
 
 async function borrarImagen(url) {
@@ -330,4 +333,28 @@ if (btnActualizar) {
     window.pistasCargadas = false;
     mostrar("pistas");
   };
+}
+
+// ===== FILTROS EN TIEMPO REAL =====
+function activarFiltros() {
+  const ids = [
+    "buscarTexto",
+    "filtroLocalidad",
+    "filtroTipo",
+    "ordenPrecio",
+    "filtroPistasTipo"
+  ];
+
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.addEventListener("input", () => {
+      cargarPistas();
+    });
+
+    el.addEventListener("change", () => {
+      cargarPistas();
+    });
+  });
 }
