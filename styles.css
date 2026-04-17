@@ -292,7 +292,7 @@ button[onclick*="mostrar('menu')"]{
 }
 
 #btnNuevaPista {
-  position: sticky;
+  position: static;
   top: 0;
   z-index: 10;
 }
