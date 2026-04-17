@@ -261,6 +261,13 @@ if (data.lat && data.lng) {
 
         lista.appendChild(div);
       });
+
+      setTimeout(() => {
+  const lista = document.getElementById("listaPistas");
+  if (lista) {
+    lista.scrollIntoView({ behavior: "smooth" });
+  }
+}, 100);
     });
 
 }
