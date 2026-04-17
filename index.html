@@ -336,60 +336,66 @@ Juego en red
 <!-- SECCION PISTAS -->
 <div id="pistas" class="container" style="display:none;">
   <h2>Pistas</h2>
+
+<button class="btnGreen" onclick="toggleFiltros()">Buscar pista</button>
+
+<div id="filtrosPistas" style="display:none;">
   <!-- BUSCADOR PISTAS -->
-<div id="buscadorPistas">
+  <div id="buscadorPistas">
 
-  <input type="text" id="buscarTexto" placeholder="Buscar por nombre o dirección">
+    <input type="text" id="buscarTexto" placeholder="Buscar por nombre o dirección">
 
-  <select id="filtroLocalidad">
-    <option value="">Todas las localidades</option>
-    <option>Sagunto</option>
-    <option>Puerto de Sagunto</option>
-    <option>Canet d'en Berenguer</option>
-    <option>Faura</option>
-    <option>Benifairó de les Valls</option>
-    <option>Quart de les Valls</option>
-    <option>Quartell</option>
-    <option>Gilet</option>
-    <option>Petrés</option>
-    <option>Albalat dels Tarongers</option>
-    <option>Estivella</option>
-    <option>Segart</option>
-    <option>Torres Torres</option>
-    <option>Algar de Palancia</option>
-    <option>Alfara de la Baronia</option>
-    <option>Algimia de Alfara</option>
-    <option>Puçol</option>
-    <option>El Puig de Santa Maria</option>
-    <option>La Pobla de Farnals</option>
-    <option>Massamagrell</option>
-    <option>Rafelbunyol</option>
-    <option>Náquera</option>
-    <option>Serra</option>
-    <option>Almenara</option>
-    <option>La Vall d'Uixó</option>
-    <option>Moncofa</option>
-    <option>Xilxes (Chilches)</option>
-  </select>
+    <select id="filtroLocalidad">
+      <option value="">Todas las localidades</option>
+      <option>Sagunto</option>
+      <option>Puerto de Sagunto</option>
+      <option>Canet d'en Berenguer</option>
+      <option>Faura</option>
+      <option>Benifairó de les Valls</option>
+      <option>Quart de les Valls</option>
+      <option>Quartell</option>
+      <option>Gilet</option>
+      <option>Petrés</option>
+      <option>Albalat dels Tarongers</option>
+      <option>Estivella</option>
+      <option>Segart</option>
+      <option>Torres Torres</option>
+      <option>Algar de Palancia</option>
+      <option>Alfara de la Baronia</option>
+      <option>Algimia de Alfara</option>
+      <option>Puçol</option>
+      <option>El Puig de Santa Maria</option>
+      <option>La Pobla de Farnals</option>
+      <option>Massamagrell</option>
+      <option>Rafelbunyol</option>
+      <option>Náquera</option>
+      <option>Serra</option>
+      <option>Almenara</option>
+      <option>La Vall d'Uixó</option>
+      <option>Moncofa</option>
+      <option>Xilxes (Chilches)</option>
+    </select>
 
-  <select id="filtroTipo">
-    <option value="">Todos los tipos</option>
-    <option value="club">Club</option>
-    <option value="polideportivo">Polideportivo</option>
-    <option value="privada">Privada / Comunidad</option>
-  </select>
+    <select id="filtroTipo">
+      <option value="">Todos los tipos</option>
+      <option value="club">Club</option>
+      <option value="polideportivo">Polideportivo</option>
+      <option value="privada">Privada / Comunidad</option>
+    </select>
 
-  <select id="ordenPrecio">
-    <option value="">Ordenar por precio</option>
-    <option value="asc">Menor a mayor</option>
-    <option value="desc">Mayor a menor</option>
-  </select>
-<select id="filtroPistasTipo">
-  <option value="">Indoor / Outdoor</option>
-  <option value="indoor">Solo indoor</option>
-  <option value="outdoor">Solo outdoor</option>
-</select>
+    <select id="ordenPrecio">
+      <option value="">Ordenar por precio</option>
+      <option value="asc">Menor a mayor</option>
+      <option value="desc">Mayor a menor</option>
+    </select>
 
+    <select id="filtroPistasTipo">
+      <option value="">Indoor / Outdoor</option>
+      <option value="indoor">Solo indoor</option>
+      <option value="outdoor">Solo outdoor</option>
+    </select>
+
+  </div>
 </div>
 
   <button id="btnNuevaPista" class="btnYellow" onclick="mostrar('crearPista')">Añadir pista</button>
