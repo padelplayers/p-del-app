@@ -374,3 +374,18 @@ button[onclick*="mostrar('menu')"]{
   border: 1px solid #4CAF50;
   outline: none;
 }
+
+.btnGreen {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btnGreen:hover {
+  background-color: #43A047;
+}

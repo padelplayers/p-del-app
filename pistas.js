@@ -152,39 +152,29 @@ const user = auth.currentUser;
 
 
 
-        // ===== FILTROS =====
-const texto = document.getElementById("buscarTexto").value.toLowerCase();
-const localidadFiltro = document.getElementById("filtroLocalidad").value;
-const tipoFiltro = document.getElementById("filtroTipo").value;
-const ordenPrecio = document.getElementById("ordenPrecio").value;
-const filtroIndoorOutdoor = document.getElementById("filtroPistasTipo").value;
+// ===== FILTROS =====
+if (window.filtrosActivos) {
 
-// TEXTO (nombre o dirección)
-if (
-  texto &&
-  !((data.nombre || "").toLowerCase().includes(texto) 
-    (data.direccion || "").toLowerCase().includes(texto))
-) {
-  return;
-}
+  const texto = document.getElementById("buscarTexto").value.toLowerCase();
+  const localidadFiltro = document.getElementById("filtroLocalidad").value;
+  const tipoFiltro = document.getElementById("filtroTipo").value;
+  const ordenPrecio = document.getElementById("ordenPrecio").value;
+  const filtroIndoorOutdoor = document.getElementById("filtroPistasTipo").value;
 
-// LOCALIDAD
-if (localidadFiltro && data.localidad !== localidadFiltro) {
-  return;
-}
+  if (
+    texto &&
+    !((data.nombre || "").toLowerCase().includes(texto) 
+      (data.direccion || "").toLowerCase().includes(texto))
+  ) return;
 
-// TIPO
-if (tipoFiltro && data.tipo !== tipoFiltro) {
-  return;
-}
+  if (localidadFiltro && data.localidad !== localidadFiltro) return;
 
-// INDOOR / OUTDOOR
-if (filtroIndoorOutdoor === "indoor" && (!data.indoor || data.indoor === 0)) {
-  return;
-}
+  if (tipoFiltro && data.tipo !== tipoFiltro) return;
 
-if (filtroIndoorOutdoor === "outdoor" && (!data.outdoor || data.outdoor === 0)) {
-  return;
+  if (filtroIndoorOutdoor === "indoor" && (!data.indoor || data.indoor === 0)) return;
+
+  if (filtroIndoorOutdoor === "outdoor" && (!data.outdoor || data.outdoor === 0)) return;
+
 }
 
         const div = document.createElement("div");
@@ -234,7 +224,7 @@ if (data.lat && data.lng) {
         lista.appendChild(div);
       });
     });
-    activarFiltros();
+
 }
 
 async function borrarImagen(url) {
@@ -335,29 +325,25 @@ if (btnActualizar) {
   };
 }
 
-// ===== FILTROS EN TIEMPO REAL =====
-function activarFiltros() {
-  const ids = [
-    "buscarTexto",
-    "filtroLocalidad",
-    "filtroTipo",
-    "ordenPrecio",
-    "filtroPistasTipo"
-  ];
+// ===== APLICAR FILTROS =====
+window.aplicarFiltros = function() {
+  window.filtrosActivos = true;
+  cargarPistas();
+};
 
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
+// ===== LIMPIAR FILTROS =====
+window.limpiarFiltros = function() {
 
-    el.addEventListener("input", () => {
-      cargarPistas();
-    });
+  document.getElementById("buscarTexto").value = "";
+  document.getElementById("filtroLocalidad").value = "";
+  document.getElementById("filtroTipo").value = "";
+  document.getElementById("ordenPrecio").value = "";
+  document.getElementById("filtroPistasTipo").value = "";
 
-    el.addEventListener("change", () => {
-      cargarPistas();
-    });
-  });
-}
+  window.filtrosActivos = false;
+
+  cargarPistas();
+};
 
 window.toggleFiltros = function() {
   const filtros = document.getElementById("filtrosPistas");
