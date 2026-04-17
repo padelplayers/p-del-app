@@ -142,6 +142,7 @@ async function guardarPerfilRegistro(){
 
   await db.collection("usuarios").doc(auth.currentUser.uid).set({
     nombre: nombre,
+    nombreNormalizado: normalizarTexto(nombre),
     sexo: sexo,
     nivel: nivel,
     mano: mano,
