@@ -280,6 +280,8 @@ function mostrar(seccion){
   document.getElementById("jugadores").style.display = "none";
   const pistas = document.getElementById("pistas");
 if (pistas) pistas.style.display = "none";
+const editar = document.getElementById("editarPista");
+if (editar) editar.style.display = "none";
   document.getElementById("testNivel") && (document.getElementById("testNivel").style.display = "none");
   document.getElementById("crearPista").style.display = "none";
 
