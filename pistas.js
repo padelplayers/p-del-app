@@ -262,12 +262,15 @@ if (data.lat && data.lng) {
         lista.appendChild(div);
       });
 
-      setTimeout(() => {
+     setTimeout(() => {
   const lista = document.getElementById("listaPistas");
   if (lista) {
-    lista.scrollIntoView({ behavior: "smooth" });
+    window.scrollTo({
+      top: lista.offsetTop - 80,
+      behavior: "smooth"
+    });
   }
-}, 100);
+}, 200);
     });
 
 }
