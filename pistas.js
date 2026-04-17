@@ -193,11 +193,17 @@ if (window.filtrosActivos) {
   const ordenPrecio = document.getElementById("ordenPrecio").value;
   const filtroIndoorOutdoor = document.getElementById("filtroPistasTipo").value;
 
-  if (
-    texto &&
-    !((data.nombre || "").toLowerCase().includes(texto) 
-      (data.direccion || "").toLowerCase().includes(texto))
-  ) return;
+  const normalizar = (str) =>
+  (str || "")
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const textoNorm = normalizar(texto);
+const nombreNorm = normalizar(data.nombre);
+
+if (textoNorm && !nombreNorm.includes(textoNorm)) return;
 
   if (localidadFiltro && data.localidad !== localidadFiltro) return;
 
