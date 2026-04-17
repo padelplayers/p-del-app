@@ -150,6 +150,41 @@ const user = auth.currentUser;
       snapshot.forEach(doc => {
         const data = doc.data();
 
+        // ===== FILTROS =====
+const texto = document.getElementById("buscarTexto").value.toLowerCase();
+const localidadFiltro = document.getElementById("filtroLocalidad").value;
+const tipoFiltro = document.getElementById("filtroTipo").value;
+const ordenPrecio = document.getElementById("ordenPrecio").value;
+const filtroIndoorOutdoor = document.getElementById("filtroPistasTipo").value;
+
+// TEXTO (nombre o dirección)
+if (
+  texto &&
+  !((data.nombre || "").toLowerCase().includes(texto) 
+    (data.direccion || "").toLowerCase().includes(texto))
+) {
+  return;
+}
+
+// LOCALIDAD
+if (localidadFiltro && data.localidad !== localidadFiltro) {
+  return;
+}
+
+// TIPO
+if (tipoFiltro && data.tipo !== tipoFiltro) {
+  return;
+}
+
+// INDOOR / OUTDOOR
+if (filtroIndoorOutdoor === "indoor" && (!data.indoor || data.indoor === 0)) {
+  return;
+}
+
+if (filtroIndoorOutdoor === "outdoor" && (!data.outdoor || data.outdoor === 0)) {
+  return;
+}
+
         const div = document.createElement("div");
         div.className = "cardPista";
 

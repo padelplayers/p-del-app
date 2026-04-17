@@ -352,3 +352,25 @@ button[onclick*="mostrar('menu')"]{
   object-fit: cover;
   display: block;
 }
+
+/* ===== BUSCADOR PISTAS ===== */
+#buscadorPistas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+#buscadorPistas input,
+#buscadorPistas select {
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* SELECT ACTIVO (verde) */
+#buscadorPistas select:focus,
+#buscadorPistas input:focus {
+  border: 1px solid #4CAF50;
+  outline: none;
+}
