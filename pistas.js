@@ -292,7 +292,7 @@ if (btnActualizar) {
       verificada: true
     });
 
+    window.pistasCargadas = false;
     mostrar("pistas");
-    cargarPistas();
   };
 }
