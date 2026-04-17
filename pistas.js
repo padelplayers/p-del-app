@@ -147,7 +147,27 @@ const user = auth.currentUser;
 
       lista.innerHTML = "";
 
-      snapshot.forEach(doc => {
+      let docs = snapshot.docs;
+
+if (window.filtrosActivos) {
+  const ordenPrecio = document.getElementById("ordenPrecio").value;
+
+  if (ordenPrecio) {
+    docs.sort((a, b) => {
+      const da = a.data();
+      const db = b.data();
+
+      const precioA = da.precioManana || 0;
+      const precioB = db.precioManana || 0;
+
+      return ordenPrecio === "asc"
+        ? precioA - precioB
+        : precioB - precioA;
+    });
+  }
+}
+
+      docs.forEach(doc => {
         const data = doc.data();
 
 
