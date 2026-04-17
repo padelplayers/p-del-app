@@ -347,12 +347,12 @@ window.limpiarFiltros = function() {
 
 window.toggleFiltros = function() {
 
-  const filtros = document.getElementById("buscadorPistas");
+  const filtros = document.getElementById("filtrosPistas");
   const btn = document.querySelector(".btnGreen");
 
   if (!filtros) return;
 
-  if (filtros.style.display === "none" || filtros.style.display === "") {
+ if (filtros.style.display === "none") {
     filtros.style.display = "block";
     if (btn) btn.style.display = "none";
   } else {
