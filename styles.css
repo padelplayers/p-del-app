@@ -389,3 +389,8 @@ button[onclick*="mostrar('menu')"]{
 .btnGreen:hover {
   background-color: #43A047;
 }
+
+#login label {
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
