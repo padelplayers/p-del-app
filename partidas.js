@@ -35,7 +35,10 @@ function cargarPistasParaPartida() {
 
         const option = document.createElement("option");
         option.value = doc.id;
-        option.textContent = pista.nombre + " - " + pista.localidad;
+       option.textContent =
+  (pista.nombre || pista.nombreNormalizado || "Pista") +
+  " - " +
+  (pista.localidad || pista.direccion || "");
 
         if (user && pista.tipo === "Privada / Comunidad" && pista.creadaPor !== user.uid) {
           option.disabled = true;
