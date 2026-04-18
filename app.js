@@ -342,30 +342,32 @@ function mostrar(seccion){
     "clasificacion"
   ];
 
-  // OCULTAR TODO SOLO CON DISPLAY
-  secciones.forEach(id => {
+  secciones.forEach(function(id){
     const el = document.getElementById(id);
-    if (el) {
+    if (el){
       el.style.display = "none";
+      el.style.visibility = "hidden";
+      el.style.opacity = "0";
     }
   });
 
-  // MOSTRAR SOLO LA ACTUAL
   const actual = document.getElementById(seccion);
-  if (actual) {
+  if (actual){
     actual.style.display = "block";
+    actual.style.visibility = "visible";
+    actual.style.opacity = "1";
   }
 
-  // CARGAS ESPECÍFICAS
-  if (seccion === "pistas" && !window.pistasCargadas) {
+  if (seccion === "pistas" && !window.pistasCargadas){
     cargarPistas();
     window.pistasCargadas = true;
   }
 
-  if (seccion === "partidas") {
-    cargarPistasParaPartida();
+  if (seccion === "partidas"){
+    setTimeout(function(){
+      cargarPistasParaPartida();
+    }, 0);
   }
-
 }
 
 function abrirTest(){
