@@ -30,7 +30,6 @@ let unsubscribePistas = null;
 
 // FUNCIONES GLOBALES
 
-
 window.subirImagen = async function(ruta, archivo) {
 
   const ref = firebase.storage().ref().child(ruta);
@@ -115,7 +114,7 @@ auth.createUserWithEmailAndPassword(email, pass)
 
 async function guardarPerfilRegistro(){
 
-  const nombre = document.getElementById("nombre").value.trim().toLowerCase();
+  const nombre = document.getElementById("nombre").value.trim();
   const sexo = document.getElementById("sexo").value;
   const nivel = document.getElementById("nivelManual").value;
   const mano = document.getElementById("mano").value;
@@ -123,7 +122,6 @@ async function guardarPerfilRegistro(){
 
   const inputFoto = document.getElementById("inputFotoRegistro");
   const archivo = inputFoto ? inputFoto.files[0] : null;
-  console.log("ARCHIVO:", archivo);
 
   if (!nombre || !mano || !posicion) {
     document.getElementById("msgPerfil").innerText = "Completa los campos";
@@ -135,21 +133,33 @@ async function guardarPerfilRegistro(){
     return;
   }
 
+  // BLOQUEO NOMBRE DUPLICADO
+  const nombreNormalizado = normalizarTexto(nombre);
+
+  const snapshot = await db.collection("usuarios")
+    .where("nombreNormalizado", "==", nombreNormalizado)
+    .get();
+
+  if (!snapshot.empty) {
+    document.getElementById("msgPerfil").innerText = "Nombre ya en uso";
+    return;
+  }
+
   let fotoURL = sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
 
   if (archivo) {
-  const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
+    const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
 
-  subirImagen(ruta, archivo).then(url => {
-    db.collection("usuarios").doc(auth.currentUser.uid).update({
-      fotoPerfil: url
+    subirImagen(ruta, archivo).then(url => {
+      db.collection("usuarios").doc(auth.currentUser.uid).update({
+        fotoPerfil: url
+      });
     });
-  });
-}
+  }
 
   await db.collection("usuarios").doc(auth.currentUser.uid).set({
     nombre: nombre,
-    nombreNormalizado: normalizarTexto(nombre),
+    nombreNormalizado: nombreNormalizado,
     sexo: sexo,
     nivel: nivel,
     mano: mano,
@@ -166,6 +176,8 @@ async function guardarPerfilRegistro(){
 
   mostrar("menu");
 }
+
+
 // ======================
 
 function login(){
@@ -220,7 +232,7 @@ auth.onAuthStateChanged(user => {
 
       } else {
         avisoNivelMostrado = false;
-      mostrar("perfilCompletar");
+        mostrar("perfilCompletar");
       }
 
     });
@@ -241,36 +253,36 @@ const inputFotoGlobal = document.getElementById("inputFotoEditar");
 if (inputFotoGlobal) {
   inputFotoGlobal.addEventListener("change", async (e) => {
 
-  const file = e.target.files[0];
-  if (!file) return;
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const user = auth.currentUser;
-  if (!user) return;
+    const user = auth.currentUser;
+    if (!user) return;
 
-  const previewURL = URL.createObjectURL(file);
+    const previewURL = URL.createObjectURL(file);
 
-  const imgEditar = document.getElementById("fotoPerfilEditar");
-  if (imgEditar) imgEditar.src = previewURL;
+    const imgEditar = document.getElementById("fotoPerfilEditar");
+    if (imgEditar) imgEditar.src = previewURL;
 
-  const imgPerfil = document.getElementById("fotoPerfil");
-  if (imgPerfil) imgPerfil.src = previewURL;
+    const imgPerfil = document.getElementById("fotoPerfil");
+    if (imgPerfil) imgPerfil.src = previewURL;
 
-  const docRef = db.collection("usuarios").doc(user.uid);
-  const doc = await docRef.get();
-  const data = doc.data();
+    const docRef = db.collection("usuarios").doc(user.uid);
+    const doc = await docRef.get();
+    const data = doc.data();
 
-  if (data && data.fotoPerfil && data.fotoPerfil.includes("firebasestorage")) {
-    await borrarImagen(data.fotoPerfil);
-  }
+    if (data && data.fotoPerfil && data.fotoPerfil.includes("firebasestorage")) {
+      await borrarImagen(data.fotoPerfil);
+    }
 
-  const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
-  const url = await subirImagen(ruta, file);
+    const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
+    const url = await subirImagen(ruta, file);
 
-  await docRef.update({
-    fotoPerfil: url
+    await docRef.update({
+      fotoPerfil: url
+    });
+
   });
-
-});
 }
 
 function togglePass(){
@@ -307,7 +319,6 @@ function mostrar(seccion){
     "clasificacion"
   ];
 
-  // OCULTAR TODO
   secciones.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
@@ -317,7 +328,6 @@ function mostrar(seccion){
     }
   });
 
-  // MOSTRAR SOLO LA ACTIVA
   const actual = document.getElementById(seccion);
   if (actual) {
     actual.style.display = "block";
@@ -325,7 +335,6 @@ function mostrar(seccion){
     actual.style.opacity = "1";
   }
 
-  // CARGA PISTAS SOLO UNA VEZ
   if (seccion === "pistas" && !window.pistasCargadas) {
     cargarPistas();
     window.pistasCargadas = true;
@@ -344,4 +353,3 @@ function crearPartida(jugadores) {
     fecha: new Date()
   });
 }
-
