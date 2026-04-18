@@ -11,7 +11,7 @@ window.subirImagen = async function(ruta, archivo) {
 
 let avisoNivelMostrado = false;
 
-emailjs.init("3OBawFhtcg2bU2x0p");
+
 
 function mostrarAvisoNivel(){
   if (!avisoNivelMostrado) {
@@ -78,6 +78,24 @@ function normalizarTexto(texto){
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
+}
+
+function recuperarPassword() {
+  const email = document.getElementById("email").value.trim();
+
+  if (!email) {
+    alert("Introduce tu email");
+    return;
+  }
+
+  auth.sendPasswordResetEmail(email)
+    .then(() => {
+      alert("Correo de recuperación enviado");
+    })
+    .catch((error) => {
+      console.log(error);
+      alert(error.code);
+    });
 }
 
 function registro(){
@@ -297,27 +315,7 @@ function togglePass(){
   }
 }
 
-function recuperarPassword() {
-  const email = document.getElementById("email").value.trim();
 
-  if (!email) {
-    alert("Introduce tu email");
-    return;
-  }
-
-  const enlace = window.location.origin + "/reset.html?email=" + encodeURIComponent(email);
-
-  emailjs.send("service_lnpe6b2", "template_4cqh07o", {
-    email: email,
-    link: enlace
-  })
-  .then(() => {
-    alert("Correo enviado");
-  })
-  .catch(() => {
-    alert("Error al enviar");
-  });
-}
 
 // ======================
 
