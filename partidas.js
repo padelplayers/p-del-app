@@ -19,37 +19,38 @@ function crearPartida() {
 
 function cargarPistasParaPartida() {
 
-  auth.onAuthStateChanged((user) => {
+  const select = document.getElementById("selectPista");
+  if (!select) return;
 
-    db.collection("pistas").get().then((snapshot) => {
+  const user = auth.currentUser;
 
-      const select = document.getElementById("selectPista");
-      if (!select) return;
+  db.collection("pistas").get().then((snapshot) => {
 
-      select.innerHTML = '<option value="">Selecciona pista</option>';
+    let html = '<option value="">Selecciona pista</option>';
 
-      snapshot.forEach((doc) => {
+    snapshot.forEach((doc) => {
 
-        const pista = doc.data();
-        console.log("PISTA:", pista);
+      const pista = doc.data();
 
-        const option = document.createElement("option");
-        option.value = doc.id;
-       option.textContent =
-  (pista.nombre || pista.nombreNormalizado || "Pista") +
-  " - " +
-  (pista.localidad || pista.direccion || "");
+      const nombre = pista.nombre || pista.nombreNorm || "Pista";
+      const ubicacion = pista.localidad || pista.localidadNorm || "";
 
-        if (user && pista.tipo === "Privada / Comunidad" && pista.creadaPor !== user.uid) {
-          option.disabled = true;
-          option.textContent += " (Solo propietario)";
-        }
+      let texto = nombre;
+      if (ubicacion) texto += " - " + ubicacion;
 
-        select.appendChild(option);
+      let disabled = "";
+      if (user && pista.tipo === "Privada / Comunidad" && pista.creadaPor !== user.uid) {
+        disabled = "disabled";
+        texto += " (Solo propietario)";
+      }
 
-      });
+      html += '<option value="' + doc.id + '" ' + disabled + '>' + texto + '</option>';
 
     });
+
+    select.innerHTML = html;
+
+    console.log("SELECT FINAL:", select.innerHTML);
 
   });
 
