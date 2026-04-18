@@ -160,6 +160,7 @@ async function guardarPerfilRegistro(){
   await db.collection("usuarios").doc(auth.currentUser.uid).set({
     nombre: nombre,
     nombreNormalizado: nombreNormalizado,
+    email: auth.currentUser.email,
     sexo: sexo,
     nivel: nivel,
     mano: mano,
@@ -302,6 +303,22 @@ async function recuperarPassword(){
     document.getElementById("msgAuth").innerText = "Introduce tu email";
     return;
   }
+
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+if (!regex.test(email)) {
+  document.getElementById("msgAuth").innerText = "Email no válido";
+  return;
+}
+
+const snapshot = await db.collection("usuarios")
+  .where("email", "==", email)
+  .get();
+
+if (snapshot.empty) {
+  document.getElementById("msgAuth").innerText = "Email no registrado";
+  return;
+}
 
   try {
     await auth.sendPasswordResetEmail(email);
