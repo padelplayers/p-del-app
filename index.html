@@ -788,7 +788,8 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-const auth = firebase.auth();
+window.auth = firebase.auth();
+auth.useDeviceLanguage();
 const db = firebase.firestore();
 </script>
 

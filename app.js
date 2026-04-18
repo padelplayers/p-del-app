@@ -84,7 +84,7 @@ function recuperarPassword() {
   const email = document.getElementById("email").value.trim();
 
   if (!email) {
-    alert("Introduce tu email");
+   alert("Te hemos enviado un correo para restablecer la contraseña. Revisa tu bandeja de entrada o spam");
     return;
   }
 
