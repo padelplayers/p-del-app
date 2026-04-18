@@ -11,6 +11,8 @@ window.subirImagen = async function(ruta, archivo) {
 
 let avisoNivelMostrado = false;
 
+emailjs.init("3OBawFhtcg2bU2x0p");
+
 function mostrarAvisoNivel(){
   if (!avisoNivelMostrado) {
     avisoNivelMostrado = true;
@@ -295,43 +297,27 @@ function togglePass(){
   }
 }
 
-async function recuperarPassword(){
-
+function recuperarPassword() {
   const email = document.getElementById("email").value.trim();
 
   if (!email) {
-    document.getElementById("msgAuth").innerText = "Introduce tu email";
+    alert("Introduce tu email");
     return;
   }
 
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const enlace = window.location.origin + "/reset.html?email=" + encodeURIComponent(email);
 
-if (!regex.test(email)) {
-  document.getElementById("msgAuth").innerText = "Email no válido";
-  return;
+  emailjs.send("service_lnpe6b2", "template_4cqh07o", {
+    email: email,
+    link: enlace
+  })
+  .then(() => {
+    alert("Correo enviado");
+  })
+  .catch(() => {
+    alert("Error al enviar");
+  });
 }
-
-const snapshot = await db.collection("usuarios")
-  .where("email", "==", email)
-  .get();
-
-if (snapshot.empty) {
-  document.getElementById("msgAuth").innerText = "Email no registrado";
-  return;
-}
-
-  try {
-    await auth.sendPasswordResetEmail(email);
-    document.getElementById("msgAuth").innerText = "Correo enviado";
-  } catch (e) {
-    document.getElementById("msgAuth").innerText = "Error: " + e.message;
-  }
-
-}
-
-document.getElementById("email").addEventListener("input", () => {
-  document.getElementById("msgAuth").innerText = "";
-});
 
 // ======================
 
