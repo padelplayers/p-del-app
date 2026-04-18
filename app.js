@@ -342,38 +342,30 @@ function mostrar(seccion){
     "clasificacion"
   ];
 
+  // OCULTAR TODO SOLO CON DISPLAY
   secciones.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.style.display = "none";
-      el.style.visibility = "hidden";
-      el.style.opacity = "0";
     }
   });
 
+  // MOSTRAR SOLO LA ACTUAL
   const actual = document.getElementById(seccion);
   if (actual) {
     actual.style.display = "block";
-actual.style.visibility = "visible";
-actual.style.opacity = "1";
-
-// FORZAR VISIBILIDAD DE TODO EL CONTENIDO
-actual.querySelectorAll("*").forEach(function(el) {
-  el.style.display = "";
-  el.style.visibility = "visible";
-  el.style.opacity = "1";
-});
   }
 
+  // CARGAS ESPECÍFICAS
   if (seccion === "pistas" && !window.pistasCargadas) {
     cargarPistas();
     window.pistasCargadas = true;
   }
+
   if (seccion === "partidas") {
-  requestAnimationFrame(() => {
     cargarPistasParaPartida();
-  });
-}
+  }
+
 }
 
 function abrirTest(){
