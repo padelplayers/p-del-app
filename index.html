@@ -74,8 +74,9 @@
 <input id="email">
 
 <label>Contraseña</label>
-<div style="position:relative;">
-  <input id="pass" type="password" style="width:100%; padding-right:40px;">
+<div style="position:relative; width:100%;">
+  <input id="pass" type="password" style="width:100%; box-sizing:border-box; padding-right:35px;">
+  
   <span onclick="togglePass()" 
         style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;">
     👁
@@ -83,9 +84,9 @@
 </div>
 
 <div style="margin-top:10px;">
-  <label style="display:flex; align-items:center; gap:6px; font-weight:bold; cursor:pointer; white-space:nowrap;">
-    <input type="checkbox" id="checkEdad" style="margin:0;">
-    <span style="white-space:nowrap;">Soy mayor de 14 años</span>
+  <label style="display:inline-flex; align-items:center; font-weight:bold; cursor:pointer;">
+    <input type="checkbox" id="checkEdad" style="margin:0; margin-right:6px;">
+    <span>Soy mayor de 14 años</span>
   </label>
 </div>
 
