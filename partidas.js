@@ -20,7 +20,6 @@ function crearPartida() {
 function cargarPistasParaPartida() {
 
   const user = auth.currentUser;
-  if (!user) return;
 
   db.collection("pistas").get().then((snapshot) => {
 
@@ -37,7 +36,7 @@ function cargarPistasParaPartida() {
       option.value = doc.id;
       option.textContent = pista.nombre + " - " + pista.localidad;
 
-      if (pista.tipo === "Privada / Comunidad" && pista.creadaPor !== user.uid) {
+      if (user && pista.tipo === "Privada / Comunidad" && pista.creadaPor !== user.uid) {
         option.disabled = true;
         option.textContent += " (Solo propietario)";
       }
