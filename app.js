@@ -294,6 +294,28 @@ function togglePass(){
   }
 }
 
+async function recuperarPassword(){
+
+  const email = document.getElementById("email").value.trim();
+
+  if (!email) {
+    document.getElementById("msgAuth").innerText = "Introduce tu email";
+    return;
+  }
+
+  try {
+    await auth.sendPasswordResetEmail(email);
+    document.getElementById("msgAuth").innerText = "Correo enviado";
+  } catch (e) {
+    document.getElementById("msgAuth").innerText = "Error: " + e.message;
+  }
+
+}
+
+document.getElementById("email").addEventListener("input", () => {
+  document.getElementById("msgAuth").innerText = "";
+});
+
 // ======================
 
 function mostrar(seccion){
