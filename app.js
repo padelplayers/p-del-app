@@ -363,9 +363,9 @@ function mostrar(seccion){
     window.pistasCargadas = true;
   }
   if (seccion === "partidas") {
-  setTimeout(() => {
+  requestAnimationFrame(() => {
     cargarPistasParaPartida();
-  }, 100);
+  });
 }
 }
 
