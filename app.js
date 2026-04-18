@@ -92,6 +92,13 @@ return;
 let email = emailInput.value;
 let pass = passInput.value;
 
+const checkEdad = document.getElementById("checkEdad");
+
+if (!checkEdad || !checkEdad.checked) {
+  alert("Debes ser mayor de 14 años");
+  return;
+}
+
 auth.createUserWithEmailAndPassword(email, pass)
   .then(user => {
     console.log("REGISTRO OK", user);
@@ -264,6 +271,15 @@ if (inputFotoGlobal) {
   });
 
 });
+}
+
+function togglePass(){
+  const input = document.getElementById("pass");
+  if (input.type === "password") {
+    input.type = "text";
+  } else {
+    input.type = "password";
+  }
 }
 
 // ======================

@@ -67,13 +67,25 @@
 </div>
 
 <!-- LOGIN -->
+
 <div id="login" class="container">
 
 <label>Email</label>
 <input id="email">
 
 <label>Contraseña</label>
-<input id="pass" type="password">
+<div style="position:relative;">
+  <input id="pass" type="password" style="width:100%; padding-right:40px;">
+  <span onclick="togglePass()" 
+        style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;">
+    👁
+  </span>
+</div>
+
+<div style="margin-top:10px; display:flex; align-items:center; gap:8px;">
+  <input type="checkbox" id="mayor14">
+  <label for="mayor14">Soy mayor de 14 años</label>
+</div>
 
 <button class="btnBlue" onclick="registro()">Registrarse</button>
 <button class="btnYellow" onclick="login()">Entrar</button>
