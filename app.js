@@ -362,6 +362,9 @@ function mostrar(seccion){
     cargarPistas();
     window.pistasCargadas = true;
   }
+  if (seccion === "partidas") {
+  cargarPistasParaPartida();
+}
 }
 
 function abrirTest(){

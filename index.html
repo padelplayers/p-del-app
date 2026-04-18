@@ -43,8 +43,8 @@
 
     <div class="perfil-stats">
       <div class="stat">
-        <div id="partidos">0</div>
-        <span>Partidos</span>
+        <div id="partidas">0</div>
+        <span>Partidas</span>
       </div>
       <div class="stat">
         <div id="seguidores">0</div>
@@ -758,8 +758,16 @@ Juego en red
 </div>
 
 <!-- PARTIDAS -->
+
 <div id="partidas" class="container" style="display:none;">
+
   <h2>Partidas</h2>
+
+  <select id="selectPista">
+  <option value="">Selecciona pista</option>
+</select>
+
+<button onclick="crearPartida()" class="btnBlue">Crear partida</button>
 
   <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
 </div>
@@ -797,6 +805,7 @@ const db = firebase.firestore();
 <script src="jugadores.js"></script>
 <script src="app.js"></script>
 <script src="pistas.js"></script>
+<script src="partidas.js"></script>
 <script src="testNivel.js"></script>
 
 
