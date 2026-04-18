@@ -20,6 +20,7 @@ function crearPartida() {
 function cargarPistasParaPartida() {
 
   const user = auth.currentUser;
+  if (!user) return;
 
   db.collection("pistas").get().then((snapshot) => {
 
