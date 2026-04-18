@@ -31,6 +31,7 @@ function cargarPistasParaPartida() {
       snapshot.forEach((doc) => {
 
         const pista = doc.data();
+        console.log("PISTA:", pista);
 
         const option = document.createElement("option");
         option.value = doc.id;
