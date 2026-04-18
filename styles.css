@@ -394,3 +394,7 @@ button[onclick*="mostrar('menu')"]{
   justify-content: flex-start !important;
   text-align: left !important;
 }
+
+#login label span {
+  white-space: nowrap;
+}
