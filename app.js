@@ -84,13 +84,13 @@ function recuperarPassword() {
   const email = document.getElementById("email").value.trim();
 
   if (!email) {
-   alert("Te hemos enviado un correo para restablecer la contraseña. Revisa tu bandeja de entrada o spam");
+   alert("Introduce tu email");
     return;
   }
 
   auth.sendPasswordResetEmail(email)
     .then(() => {
-      alert("Correo de recuperación enviado");
+      alert("Te hemos enviado un correo para restablecer la contraseña. Revisa tu bandeja de entrada o spam");
     })
     .catch((error) => {
       console.log(error);
