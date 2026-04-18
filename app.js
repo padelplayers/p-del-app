@@ -354,8 +354,15 @@ function mostrar(seccion){
   const actual = document.getElementById(seccion);
   if (actual) {
     actual.style.display = "block";
-    actual.style.visibility = "visible";
-    actual.style.opacity = "1";
+actual.style.visibility = "visible";
+actual.style.opacity = "1";
+
+// FORZAR VISIBILIDAD DE TODO EL CONTENIDO
+actual.querySelectorAll("*").forEach(function(el) {
+  el.style.display = "";
+  el.style.visibility = "visible";
+  el.style.opacity = "1";
+});
   }
 
   if (seccion === "pistas" && !window.pistasCargadas) {
