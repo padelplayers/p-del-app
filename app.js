@@ -320,6 +320,7 @@ function togglePass(){
 // ======================
 
 function mostrar(seccion){
+  console.log("MOSTRAR:", seccion);
 
   const btnFoto = document.getElementById("btnCambiarFoto");
   if (btnFoto) btnFoto.style.display = "none";
