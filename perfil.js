@@ -400,7 +400,7 @@ function cargarPerfil(uid){
       document.getElementById("manoPerfil").innerText = data.mano || "-";
       document.getElementById("posicionPerfil").innerText = data.posicion || "-";
 
-      const elPartidos = document.getElementById("partidos");
+      const elPartidos = document.getElementById("partidasCount");
       if (elPartidos) elPartidos.innerText = data.partidos || 0;
 
       const elSeguidores = document.getElementById("seguidores");
