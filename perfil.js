@@ -400,14 +400,18 @@ function cargarPerfil(uid){
       document.getElementById("manoPerfil").innerText = data.mano || "-";
       document.getElementById("posicionPerfil").innerText = data.posicion || "-";
 
-      const elPartidos = document.getElementById("partidasCount");
-      if (elPartidos) elPartidos.innerText = data.partidos || 0;
+      if (document.getElementById("perfil").style.display === "block") {
 
-      const elSeguidores = document.getElementById("seguidores");
-      if (elSeguidores) elSeguidores.innerText = data.seguidores || 0;
+  const elPartidos = document.getElementById("partidasCount");
+  if (elPartidos) elPartidos.innerText = data.partidos || 0;
 
-      const elSeguidos = document.getElementById("seguidos");
-      if (elSeguidos) elSeguidos.innerText = data.seguidos || 0;
+  const elSeguidores = document.getElementById("seguidores");
+  if (elSeguidores) elSeguidores.innerText = data.seguidores || 0;
+
+  const elSeguidos = document.getElementById("seguidos");
+  if (elSeguidos) elSeguidos.innerText = data.seguidos || 0;
+
+}
 
       const manoSelect = document.getElementById("manoEditar");
       const posicionSelect = document.getElementById("posicionEditar");
