@@ -66,8 +66,8 @@ function verPerfil(uid = auth.currentUser?.uid){
   if (!user || !uid) return;
 
   // limpiar listeners anteriores
-  if (unsubscribePerfil) unsubscribePerfil();
-  if (unsubscribeUser) unsubscribeUser();
+ if (typeof unsubscribePerfil === "function") unsubscribePerfil();
+if (typeof unsubscribeUser === "function") unsubscribeUser();
 
   mostrar("perfil");
 
