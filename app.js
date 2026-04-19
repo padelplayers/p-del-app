@@ -347,14 +347,12 @@ function mostrar(seccion){
     const el = document.getElementById(id);
     if (el){
       el.style.display = "none";
-      
     }
   });
 
   const actual = document.getElementById(seccion);
   if (actual){
     actual.style.display = "block";
-    
   }
 
   if (seccion === "pistas" && !window.pistasCargadas){
@@ -365,7 +363,7 @@ function mostrar(seccion){
   if (seccion === "partidas"){
     setTimeout(function(){
       cargarPistasParaPartida();
-    }, 0);
+    }, 100); // ← cambio aquí
   }
 }
 
