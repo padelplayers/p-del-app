@@ -347,16 +347,14 @@ function mostrar(seccion){
     const el = document.getElementById(id);
     if (el){
       el.style.display = "none";
-      el.style.visibility = "hidden";
-      el.style.opacity = "0";
+      
     }
   });
 
   const actual = document.getElementById(seccion);
   if (actual){
     actual.style.display = "block";
-    actual.style.visibility = "visible";
-    actual.style.opacity = "1";
+    
   }
 
   if (seccion === "pistas" && !window.pistasCargadas){
