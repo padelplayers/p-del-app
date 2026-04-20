@@ -320,6 +320,7 @@ function togglePass(){
 // ======================
 
 function mostrar(seccion){
+  console.log("MOSTRAR:", seccion);
 
   const btnFoto = document.getElementById("btnCambiarFoto");
   if (btnFoto) btnFoto.style.display = "none";
@@ -342,25 +343,27 @@ function mostrar(seccion){
     "clasificacion"
   ];
 
-  secciones.forEach(id => {
+  secciones.forEach(function(id){
     const el = document.getElementById(id);
-    if (el) {
+    if (el){
       el.style.display = "none";
-      el.style.visibility = "hidden";
-      el.style.opacity = "0";
     }
   });
 
   const actual = document.getElementById(seccion);
-  if (actual) {
+  if (actual){
     actual.style.display = "block";
-    actual.style.visibility = "visible";
-    actual.style.opacity = "1";
   }
 
-  if (seccion === "pistas" && !window.pistasCargadas) {
+  if (seccion === "pistas" && !window.pistasCargadas){
     cargarPistas();
     window.pistasCargadas = true;
+  }
+
+  if (seccion === "partidas"){
+    setTimeout(function(){
+      cargarPistasParaPartida();
+    }, 100); // ← cambio aquí
   }
 }
 
