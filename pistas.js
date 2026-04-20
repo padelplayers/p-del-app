@@ -340,7 +340,8 @@ window.abrirEditarPista = async function(id) {
   document.getElementById("editarLng").value = data.lng || "";
   document.getElementById("editarReserva").value = data.reserva || "";
 
-  document.getElementById("formaPagoEditar").value = data.formaPago || "";
+ const fp = document.getElementById("formaPagoEditar");
+if (fp) fp.value = data.formaPago || "";
 
   // SELECTS
   document.getElementById("editarLocalidadPista").value = data.localidad || "";
