@@ -24,6 +24,10 @@ if (btnGuardarPista) {
       const lng = document.getElementById("lng").value;
       const reserva = document.getElementById("reserva").value;
 
+      const formaPago = window.pistaEditando
+  ? document.getElementById("formaPagoEditar").value
+  : document.getElementById("formaPago").value;
+
       let urlImagen = "";
 
       const inputFotoPista = document.getElementById("inputFotoPista");
@@ -94,6 +98,7 @@ if (btnGuardarPista) {
         lat: Number(lat),
         lng: Number(lng),
         reserva: reserva,
+        formaPago: formaPago,
         creadaPor: auth.currentUser.uid
       };
 
@@ -236,7 +241,17 @@ if (textoNorm && !nombreNorm.includes(textoNorm)) return;
 (data.precioManana || 0) + "€ mañana | " +
 (data.precioTarde || 0) + "€ tarde | " +
 (data.precioFestivo || 0) + "€ finde/festivo" +
-"</div>";
+"</div>" +
+
+(data.reserva && data.reserva.startsWith("http")
+  ? "<div><a href='" + data.reserva + "' target='_blank'>Reservar</a></div>"
+  : "<div>Tel: " + (data.reserva || "No disponible") + "</div>");
+
+  div.innerHTML += "<div>Pago: " + (
+  data.formaPago === "reserva" ? "Al reservar" :
+  data.formaPago === "pista" ? "En pista" :
+  "No se paga"
+) + "</div>";
 
 if (data.lat && data.lng) {
   div.innerHTML +=
@@ -324,6 +339,8 @@ window.abrirEditarPista = async function(id) {
   document.getElementById("editarLat").value = data.lat || "";
   document.getElementById("editarLng").value = data.lng || "";
   document.getElementById("editarReserva").value = data.reserva || "";
+
+  document.getElementById("formaPagoEditar").value = data.formaPago || "";
 
   // SELECTS
   document.getElementById("editarLocalidadPista").value = data.localidad || "";
