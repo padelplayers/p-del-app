@@ -83,6 +83,13 @@ if (btnGuardarPista) {
         return;
       }
 
+      const fpEditar = document.getElementById("formaPagoEditar");
+const fpCrear = document.getElementById("formaPago");
+
+const formaPago = fpEditar && fpEditar.value !== ""
+  ? fpEditar.value
+  : (fpCrear ? fpCrear.value : "");
+
       const datos = {
         nombre: nombre,
         nombreNorm: nombreNorm,
@@ -107,10 +114,10 @@ if (btnGuardarPista) {
       }
 
       if (window.pistaEditando) {
-        await db.collection("pistas").doc(window.pistaEditando).update({
-          ...datos,
-          verificada: true
-        });
+         await db.collection("pistas").doc(window.pistaEditando).update({
+  ...datos,
+  verificada: datos.verificada ?? true
+});
         window.pistaEditando = null;
       } else {
         await db.collection("pistas").add({
