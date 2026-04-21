@@ -84,9 +84,15 @@ if (btnGuardarPista) {
       const fpEditar = document.getElementById("formaPagoEditar");
 const fpCrear = document.getElementById("formaPago");
 
-const formaPago = fpEditar && fpEditar.value !== ""
-  ? fpEditar.value
-  : (fpCrear ? fpCrear.value : "");
+let formaPago = "";
+
+if (window.pistaEditando) {
+  
+  if (fpEditar) formaPago = fpEditar.value;
+} else {
+  
+  if (fpCrear) formaPago = fpCrear.value;
+}
 
       const datos = {
         nombre: nombre,
