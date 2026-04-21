@@ -396,8 +396,7 @@ if (btnActualizar) {
       reserva: document.getElementById("editarReserva").value,
 
       
-formaPago: document.getElementById("formaPagoEditar") ? document.getElementById("formaPagoEditar").value : data.formaPago,
-
+formaPago: document.getElementById("formaPagoEditar") ? document.getElementById("formaPagoEditar").value : "",
       verificada: true
     });
 
