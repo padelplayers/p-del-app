@@ -358,10 +358,9 @@ function mostrar(seccion){
     actual.style.display = "block";
   }
 
-  if (seccion === "pistas" && !window.pistasCargadas){
-    cargarPistas();
-    window.pistasCargadas = true;
-  }
+ if (seccion === "pistas"){
+  cargarPistas();
+}
 
   if (seccion === "partidas"){
     setTimeout(function(){
