@@ -396,7 +396,9 @@ if (btnActualizar) {
       reserva: document.getElementById("editarReserva").value,
 
       
-formaPago: document.getElementById("formaPagoEditar") ? document.getElementById("formaPagoEditar").value : "",
+formaPago: document.getElementById("formaPagoEditar") && document.getElementById("formaPagoEditar").value !== ""
+  ? document.getElementById("formaPagoEditar").value
+  : (await db.collection("pistas").doc(window.pistaEditando).get()).data().formaPago || "",
       verificada: true
     });
 
