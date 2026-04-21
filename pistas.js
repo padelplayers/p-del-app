@@ -259,11 +259,11 @@ if (textoNorm && !nombreNorm.includes(textoNorm)) return;
   ? "<div><a href='" + data.reserva + "' target='_blank'>Reservar</a></div>"
   : "<div>Tel: " + (data.reserva || "No disponible") + "</div>");
 
-  div.innerHTML += "<div>Pago: " + (
-  data.formaPago === "reserva" ? "Al reservar" :
-  data.formaPago === "pista" ? "En pista" :
-  "No se paga"
-) + "</div>";
+  div.innerHTML += "<div>Pago: " +
+  (data.formaPago === "reserva" ? "Al reservar" :
+   data.formaPago === "pista" ? "En pista" :
+   "No se paga")
++ "</div>";
 
 if (data.lat && data.lng) {
   div.innerHTML +=
@@ -394,6 +394,9 @@ if (btnActualizar) {
       lat: document.getElementById("editarLat").value,
       lng: document.getElementById("editarLng").value,
       reserva: document.getElementById("editarReserva").value,
+
+      formaPago: document.getElementById("formaPagoEditar").value,
+
 
       verificada: true
     });
