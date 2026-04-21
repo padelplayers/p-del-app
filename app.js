@@ -362,11 +362,7 @@ function mostrar(seccion){
   cargarPistas();
 }
 
-  if (seccion === "partidas"){
-    setTimeout(function(){
-      cargarPistasParaPartida();
-    }, 100); // ← cambio aquí
-  }
+
 
   const btnNueva = document.getElementById("btnNuevaPista");
 
