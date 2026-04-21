@@ -24,9 +24,7 @@ if (btnGuardarPista) {
       const lng = document.getElementById("lng").value;
       const reserva = document.getElementById("reserva").value;
 
-      const formaPago = window.pistaEditando
-  ? document.getElementById("formaPagoEditar").value
-  : document.getElementById("formaPago").value;
+      
 
       let urlImagen = "";
 
