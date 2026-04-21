@@ -112,6 +112,7 @@ const formaPago = fpEditar && fpEditar.value !== ""
       }
 
       if (window.pistaEditando) {
+        console.log("FORMA PAGO GUARDAR:", formaPago);
          await db.collection("pistas").doc(window.pistaEditando).update({
   ...datos,
   verificada: datos.verificada ?? true
