@@ -25,6 +25,7 @@ function crearPartida() {
     tipo: tipo,
     genero: genero,
     jugadores: [],
+    creadorId: auth.currentUser ? auth.currentUser.uid : null,
     estado: "abierta"
   }).then(() => {
     document.getElementById("pistaSeleccionada").innerText = "Ninguna pista seleccionada";
