@@ -366,7 +366,7 @@ if (fp) fp.value = data.formaPago || "";
   document.getElementById("editarPrecioTarde").value = data.precioTarde || "";
   document.getElementById("editarPrecioFestivo").value = data.precioFestivo || "";
 
-  window.idPistaEditando = id;
+  window.pistaEditando = id;
 
   mostrar("editarPista");
 };
