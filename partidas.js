@@ -1,67 +1,37 @@
 function crearPartida() {
 
-  if (!window.partidaCreando.pistaId) {
-  window.modoSeleccionPista = true;
-  mostrar("pistas");
+  const div = document.getElementById("pistaSeleccionada");
+const pistaId = div ? div.dataset.id : null;
+
+if (!pistaId) {
+  alert("Selecciona una pista");
   return;
 }
+const fecha = document.getElementById("fechaPartida")?.value;
+const hora = document.getElementById("horaPartida")?.value;
 
-const pistaId = window.partidaCreando.pistaId;
-
+if (!fecha || !hora) {
+  alert("Completa todos los campos");
+  return;
+}
   return db.collection("partidas").add({
     pistaId: pistaId,
     jugadores: [],
     estado: "borrador",
-    fecha: new Date()
+    fecha: fecha,
+    hora: hora,
   });
 
 }
 
 window.seleccionarPistaPartida = function(id, nombre) {
-  const select = document.getElementById("selectPista");
-  if (select) {
-    select.value = id;
+  const div = document.getElementById("pistaSeleccionada");
+  if (div) {
+    div.innerText = nombre;
+    div.dataset.id = id;
   }
 
   window.modoSeleccionPista = false;
   mostrar("partidas");
 };
 
-function cargarPistasParaPartida() {
-
-  const select = document.getElementById("selectPista");
-  if (!select) return;
-
-  const user = auth.currentUser;
-
-  db.collection("pistas").get().then((snapshot) => {
-
-    let html = '<option value="">Selecciona pista</option>';
-
-    snapshot.forEach((doc) => {
-
-      const pista = doc.data();
-
-      const nombre = pista.nombre || pista.nombreNorm || "Pista";
-      const ubicacion = pista.localidad || pista.localidadNorm || "";
-
-      let texto = nombre;
-      if (ubicacion) texto += " - " + ubicacion;
-
-      let disabled = "";
-      if (user && pista.tipo === "Privada / Comunidad" && pista.creadaPor !== user.uid) {
-        disabled = "disabled";
-        texto += " (Solo propietario)";
-      }
-
-      html += '<option value="' + doc.id + '" ' + disabled + '>' + texto + '</option>';
-
-    });
-
-    select.innerHTML = html;
-
-    console.log("SELECT FINAL:", select.innerHTML);
-
-  });
-
-}

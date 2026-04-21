@@ -786,9 +786,11 @@ Añadir pista
 
   <h2>Partidas</h2>
 
- <select id="selectPista">
-  <option value="">Selecciona pista</option>
-</select>
+ <div id="pistaSeleccionada">Ninguna pista seleccionada</div>
+
+<button class="btnYellow" onclick="irASeleccionPista()">
+  Elegir pista
+</button>
 
 <button class="btnBlue" onclick="window.modoSeleccionPista = true; mostrar('pistas')">
 Elegir pista
