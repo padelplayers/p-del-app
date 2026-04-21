@@ -786,19 +786,44 @@ Añadir pista
 
   <h2>Partidas</h2>
 
- <div id="pistaSeleccionada">Ninguna pista seleccionada</div>
 
-<button class="btnYellow" onclick="irASeleccionPista()">
-  Elegir pista
-</button>
-
-<button class="btnBlue" onclick="window.modoSeleccionPista = true; mostrar('pistas')">
-Elegir pista
-</button>
-
-<button onclick="crearPartida()" class="btnBlue">Crear partida</button>
+<button onclick="mostrar('crearPartida')" class="btnBlue">Crear partida</button>
 
   <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
+</div>
+
+<div id="crearPartida" class="container" style="display:none;">
+
+  <h2>Crear partida</h2>
+
+  <div id="pistaSeleccionada" style="margin:10px 0; font-weight:bold;">
+    Ninguna pista seleccionada
+  </div>
+
+  <button class="btnYellow" onclick="window.modoSeleccionPista = true; mostrar('pistas')">
+    Elegir pista
+  </button>
+
+  <input type="date" id="fechaPartida">
+  <input type="time" id="horaPartida">
+
+  <select id="tipoPartida">
+    <option value="">Tipo de partida</option>
+    <option value="ranking">Ranking</option>
+    <option value="amistosa">Amistosa</option>
+  </select>
+
+  <select id="generoPartida">
+    <option value="">Género</option>
+    <option value="masculino">Masculino</option>
+    <option value="femenino">Femenino</option>
+    <option value="mixto">Mixto</option>
+    <option value="cualquiera">Cualquiera</option>
+  </select>
+
+  <button onclick="crearPartida()" class="btnBlue">Crear partida</button>
+  <button class="btnBlue" onclick="mostrar('partidas')">Volver</button>
+
 </div>
 
 <!-- CLASIFICACIÓN -->

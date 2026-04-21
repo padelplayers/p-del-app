@@ -1,25 +1,28 @@
 function crearPartida() {
 
   const div = document.getElementById("pistaSeleccionada");
-const pistaId = div ? div.dataset.id : null;
+  const pistaId = div ? div.dataset.id : null;
 
-if (!pistaId) {
-  alert("Selecciona una pista");
-  return;
-}
-const fecha = document.getElementById("fechaPartida")?.value;
-const hora = document.getElementById("horaPartida")?.value;
+  const fecha = document.getElementById("fechaPartida")?.value;
+  const hora = document.getElementById("horaPartida")?.value;
+  const tipo = document.getElementById("tipoPartida")?.value;
+  const genero = document.getElementById("generoPartida")?.value;
 
-if (!fecha || !hora) {
-  alert("Completa todos los campos");
-  return;
-}
+  if (!pistaId || !fecha || !hora || !tipo || !genero) {
+    alert("Completa todos los campos");
+    return;
+  }
+
   return db.collection("partidas").add({
     pistaId: pistaId,
-    jugadores: [],
-    estado: "borrador",
     fecha: fecha,
     hora: hora,
+    tipo: tipo,
+    genero: genero,
+    jugadores: [],
+    estado: "abierta"
+  }).then(() => {
+    mostrar("partidas");
   });
 
 }
