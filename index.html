@@ -435,7 +435,10 @@ Juego en red
   </div>
 </div>
 
-  <button id="btnNuevaPista" class="btnYellow" onclick="mostrar('crearPista')">Añadir pista</button>
+  <button id="btnNuevaPista" class="btnYellow"
+onclick="if (!window.modoSeleccionPista) mostrar('crearPista')">
+Añadir pista
+</button>
   <button id="btnVolverPistas" onclick="mostrar('menu')" class="btnBlue">Volver</button>
 
   <div id="listaPistas"></div>
@@ -783,9 +786,13 @@ Juego en red
 
   <h2>Partidas</h2>
 
-  <select id="selectPista">
+ <select id="selectPista">
   <option value="">Selecciona pista</option>
 </select>
+
+<button class="btnBlue" onclick="window.modoSeleccionPista = true; mostrar('pistas')">
+Elegir pista
+</button>
 
 <button onclick="crearPartida()" class="btnBlue">Crear partida</button>
 

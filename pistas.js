@@ -286,6 +286,10 @@ if (data.lat && data.lng) {
           div.innerHTML += "</div>";
         }
 
+        if (window.modoSeleccionPista) {
+  div.innerHTML += "<button class='btnBlue' onclick='seleccionarPistaPartida(\"" + doc.id + "\", \"" + data.nombre + "\")'>Añadir a partida</button>";
+}
+
         lista.appendChild(div);
       });
 

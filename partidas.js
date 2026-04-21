@@ -1,12 +1,12 @@
 function crearPartida() {
 
-  const select = document.getElementById("selectPista");
-  const pistaId = select.value;
+  if (!window.partidaCreando.pistaId) {
+  window.modoSeleccionPista = true;
+  mostrar("pistas");
+  return;
+}
 
-  if (!pistaId) {
-    alert("Selecciona una pista");
-    return;
-  }
+const pistaId = window.partidaCreando.pistaId;
 
   return db.collection("partidas").add({
     pistaId: pistaId,
@@ -16,6 +16,16 @@ function crearPartida() {
   });
 
 }
+
+window.seleccionarPistaPartida = function(id, nombre) {
+  const select = document.getElementById("selectPista");
+  if (select) {
+    select.value = id;
+  }
+
+  window.modoSeleccionPista = false;
+  mostrar("partidas");
+};
 
 function cargarPistasParaPartida() {
 

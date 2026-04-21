@@ -1,3 +1,6 @@
+window.modoSeleccionPista = false;
+window.partidaCreando = {};
+
 window.subirImagen = async function(ruta, archivo) {
 
   const ref = firebase.storage().ref().child(ruta);
@@ -365,6 +368,12 @@ function mostrar(seccion){
       cargarPistasParaPartida();
     }, 100); // ← cambio aquí
   }
+
+  const btnNueva = document.getElementById("btnNuevaPista");
+
+if (btnNueva) {
+  btnNueva.style.display = window.modoSeleccionPista ? "none" : "inline-block";
+}
 }
 
 function abrirTest(){
