@@ -377,7 +377,7 @@ const btnActualizar = document.getElementById("btnActualizarPista");
 if (btnActualizar) {
   btnActualizar.onclick = async () => {
 
-    await db.collection("pistas").doc(window.idPistaEditando).update({
+    await db.collection("pistas").doc(window.pistaEditando).update({
 
       nombre: document.getElementById("editarNombrePista").value,
       localidad: document.getElementById("editarLocalidadPista").value,
