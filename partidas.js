@@ -13,10 +13,10 @@ function crearPartida() {
     return;
   }
 
- if (!fecha || !hora || !tipo || !genero || tipo === "" || genero === "") {
-    alert("Completa todos los campos");
-    return;
-  }
+ if (!fecha || !hora || !tipo || !genero) {
+  alert("Completa todos los campos");
+  return;
+}
 
   console.log("pistaId:", pistaId);
 console.log("fecha:", fecha);
