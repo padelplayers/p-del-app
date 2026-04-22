@@ -376,10 +376,3 @@ function abrirTest(){
   mostrar("testNivel");
 }
 
-function crearPartida(jugadores) {
-  return db.collection("partidas").add({
-    jugadores: jugadores,
-    resultado: null,
-    fecha: new Date()
-  });
-}
