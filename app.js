@@ -362,7 +362,9 @@ function mostrar(seccion){
   cargarPistas();
 }
 
-
+if (seccion === "crearPartida") {
+  initCrearPartida();
+}
 
   const btnNueva = document.getElementById("btnNuevaPista");
 
