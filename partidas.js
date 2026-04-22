@@ -13,7 +13,7 @@ function crearPartida() {
     return;
   }
 
-  if (!fecha || !hora || !tipo || !genero) {
+ if (!fecha || !hora || !tipo || !genero || tipo === "" || genero === "") {
     alert("Completa todos los campos");
     return;
   }
