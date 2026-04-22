@@ -52,3 +52,45 @@ window.seleccionarPistaPartida = function(id, nombre) {
   mostrar("crearPartida");
 };
 
+function cargarPartidas() {
+  const contenedor = document.getElementById("listaPartidas");
+  if (!contenedor) return;
+
+  contenedor.innerHTML = "Cargando...";
+
+  db.collection("partidas").get()
+  .then(snapshot => {
+    if (snapshot.empty) {
+      contenedor.innerHTML = "No hay partidas";
+      return;
+    }
+
+    let html = "";
+
+    snapshot.forEach(doc => {
+      const p = doc.data();
+
+      html += 
+        "<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:8px;'>" +
+
+          "<b>" + (p.tipo || "") + "</b><br>" +
+          (p.fecha || "") + " - " + (p.hora || "") + "<br><br>" +
+
+          "<div><b>Jugadores:</b></div>" +
+          (p.jugadores && p.jugadores[0] ? p.jugadores[0] : "-") + "<br>" +
+          (p.jugadores && p.jugadores[1] ? p.jugadores[1] : "-") + "<br>" +
+          (p.jugadores && p.jugadores[2] ? p.jugadores[2] : "-") + "<br>" +
+          (p.jugadores && p.jugadores[3] ? p.jugadores[3] : "-") + "<br><br>" +
+
+          "<div><b>Reservas:</b></div>" +
+          (p.reservas && p.reservas[0] ? p.reservas[0] : "-") + "<br>" +
+          (p.reservas && p.reservas[1] ? p.reservas[1] : "-") + "<br><br>" +
+
+          "<button class='btnBlue'>Unirse</button>" +
+
+        "</div>";
+    });
+
+    contenedor.innerHTML = html;
+  });
+}

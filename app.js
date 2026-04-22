@@ -373,6 +373,7 @@ if (btnNueva) {
 
 function abrirTest(){
   alert("Elige bien tu nivel. No podrás cambiarlo después.");
-  mostrar("testNivel");
+  
+  ("testNivel");
 }
 
