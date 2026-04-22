@@ -343,6 +343,7 @@ function mostrar(seccion){
     "mediaCenter",
     "instrucciones",
     "partidas",
+    "crearPartida",
     "clasificacion"
   ];
 
