@@ -31,7 +31,7 @@ console.log("genero:", genero);
     tipo: tipo,
     genero: genero,
     jugadores: auth.currentUser ? [auth.currentUser.uid] : [],
-    readorId: auth.currentUser ? auth.currentUser.uid : null,
+    creadorId: auth.currentUser ? auth.currentUser.uid : null,
     estado: "abierta"
   }).then(() => {
     document.getElementById("pistaSeleccionada").innerText = "Ninguna pista seleccionada";
