@@ -60,6 +60,11 @@ window.seleccionarPistaPartida = function(id, nombre) {
   mostrar("crearPartida");
 };
 
+function initCrearPartida() {
+  const hoy = new Date().toISOString().split("T")[0];
+  document.getElementById("fechaPartida").min = hoy;
+}
+
 function cargarPartidas() {
   const contenedor = document.getElementById("listaPartidas");
   if (!contenedor) return;

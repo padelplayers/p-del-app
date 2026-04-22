@@ -806,7 +806,7 @@ Añadir pista
     Elegir pista
   </button>
 
-  <input type="date" id="fechaPartida">
+  <input type="date" id="fechaPartida" min="">
   <input type="time" id="horaPartida">
 
   <select id="tipoPartida">
@@ -823,7 +823,7 @@ Añadir pista
     <option value="cualquiera">Cualquiera</option>
   </select>
 
-  <button onclick="crearPartida()" class="btnBlue">Crear partida</button>
+  <button onclick="mostrar('crearPartida'); initCrearPartida();" class="btnBlue">Crear partida</button>
   <button class="btnBlue" onclick="mostrar('partidas')">Volver</button>
 
 </div>
