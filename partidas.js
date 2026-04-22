@@ -64,8 +64,13 @@ function initCrearPartida() {
   const input = document.getElementById("fechaPartida");
   const hoy = new Date().toISOString().split("T")[0];
 
-  input.min = hoy;
   input.value = hoy;
+
+  input.addEventListener("change", function () {
+    if (this.value < hoy) {
+      this.value = hoy;
+    }
+  });
 }
 
 function cargarPartidas() {
