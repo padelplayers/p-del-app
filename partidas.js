@@ -8,6 +8,9 @@ function crearPartida() {
   const hora = document.getElementById("horaPartida")?.value;
   const tipo = document.getElementById("tipoPartida")?.value;
   const genero = document.getElementById("generoPartida")?.value;
+  const nivelTipo = document.getElementById("nivelTipo").value;
+const nivelDesde = document.getElementById("nivelDesde").value;
+const nivelHasta = document.getElementById("nivelHasta").value;
 
   if (!pistaId) {
     alert("Selecciona una pista");
@@ -19,7 +22,20 @@ function crearPartida() {
   return;
 }
 
-  console.log("pistaId:", pistaId);
+if (nivelTipo === "rango") {
+
+  if (!nivelDesde || !nivelHasta) {
+    alert("Selecciona rango de nivel");
+    return;
+  }
+
+  if (parseFloat(nivelDesde) > parseFloat(nivelHasta)) {
+    alert("Nivel incorrecto");
+    return;
+  }
+}
+
+console.log("pistaId:", pistaId);
 console.log("fecha:", fecha);
 console.log("hora:", hora);
 console.log("tipo:", tipo);
@@ -32,6 +48,10 @@ console.log("genero:", genero);
   hora: hora,
   tipo: tipo,
   genero: genero,
+  nivel: nivelTipo === "cualquiera" ? "cualquiera" : {
+  desde: nivelDesde,
+  hasta: nivelHasta
+},
 
   jugadores: [auth.currentUser.uid],
   reservas: [],

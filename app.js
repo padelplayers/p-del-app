@@ -359,6 +359,37 @@ function mostrar(seccion){
     actual.style.display = "block";
   }
 
+  if (seccion === "crearPartida") {
+
+  const tipoNivel = document.getElementById("nivelTipo");
+  const rango = document.getElementById("nivelRango");
+  const desde = document.getElementById("nivelDesde");
+  const hasta = document.getElementById("nivelHasta");
+
+  // mostrar / ocultar rango
+  if (tipoNivel && rango) {
+    tipoNivel.onchange = function () {
+      rango.style.display = this.value === "rango" ? "block" : "none";
+    };
+  }
+
+  // generar niveles solo una vez
+  if (desde && hasta && desde.options.length === 0) {
+
+    let htmlDesde = '<option value="">Desde</option>';
+    let htmlHasta = '<option value="">Hasta</option>';
+
+    for (let i = 0.5; i <= 7; i += 0.25) {
+      let val = Math.round(i * 100) / 100;
+      htmlDesde += '<option value="' + val + '">' + val + '</option>';
+      htmlHasta += '<option value="' + val + '">' + val + '</option>';
+    }
+
+    desde.innerHTML = htmlDesde;
+    hasta.innerHTML = htmlHasta;
+  }
+}
+
  if (seccion === "pistas"){
   cargarPistas();
 }

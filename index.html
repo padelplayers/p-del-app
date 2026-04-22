@@ -823,6 +823,16 @@ Añadir pista
     <option value="cualquiera">Cualquiera</option>
   </select>
 
+  <select id="nivelTipo">
+  <option value="cualquiera">Nivel: Cualquiera</option>
+  <option value="rango">Nivel: Rango</option>
+</select>
+
+<div id="nivelRango" style="display:none;">
+  <select id="nivelDesde"></select>
+  <select id="nivelHasta"></select>
+</div>
+
  <button class="btnBlue" onclick="crearPartida()">Crear partida</button>
   <button class="btnBlue" onclick="mostrar('partidas')">Volver</button>
 
