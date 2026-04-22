@@ -18,14 +18,20 @@ function crearPartida() {
     return;
   }
 
+  console.log("pistaId:", pistaId);
+console.log("fecha:", fecha);
+console.log("hora:", hora);
+console.log("tipo:", tipo);
+console.log("genero:", genero);
+
   return db.collection("partidas").add({
     pistaId: pistaId,
     fecha: fecha,
     hora: hora,
     tipo: tipo,
     genero: genero,
-    jugadores: [],
-    creadorId: auth.currentUser ? auth.currentUser.uid : null,
+    jugadores: auth.currentUser ? [auth.currentUser.uid] : [],
+    readorId: auth.currentUser ? auth.currentUser.uid : null,
     estado: "abierta"
   }).then(() => {
     document.getElementById("pistaSeleccionada").innerText = "Ninguna pista seleccionada";
