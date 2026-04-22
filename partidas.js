@@ -1,3 +1,27 @@
+function pintarJugador(uid, slotId) {
+  if (!uid) {
+    document.getElementById(slotId).innerText = "Libre";
+    return;
+  }
+
+  db.collection("usuarios").doc(uid).get().then(doc => {
+    if (!doc.exists) {
+      document.getElementById(slotId).innerText = "Jugador";
+      return;
+    }
+
+    const u = doc.data();
+
+    const html =
+      "<div style='display:flex; align-items:center; gap:6px;'>" +
+        "<img src='" + (u.foto || "imagen/hombre.jpeg") + "' style='width:28px;height:28px;border-radius:50%;'>" +
+        "<span>" + (u.nombre || "Jugador") + "</span>" +
+      "</div>";
+
+    document.getElementById(slotId).innerHTML = html;
+  });
+}
+
 function crearPartida() {
   console.log("CLICK CREAR PARTIDA");
 
@@ -113,25 +137,86 @@ function cargarPartidas() {
     snapshot.forEach(doc => {
       const p = doc.data();
 
-      html += 
-        "<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:8px;'>" +
+      const jugadores = p.jugadores || [];
+      const reservas = p.reservas || [];
 
-          "<b>" + (p.tipo || "") + "</b><br>" +
-          (p.fecha || "") + " - " + (p.hora || "") + "<br><br>" +
+      let pistaTexto = "Cargando pista...";
 
-          "<div><b>Jugadores:</b></div>" +
-          (p.jugadores && p.jugadores[0] ? p.jugadores[0] : "-") + "<br>" +
-          (p.jugadores && p.jugadores[1] ? p.jugadores[1] : "-") + "<br>" +
-          (p.jugadores && p.jugadores[2] ? p.jugadores[2] : "-") + "<br>" +
-          (p.jugadores && p.jugadores[3] ? p.jugadores[3] : "-") + "<br><br>" +
+if (p.pistaId) {
+  db.collection("pistas").doc(p.pistaId).get().then(docPista => {
+    if (docPista.exists) {
+      const pista = docPista.data();
+      const texto = (pista.nombre || "") + " - " + (pista.localidad || "");
 
-          "<div><b>Reservas:</b></div>" +
-          (p.reservas && p.reservas[0] ? p.reservas[0] : "-") + "<br>" +
-          (p.reservas && p.reservas[1] ? p.reservas[1] : "-") + "<br><br>" +
+      const el = document.getElementById("pista_" + doc.id);
+      if (el) el.innerText = texto;
+    }
+  });
+}
 
-          "<button class='btnBlue'>Unirse</button>" +
+      html +=
 
-        "</div>";
+      
+"<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px;'>" +
+
+"<div style='font-size:18px; font-weight:bold;'>" + (p.tipo || "") + "</div>" +
+
+"<div style='color:gray; margin-bottom:10px;'>" +
+(p.fecha || "") + " - " + (p.hora || "") +
+"</div>" +
+
+"<div id='pista_" + doc.id + "'><b>Pista:</b> " + pistaTexto + "</div>" +
+
+"<div><b>Estado:</b> " + (p.estado || "") + "</div>" +
+
+"<div><b>Creador:</b> " + (p.creadorNombre || "Jugador") + "</div>" +
+
+"<div><b>Nivel:</b> " +
+(p.nivelTipo === "rango"
+  ? (p.nivelDesde + " - " + p.nivelHasta)
+  : "Cualquiera") +
+"</div>" +
+
+"<div><b>Género:</b> " + (p.genero || "") + "</div>" +
+
+"<br>" +
+
+"<div><b>Jugadores:</b></div>" +
+
+"<div style='display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;'>" +
+
+"<div class='jugadorSlot' id='j1_" + doc.id + "'>...</div>" +
+"<div class='jugadorSlot' id='j2_" + doc.id + "'>...</div>" +
+"<div class='jugadorSlot' id='j3_" + doc.id + "'>...</div>" +
+"<div class='jugadorSlot' id='j4_" + doc.id + "'>...</div>" +
+
+"</div>" +
+
+"<div style='margin-top:5px;'><b>Reservas</b></div>" +
+
+"<div style='display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;'>" +
+
+"<div class='jugadorSlot' id='r1_" + doc.id + "'>...</div>" +
+"<div class='jugadorSlot' id='r2_" + doc.id + "'>...</div>" +
+
+"</div>" +
+
+"<button class='btnBlue'>Unirse</button>" +
+
+"</div>";
+
+if (p.jugadores) {
+  for (var i = 0; i < 4; i++) {
+    pintarJugador(p.jugadores[i] || null, "j" + (i + 1) + "_" + doc.id);
+  }
+}
+
+if (p.reservas) {
+  for (var i = 0; i < 2; i++) {
+    pintarJugador(p.reservas[i] || null, "r" + (i + 1) + "_" + doc.id);
+  }
+}
+
     });
 
     contenedor.innerHTML = html;
