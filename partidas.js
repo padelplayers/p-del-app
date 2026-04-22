@@ -24,20 +24,28 @@ console.log("hora:", hora);
 console.log("tipo:", tipo);
 console.log("genero:", genero);
 
-  return db.collection("partidas").add({
-    pistaId: pistaId,
-    fecha: fecha,
-    hora: hora,
-    tipo: tipo,
-    genero: genero,
-    jugadores: [],
-    creadorId: auth.currentUser ? auth.currentUser.uid : null,
-    estado: "abierta"
-  }).then(() => {
-    document.getElementById("pistaSeleccionada").innerText = "Ninguna pista seleccionada";
-    document.getElementById("pistaSeleccionada").dataset.id = "";
-    mostrar("partidas");
-  });
+  db.collection("partidas").add({
+  pistaId: pistaId,
+
+  fecha: fecha,
+  hora: hora,
+  tipo: tipo,
+  genero: genero,
+
+  jugadores: [auth.currentUser.uid],
+  reservas: [],
+
+  estado: "abierta",
+  creadaPor: auth.currentUser.uid,
+  creadaAt: new Date()
+})
+.then(() => {
+  document.getElementById("pistaSeleccionada").innerText = "Ninguna pista";
+  document.getElementById("pistaSeleccionada").dataset.id = "";
+
+  mostrar("partidas");
+  cargarPartidas();
+});
 
 }
 
