@@ -61,6 +61,8 @@ window.seleccionarPistaPartida = function(id, nombre) {
 };
 
 function initCrearPartida() {
+  console.log("INIT CREAR PARTIDA");
+
   const input = document.getElementById("fechaPartida");
   const hoy = new Date().toISOString().split("T")[0];
 
