@@ -30,7 +30,7 @@ console.log("genero:", genero);
     hora: hora,
     tipo: tipo,
     genero: genero,
-    jugadores: (auth.currentUser && auth.currentUser.uid) ? [auth.currentUser.uid] : []
+    jugadores: (auth.currentUser && auth.currentUser.uid) ? [auth.currentUser.uid] : [],
     creadorId: auth.currentUser ? auth.currentUser.uid : null,
     estado: "abierta"
   }).then(() => {
