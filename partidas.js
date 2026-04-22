@@ -1,4 +1,5 @@
 function crearPartida() {
+  console.log("CLICK CREAR PARTIDA");
 
   const div = document.getElementById("pistaSeleccionada");
   const pistaId = div && div.dataset ? div.dataset.id : null;
