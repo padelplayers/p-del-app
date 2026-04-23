@@ -1,24 +1,41 @@
 function pintarJugador(uid, slotId) {
+  const el = document.getElementById(slotId);
+  if (!el) return;
+
   if (!uid) {
-    document.getElementById(slotId).innerText = "Libre";
+    el.innerHTML =
+      "<div style='display:flex; flex-direction:column; align-items:center; gap:4px; color:#999;'>" +
+
+        "<div style='position:relative; width:40px; height:40px;'>" +
+
+          "<img src='imagen/hombre.jpeg' style='width:40px; height:40px; border-radius:50%; opacity:0.3;'>" +
+
+          "<div style='position:absolute; bottom:-2px; right:-2px; width:18px; height:18px; border-radius:50%; background:#1565C0; color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center;'>+</div>" +
+
+        "</div>" +
+
+        "<span style='font-size:12px;'>Libre</span>" +
+
+      "</div>";
     return;
   }
 
   db.collection("usuarios").doc(uid).get().then(doc => {
-    if (!doc.exists) {
-      document.getElementById(slotId).innerText = "Jugador";
-      return;
-    }
+    if (!doc.exists) return;
 
     const u = doc.data();
 
-    const html =
-      "<div style='display:flex; align-items:center; gap:6px;'>" +
-        "<img src='" + (u.foto || "imagen/hombre.jpeg") + "' style='width:28px;height:28px;border-radius:50%;'>" +
-        "<span>" + (u.nombre || "Jugador") + "</span>" +
-      "</div>";
+    el.innerHTML =
+      "<div style='display:flex; align-items:center; gap:8px;'>" +
 
-    document.getElementById(slotId).innerHTML = html;
+        "<img src='" + (u.foto || "imagen/hombre.jpeg") + "' style='width:32px; height:32px; border-radius:50%;'>" +
+
+        "<div style='line-height:1.1;'>" +
+          "<div style='font-size:14px;'>" + (u.nombre || "Jugador") + "</div>" +
+          "<div style='font-size:12px; color:#666;'>Nivel " + (u.nivel || "-") + "</div>" +
+        "</div>" +
+
+      "</div>";
   });
 }
 
@@ -144,6 +161,16 @@ function cargarPartidas() {
 
       const p = doc.data() || {};
 
+      let fondo = "#ffffff";
+
+if (p.estado === "confirmada" || p.estado === "cerrada") {
+  fondo = "#e3f2fd";
+}
+
+if (p.estado === "finalizada" || p.estado === "cancelada") {
+  fondo = "#fdecea";
+}
+
       let pistaTexto = "Cargando pista...";
 
       if (p.pistaId) {
@@ -160,10 +187,9 @@ function cargarPartidas() {
 
       html +=
 
-      "<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px;'>" +
+      "<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; background:" + fondo + ";'>" +
 
-      "<div style='font-size:18px; font-weight:bold;'>" + (p.tipo || "") + "</div>" +
-
+    
       "<div style='color:gray; margin-bottom:10px;'>" +
       (p.fecha || "") + " - " + (p.hora || "") +
       "</div>" +
@@ -173,7 +199,13 @@ function cargarPartidas() {
 
 "<span style='font-size:14px;'>📍</span>" +
 
-"<span id='pista_" + doc.id + "' style='font-weight:500;'>" + pistaTexto + " →</span>" +
+"<div onclick='verPista(\"" + p.pistaId + "\")' style='cursor:pointer; display:flex; align-items:center; gap:6px;'>" +
+
+"<span>📍</span>" +
+
+"<span id='pista_" + doc.id + "' style='font-weight:500;'>" + pistaTexto + "</span>" +
+
+"</div>"
 
 "</div>" +
 
@@ -193,14 +225,14 @@ function cargarPartidas() {
 
       "<div><b>Jugadores:</b></div>" +
 
-      "<div style='display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;'>" +
+      "<div style='display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;'>" +
 
-      "<div class='jugadorSlot' id='j1_" + doc.id + "'>...</div>" +
-      "<div class='jugadorSlot' id='j2_" + doc.id + "'>...</div>" +
-      "<div class='jugadorSlot' id='j3_" + doc.id + "'>...</div>" +
-      "<div class='jugadorSlot' id='j4_" + doc.id + "'>...</div>" +
+"<div id='j1_" + doc.id + "'></div>" +
+"<div id='j2_" + doc.id + "'></div>" +
+"<div id='j3_" + doc.id + "'></div>" +
+"<div id='j4_" + doc.id + "'></div>" +
 
-      "</div>" +
+"</div>" +
 
       "<div style='margin-top:5px;'><b>Reservas</b></div>" +
 

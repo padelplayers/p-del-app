@@ -411,3 +411,7 @@ function abrirTest(){
   ("testNivel");
 }
 
+function verPista(pistaId) {
+  if (!pistaId) return;
+  console.log("Ir a pista:", pistaId);
+}
