@@ -161,6 +161,9 @@ function cargarPartidas() {
 
       const p = doc.data() || {};
 
+      p.jugadores = p.jugadores || [];
+      p.reservas = p.reservas || [];
+
       let fondo = "#ffffff";
 
 if (p.estado === "confirmada" || p.estado === "cerrada") {
