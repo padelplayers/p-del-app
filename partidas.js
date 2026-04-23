@@ -222,23 +222,19 @@ html +=
 
     "<div><b>Jugadores:</b></div>" +
 
-    "<div style='display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;'>" +
-      "<div class='jugadorSlot' id='j1_" + doc.id + "'></div>" +
-      "<div class='jugadorSlot' id='j2_" + doc.id + "'></div>" +
-      "<div class='jugadorSlot' id='j3_" + doc.id + "'></div>" +
-      "<div class='jugadorSlot' id='j4_" + doc.id + "'></div>" +
-    "</div>" +
+"<div style='display:grid; grid-template-columns:repeat(2, 60px); justify-content:center; gap:10px; margin-bottom:8px;'>" +
+"<div class='jugadorSlot' id='j1_" + doc.id + "'></div>" +
+"<div class='jugadorSlot' id='j2_" + doc.id + "'></div>" +
+"<div class='jugadorSlot' id='j3_" + doc.id + "'></div>" +
+"<div class='jugadorSlot' id='j4_" + doc.id + "'></div>" +
+"</div>" +
 
     "<div style='margin-top:5px;'><b>Reservas</b></div>" +
 
-    "<div style='display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;'>" +
-      "<div class='jugadorSlot' id='r1_" + doc.id + "'></div>" +
-      "<div class='jugadorSlot' id='r2_" + doc.id + "'></div>" +
-    "</div>" +
-
-    "<button class='btnBlue'>Unirse</button>" +
-
-  "</div>" +
+"<div style='display:grid; grid-template-columns:repeat(2, 60px); justify-content:center; gap:10px; margin-bottom:10px;'>" +
+"<div class='jugadorSlot' id='r1_" + doc.id + "'></div>" +
+"<div class='jugadorSlot' id='r2_" + doc.id + "'></div>" +
+"</div>" +
 
 "</div>";
 
