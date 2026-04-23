@@ -230,7 +230,7 @@ html +=
 "<div class='jugadorSlot' id='r1_" + doc.id + "'></div>" +
 "<div class='jugadorSlot' id='r2_" + doc.id + "'></div>" +
 "</div>" +
-
+"</div>" +
 "</div>";
 
     });
