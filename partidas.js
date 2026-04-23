@@ -181,9 +181,9 @@ if (p.estado === "finalizada" || p.estado === "cancelada") {
     
 
 html +=
-"<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; display:grid; grid-template-columns:1fr 2fr; gap:10px; align-items:center;'>" +
+"<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px;'>"
 
-+ "<div style='display:flex; justify-content:space-between; align-items:flex-start; gap:10px;'>"
+"<div style='display:flex; justify-content:space-between; align-items:flex-start; gap:10px;'>" +
 
   // COLUMNA IZQUIERDA
  "<div style='flex:1;'>" +
@@ -198,12 +198,15 @@ html +=
     "</div>" +
 
     "<div style='color:#666; font-size:13px; margin-bottom:6px;'>" +
-      (p.tipo || "") + " - " +
-      (p.nivelTipo === "rango" && p.nivelDesde && p.nivelHasta
- ? (p.nivelDesde + " - " + p.nivelHasta)
- : "Cualquiera"
-) +
-      (p.genero || "") +
+
+      (p.tipo ? p.tipo + " - " : "") +
+(
+  p.nivel && p.nivel.desde && p.nivel.hasta
+    ? (p.nivel.desde + " - " + p.nivel.hasta)
+    : "Cualquiera"
+) + " - " +
+(p.genero || "")
+
     "</div>" +
 
     "<div style='font-size:13px;'>" +
