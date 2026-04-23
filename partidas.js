@@ -126,7 +126,8 @@ function cargarPartidas() {
   contenedor.innerHTML = "Cargando...";
 
   db.collection("partidas").get()
-  .then(snapshot => {
+  .then(function(snapshot) {
+
     if (snapshot.empty) {
       contenedor.innerHTML = "No hay partidas";
       return;
@@ -134,91 +135,98 @@ function cargarPartidas() {
 
     let html = "";
 
-    snapshot.forEach(doc => {
-      const p = doc.data();
+    // 1. SOLO construir HTML
+    snapshot.forEach(function(doc) {
 
-      const jugadores = p.jugadores || [];
-      const reservas = p.reservas || [];
+      const p = doc.data() || {};
 
       let pistaTexto = "Cargando pista...";
 
-if (p.pistaId) {
-  db.collection("pistas").doc(p.pistaId).get().then(docPista => {
-    if (docPista.exists) {
-      const pista = docPista.data();
-      const texto = (pista.nombre || "") + " - " + (pista.localidad || "");
+      if (p.pistaId) {
+        db.collection("pistas").doc(p.pistaId).get().then(function(docPista) {
+          if (docPista.exists) {
+            const pista = docPista.data();
+            const texto = (pista.nombre || "") + " - " + (pista.localidad || "");
 
-      const el = document.getElementById("pista_" + doc.id);
-      if (el) el.innerText = texto;
-    }
-  });
-}
+            const el = document.getElementById("pista_" + doc.id);
+            if (el) el.innerText = texto;
+          }
+        });
+      }
 
       html +=
 
-      
-"<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px;'>" +
+      "<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px;'>" +
 
-"<div style='font-size:18px; font-weight:bold;'>" + (p.tipo || "") + "</div>" +
+      "<div style='font-size:18px; font-weight:bold;'>" + (p.tipo || "") + "</div>" +
 
-"<div style='color:gray; margin-bottom:10px;'>" +
-(p.fecha || "") + " - " + (p.hora || "") +
-"</div>" +
+      "<div style='color:gray; margin-bottom:10px;'>" +
+      (p.fecha || "") + " - " + (p.hora || "") +
+      "</div>" +
 
-"<div id='pista_" + doc.id + "'><b>Pista:</b> " + pistaTexto + "</div>" +
+      "<div id='pista_" + doc.id + "'><b>Pista:</b> " + pistaTexto + "</div>" +
 
-"<div><b>Estado:</b> " + (p.estado || "") + "</div>" +
+      "<div><b>Estado:</b> " + (p.estado || "") + "</div>" +
 
-"<div><b>Creador:</b> " + (p.creadorNombre || "Jugador") + "</div>" +
+      "<div><b>Creador:</b> " + (p.creadorNombre || "Jugador") + "</div>" +
 
-"<div><b>Nivel:</b> " +
-(p.nivelTipo === "rango"
-  ? (p.nivelDesde + " - " + p.nivelHasta)
-  : "Cualquiera") +
-"</div>" +
+      "<div><b>Nivel:</b> " +
+      (p.nivelTipo === "rango"
+        ? (p.nivelDesde + " - " + p.nivelHasta)
+        : "Cualquiera") +
+      "</div>" +
 
-"<div><b>Género:</b> " + (p.genero || "") + "</div>" +
+      "<div><b>Género:</b> " + (p.genero || "") + "</div>" +
 
-"<br>" +
+      "<br>" +
 
-"<div><b>Jugadores:</b></div>" +
+      "<div><b>Jugadores:</b></div>" +
 
-"<div style='display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;'>" +
+      "<div style='display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;'>" +
 
-"<div class='jugadorSlot' id='j1_" + doc.id + "'>...</div>" +
-"<div class='jugadorSlot' id='j2_" + doc.id + "'>...</div>" +
-"<div class='jugadorSlot' id='j3_" + doc.id + "'>...</div>" +
-"<div class='jugadorSlot' id='j4_" + doc.id + "'>...</div>" +
+      "<div class='jugadorSlot' id='j1_" + doc.id + "'>...</div>" +
+      "<div class='jugadorSlot' id='j2_" + doc.id + "'>...</div>" +
+      "<div class='jugadorSlot' id='j3_" + doc.id + "'>...</div>" +
+      "<div class='jugadorSlot' id='j4_" + doc.id + "'>...</div>" +
 
-"</div>" +
+      "</div>" +
 
-"<div style='margin-top:5px;'><b>Reservas</b></div>" +
+      "<div style='margin-top:5px;'><b>Reservas</b></div>" +
 
-"<div style='display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;'>" +
+      "<div style='display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;'>" +
 
-"<div class='jugadorSlot' id='r1_" + doc.id + "'>...</div>" +
-"<div class='jugadorSlot' id='r2_" + doc.id + "'>...</div>" +
+      "<div class='jugadorSlot' id='r1_" + doc.id + "'>...</div>" +
+      "<div class='jugadorSlot' id='r2_" + doc.id + "'>...</div>" +
 
-"</div>" +
+      "</div>" +
 
-"<button class='btnBlue'>Unirse</button>" +
+      "<button class='btnBlue'>Unirse</button>" +
 
-"</div>";
-
-if (p.jugadores) {
-  for (var i = 0; i < 4; i++) {
-    pintarJugador(p.jugadores[i] || null, "j" + (i + 1) + "_" + doc.id);
-  }
-}
-
-if (p.reservas) {
-  for (var i = 0; i < 2; i++) {
-    pintarJugador(p.reservas[i] || null, "r" + (i + 1) + "_" + doc.id);
-  }
-}
-
+      "</div>";
     });
 
+    // 2. Pintar HTML en DOM
     contenedor.innerHTML = html;
+
+    // 3. AHORA sí pintar jugadores (DOM ya existe)
+    snapshot.forEach(function(doc) {
+
+      const p = doc.data() || {};
+      p.jugadores = p.jugadores || [];
+      p.reservas = p.reservas || [];
+
+      for (var i = 0; i < 4; i++) {
+        pintarJugador(p.jugadores[i] || null, "j" + (i + 1) + "_" + doc.id);
+      }
+
+      for (var i = 0; i < 2; i++) {
+        pintarJugador(p.reservas[i] || null, "r" + (i + 1) + "_" + doc.id);
+      }
+    });
+
+  })
+  .catch(function(error) {
+    console.error("Error cargando partidas:", error);
+    contenedor.innerHTML = "Error cargando partidas";
   });
 }
