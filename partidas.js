@@ -65,6 +65,8 @@ console.log("hora:", hora);
 console.log("tipo:", tipo);
 console.log("genero:", genero);
 
+const user = firebase.auth().currentUser;
+
   db.collection("partidas").add({
   pistaId: pistaId,
 
@@ -72,6 +74,8 @@ console.log("genero:", genero);
   hora: hora,
   tipo: tipo,
   genero: genero,
+  creador: user.uid,
+  creadorNombre: user.displayName || "Jugador",
   nivel: nivelTipo === "cualquiera" ? "cualquiera" : {
   desde: nivelDesde,
   hasta: nivelHasta
@@ -164,21 +168,28 @@ function cargarPartidas() {
       (p.fecha || "") + " - " + (p.hora || "") +
       "</div>" +
 
-      "<div id='pista_" + doc.id + "'><b>Pista:</b> " + pistaTexto + "</div>" +
+      "<div onclick='verPista(\"" + p.pistaId + "\")' " +
+"style='display:flex; align-items:center; gap:6px; cursor:pointer; margin-bottom:6px;'>" +
 
-      "<div><b>Estado:</b> " + (p.estado || "") + "</div>" +
+"<span style='font-size:14px;'>📍</span>" +
 
-      "<div><b>Creador:</b> " + (p.creadorNombre || "Jugador") + "</div>" +
+"<span id='pista_" + doc.id + "' style='font-weight:500;'>" + pistaTexto + " →</span>" +
 
-      "<div><b>Nivel:</b> " +
-      (p.nivelTipo === "rango"
-        ? (p.nivelDesde + " - " + p.nivelHasta)
-        : "Cualquiera") +
-      "</div>" +
+"</div>" +
 
-      "<div><b>Género:</b> " + (p.genero || "") + "</div>" +
+     "<div style='color:#666; font-size:13px; margin-bottom:6px;'>" +
+(p.tipo || "") + " - " +
+(
+  p.nivelTipo === "rango"
+    ? (p.nivelDesde + " - " + p.nivelHasta)
+    : "Cualquiera"
+) + " - " +
+(p.genero || "") +
+"</div>" +
 
-      "<br>" +
+"<div style='font-size:13px; margin-bottom:6px;'>" +
+"Creador: " + (p.creadorNombre || p.creador || "-") +
+"</div>" +
 
       "<div><b>Jugadores:</b></div>" +
 
