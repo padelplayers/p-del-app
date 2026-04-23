@@ -187,17 +187,14 @@ if (p.estado === "finalizada" || p.estado === "cancelada") {
 
       html +=
 
-      "<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; background:" + fondo + ";'>" +
+      html += "<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; width:100%; display:block;'>" +
 
     
       "<div style='color:gray; margin-bottom:10px;'>" +
       (p.fecha || "") + " - " + (p.hora || "") +
       "</div>" +
 
-      "<div onclick='verPista(\"" + p.pistaId + "\")' " +
-"style='display:flex; align-items:center; gap:6px; cursor:pointer; margin-bottom:6px;'>" +
-
-"<span style='font-size:14px;'>📍</span>" +
+     
 
 "<div onclick='verPista(\"" + p.pistaId + "\")' style='cursor:pointer; display:flex; align-items:center; gap:6px;'>" +
 
