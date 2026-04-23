@@ -185,7 +185,7 @@ if (p.estado === "finalizada" || p.estado === "cancelada") {
         });
       }
 
-      html +=
+    
 
       html += "<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; width:100%; display:block;'>" +
 
@@ -202,9 +202,7 @@ if (p.estado === "finalizada" || p.estado === "cancelada") {
 
 "<span id='pista_" + doc.id + "' style='font-weight:500;'>" + pistaTexto + "</span>" +
 
-"</div>"
 
-"</div>" +
 
      "<div style='color:#666; font-size:13px; margin-bottom:6px;'>" +
 (p.tipo || "") + " - " +
