@@ -187,60 +187,61 @@ if (p.estado === "finalizada" || p.estado === "cancelada") {
 
     
 
-      html += "<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; display:grid; grid-template-columns: 1fr 2fr; gap:10px; align-items:center;'>"
+html +=
+"<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; display:grid; grid-template-columns:1fr 2fr; gap:10px; align-items:center;'>" +
 
-    
-      "<div style='color:gray; margin-bottom:10px;'>" +
-      (p.fecha || "") + " - " + (p.hora || "") +
-      "</div>" +
+  // COLUMNA IZQUIERDA
+  "<div>" +
 
-     
+    "<div style='color:gray; margin-bottom:10px;'>" +
+    (p.fecha || "") + " - " + (p.hora || "") +
+    "</div>" +
 
-"<div onclick='verPista(\"" + p.pistaId + "\")' style='cursor:pointer; display:flex; align-items:center; gap:6px;'>" +
+    "<div onclick='verPista(\"" + p.pistaId + "\")' style='cursor:pointer; display:flex; align-items:center; gap:6px; margin-bottom:6px;'>" +
+      "<span>📍</span>" +
+      "<span id='pista_" + doc.id + "' style='font-weight:500;'>" + pistaTexto + "</span>" +
+    "</div>" +
 
-"<span>📍</span>" +
+    "<div style='color:#666; font-size:13px; margin-bottom:6px;'>" +
+      (p.tipo || "") + " - " +
+      (p.nivelTipo === "rango"
+        ? (p.nivelDesde + " - " + p.nivelHasta)
+        : "Cualquiera"
+      ) + " - " +
+      (p.genero || "") +
+    "</div>" +
 
-"<span id='pista_" + doc.id + "' style='font-weight:500;'>" + pistaTexto + "</span>" +
+    "<div style='font-size:13px;'>" +
+      "Creador: " + (p.creadorNombre || p.creador || "-") +
+    "</div>" +
 
+  "</div>" +
 
+  // COLUMNA DERECHA
+  "<div>" +
 
-     "<div style='color:#666; font-size:13px; margin-bottom:6px;'>" +
-(p.tipo || "") + " - " +
-(
-  p.nivelTipo === "rango"
-    ? (p.nivelDesde + " - " + p.nivelHasta)
-    : "Cualquiera"
-) + " - " +
-(p.genero || "") +
-"</div>" +
+    "<div><b>Jugadores:</b></div>" +
 
-"<div style='font-size:13px; margin-bottom:6px;'>" +
-"Creador: " + (p.creadorNombre || p.creador || "-") +
-"</div>" +
+    "<div style='display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;'>" +
+      "<div class='jugadorSlot' id='j1_" + doc.id + "'></div>" +
+      "<div class='jugadorSlot' id='j2_" + doc.id + "'></div>" +
+      "<div class='jugadorSlot' id='j3_" + doc.id + "'></div>" +
+      "<div class='jugadorSlot' id='j4_" + doc.id + "'></div>" +
+    "</div>" +
 
-      "<div><b>Jugadores:</b></div>" +
+    "<div style='margin-top:5px;'><b>Reservas</b></div>" +
 
-      "<div style='display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;'>" +
+    "<div style='display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;'>" +
+      "<div class='jugadorSlot' id='r1_" + doc.id + "'></div>" +
+      "<div class='jugadorSlot' id='r2_" + doc.id + "'></div>" +
+    "</div>" +
 
-"<div id='j1_" + doc.id + "'></div>" +
-"<div id='j2_" + doc.id + "'></div>" +
-"<div id='j3_" + doc.id + "'></div>" +
-"<div id='j4_" + doc.id + "'></div>" +
+    "<button class='btnBlue'>Unirse</button>" +
 
-"</div>" +
+  "</div>" +
 
-      "<div style='margin-top:5px;'><b>Reservas</b></div>" +
+"</div>";
 
-      "<div style='display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;'>" +
-
-      "<div class='jugadorSlot' id='r1_" + doc.id + "'>...</div>" +
-      "<div class='jugadorSlot' id='r2_" + doc.id + "'>...</div>" +
-
-      "</div>" +
-
-      "<button class='btnBlue'>Unirse</button>" +
-
-      "</div>";
     });
 
     // 2. Pintar HTML en DOM
