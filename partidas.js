@@ -202,7 +202,7 @@ html +=
       (p.nivelTipo === "rango" && p.nivelDesde && p.nivelHasta
  ? (p.nivelDesde + " - " + p.nivelHasta)
  : "Cualquiera"
-)
+) +
       (p.genero || "") +
     "</div>" +
 
