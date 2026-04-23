@@ -176,17 +176,7 @@ if (p.estado === "finalizada" || p.estado === "cancelada") {
 
       let pistaTexto = "Cargando pista...";
 
-      if (p.pistaId) {
-        db.collection("pistas").doc(p.pistaId).get().then(function(docPista) {
-          if (docPista.exists) {
-            const pista = docPista.data();
-            const texto = (pista.nombre || "") + " - " + (pista.localidad || "");
-
-            const el = document.getElementById("pista_" + doc.id);
-            if (el) el.innerText = texto;
-          }
-        });
-      }
+     
 
     
 
@@ -254,6 +244,18 @@ html +=
       const p = doc.data() || {};
       p.jugadores = p.jugadores || [];
       p.reservas = p.reservas || [];
+
+       if (p.pistaId) {
+        db.collection("pistas").doc(p.pistaId).get().then(function(docPista) {
+          if (docPista.exists) {
+            const pista = docPista.data();
+            const texto = (pista.nombre || "") + " - " + (pista.localidad || "");
+
+            const el = document.getElementById("pista_" + doc.id);
+            if (el) el.innerText = texto;
+          }
+        });
+      }
 
       for (var i = 0; i < 4; i++) {
         pintarJugador(p.jugadores[i] || null, "j" + (i + 1) + "_" + doc.id);
