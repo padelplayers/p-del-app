@@ -183,7 +183,7 @@ if (p.estado === "finalizada" || p.estado === "cancelada") {
 
 html +=
 "<div style='border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; background:" + fondo + ";'>" +
-"<div style='display:flex; justify-content:space-between; align-items:flex-start; gap:10px;'>" +
+"<div style='display:grid; grid-template-columns:1fr 1fr; gap:10px;'>" +
 
   // COLUMNA IZQUIERDA
  "<div style='flex:1;'>" +
