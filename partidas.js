@@ -141,6 +141,7 @@ function initCrearPartida() {
 }
 
 function cargarPartidas() {
+  console.log("CARGAR PARTIDAS");
   const contenedor = document.getElementById("listaPartidas");
   if (!contenedor) return;
 
@@ -231,6 +232,7 @@ html +=
 "<div style='display:grid; grid-template-columns:repeat(2, 60px); justify-content:center; gap:10px; margin-bottom:10px;'>" +
 "<div class='jugadorSlot' id='r1_" + doc.id + "'></div>" +
 "<div class='jugadorSlot' id='r2_" + doc.id + "'></div>" +
+"</div>" +
 "</div>" +
 "</div>" +
 "</div>";
