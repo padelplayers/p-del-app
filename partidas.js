@@ -224,7 +224,7 @@ html += `
     <!-- ===================== -->
     <!-- COLUMNA DERECHA -->
     <!-- ===================== -->
-    <div style="text-align:center;">
+   "<div style='display:flex; flex-direction:column; align-items:center; justify-content:center;'>"
 
       <!-- JUGADORES -->
       <div><b>Jugadores:</b></div>
