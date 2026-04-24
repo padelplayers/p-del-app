@@ -179,57 +179,73 @@ function cargarPartidas() {
           : "Cualquiera";
 
       html += `
-<div style="width:100%;">
-  <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; background:${fondo};">
-    
-    <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:15px; align-items:center;">
-      
-      <!-- COLUMNA IZQUIERDA -->
-      <div>
-        
-        <div style="color:gray; margin-bottom:10px;">
-          ${p.fecha || ""} - ${p.hora || ""}
-        </div>
+<div style="border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; background:${fondo};">
 
-        <div onclick="verPista('${p.pistaId}')" style="cursor:pointer; display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-          <span>📍</span>
-          <span id="pista_${doc.id}" style="font-weight:500;">Cargando pista...</span>
-        </div>
+  <!-- ===================== -->
+  <!-- CABECERA -->
+  <!-- ===================== -->
+  <div style="position:relative;">
 
-        <div style="color:#666; font-size:13px; margin-bottom:6px;">
-          ${(p.tipo ? p.tipo + " - " : "")}${nivelTexto} - ${p.genero || ""}
-        </div>
+    <!-- CHAT -->
+    <div style="position:absolute; top:8px; right:8px; cursor:pointer;">
+      💬
+    </div>
 
-        <div style="font-size:13px;">
-          Creador: ${p.creadorNombre || p.creador || "-"}
-        </div>
+    <!-- FILA 1 -->
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px;">
 
+      <div style="color:gray;">
+        ${p.fecha || ""} - ${p.hora || ""}
       </div>
 
-      <!-- COLUMNA DERECHA -->
-      <div style="text-align:center;">
-        
-        <div><b>Jugadores:</b></div>
+      <div onclick="verPista('${p.pistaId}')" style="cursor:pointer; display:flex; align-items:center; gap:6px;">
+        <span>📍</span>
+        <span id="pista_${doc.id}" style="font-weight:500;">Cargando pista...</span>
+      </div>
 
-        <div style="display:grid; grid-template-columns:repeat(2, 60px); justify-items:center; gap:10px; margin-bottom:8px;">
-          <div class="jugadorSlot" id="j1_${doc.id}"></div>
-          <div class="jugadorSlot" id="j2_${doc.id}"></div>
-          <div class="jugadorSlot" id="j3_${doc.id}"></div>
-          <div class="jugadorSlot" id="j4_${doc.id}"></div>
-        </div>
+    </div>
 
-        <div style="margin-top:5px;"><b>Reservas</b></div>
+    <!-- FILA 2 -->
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
 
-        <div style="display:grid; grid-template-columns:repeat(2, 60px); justify-items:center; gap:10px;">
-          <div class="jugadorSlot" id="r1_${doc.id}"></div>
-          <div class="jugadorSlot" id="r2_${doc.id}"></div>
-        </div>
+      <div style="color:#666; font-size:13px;">
+        ${(p.tipo ? p.tipo + " - " : "")}${nivelTexto} - ${p.genero || ""}
+      </div>
 
+      <div style="font-size:13px;">
+        Creador: ${p.creadorNombre || p.creador || "-"}
       </div>
 
     </div>
 
   </div>
+
+  <!-- ===================== -->
+  <!-- JUGADORES -->
+  <!-- ===================== -->
+  <div style="text-align:center; margin-top:10px;">
+    <div><b>Jugadores:</b></div>
+
+    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; justify-items:center;">
+      <div class="jugadorSlot" id="j1_${doc.id}"></div>
+      <div class="jugadorSlot" id="j2_${doc.id}"></div>
+      <div class="jugadorSlot" id="j3_${doc.id}"></div>
+      <div class="jugadorSlot" id="j4_${doc.id}"></div>
+    </div>
+  </div>
+
+  <!-- ===================== -->
+  <!-- RESERVAS -->
+  <!-- ===================== -->
+  <div style="text-align:center; margin-top:10px;">
+    <div><b>Reservas</b></div>
+
+    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; justify-items:center;">
+      <div class="jugadorSlot" id="r1_${doc.id}"></div>
+      <div class="jugadorSlot" id="r2_${doc.id}"></div>
+    </div>
+  </div>
+
 </div>
 `;
     });
