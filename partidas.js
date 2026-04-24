@@ -141,7 +141,6 @@ function initCrearPartida() {
 }
 
 function cargarPartidas() {
-  console.log("CARGAR PARTIDAS");
   const contenedor = document.getElementById("listaPartidas");
   if (!contenedor) return;
 
@@ -157,7 +156,6 @@ function cargarPartidas() {
 
     let html = "";
 
-    // 1. SOLO construir HTML
     snapshot.forEach(function(doc) {
 
       const p = doc.data() || {};
@@ -167,107 +165,88 @@ function cargarPartidas() {
 
       let fondo = "#ffffff";
 
-if (p.estado === "confirmada" || p.estado === "cerrada") {
-  fondo = "#e3f2fd";
-}
+      if (p.estado === "confirmada" || p.estado === "cerrada") {
+        fondo = "#e3f2fd";
+      }
 
-if (p.estado === "finalizada" || p.estado === "cancelada") {
-  fondo = "#fdecea";
-}
+      if (p.estado === "finalizada" || p.estado === "cancelada") {
+        fondo = "#fdecea";
+      }
 
-      let pistaTexto = "Cargando pista...";
+      const nivelTexto =
+        (p.nivel && p.nivel.desde && p.nivel.hasta)
+          ? `${p.nivel.desde} - ${p.nivel.hasta}`
+          : "Cualquiera";
 
-     
-
+      html += `
+<div style="width:100%;">
+  <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; background:${fondo};">
     
+    <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:15px; align-items:center;">
+      
+      <!-- COLUMNA IZQUIERDA -->
+      <div>
+        
+        <div style="color:gray; margin-bottom:10px;">
+          ${p.fecha || ""} - ${p.hora || ""}
+        </div>
 
-html += `
-<div style="border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; background:${fondo};">
+        <div onclick="verPista('${p.pistaId}')" style="cursor:pointer; display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+          <span>📍</span>
+          <span id="pista_${doc.id}" style="font-weight:500;">Cargando pista...</span>
+        </div>
 
- "<div style='display:grid; grid-template-columns:1.2fr 1fr; gap:15px; align-items:center;'>"
+        <div style="color:#666; font-size:13px; margin-bottom:6px;">
+          ${(p.tipo ? p.tipo + " - " : "")}${nivelTexto} - ${p.genero || ""}
+        </div>
 
-    <!-- ===================== -->
-    <!-- COLUMNA IZQUIERDA -->
-    <!-- ===================== -->
-    <div>
+        <div style="font-size:13px;">
+          Creador: ${p.creadorNombre || p.creador || "-"}
+        </div>
 
-      <!-- FECHA Y HORA -->
-      <div style="color:gray; margin-bottom:10px;">
-        ${p.fecha || ""} - ${p.hora || ""}
       </div>
 
-      <!-- PISTA (CLICABLE) -->
-      <div onclick="verPista('${p.pistaId}')" style="cursor:pointer; display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-        <span>📍</span>
-        <span id="pista_${doc.id}" style="font-weight:500;">
-          ${pistaTexto}
-        </span>
-      </div>
+      <!-- COLUMNA DERECHA -->
+      <div style="text-align:center;">
+        
+        <div><b>Jugadores:</b></div>
 
-      <!-- TIPO / NIVEL / GÉNERO -->
-      <div style="color:#666; font-size:13px; margin-bottom:6px;">
-        ${(p.tipo ? p.tipo + " - " : "")}
-        ${
-          p.nivel && p.nivel.desde && p.nivel.hasta
-            ? p.nivel.desde + " - " + p.nivel.hasta
-            : "Cualquiera"
-        } - ${p.genero || ""}
-      </div>
+        <div style="display:grid; grid-template-columns:repeat(2, 60px); justify-items:center; gap:10px; margin-bottom:8px;">
+          <div class="jugadorSlot" id="j1_${doc.id}"></div>
+          <div class="jugadorSlot" id="j2_${doc.id}"></div>
+          <div class="jugadorSlot" id="j3_${doc.id}"></div>
+          <div class="jugadorSlot" id="j4_${doc.id}"></div>
+        </div>
 
-      <!-- CREADOR -->
-      <div style="font-size:13px;">
-        Creador: ${p.creadorNombre || p.creador || "-"}
-      </div>
+        <div style="margin-top:5px;"><b>Reservas</b></div>
 
-    </div>
+        <div style="display:grid; grid-template-columns:repeat(2, 60px); justify-items:center; gap:10px;">
+          <div class="jugadorSlot" id="r1_${doc.id}"></div>
+          <div class="jugadorSlot" id="r2_${doc.id}"></div>
+        </div>
 
-    <!-- ===================== -->
-    <!-- COLUMNA DERECHA -->
-    <!-- ===================== -->
-   "<div style='display:flex; flex-direction:column; align-items:center; justify-content:center;'>"
-
-      <!-- JUGADORES -->
-      <div><b>Jugadores:</b></div>
-
-      <div style="display:grid; grid-template-columns:repeat(2, 60px); justify-items:center; gap:10px; margin-bottom:8px;">
-        <div class="jugadorSlot" id="j1_${doc.id}"></div>
-        <div class="jugadorSlot" id="j2_${doc.id}"></div>
-        <div class="jugadorSlot" id="j3_${doc.id}"></div>
-        <div class="jugadorSlot" id="j4_${doc.id}"></div>
-      </div>
-
-      <!-- RESERVAS -->
-      <div style="margin-top:5px;"><b>Reservas</b></div>
-
-      <div style="display:grid; grid-template-columns:repeat(2, 60px); justify-items:center; gap:10px;">
-        <div class="jugadorSlot" id="r1_${doc.id}"></div>
-        <div class="jugadorSlot" id="r2_${doc.id}"></div>
       </div>
 
     </div>
 
   </div>
-
 </div>
 `;
     });
 
-    // 2. Pintar HTML en DOM
     contenedor.innerHTML = html;
 
-    // 3. AHORA sí pintar jugadores (DOM ya existe)
     snapshot.forEach(function(doc) {
 
       const p = doc.data() || {};
       p.jugadores = p.jugadores || [];
       p.reservas = p.reservas || [];
 
-       if (p.pistaId) {
+      if (p.pistaId) {
         db.collection("pistas").doc(p.pistaId).get().then(function(docPista) {
           if (docPista.exists) {
             const pista = docPista.data();
-            const texto = (pista.nombre || "") + " - " + (pista.localidad || "");
-
+            const texto = `${pista.nombre || ""} - ${pista.localidad || ""}`;
             const el = document.getElementById("pista_" + doc.id);
             if (el) el.innerText = texto;
           }
