@@ -8,7 +8,7 @@ function pintarJugador(uid, slotId) {
 
         "<div style='position:relative; width:40px; height:40px;'>" +
 
-          "<img src='imagen/hombre.jpeg' style='width:40px; height:40px; border-radius:50%; opacity:0.3;'>" +
+         "<img src='imagen/hombre.jpeg' style='width:40px; height:40px; border-radius:50%; object-fit:cover; display:block; opacity:0.3;'>" +
 
           "<div style='position:absolute; bottom:-2px; right:-2px; width:18px; height:18px; border-radius:50%; background:#1565C0; color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center;'>+</div>" +
 
@@ -28,7 +28,7 @@ function pintarJugador(uid, slotId) {
     el.innerHTML =
       "<div style='display:flex; align-items:center; gap:8px;'>" +
 
-        "<img src='" + (u.foto || "imagen/hombre.jpeg") + "' style='width:32px; height:32px; border-radius:50%;'>" +
+        "<img src='" + (u.foto || "imagen/hombre.jpeg") + "' style='width:32px; height:32px; border-radius:50%; object-fit:cover; display:block;'>" +
 
         "<div style='line-height:1.1;'>" +
           "<div style='font-size:14px;'>" + (u.nombre || "Jugador") + "</div>" +
