@@ -190,42 +190,36 @@ function cargarPartidas() {
   <!-- ===================== -->
   <!-- CABECERA -->
   <!-- ===================== -->
-  <div style="position:relative; padding-top:28px;">
+  html += 
+<div style="padding-top:8px;">
 
-    <!-- CHAT -->
-    <div style="position:absolute; top:0; right:0; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:#1565C0; background:#e3f2fd; padding:6px 10px; border-radius:8px;">
-  <span>💬</span>
-  <span>Chat partida</span>
-</div>
-
-    <!-- FILA 1 -->
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px;">
-
-      <div style="color:gray;">
-        ${p.fecha || ""} - ${p.hora || ""}
-      </div>
-
-      <div onclick="verPista('${p.pistaId}')" style="cursor:pointer; display:flex; align-items:center; gap:6px;">
-        <span>📍</span>
-        <span id="pista_${doc.id}" style="font-weight:500;">Cargando pista...</span>
-      </div>
-
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div style="font-size:13px; color:#666;">
+      ${p.fecha || ""} - ${p.hora || ""}
     </div>
 
-    <!-- FILA 2 -->
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
-
-      <div style="color:#666; font-size:13px;">
-        ${(p.tipo ? p.tipo + " - " : "")}${nivelTexto} - ${p.genero || ""}
-      </div>
-
-      <div style="font-size:13px;">
-        Creador: ${p.creadorNombre || p.creador || "-"}
-      </div>
-
+    <div style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; background:#E3F2FD; padding:4px 8px; border-radius:12px;">
+      <span>💬</span>
+      <span>Chat partida</span>
     </div>
-
   </div>
+
+  <div style="text-align:center; font-weight:500; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+    📍 ${p.nombrePista || "Pista"}
+  </div>
+
+  <div style="display:flex; justify-content:space-between; font-size:13px; color:#666; margin-top:4px;">
+    <div>
+      ${p.tipo || "ranking"} - ${nivelTexto || "Cualquiera"} - ${p.genero || ""}
+    </div>
+
+    <div id="creador_${doc.id}">
+      Creador: -
+    </div>
+  </div>
+
+</div>
+;
 
   <!-- ===================== -->
   <!-- JUGADORES -->
