@@ -285,3 +285,8 @@ function cargarPartidas() {
     contenedor.innerHTML = "Error cargando partidas";
   });
 }
+
+function verPista(id) {
+  if (!id) return;
+  window.location.href = "pista.html?id=" + id;
+}
