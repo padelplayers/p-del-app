@@ -155,6 +155,8 @@ const user = auth.currentUser;
   const lista = document.getElementById("listaPistas");
   if (!lista) return;
 
+  const pistaSeleccionada = localStorage.getItem("pistaSeleccionada");
+
   if (window.unsubscribePistas) {
   window.unsubscribePistas();
 }
@@ -233,9 +235,18 @@ if (textoNorm && !nombreNorm.includes(textoNorm)) return;
 }
 
         const div = document.createElement("div");
-        div.className = "cardPista";
+div.className = "cardPista";
 
-        div.innerHTML =
+if (pistaSeleccionada && doc.id === pistaSeleccionada) {
+  div.style.border = "2px solid #1565C0";
+  div.style.background = "#E3F2FD";
+
+  setTimeout(function() {
+    div.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, 100);
+}
+
+div.innerHTML =
 "<img src='" + (data.imagen || "") + "'>" +
 
 "<strong>" + (data.nombre || "") + "</strong> " +
@@ -303,7 +314,7 @@ if (data.lat && data.lng) {
   }
 }, 200);
     });
-
+localStorage.removeItem("pistaSeleccionada");
 }
 
 async function borrarImagen(url) {

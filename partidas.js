@@ -288,6 +288,8 @@ function cargarPartidas() {
 
 function verPista(id) {
   if (!id) return;
-  window.location.href = "pista.html?id=" + id;
+
+  localStorage.setItem("pistaSeleccionada", id);
+  mostrar("pistas");
 }
 
