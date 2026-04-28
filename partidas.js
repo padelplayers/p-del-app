@@ -275,7 +275,7 @@ function cargarPartidas() {
       for (var i = 0; i < 2; i++) {
         pintarJugador(p.reservas[i] || null, "r" + (i + 1) + "_" + doc.id);
       }
-
+console.log("CREADOR ID:", p.creador);
       if (p.creador) {
   db.collection("usuarios").doc(p.creador).get().then(docUser => {
     if (docUser.exists) {
