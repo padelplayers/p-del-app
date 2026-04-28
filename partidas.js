@@ -2,6 +2,7 @@ function pintarJugador(uid, slotId) {
   const el = document.getElementById(slotId);
   if (!el) return;
 
+  // ===== LIBRE =====
   if (!uid) {
     el.innerHTML =
       "<div style='display:flex; flex-direction:column; align-items:center; gap:4px; color:#999;'>" +
@@ -20,6 +21,7 @@ function pintarJugador(uid, slotId) {
     return;
   }
 
+  // ===== JUGADOR =====
   db.collection("usuarios").doc(uid).get().then(doc => {
     if (!doc.exists) return;
 
@@ -29,14 +31,14 @@ function pintarJugador(uid, slotId) {
       "<div style='display:flex; flex-direction:column; align-items:center; gap:4px;'>" +
 
         "<div style='position:relative; width:40px; height:40px;'>" +
-
           "<img src='" + (u.foto || "imagen/hombre.jpeg") + "' style='width:40px; height:40px; border-radius:50%; object-fit:cover; display:block;'>" +
-
         "</div>" +
 
-        "<div style='font-size:12px; text-align:center; line-height:1.1;'>" +
-          (u.nombre || "Jugador") + "<br>" +
-          "Nivel " + (u.nivel || "-") +
+        "<div style='font-size:12px; text-align:center; line-height:1.1; max-width:60px;'>" +
+          "<div style='overflow:hidden; text-overflow:ellipsis; white-space:nowrap;'>" +
+            (u.nombre || "Jugador") +
+          "</div>" +
+          "<div style='color:#666;'>Nivel " + (u.nivel || "-") + "</div>" +
         "</div>" +
 
       "</div>";
