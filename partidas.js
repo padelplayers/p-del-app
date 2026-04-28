@@ -8,7 +8,7 @@ function pintarJugador(uid, slotId) {
 
         "<div style='position:relative; width:40px; height:40px;'>" +
 
-         "<img src='imagen/hombre.jpeg' style='width:40px; height:40px; border-radius:50%; object-fit:cover; display:block; opacity:0.3;'>" +
+          "<img src='imagen/hombre.jpeg' style='width:40px; height:40px; border-radius:50%; object-fit:cover; display:block; opacity:0.3;'>" +
 
           "<div style='position:absolute; bottom:-2px; right:-2px; width:18px; height:18px; border-radius:50%; background:#1565C0; color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center;'>+</div>" +
 
@@ -26,13 +26,17 @@ function pintarJugador(uid, slotId) {
     const u = doc.data();
 
     el.innerHTML =
-      "<div style='display:flex; align-items:center; gap:8px;'>" +
+      "<div style='display:flex; flex-direction:column; align-items:center; gap:4px;'>" +
 
-        "<img src='" + (u.foto || "imagen/hombre.jpeg") + "' style='width:32px; height:32px; border-radius:50%; object-fit:cover; display:block;'>" +
+        "<div style='position:relative; width:40px; height:40px;'>" +
 
-        "<div style='line-height:1.1;'>" +
-          "<div style='font-size:14px;'>" + (u.nombre || "Jugador") + "</div>" +
-          "<div style='font-size:12px; color:#666;'>Nivel " + (u.nivel || "-") + "</div>" +
+          "<img src='" + (u.foto || "imagen/hombre.jpeg") + "' style='width:40px; height:40px; border-radius:50%; object-fit:cover; display:block;'>" +
+
+        "</div>" +
+
+        "<div style='font-size:12px; text-align:center; line-height:1.1;'>" +
+          (u.nombre || "Jugador") + "<br>" +
+          "Nivel " + (u.nivel || "-") +
         "</div>" +
 
       "</div>";
@@ -273,7 +277,7 @@ function cargarPartidas() {
       for (var i = 0; i < 4; i++) {
         pintarJugador(p.jugadores[i] || null, "j" + (i + 1) + "_" + doc.id);
       }
-
+   
       for (var i = 0; i < 2; i++) {
         pintarJugador(p.reservas[i] || null, "r" + (i + 1) + "_" + doc.id);
       }
@@ -291,5 +295,5 @@ function verPista(id) {
 
   localStorage.setItem("pistaSeleccionada", id);
   mostrar("pistas");
-}
+}   
 
