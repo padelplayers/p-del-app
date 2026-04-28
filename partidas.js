@@ -202,9 +202,9 @@ function cargarPartidas() {
     </div>
   </div>
 
-  <div style="text-align:center; font-weight:500; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer;"
-     onclick="verPista('${p.pistaId || ""}')">
-  📍 ${p.nombrePista || "Pista"}
+ <div onclick="verPista('${p.pistaId}')" style="cursor:pointer; display:flex; align-items:center; gap:6px;">
+  <span>📍</span>
+  <span id="pista_${doc.id}" style="font-weight:500;">Cargando pista...</span>
 </div>
 
   <div style="display:flex; justify-content:space-between; font-size:13px; color:#666; margin-top:4px;">
