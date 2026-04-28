@@ -275,6 +275,18 @@ function cargarPartidas() {
       for (var i = 0; i < 2; i++) {
         pintarJugador(p.reservas[i] || null, "r" + (i + 1) + "_" + doc.id);
       }
+
+      if (p.creador) {
+  db.collection("usuarios").doc(p.creador).get().then(docUser => {
+    if (docUser.exists) {
+      const u = docUser.data();
+      const el = document.getElementById("creador_" + doc.id);
+      if (el) {
+        el.innerText = "Creador: " + (u.nombre || "Jugador");
+      }
+    }
+  });
+}
     });
 
   })
