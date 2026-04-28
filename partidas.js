@@ -189,9 +189,7 @@ function cargarPartidas() {
 
   <!-- ===================== -->
   <!-- CABECERA -->
-  <!-- ===================== -->
-  html += 
-<div style="padding-top:8px;">
+  <div style="padding-top:8px;">
 
   <div style="display:flex; justify-content:space-between; align-items:center;">
     <div style="font-size:13px; color:#666;">
@@ -219,7 +217,6 @@ function cargarPartidas() {
   </div>
 
 </div>
-;
 
   <!-- ===================== -->
   <!-- JUGADORES -->
