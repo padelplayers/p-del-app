@@ -202,9 +202,10 @@ function cargarPartidas() {
     </div>
   </div>
 
-  <div style="text-align:center; font-weight:500; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-    📍 ${p.nombrePista || "Pista"}
-  </div>
+  <div style="text-align:center; font-weight:500; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer;"
+     onclick="verPista('${p.pistaId || ""}')">
+  📍 ${p.nombrePista || "Pista"}
+</div>
 
   <div style="display:flex; justify-content:space-between; font-size:13px; color:#666; margin-top:4px;">
     <div>
