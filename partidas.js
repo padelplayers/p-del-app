@@ -184,12 +184,13 @@ function cargarPartidas() {
   <!-- ===================== -->
   <!-- CABECERA -->
   <!-- ===================== -->
-  <div style="position:relative;">
+  <div style="position:relative; padding-top:28px;">
 
     <!-- CHAT -->
-    <div style="position:absolute; top:8px; right:8px; cursor:pointer;">
-      💬
-    </div>
+    <div style="position:absolute; top:0; right:0; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:#1565C0; background:#e3f2fd; padding:6px 10px; border-radius:8px;">
+  <span>💬</span>
+  <span>Chat partida</span>
+</div>
 
     <!-- FILA 1 -->
     <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px;">
