@@ -104,11 +104,11 @@ const user = firebase.auth().currentUser;
   hasta: nivelHasta
 },
 
-  jugadores: [auth.currentUser.uid],
+  jugadores: [user.uid],
   reservas: [],
 
   estado: "abierta",
-  creadaPor: auth.currentUser.uid,
+  creadaPor: user.uid,
   creadaAt: new Date()
 })
 .then(() => {
