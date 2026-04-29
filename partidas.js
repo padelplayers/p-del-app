@@ -4,23 +4,20 @@ function pintarJugador(uid, slotId) {
 
   // ===== LIBRE =====
  if (!uid) {
-  el.innerHTML = 
-    <div onclick="unirseAPartida('${slotId}')" style="display:flex; flex-direction:column; align-items:center; gap:4px; color:#999; cursor:pointer;">
+  el.innerHTML =
+    "<div onclick='unirseAPartida(\"" + slotId + "\")' style='display:flex; flex-direction:column; align-items:center; gap:4px; color:#999; cursor:pointer;'>" +
 
-      <div style="position:relative; width:40px; height:40px;">
+      "<div style='position:relative; width:40px; height:40px;'>" +
 
-        <img src="imagen/hombre.jpeg" style="width:40px; height:40px; border-radius:50%; object-fit:cover; opacity:0.3;" />
+        "<img src='imagen/hombre.jpeg' style='width:40px; height:40px; border-radius:50%; object-fit:cover; opacity:0.3;'>" +
 
-        <div style="position:absolute; bottom:-2px; right:-2px; width:18px; height:18px; border-radius:50%; background:#1565C0; color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center;">
-          +
-        </div>
+        "<div style='position:absolute; bottom:-2px; right:-2px; width:18px; height:18px; border-radius:50%; background:#1565C0; color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center;'>+</div>" +
 
-      </div>
+      "</div>" +
 
-      <span style="font-size:12px;">Libre</span>
+      "<span style='font-size:12px;'>Libre</span>" +
 
-    </div>
-  ;
+    "</div>";
   return;
 }
 
