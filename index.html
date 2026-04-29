@@ -786,11 +786,15 @@ Añadir pista
 
   <h2>Partidas</h2>
 
-  <button onclick="mostrar('crearPartida')" class="btnBlue">Crear partida</button>
+<button onclick="mostrar('crearPartida')" class="btnBlue">Crear partida</button>
+<button class="btnBlue" onclick="mostrar('menu')">Volver</button>
 
-  <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
+<div style="display:flex; gap:10px; margin-top:10px; margin-bottom:10px;">
+  <button onclick="cambiarModoPartidas('proximas')">Próximas</button>
+  <button onclick="cambiarModoPartidas('pendientes')">Pendientes</button>
+</div>
 
-  <div id="listaPartidas"></div>
+<div id="listaPartidas"></div>
 
 </div>
 

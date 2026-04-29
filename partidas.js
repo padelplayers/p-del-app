@@ -1,3 +1,10 @@
+let modoPartidas = "proximas";
+
+function cambiarModoPartidas(modo) {
+  modoPartidas = modo;
+  cargarPartidas();
+}
+
 function pintarJugador(uid, slotId) {
   const el = document.getElementById(slotId);
   if (!el) return;
