@@ -3,23 +3,26 @@ function pintarJugador(uid, slotId) {
   if (!el) return;
 
   // ===== LIBRE =====
-  if (!uid) {
-    el.innerHTML =
-      "<div style='display:flex; flex-direction:column; align-items:center; gap:4px; color:#999;'>" +
+ if (!uid) {
+  el.innerHTML = 
+    <div onclick="unirseAPartida('${slotId}')" style="display:flex; flex-direction:column; align-items:center; gap:4px; color:#999; cursor:pointer;">
 
-        "<div style='position:relative; width:40px; height:40px;'>" +
+      <div style="position:relative; width:40px; height:40px;">
 
-          "<img src='imagen/hombre.jpeg' style='width:40px; height:40px; border-radius:50%; object-fit:cover; display:block; opacity:0.3;'>" +
+        <img src="imagen/hombre.jpeg" style="width:40px; height:40px; border-radius:50%; object-fit:cover; opacity:0.3;" />
 
-          "<div style='position:absolute; bottom:-2px; right:-2px; width:18px; height:18px; border-radius:50%; background:#1565C0; color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center;'>+</div>" +
+        <div style="position:absolute; bottom:-2px; right:-2px; width:18px; height:18px; border-radius:50%; background:#1565C0; color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center;">
+          +
+        </div>
 
-        "</div>" +
+      </div>
 
-        "<span style='font-size:12px;'>Libre</span>" +
+      <span style="font-size:12px;">Libre</span>
 
-      "</div>";
-    return;
-  }
+    </div>
+  ;
+  return;
+}
 
   // ===== JUGADOR =====
   db.collection("usuarios").doc(uid).get().then(doc => {
@@ -303,3 +306,50 @@ function verPista(id) {
   mostrar("pistas");
 }   
 
+function unirseAPartida(slotId) {
+
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+
+  const partidaId = slotId.split("_")[1];
+  const esReserva = slotId.startsWith("r");
+
+  const ref = db.collection("partidas").doc(partidaId);
+
+  ref.get().then(function(doc) {
+
+    if (!doc.exists) return;
+
+    const p = doc.data();
+
+    let jugadores = p.jugadores || [];
+    let reservas = p.reservas || [];
+
+    if (jugadores.includes(user.uid) || reservas.includes(user.uid)) return;
+
+    if (!esReserva) {
+
+      if (jugadores.length < 4) {
+        jugadores.push(user.uid);
+      } else {
+        reservas.push(user.uid);
+      }
+
+    } else {
+
+      if (reservas.length < 2) {
+        reservas.push(user.uid);
+      }
+
+    }
+
+    ref.update({
+      jugadores: jugadores,
+      reservas: reservas
+    }).then(function() {
+      cargarPartidas();
+    });
+
+  });
+
+}
