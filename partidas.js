@@ -216,11 +216,9 @@ function cargarPartidas() {
       Creador: -
     </div>
 
-if ((p.jugadores || []).includes(firebase.auth().currentUser.uid) || (p.reservas || []).includes(firebase.auth().currentUser.uid)) {
-    html += '<div style="margin-top:6px; text-align:right;">';
-    html += '<button onclick="salirDePartida(\'' + doc.id + '\')" style="background:#e53935; color:white; border:none; padding:6px 10px; border-radius:6px;">Salir</button>';
-    html += '</div>';
-}
+${ ((p.jugadores || []).includes(firebase.auth().currentUser.uid) || (p.reservas || []).includes(firebase.auth().currentUser.uid)) 
+? '<div style="margin-top:6px; text-align:right;"><button onclick="salirDePartida(\'' + doc.id + '\')" style="background:#e53935; color:white; border:none; padding:6px 10px; border-radius:6px;">Salir</button></div>' 
+: '' }
 
 }
 
