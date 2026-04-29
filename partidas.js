@@ -1,7 +1,29 @@
 let modoPartidas = "proximas";
 
+function actualizarBotonesPartidas() {
+  const btnProx = document.getElementById("btnProximas");
+  const btnPend = document.getElementById("btnPendientes");
+
+  if (!btnProx || !btnPend) return;
+
+  if (modoPartidas === "proximas") {
+    btnProx.style.background = "#1565C0";
+    btnProx.style.color = "#fff";
+
+    btnPend.style.background = "#eee";
+    btnPend.style.color = "#000";
+  } else {
+    btnPend.style.background = "#1565C0";
+    btnPend.style.color = "#fff";
+
+    btnProx.style.background = "#eee";
+    btnProx.style.color = "#000";
+  }
+}
+
 function cambiarModoPartidas(modo) {
   modoPartidas = modo;
+  actualizarBotonesPartidas();
   cargarPartidas();
 }
 
@@ -154,6 +176,7 @@ function initCrearPartida() {
 }
 
 function cargarPartidas() {
+  actualizarBotonesPartidas();
   const contenedor = document.getElementById("listaPartidas");
   if (!contenedor) return;
 
@@ -172,6 +195,15 @@ function cargarPartidas() {
     snapshot.forEach(function(doc) {
 
       const p = doc.data() || {};
+
+      const ahora = new Date();
+const fechaPartida = new Date(p.fecha + "T" + p.hora);
+
+const esFutura = fechaPartida >= ahora;
+const esPasada = fechaPartida < ahora;
+
+if (modoPartidas === "proximas" && !esFutura) return;
+if (modoPartidas === "pendientes" && !esPasada) return;
 
       p.jugadores = p.jugadores || [];
       p.reservas = p.reservas || [];
