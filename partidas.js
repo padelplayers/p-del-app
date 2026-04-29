@@ -216,11 +216,13 @@ function cargarPartidas() {
       Creador: -
     </div>
 
-    <div style="margin-top:6px; text-align:right;">
+   ${((p.jugadores || []).includes(firebase.auth().currentUser.uid) || (p.reservas || []).includes(firebase.auth().currentUser.uid)) ? 
+<div style="margin-top:6px; text-align:right;">
   <button onclick="salirDePartida('${doc.id}')" style="background:#e53935; color:#fff; border:none; padding:4px 8px; border-radius:6px; font-size:12px; cursor:pointer;">
     Salir
   </button>
 </div>
+ : ""}
 
   </div>
 
