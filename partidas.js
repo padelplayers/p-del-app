@@ -365,7 +365,6 @@ function unirseAPartida(slotId) {
 function salirDePartida(partidaId) {
 
   const uid = firebase.auth().currentUser.uid;
-
   const ref = db.collection("partidas").doc(partidaId);
 
   ref.get().then(function(doc) {
@@ -377,36 +376,35 @@ function salirDePartida(partidaId) {
     let jugadores = p.jugadores || [];
     let reservas = p.reservas || [];
 
-    // Si es el creador → cancelar partida
+    // --- CREADOR ---
     if (p.creadaPor === uid) {
-      ref.update({
-        estado: "cancelada"
-      }).then(function() {
+
+      const ok = confirm("Se cancelará la partida para todos. ¿Continuar?");
+      if (!ok) return;
+
+      ref.delete().then(function() {
         cargarPartidas();
       });
+
       return;
     }
 
-    // Si está en jugadores → quitarlo
+    // --- JUGADOR ---
     if (jugadores.includes(uid)) {
       jugadores = jugadores.filter(function(j) { return j !== uid; });
 
-      ref.update({
-        jugadores: jugadores
-      }).then(function() {
+      ref.update({ jugadores: jugadores }).then(function() {
         cargarPartidas();
       });
 
       return;
     }
 
-    // Si está en reservas → quitarlo
+    // --- RESERVA ---
     if (reservas.includes(uid)) {
       reservas = reservas.filter(function(r) { return r !== uid; });
 
-      ref.update({
-        reservas: reservas
-      }).then(function() {
+      ref.update({ reservas: reservas }).then(function() {
         cargarPartidas();
       });
 
