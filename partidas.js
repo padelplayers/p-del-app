@@ -220,7 +220,6 @@ ${ ((p.jugadores || []).includes(firebase.auth().currentUser.uid) || (p.reservas
 ? '<div style="margin-top:6px; text-align:right;"><button onclick="salirDePartida(&quot;' + doc.id + '&quot;)" style="background:#e53935; color:white; border:none; padding:6px 10px; border-radius:6px;">Salir</button></div>' 
 : '' }
 
-}
 
   </div>
 
