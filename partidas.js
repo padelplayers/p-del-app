@@ -181,61 +181,59 @@ function cargarPartidas() {
 
       const nivelTexto =
         (p.nivel && p.nivel.desde && p.nivel.hasta)
-          ? `${p.nivel.desde} - ${p.nivel.hasta}`
+          ? p.nivel.desde + " - " + p.nivel.hasta
           : "Cualquiera";
 
-     html += `
+      let mostrarSalir = false;
+
+      if (
+        (p.jugadores || []).includes(firebase.auth().currentUser.uid) ||
+        (p.reservas || []).includes(firebase.auth().currentUser.uid)
+      ) {
+        mostrarSalir = true;
+      }
+
+      html += `
 <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; background:${fondo};">
 
-  <!-- ===================== -->
-  <!-- CABECERA -->
   <div style="padding-top:8px;">
 
-  <div style="display:flex; justify-content:space-between; align-items:center;">
-    <div style="font-size:13px; color:#666;">
-      ${p.fecha || ""} - ${p.hora || ""}
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-size:13px; color:#666;">
+        ${p.fecha || ""} - ${p.hora || ""}
+      </div>
+
+      <div style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; background:#E3F2FD; padding:4px 8px; border-radius:12px;">
+        <span>💬</span>
+        <span>Chat partida</span>
+      </div>
     </div>
 
-    <div style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; background:#E3F2FD; padding:4px 8px; border-radius:12px;">
-      <span>💬</span>
-      <span>Chat partida</span>
-    </div>
-  </div>
-
- <div onclick="verPista('${p.pistaId}')" style="cursor:pointer; display:flex; align-items:center; gap:6px;">
-  <span>📍</span>
-  <span id="pista_${doc.id}" style="font-weight:500;">Cargando pista...</span>
-</div>
-
-  <div style="display:flex; justify-content:space-between; font-size:13px; color:#666; margin-top:4px;">
-    <div>
-      ${p.tipo || "ranking"} - ${nivelTexto || "Cualquiera"} - ${p.genero || ""}
+    <div onclick="verPista('${p.pistaId}')" style="cursor:pointer; display:flex; align-items:center; gap:6px;">
+      <span>📍</span>
+      <span id="pista_${doc.id}" style="font-weight:500;">Cargando pista...</span>
     </div>
 
-    <div id="creador_${doc.id}">
-      Creador: -
+    <div style="display:flex; justify-content:space-between; font-size:13px; color:#666; margin-top:4px;">
+      <div>
+        ${p.tipo || "ranking"} - ${nivelTexto} - ${p.genero || ""}
+      </div>
+
+      <div id="creador_${doc.id}">
+        Creador: -
+      </div>
     </div>
 
-let mostrarSalir = false;
-
-if ((p.jugadores  []).includes(firebase.auth().currentUser.uid)  (p.reservas || []).includes(firebase.auth().currentUser.uid)) {
-    mostrarSalir = true;
-}
-
-if (mostrarSalir) {
-    html += "<div style='margin-top:6px; text-align:right;'>";
-    html += "<button onclick=\"salirDePartida('" + doc.id + "')\" style='background:#e53935; color:white; border:none; padding:6px 10px; border-radius:6px;'>Salir</button>";
-    html += "</div>";
-}
-
+    ${mostrarSalir ? `
+    <div style="margin-top:6px; text-align:right;">
+      <button onclick="salirDePartida('${doc.id}')" style="background:#e53935; color:white; border:none; padding:6px 10px; border-radius:6px;">
+        Salir
+      </button>
+    </div>
+    ` : ""}
 
   </div>
 
-</div>
-
-  <!-- ===================== -->
-  <!-- JUGADORES -->
-  <!-- ===================== -->
   <div style="text-align:center; margin-top:10px;">
     <div><b>Jugadores:</b></div>
 
@@ -247,9 +245,6 @@ if (mostrarSalir) {
     </div>
   </div>
 
-  <!-- ===================== -->
-  <!-- RESERVAS -->
-  <!-- ===================== -->
   <div style="text-align:center; margin-top:10px;">
     <div><b>Reservas</b></div>
 
@@ -262,8 +257,6 @@ if (mostrarSalir) {
 </div>
 `;
     });
-
-     
 
     contenedor.innerHTML = html;
 
@@ -278,7 +271,7 @@ if (mostrarSalir) {
         db.collection("pistas").doc(p.pistaId).get().then(function(docPista) {
           if (docPista.exists) {
             const pista = docPista.data();
-            const texto = `${pista.nombre || ""} - ${pista.localidad || ""}`;
+            const texto = (pista.nombre || "") + " - " + (pista.localidad || "");
             const el = document.getElementById("pista_" + doc.id);
             if (el) el.innerText = texto;
           }
@@ -288,22 +281,23 @@ if (mostrarSalir) {
       for (var i = 0; i < 4; i++) {
         pintarJugador(p.jugadores[i] || null, "j" + (i + 1) + "_" + doc.id);
       }
-   
+
       for (var i = 0; i < 2; i++) {
         pintarJugador(p.reservas[i] || null, "r" + (i + 1) + "_" + doc.id);
       }
 
       if (p.creadaPor) {
-  db.collection("usuarios").doc(p.creadaPor).get().then(docUser => {
-    if (docUser.exists) {
-      const u = docUser.data();
-      const el = document.getElementById("creador_" + doc.id);
-      if (el) {
-        el.innerText = "Creador: " + (u.nombre || "Jugador");
+        db.collection("usuarios").doc(p.creadaPor).get().then(function(docUser) {
+          if (docUser.exists) {
+            const u = docUser.data();
+            const el = document.getElementById("creador_" + doc.id);
+            if (el) {
+              el.innerText = "Creador: " + (u.nombre || "Jugador");
+            }
+          }
+        });
       }
-    }
-  });
-}
+
     });
 
   })
