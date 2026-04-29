@@ -192,15 +192,36 @@ function cargarPartidas() {
 
     let html = "";
 
+
+let htmlProximas = "";
+let htmlPendientes = "";
+
     snapshot.forEach(function(doc) {
 
       const p = doc.data() || {};
 
-      const ahora = new Date();
-const fechaPartida = new Date(p.fecha + "T" + p.hora);
+      if (p.estado === "finalizada") return;
 
-const esFutura = fechaPartida >= ahora;
-const esPasada = fechaPartida < ahora;
+      const ahora = new Date();
+let fechaPartida = null;
+
+if (p.fecha && p.hora) {
+  const partesFecha = p.fecha.split("-");
+  const partesHora = p.hora.split(":");
+
+  fechaPartida = new Date(
+    parseInt(partesFecha[0]),
+    parseInt(partesFecha[1]) - 1,
+    parseInt(partesFecha[2]),
+    parseInt(partesHora[0]),
+    parseInt(partesHora[1])
+  );
+}
+
+if (!fechaPartida) return;
+
+const esFutura = fechaPartida >= ahoraGlobal;
+const esPasada = fechaPartida < ahoraGlobal;
 
 if (modoPartidas === "proximas" && !esFutura) return;
 if (modoPartidas === "pendientes" && !esPasada) return;
@@ -232,7 +253,7 @@ if (modoPartidas === "pendientes" && !esPasada) return;
         mostrarSalir = true;
       }
 
-      html += `
+      let bloque = `
 <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; background:${fondo};">
 
   <div style="padding-top:8px;">
@@ -295,9 +316,14 @@ if (modoPartidas === "pendientes" && !esPasada) return;
 
 </div>
 `;
+if (esFutura) {
+  htmlProximas += bloque;
+} else {
+  htmlPendientes += bloque;
+}
     });
 
-    contenedor.innerHTML = html;
+    contenedor.innerHTML = (modoPartidas === "proximas" ? htmlProximas : htmlPendientes);
 
     snapshot.forEach(function(doc) {
 
@@ -451,4 +477,19 @@ function salirDePartida(partidaId) {
     }
 
   });
+}
+
+function guardarPartidaFinalizada(p, idPartida) {
+
+  const datos = {
+    fecha: p.fecha,
+    hora: p.hora,
+    jugadores: p.jugadores || [],
+    resultado: p.resultado || null,
+    valoraciones: p.valoraciones || [],
+    creadaPor: p.creadaPor || null,
+    timestamp: new Date()
+  };
+
+  db.collection("historial_partidas").doc(idPartida).set(datos);
 }
