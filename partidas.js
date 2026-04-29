@@ -190,7 +190,6 @@ function cargarPartidas() {
       return;
     }
 
-    let html = "";
 
 
 let htmlProximas = "";
@@ -200,7 +199,7 @@ let htmlPendientes = "";
 
       const p = doc.data() || {};
 
-      if (p.estado === "finalizada") return;
+      if (p.estado === "finalizada" || p.estado === "cancelada") return;
 
       const ahora = new Date();
 let fechaPartida = null;
@@ -226,6 +225,7 @@ const esPasada = fechaPartida < ahoraGlobal;
 if (modoPartidas === "proximas" && !esFutura) return;
 if (modoPartidas === "pendientes" && !esPasada) return;
 
+
       p.jugadores = p.jugadores || [];
       p.reservas = p.reservas || [];
 
@@ -235,9 +235,7 @@ if (modoPartidas === "pendientes" && !esPasada) return;
         fondo = "#e3f2fd";
       }
 
-      if (p.estado === "finalizada" || p.estado === "cancelada") {
-        fondo = "#fdecea";
-      }
+    
 
       const nivelTexto =
         (p.nivel && p.nivel.desde && p.nivel.hasta)
@@ -323,7 +321,10 @@ if (esFutura) {
 }
     });
 
-    contenedor.innerHTML = (modoPartidas === "proximas" ? htmlProximas : htmlPendientes);
+    contenedor.innerHTML =
+  (modoPartidas === "proximas" ? htmlProximas : htmlPendientes);
+
+actualizarBotonesPartidas();
 
     snapshot.forEach(function(doc) {
 
