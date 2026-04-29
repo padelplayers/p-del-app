@@ -215,6 +215,13 @@ function cargarPartidas() {
     <div id="creador_${doc.id}">
       Creador: -
     </div>
+
+    <div style="margin-top:6px; text-align:right;">
+  <button onclick="salirDePartida('${doc.id}')" style="background:#e53935; color:#fff; border:none; padding:4px 8px; border-radius:6px; font-size:12px; cursor:pointer;">
+    Salir
+  </button>
+</div>
+
   </div>
 
 </div>
@@ -339,6 +346,57 @@ function unirseAPartida(slotId) {
       }
 
     }
+
+    ref.update({
+      jugadores: jugadores,
+      reservas: reservas
+    }).then(function() {
+      cargarPartidas();
+    });
+
+  });
+
+}
+
+function salirDePartida(partidaId) {
+
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+
+  const ref = db.collection("partidas").doc(partidaId);
+
+  ref.get().then(function(doc) {
+
+    if (!doc.exists) return;
+
+    const p = doc.data();
+
+    let jugadores = p.jugadores || [];
+    let reservas = p.reservas || [];
+
+    const esCreador = p.creadaPor === user.uid;
+
+    // SI ES CREADOR → CANCELAR PARTIDA
+    if (esCreador) {
+
+      ref.update({
+        estado: "cancelada"
+      }).then(function() {
+        cargarPartidas();
+      });
+
+      return;
+    }
+
+    // QUITAR DE JUGADORES
+    jugadores = jugadores.filter(function(id) {
+      return id !== user.uid;
+    });
+
+    // QUITAR DE RESERVAS
+    reservas = reservas.filter(function(id) {
+      return id !== user.uid;
+    });
 
     ref.update({
       jugadores: jugadores,
