@@ -184,7 +184,7 @@ function cargarPartidas() {
           ? `${p.nivel.desde} - ${p.nivel.hasta}`
           : "Cualquiera";
 
-      html += `
+     html += `
 <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; background:${fondo};">
 
   <!-- ===================== -->
@@ -216,19 +216,12 @@ function cargarPartidas() {
       Creador: -
     </div>
 
-     let mostrarSalir = false;
-
-if ((p.jugadores || []).includes(firebase.auth().currentUser.uid) ||
-    (p.reservas || []).includes(firebase.auth().currentUser.uid)) {
-    mostrarSalir = true;
+if ((p.jugadores || []).includes(firebase.auth().currentUser.uid) || (p.reservas || []).includes(firebase.auth().currentUser.uid)) {
+    html += '<div style="margin-top:6px; text-align:right;">';
+    html += '<button onclick="salirDePartida(\'' + doc.id + '\')" style="background:#e53935; color:white; border:none; padding:6px 10px; border-radius:6px;">Salir</button>';
+    html += '</div>';
 }
 
-if (mostrarSalir) {
-    html += "<div style='margin-top:6px; text-align:right;'>";
-    html += "<button onclick=\"salirDePartida('" + doc.id + "')\" style='background:#e53935;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;'>Salir</button>";
-    html += "</div>";
-}
-    
 }
 
   </div>
