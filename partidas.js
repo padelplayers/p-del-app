@@ -364,29 +364,54 @@ function unirseAPartida(slotId) {
 
 function salirDePartida(partidaId) {
 
-    const uid = firebase.auth().currentUser.uid;
+  const uid = firebase.auth().currentUser.uid;
 
-    db.collection("partidas").doc(partidaId).get().then(function(doc) {
+  const ref = db.collection("partidas").doc(partidaId);
 
-        if (!doc.exists) return;
+  ref.get().then(function(doc) {
 
-        const p = doc.data();
+    if (!doc.exists) return;
 
-        const esCreador = p.creador === uid;
+    const p = doc.data() || {};
 
-        if (esCreador) {
-            if (!confirm("Si sales, la partida se cancelará. ¿Continuar?")) return;
+    let jugadores = p.jugadores || [];
+    let reservas = p.reservas || [];
 
-            db.collection("partidas").doc(partidaId).delete();
-            return;
-        }
+    // Si es el creador → cancelar partida
+    if (p.creadaPor === uid) {
+      ref.update({
+        estado: "cancelada"
+      }).then(function() {
+        cargarPartidas();
+      });
+      return;
+    }
 
-        const jugadores = (p.jugadores || []).filter(j => j !== uid);
-        const reservas = (p.reservas || []).filter(r => r !== uid);
+    // Si está en jugadores → quitarlo
+    if (jugadores.includes(uid)) {
+      jugadores = jugadores.filter(function(j) { return j !== uid; });
 
-        db.collection("partidas").doc(partidaId).update({
-            jugadores: jugadores,
-            reservas: reservas
-        });
-    });
+      ref.update({
+        jugadores: jugadores
+      }).then(function() {
+        cargarPartidas();
+      });
+
+      return;
+    }
+
+    // Si está en reservas → quitarlo
+    if (reservas.includes(uid)) {
+      reservas = reservas.filter(function(r) { return r !== uid; });
+
+      ref.update({
+        reservas: reservas
+      }).then(function() {
+        cargarPartidas();
+      });
+
+      return;
+    }
+
+  });
 }
