@@ -216,13 +216,15 @@ function cargarPartidas() {
       Creador: -
     </div>
 
-   ${((p.jugadores || []).includes(firebase.auth().currentUser.uid) || (p.reservas || []).includes(firebase.auth().currentUser.uid)) ? 
-<div style="margin-top:6px; text-align:right;">
-  <button onclick="salirDePartida('${doc.id}')" style="background:#e53935; color:#fff; border:none; padding:4px 8px; border-radius:6px; font-size:12px; cursor:pointer;">
-    Salir
-  </button>
-</div>
- : ""}
+  if ((p.jugadores  []).includes(firebase.auth().currentUser.uid)  (p.reservas || []).includes(firebase.auth().currentUser.uid)) {
+
+  html += "<div style='margin-top:6px; text-align:right;'>";
+  html += "<button onclick=\"salirDePartida('" + doc.id + "')\" style='background:#e53935; color:#fff; border:none; padding:4px 8px; border-radius:6px; font-size:12px; cursor:pointer;'>";
+  html += "Salir";
+  html += "</button>";
+  html += "</div>";
+
+}
 
   </div>
 
@@ -365,9 +367,7 @@ function salirDePartida(partidaId) {
   const user = firebase.auth().currentUser;
   if (!user) return;
 
-  const ref = db.collection("partidas").doc(partidaId);
-
-  ref.get().then(function(doc) {
+  db.collection("partidas").doc(partidaId).get().then(function(doc) {
 
     if (!doc.exists) return;
 
@@ -376,12 +376,13 @@ function salirDePartida(partidaId) {
     let jugadores = p.jugadores || [];
     let reservas = p.reservas || [];
 
-    const esCreador = p.creadaPor === user.uid;
+    // 🔴 Si es el creador → cancelar partida
+    if (p.creador === user.uid || p.creadaPor === user.uid) {
 
-    // SI ES CREADOR → CANCELAR PARTIDA
-    if (esCreador) {
+      const ok = confirm("Si sales, la partida se cancelará. ¿Continuar?");
+      if (!ok) return;
 
-      ref.update({
+      db.collection("partidas").doc(partidaId).update({
         estado: "cancelada"
       }).then(function() {
         cargarPartidas();
@@ -390,17 +391,17 @@ function salirDePartida(partidaId) {
       return;
     }
 
-    // QUITAR DE JUGADORES
-    jugadores = jugadores.filter(function(id) {
-      return id !== user.uid;
+    // 🔴 Quitar de jugadores
+    jugadores = jugadores.filter(function(uid) {
+      return uid !== user.uid;
     });
 
-    // QUITAR DE RESERVAS
-    reservas = reservas.filter(function(id) {
-      return id !== user.uid;
+    // 🔴 Quitar de reservas
+    reservas = reservas.filter(function(uid) {
+      return uid !== user.uid;
     });
 
-    ref.update({
+    db.collection("partidas").doc(partidaId).update({
       jugadores: jugadores,
       reservas: reservas
     }).then(function() {
