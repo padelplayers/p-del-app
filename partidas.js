@@ -216,8 +216,19 @@ function cargarPartidas() {
       Creador: -
     </div>
 
- 
+     let mostrarSalir = false;
 
+if ((p.jugadores || []).includes(firebase.auth().currentUser.uid) ||
+    (p.reservas || []).includes(firebase.auth().currentUser.uid)) {
+    mostrarSalir = true;
+}
+
+if (mostrarSalir) {
+    html += "<div style='margin-top:6px; text-align:right;'>";
+    html += "<button onclick=\"salirDePartida('" + doc.id + "')\" style='background:#e53935;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;'>Salir</button>";
+    html += "</div>";
+}
+    
 }
 
   </div>
@@ -261,19 +272,6 @@ function cargarPartidas() {
     snapshot.forEach(function(doc) {
 
       const p = doc.data() || {};
-
-      let mostrarSalir = false;
-
-if ((p.jugadores || []).includes(firebase.auth().currentUser.uid) ||
-    (p.reservas || []).includes(firebase.auth().currentUser.uid)) {
-    mostrarSalir = true;
-}
-
-if (mostrarSalir) {
-    html += "<div style='margin-top:6px; text-align:right;'>";
-    html += "<button onclick=\"salirDePartida('" + doc.id + "')\" style='background:#e53935;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;'>Salir</button>";
-    html += "</div>";
-}
 
       p.jugadores = p.jugadores || [];
       p.reservas = p.reservas || [];
