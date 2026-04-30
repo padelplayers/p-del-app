@@ -68,7 +68,7 @@ if (u.imagen) {
       "<div style='display:flex; flex-direction:column; align-items:center; gap:4px;'>" +
 
         "<div style='position:relative; width:40px; height:40px;'>" +
-          "<img src='" + img + "' style='width:40px; height:40px; border-radius:50%; object-fit:cover;'>"
+        "<img src='" + img + "' style='width:40px; height:40px; border-radius:50%; object-fit:cover;'>" +
         "</div>" +
 
         "<div style='font-size:12px; text-align:center; line-height:1.1; max-width:60px;'>" +
