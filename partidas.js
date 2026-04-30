@@ -54,7 +54,14 @@ function pintarJugador(uid, slotId) {
   db.collection("usuarios").doc(uid).get().then(doc => {
     if (!doc.exists) return;
 
-    const u = doc.data();
+    const raw = doc.data() || {};
+
+const u = {
+    nombre: raw.nombre,
+    nivel: raw.nivel,
+    imagen: raw.fotoPerfil,
+    genero: raw.sexo
+};
 
 
     let img = "imagen/hombre.jpeg";
