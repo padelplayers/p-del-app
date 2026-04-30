@@ -214,41 +214,67 @@ const ahoraGlobal = new Date();
 
     snapshot.forEach(function(doc) {
 
-      const p = doc.data() || {};
+     const p = doc.data() || {};
 
-      // BORRADO AUTOMÁTICO INMEDIATO
+// ===============================
+// BORRADOS AUTOMÁTICOS
+// ===============================
 
-// cancelada → borrar
+// construir fechaPartida una sola vez
+let fechaPartida = null;
+
+if (p.fecha && p.hora) {
+    const f = p.fecha.split("-");
+    const h = p.hora.split(":");
+
+    fechaPartida = new Date(
+        parseInt(f[0]),
+        parseInt(f[1]) - 1,
+        parseInt(f[2]),
+        parseInt(h[0]),
+        parseInt(h[1])
+    );
+}
+
+const ahora = new Date();
+
+// 1. Cancelada → borrar
 if (p.estado === "cancelada") {
     db.collection("partidas").doc(doc.id).delete();
     return;
 }
 
-// abierta y pasada → borrar
-if (p.estado === "abierta") {
-    const ahora = new Date();
+// 2. Abierta y pasada → borrar
+if (p.estado === "abierta" && fechaPartida && fechaPartida < ahora) {
+    db.collection("partidas").doc(doc.id).delete();
+    return;
+}
 
-    let fechaPartida = null;
+// 3. Finalizada + todos votados → borrar inmediato
+if (p.estado === "finalizada") {
 
-    if (p.fecha && p.hora) {
-        const f = p.fecha.split("-");
-        const h = p.hora.split(":");
+    const totalJugadores = (p.jugadores || []).length;
+    const votos = p.votaciones || [];
 
-        fechaPartida = new Date(
-            parseInt(f[0]),
-            parseInt(f[1]) - 1,
-            parseInt(f[2]),
-            parseInt(h[0]),
-            parseInt(h[1])
-        );
-    }
-
-    if (fechaPartida && fechaPartida < ahora) {
+    if (totalJugadores > 0 && votos.length >= totalJugadores) {
         db.collection("partidas").doc(doc.id).delete();
         return;
     }
+
+    // 4. Si NO han votado todos → esperar 3 días y borrar
+    if (fechaPartida) {
+        const limite = new Date(fechaPartida);
+        limite.setDate(limite.getDate() + 3);
+
+        if (ahora > limite) {
+            db.collection("partidas").doc(doc.id).delete();
+            return;
+        }
+    }
 }
 
+      
+      
       const ahora = new Date();
 let fechaPartida = null;
 
