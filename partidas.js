@@ -216,7 +216,38 @@ const ahoraGlobal = new Date();
 
       const p = doc.data() || {};
 
-      if (p.estado === "finalizada" || p.estado === "cancelada") return;
+      // BORRADO AUTOMÁTICO INMEDIATO
+
+// cancelada → borrar
+if (p.estado === "cancelada") {
+    db.collection("partidas").doc(doc.id).delete();
+    return;
+}
+
+// abierta y pasada → borrar
+if (p.estado === "abierta") {
+    const ahora = new Date();
+
+    let fechaPartida = null;
+
+    if (p.fecha && p.hora) {
+        const f = p.fecha.split("-");
+        const h = p.hora.split(":");
+
+        fechaPartida = new Date(
+            parseInt(f[0]),
+            parseInt(f[1]) - 1,
+            parseInt(f[2]),
+            parseInt(h[0]),
+            parseInt(h[1])
+        );
+    }
+
+    if (fechaPartida && fechaPartida < ahora) {
+        db.collection("partidas").doc(doc.id).delete();
+        return;
+    }
+}
 
       const ahora = new Date();
 let fechaPartida = null;
