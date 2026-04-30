@@ -97,6 +97,30 @@ function crearPartida() {
 
   const fecha = document.getElementById("fechaPartida")?.value;
   const hora = document.getElementById("horaPartida")?.value;
+  // VALIDAR HORA SI ES HOY
+
+const ahora = new Date();
+
+const partesFecha = fecha.split("-");
+const partesHora = hora.split(":");
+
+const fechaPartida = new Date(
+  parseInt(partesFecha[0]),
+  parseInt(partesFecha[1]) - 1,
+  parseInt(partesFecha[2]),
+  parseInt(partesHora[0]),
+  parseInt(partesHora[1])
+);
+
+const esHoy =
+  parseInt(partesFecha[0]) === ahora.getFullYear() &&
+  parseInt(partesFecha[1]) === (ahora.getMonth() + 1) &&
+  parseInt(partesFecha[2]) === ahora.getDate();
+
+if (esHoy && fechaPartida < ahora) {
+  alert("No puedes seleccionar una hora anterior a la actual");
+  return;
+}
   const tipo = document.getElementById("tipoPartida")?.value;
   const genero = document.getElementById("generoPartida")?.value;
   const nivelTipo = document.getElementById("nivelTipo").value;
