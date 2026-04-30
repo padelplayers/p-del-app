@@ -55,13 +55,13 @@ function pintarJugador(uid, slotId) {
     if (!doc.exists) return;
 
     const u = doc.data();
-    console.log(u);
+
 
     let img = "imagen/hombre.jpeg";
 
-if (u.imagen) {
-    img = u.imagen;
-} else if (u.genero === "mujer") {
+if (u.fotoPerfil && u.fotoPerfil !== "") {
+    img = u.fotoPerfil;
+} else if (u.sexo === "mujer") {
     img = "imagen/mujer.jpeg";
 }
 
