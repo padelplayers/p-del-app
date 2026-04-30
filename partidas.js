@@ -203,6 +203,8 @@ function cargarPartidas() {
 let htmlProximas = "";
 let htmlPendientes = "";
 
+const ahoraGlobal = new Date();
+
     snapshot.forEach(function(doc) {
 
       const p = doc.data() || {};
