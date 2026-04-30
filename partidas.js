@@ -275,7 +275,7 @@ if (p.estado === "finalizada") {
 
       
       
-      const ahora = new Date();
+    
 let fechaPartida = null;
 
 if (p.fecha && p.hora) {
