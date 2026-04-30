@@ -54,7 +54,7 @@ function pintarJugador(uid, slotId) {
   db.collection("usuarios").doc(uid).get().then(doc => {
     if (!doc.exists) return;
 
-    const raw = doc.data() || {};
+   const raw = doc.data() || {};
 
 const u = {
     nombre: raw.nombre,
@@ -63,12 +63,11 @@ const u = {
     genero: raw.sexo
 };
 
+let img = "imagen/hombre.jpeg";
 
-    let img = "imagen/hombre.jpeg";
-
-if (u.fotoPerfil && u.fotoPerfil !== "") {
-    img = u.fotoPerfil;
-} else if (u.sexo === "mujer") {
+if (u.imagen && u.imagen !== "") {
+    img = u.imagen;
+} else if (u.genero === "mujer") {
     img = "imagen/mujer.jpeg";
 }
 
