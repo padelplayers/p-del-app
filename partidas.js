@@ -56,11 +56,19 @@ function pintarJugador(uid, slotId) {
 
     const u = doc.data();
 
+    let img = "imagen/hombre.jpeg";
+
+if (u.imagen) {
+    img = u.imagen;
+} else if (u.genero === "mujer") {
+    img = "imagen/mujer.jpeg";
+}
+
     el.innerHTML =
       "<div style='display:flex; flex-direction:column; align-items:center; gap:4px;'>" +
 
         "<div style='position:relative; width:40px; height:40px;'>" +
-          "<img src='" + (u.foto || "imagen/hombre.jpeg") + "' style='width:40px; height:40px; border-radius:50%; object-fit:cover; display:block;'>" +
+          "<img src='" + img + "' style='width:40px; height:40px; border-radius:50%;'>"
         "</div>" +
 
         "<div style='font-size:12px; text-align:center; line-height:1.1; max-width:60px;'>" +
