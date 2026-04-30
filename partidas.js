@@ -273,23 +273,6 @@ if (p.estado === "finalizada") {
     }
 }
 
-      
-      
-    
-let fechaPartida = null;
-
-if (p.fecha && p.hora) {
-  const partesFecha = p.fecha.split("-");
-  const partesHora = p.hora.split(":");
-
-  fechaPartida = new Date(
-    parseInt(partesFecha[0]),
-    parseInt(partesFecha[1]) - 1,
-    parseInt(partesFecha[2]),
-    parseInt(partesHora[0]),
-    parseInt(partesHora[1])
-  );
-}
 
 if (!fechaPartida) return;
 
