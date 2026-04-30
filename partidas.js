@@ -55,6 +55,7 @@ function pintarJugador(uid, slotId) {
     if (!doc.exists) return;
 
     const u = doc.data();
+    console.log(u);
 
     let img = "imagen/hombre.jpeg";
 
