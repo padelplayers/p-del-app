@@ -786,6 +786,7 @@ Añadir pista
 
   <h2>Partidas</h2>
 
+<button onclick="mostrar('buscarPartida')" class="btnGreen">Buscar partida</button>
 <button onclick="mostrar('crearPartida')" class="btnBlue">Crear partida</button>
 <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
 
@@ -795,6 +796,39 @@ Añadir pista
 </div>
 
 <div id="listaPartidas"></div>
+
+</div>
+
+<div id="buscarPartida" class="container" style="display:none;">
+
+  <h2>Buscar partidas</h2>
+
+  <input type="date" id="filtroFecha">
+
+  <select id="filtroTipo">
+    <option value="">Tipo</option>
+    <option value="ranking">Ranking</option>
+    <option value="amistosa">Amistosa</option>
+  </select>
+
+  <select id="filtroGenero">
+    <option value="">Género</option>
+    <option value="masculino">Masculino</option>
+    <option value="femenino">Femenino</option>
+    <option value="mixto">Mixto</option>
+    <option value="cualquiera">Cualquiera</option>
+  </select>
+
+  <input type="number" id="filtroNivel" placeholder="Nivel">
+
+  <select id="filtroPista">
+    <option value="">Todas las pistas</option>
+  </select>
+
+  <button onclick="aplicarFiltrosPartidas()" class="btnGreen">Buscar</button>
+  <button onclick="limpiarFiltrosPartidas()" class="btnBlue">Limpiar</button>
+
+  <button onclick="mostrar('partidas')" class="btnBlue">Volver</button>
 
 </div>
 

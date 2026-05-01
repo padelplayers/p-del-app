@@ -216,6 +216,7 @@ function initCrearPartida() {
 
 function cargarPartidas() {
   actualizarBotonesPartidas();
+  cargarFiltroPistas();
   const contenedor = document.getElementById("listaPartidas");
   if (!contenedor) return;
 
@@ -300,8 +301,31 @@ if (p.estado === "finalizada") {
 
 if (!fechaPartida) return;
 
+const filtroFecha = document.getElementById("filtroFecha") ? document.getElementById("filtroFecha").value : "";
+const filtroTipo = document.getElementById("filtroTipo") ? document.getElementById("filtroTipo").value : "";
+const filtroGenero = document.getElementById("filtroGenero") ? document.getElementById("filtroGenero").value : "";
+const filtroNivel = document.getElementById("filtroNivel") ? document.getElementById("filtroNivel").value : "";
+const filtroPista = document.getElementById("filtroPista") ? document.getElementById("filtroPista").value : "";
+
 const esFutura = fechaPartida >= ahoraGlobal;
 const esPasada = fechaPartida < ahoraGlobal;
+
+// FILTROS
+
+if (filtroFecha && p.fecha !== filtroFecha) return;
+
+if (filtroTipo && p.tipo !== filtroTipo) return;
+
+if (filtroGenero && filtroGenero !== "" && p.genero !== filtroGenero) return;
+
+if (filtroNivel) {
+  const nivel = parseInt(filtroNivel);
+  if (p.nivel && p.nivel.desde && p.nivel.hasta) {
+    if (nivel < p.nivel.desde || nivel > p.nivel.hasta) return;
+  }
+}
+
+if (filtroPista && p.pistaId !== filtroPista) return;
 
 if (modoPartidas === "proximas" && !esFutura) return;
 if (modoPartidas === "pendientes" && !esPasada) return;
@@ -452,6 +476,44 @@ actualizarBotonesPartidas();
     console.error("Error cargando partidas:", error);
     contenedor.innerHTML = "Error cargando partidas";
   });
+}
+
+function cargarFiltroPistas() {
+  const select = document.getElementById("filtroPista");
+  if (!select) return;
+
+  select.innerHTML = '<option value="">Todas las pistas</option>';
+
+  db.collection("pistas").get().then(function(snapshot) {
+    snapshot.forEach(function(doc) {
+      const p = doc.data() || {};
+      const nombre = (p.nombre || "Pista") + " - " + (p.localidad || "");
+
+      select.innerHTML += '<option value="' + doc.id + '">' + nombre + '</option>';
+    });
+  });
+}
+
+function aplicarFiltrosPartidas() {
+  cargarPartidas();
+  mostrar("partidas");
+}
+
+function limpiarFiltrosPartidas() {
+
+  const f1 = document.getElementById("filtroFecha");
+  const f2 = document.getElementById("filtroTipo");
+  const f3 = document.getElementById("filtroGenero");
+  const f4 = document.getElementById("filtroNivel");
+  const f5 = document.getElementById("filtroPista");
+
+  if (f1) f1.value = "";
+  if (f2) f2.value = "";
+  if (f3) f3.value = "";
+  if (f4) f4.value = "";
+  if (f5) f5.value = "";
+
+  cargarPartidas();
 }
 
 function verPista(id) {
