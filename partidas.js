@@ -451,7 +451,9 @@ function cargarPartidas() {
     });
 
     contenedor.innerHTML =
-      (modoPartidas === "proximas" ? htmlProximas : htmlPendientes);
+  (window.modoPartidas === "pendientes")
+    ? htmlPendientes
+    : htmlProximas;
 
     actualizarBotonesPartidas();
 
