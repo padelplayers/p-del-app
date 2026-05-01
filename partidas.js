@@ -215,6 +215,11 @@ function initCrearPartida() {
 }
 
 function cargarPartidas() {
+
+  if (!window.modoPartidas) {
+  window.modoPartidas = "proximas";
+}
+
   actualizarBotonesPartidas();
   cargarFiltroPistas();
 
