@@ -509,18 +509,20 @@ function cargarFiltroPistas() {
 function aplicarFiltrosPartidas() {
 
 const tipoNivel = document.getElementById("filtroNivelTipo") ? document.getElementById("filtroNivelTipo").value : "";
+
 const desde = document.getElementById("filtroNivelDesde") ? document.getElementById("filtroNivelDesde").value : "";
 const hasta = document.getElementById("filtroNivelHasta") ? document.getElementById("filtroNivelHasta").value : "";
 
 if (tipoNivel === "rango") {
 
   const nDesde = parseFloat(desde);
-  const nHasta = parseFloat(hasta);
+const nHasta = parseFloat(hasta);
 
-  if (desde && hasta && nDesde > nHasta) {
-    alert("Nivel incorrecto");
-    return;
-  }
+if (!isNaN(nDesde) && !isNaN(nHasta) && nDesde > nHasta) {
+  alert("Nivel incorrecto");
+  return;
+}
+ 
 }
 
   const filtroFecha = document.getElementById("filtroFecha").value;
