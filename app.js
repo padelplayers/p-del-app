@@ -399,6 +399,28 @@ if (seccion === "crearPartida") {
   initCrearPartida();
 }
 
+if (seccion === "buscarPartida") {
+
+  const f1 = document.getElementById("filtroFecha");
+  const f2 = document.getElementById("filtroTipo");
+  const f3 = document.getElementById("filtroGenero");
+  const f4 = document.getElementById("filtroNivelTipo");
+  const f5 = document.getElementById("filtroNivelDesde");
+  const f6 = document.getElementById("filtroNivelHasta");
+  const f7 = document.getElementById("filtroPista");
+
+  if (f1) f1.value = "";
+  if (f2) f2.value = "";
+  if (f3) f3.value = "";
+  if (f4) f4.value = "";
+  if (f5) f5.value = "";
+  if (f6) f6.value = "";
+  if (f7) f7.value = "";
+
+  const bloque = document.getElementById("bloqueNivelRango");
+  if (bloque) bloque.style.display = "none";
+}
+
   const btnNueva = document.getElementById("btnNuevaPista");
 
 if (btnNueva) {

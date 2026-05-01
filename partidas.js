@@ -314,18 +314,30 @@ const esPasada = fechaPartida < ahoraGlobal;
 
 if (filtroFecha && p.fecha !== filtroFecha) return;
 
-if (filtroTipo && p.tipo !== filtroTipo) return;
+if (filtroTipo && filtroTipo !== "" && p.tipo !== filtroTipo) return;
 
 if (filtroGenero && filtroGenero !== "" && p.genero !== filtroGenero) return;
 
-if (filtroNivel) {
-  const nivel = parseInt(filtroNivel);
-  if (p.nivel && p.nivel.desde && p.nivel.hasta) {
-    if (nivel < p.nivel.desde || nivel > p.nivel.hasta) return;
+if (tipoNivel === "rango") {
+
+  const desde = nivelDesde ? parseFloat(nivelDesde) : null;
+  const hasta = nivelHasta ? parseFloat(nivelHasta) : null;
+
+  const partidaDesde = p.nivel && p.nivel.desde ? parseFloat(p.nivel.desde) : null;
+  const partidaHasta = p.nivel && p.nivel.hasta ? parseFloat(p.nivel.hasta) : null;
+
+  if (partidaDesde !== null && partidaHasta !== null) {
+
+    if (
+      (desde !== null && partidaHasta < desde) ||
+      (hasta !== null && partidaDesde > hasta)
+    ) {
+      return;
+    }
   }
 }
 
-if (filtroPista && p.pistaId !== filtroPista) return;
+if (filtroPista && filtroPista !== "" && p.pistaId !== filtroPista) return;
 
 if (modoPartidas === "proximas" && !esFutura) return;
 if (modoPartidas === "pendientes" && !esPasada) return;
@@ -495,6 +507,21 @@ function cargarFiltroPistas() {
 }
 
 function aplicarFiltrosPartidas() {
+
+  const tipoNivel = document.getElementById("filtroNivelTipo") ? document.getElementById("filtroNivelTipo").value : "";
+const desde = document.getElementById("filtroNivelDesde") ? document.getElementById("filtroNivelDesde").value : "";
+const hasta = document.getElementById("filtroNivelHasta") ? document.getElementById("filtroNivelHasta").value : "";
+
+if (tipoNivel === "rango") {
+
+  const nDesde = parseFloat(desde);
+  const nHasta = parseFloat(hasta);
+
+  if (desde && hasta && nDesde > nHasta) {
+    alert("Nivel incorrecto");
+    return;
+  }
+}
 
   const filtroFecha = document.getElementById("filtroFecha").value;
   const filtroTipo = document.getElementById("filtroTipo").value;
