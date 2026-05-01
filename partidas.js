@@ -217,6 +217,7 @@ function initCrearPartida() {
 function cargarPartidas() {
   actualizarBotonesPartidas();
   cargarFiltroPistas();
+
   const contenedor = document.getElementById("listaPartidas");
   if (!contenedor) return;
 
@@ -230,118 +231,124 @@ function cargarPartidas() {
       return;
     }
 
+    let htmlProximas = "";
+    let htmlPendientes = "";
 
+    const ahoraGlobal = new Date();
 
-let htmlProximas = "";
-let htmlPendientes = "";
+    // FILTROS DESDE MEMORIA
+    const filtros = window.filtrosPartidas || {};
 
-const ahoraGlobal = new Date();
+    const tipoNivel = filtros.tipoNivel || "";
+    const nivelDesde = filtros.nivelDesde || "";
+    const nivelHasta = filtros.nivelHasta || "";
+
+    const filtroFecha = filtros.fecha || "";
+    const filtroTipo = filtros.tipo || "";
+    const filtroGenero = filtros.genero || "";
+    const filtroPista = filtros.pista || "";
 
     snapshot.forEach(function(doc) {
 
-     const p = doc.data() || {};
+      const p = doc.data() || {};
 
-// ===============================
-// BORRADOS AUTOMÁTICOS
-// ===============================
+      // ===============================
+      // FECHA
+      // ===============================
+      let fechaPartida = null;
 
-// construir fechaPartida una sola vez
-let fechaPartida = null;
+      if (p.fecha && p.hora) {
+        const f = p.fecha.split("-");
+        const h = p.hora.split(":");
 
-if (p.fecha && p.hora) {
-    const f = p.fecha.split("-");
-    const h = p.hora.split(":");
+        fechaPartida = new Date(
+          parseInt(f[0]),
+          parseInt(f[1]) - 1,
+          parseInt(f[2]),
+          parseInt(h[0]),
+          parseInt(h[1])
+        );
+      }
 
-    fechaPartida = new Date(
-        parseInt(f[0]),
-        parseInt(f[1]) - 1,
-        parseInt(f[2]),
-        parseInt(h[0]),
-        parseInt(h[1])
-    );
-}
+      const ahora = new Date();
 
-const ahora = new Date();
+      // ===============================
+      // BORRADOS AUTOMÁTICOS
+      // ===============================
 
-// 1. Cancelada → borrar
-if (p.estado === "cancelada") {
-    db.collection("partidas").doc(doc.id).delete();
-    return;
-}
-
-// 2. Abierta y pasada → borrar
-if (p.estado === "abierta" && fechaPartida && fechaPartida < ahora) {
-    db.collection("partidas").doc(doc.id).delete();
-    return;
-}
-
-// 3. Finalizada + todos votados → borrar inmediato
-if (p.estado === "finalizada") {
-
-    const totalJugadores = (p.jugadores || []).length;
-    const votos = p.votaciones || [];
-
-    if (totalJugadores > 0 && votos.length >= totalJugadores) {
+      if (p.estado === "cancelada") {
         db.collection("partidas").doc(doc.id).delete();
         return;
-    }
+      }
 
-    // 4. Si NO han votado todos → esperar 3 días y borrar
-    if (fechaPartida) {
-        const limite = new Date(fechaPartida);
-        limite.setDate(limite.getDate() + 3);
+      if (p.estado === "abierta" && fechaPartida && fechaPartida < ahora) {
+        db.collection("partidas").doc(doc.id).delete();
+        return;
+      }
 
-        if (ahora > limite) {
+      if (p.estado === "finalizada") {
+
+        const totalJugadores = (p.jugadores || []).length;
+        const votos = p.votaciones || [];
+
+        if (totalJugadores > 0 && votos.length >= totalJugadores) {
+          db.collection("partidas").doc(doc.id).delete();
+          return;
+        }
+
+        if (fechaPartida) {
+          const limite = new Date(fechaPartida);
+          limite.setDate(limite.getDate() + 3);
+
+          if (ahora > limite) {
             db.collection("partidas").doc(doc.id).delete();
             return;
+          }
         }
-    }
-}
+      }
 
+      if (!fechaPartida) return;
 
-if (!fechaPartida) return;
+      const esFutura = fechaPartida >= ahoraGlobal;
+      const esPasada = fechaPartida < ahoraGlobal;
 
-const filtroFecha = document.getElementById("filtroFecha") ? document.getElementById("filtroFecha").value : "";
-const filtroTipo = document.getElementById("filtroTipo") ? document.getElementById("filtroTipo").value : "";
-const filtroGenero = document.getElementById("filtroGenero") ? document.getElementById("filtroGenero").value : "";
-const filtroNivel = document.getElementById("filtroNivel") ? document.getElementById("filtroNivel").value : "";
-const filtroPista = document.getElementById("filtroPista") ? document.getElementById("filtroPista").value : "";
+      // ===============================
+      // FILTROS
+      // ===============================
 
-const esFutura = fechaPartida >= ahoraGlobal;
-const esPasada = fechaPartida < ahoraGlobal;
+      if (filtroFecha && p.fecha !== filtroFecha) return;
 
-// FILTROS
+      if (filtroTipo && p.tipo !== filtroTipo) return;
 
-if (filtroFecha && p.fecha !== filtroFecha) return;
+      if (filtroGenero && p.genero !== filtroGenero) return;
 
-if (filtroTipo && filtroTipo !== "" && p.tipo !== filtroTipo) return;
+      if (tipoNivel === "rango") {
 
-if (filtroGenero && filtroGenero !== "" && p.genero !== filtroGenero) return;
+        const desde = nivelDesde ? parseFloat(nivelDesde) : null;
+        const hasta = nivelHasta ? parseFloat(nivelHasta) : null;
 
-if (tipoNivel === "rango") {
+        const partidaDesde = p.nivel && p.nivel.desde ? parseFloat(p.nivel.desde) : null;
+        const partidaHasta = p.nivel && p.nivel.hasta ? parseFloat(p.nivel.hasta) : null;
 
-  const desde = nivelDesde ? parseFloat(nivelDesde) : null;
-  const hasta = nivelHasta ? parseFloat(nivelHasta) : null;
+        if (partidaDesde !== null && partidaHasta !== null) {
 
-  const partidaDesde = p.nivel && p.nivel.desde ? parseFloat(p.nivel.desde) : null;
-  const partidaHasta = p.nivel && p.nivel.hasta ? parseFloat(p.nivel.hasta) : null;
+          if (
+            (desde !== null && partidaHasta < desde) ||
+            (hasta !== null && partidaDesde > hasta)
+          ) {
+            return;
+          }
+        }
+      }
 
-  if (partidaDesde !== null && partidaHasta !== null) {
+      if (filtroPista && p.pistaId !== filtroPista) return;
 
-    if (
-      (desde !== null && partidaHasta < desde) ||
-      (hasta !== null && partidaDesde > hasta)
-    ) {
-      return;
-    }
-  }
-}
+      if (modoPartidas === "proximas" && !esFutura) return;
+      if (modoPartidas === "pendientes" && !esPasada) return;
 
-if (filtroPista && filtroPista !== "" && p.pistaId !== filtroPista) return;
-
-if (modoPartidas === "proximas" && !esFutura) return;
-if (modoPartidas === "pendientes" && !esPasada) return;
-
+      // ===============================
+      // RENDER
+      // ===============================
 
       p.jugadores = p.jugadores || [];
       p.reservas = p.reservas || [];
@@ -351,8 +358,6 @@ if (modoPartidas === "pendientes" && !esPasada) return;
       if (p.estado === "confirmada" || p.estado === "cerrada") {
         fondo = "#e3f2fd";
       }
-
-    
 
       const nivelTexto =
         (p.nivel && p.nivel.desde && p.nivel.hasta)
@@ -431,17 +436,19 @@ if (modoPartidas === "pendientes" && !esPasada) return;
 
 </div>
 `;
-if (esFutura) {
-  htmlProximas += bloque;
-} else {
-  htmlPendientes += bloque;
-}
+
+      if (esFutura) {
+        htmlProximas += bloque;
+      } else {
+        htmlPendientes += bloque;
+      }
+
     });
 
     contenedor.innerHTML =
-  (modoPartidas === "proximas" ? htmlProximas : htmlPendientes);
+      (modoPartidas === "proximas" ? htmlProximas : htmlPendientes);
 
-actualizarBotonesPartidas();
+    actualizarBotonesPartidas();
 
     snapshot.forEach(function(doc) {
 
@@ -500,7 +507,6 @@ function cargarFiltroPistas() {
     snapshot.forEach(function(doc) {
       const p = doc.data() || {};
       const nombre = (p.nombre || "Pista") + " - " + (p.localidad || "");
-
       select.innerHTML += '<option value="' + doc.id + '">' + nombre + '</option>';
     });
   });
@@ -508,28 +514,24 @@ function cargarFiltroPistas() {
 
 function aplicarFiltrosPartidas() {
 
-const tipoNivel = document.getElementById("filtroNivelTipo") ? document.getElementById("filtroNivelTipo").value : "";
+  const tipoNivel = document.getElementById("filtroNivelTipo") ? document.getElementById("filtroNivelTipo").value : "";
+  const desde = document.getElementById("filtroNivelDesde") ? document.getElementById("filtroNivelDesde").value : "";
+  const hasta = document.getElementById("filtroNivelHasta") ? document.getElementById("filtroNivelHasta").value : "";
 
-const desde = document.getElementById("filtroNivelDesde") ? document.getElementById("filtroNivelDesde").value : "";
-const hasta = document.getElementById("filtroNivelHasta") ? document.getElementById("filtroNivelHasta").value : "";
+  if (tipoNivel === "rango") {
+    const nDesde = parseFloat(desde);
+    const nHasta = parseFloat(hasta);
 
-if (tipoNivel === "rango") {
-
-  const nDesde = parseFloat(desde);
-const nHasta = parseFloat(hasta);
-
-if (!isNaN(nDesde) && !isNaN(nHasta) && nDesde > nHasta) {
-  alert("Nivel incorrecto");
-  return;
-}
- 
-}
+    if (!isNaN(nDesde) && !isNaN(nHasta) && nDesde > nHasta) {
+      alert("Nivel incorrecto");
+      return;
+    }
+  }
 
   const filtroFecha = document.getElementById("filtroFecha").value;
   const filtroTipo = document.getElementById("filtroTipo").value;
   const filtroGenero = document.getElementById("filtroGenero").value;
   const filtroPista = document.getElementById("filtroPista").value;
-
 
   window.filtrosPartidas = {
     fecha: filtroFecha,
@@ -537,8 +539,8 @@ if (!isNaN(nDesde) && !isNaN(nHasta) && nDesde > nHasta) {
     genero: filtroGenero,
     pista: filtroPista,
     tipoNivel: tipoNivel,
-    nivelDesde: nivelDesde,
-    nivelHasta: nivelHasta
+    nivelDesde: desde,
+    nivelHasta: hasta
   };
 
   mostrar("partidas");
@@ -587,7 +589,7 @@ function verPista(id) {
 
   localStorage.setItem("pistaSeleccionada", id);
   mostrar("pistas");
-}   
+}
 
 function unirseAPartida(slotId) {
 
@@ -611,19 +613,15 @@ function unirseAPartida(slotId) {
     if (jugadores.includes(user.uid) || reservas.includes(user.uid)) return;
 
     if (!esReserva) {
-
       if (jugadores.length < 4) {
         jugadores.push(user.uid);
       } else {
         reservas.push(user.uid);
       }
-
     } else {
-
       if (reservas.length < 2) {
         reservas.push(user.uid);
       }
-
     }
 
     ref.update({
@@ -651,7 +649,6 @@ function salirDePartida(partidaId) {
     let jugadores = p.jugadores || [];
     let reservas = p.reservas || [];
 
-    // --- CREADOR ---
     if (p.creadaPor === uid) {
 
       const ok = confirm("Se cancelará la partida para todos. ¿Continuar?");
@@ -664,7 +661,6 @@ function salirDePartida(partidaId) {
       return;
     }
 
-    // --- JUGADOR ---
     if (jugadores.includes(uid)) {
       jugadores = jugadores.filter(function(j) { return j !== uid; });
 
@@ -675,7 +671,6 @@ function salirDePartida(partidaId) {
       return;
     }
 
-    // --- RESERVA ---
     if (reservas.includes(uid)) {
       reservas = reservas.filter(function(r) { return r !== uid; });
 
