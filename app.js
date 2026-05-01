@@ -399,6 +399,10 @@ if (seccion === "crearPartida") {
   initCrearPartida();
 }
 
+if (seccion === "partidas") {
+  window.modoPartidas = "proximas";
+}
+
 if (seccion === "buscarPartida") {
 
   const f1 = document.getElementById("filtroFecha");
