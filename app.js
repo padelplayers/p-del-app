@@ -344,6 +344,7 @@ function mostrar(seccion){
     "instrucciones",
     "partidas",
     "crearPartida",
+    "buscarPartida",
     "clasificacion"
   ];
 
