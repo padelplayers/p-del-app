@@ -450,8 +450,15 @@ function cargarPartidas() {
 
     });
 
-    contenedor.innerHTML =
-  (window.modoPartidas === "pendientes")
+    let modo = window.modoPartidas;
+
+if (modo !== "pendientes" && modo !== "proximas") {
+  modo = "proximas";
+  window.modoPartidas = "proximas";
+}
+
+contenedor.innerHTML =
+  (modo === "pendientes")
     ? htmlPendientes
     : htmlProximas;
 
