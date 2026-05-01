@@ -508,7 +508,7 @@ function cargarFiltroPistas() {
 
 function aplicarFiltrosPartidas() {
 
-  const tipoNivel = document.getElementById("filtroNivelTipo") ? document.getElementById("filtroNivelTipo").value : "";
+const tipoNivel = document.getElementById("filtroNivelTipo") ? document.getElementById("filtroNivelTipo").value : "";
 const desde = document.getElementById("filtroNivelDesde") ? document.getElementById("filtroNivelDesde").value : "";
 const hasta = document.getElementById("filtroNivelHasta") ? document.getElementById("filtroNivelHasta").value : "";
 
@@ -528,9 +528,6 @@ if (tipoNivel === "rango") {
   const filtroGenero = document.getElementById("filtroGenero").value;
   const filtroPista = document.getElementById("filtroPista").value;
 
-  const tipoNivel = document.getElementById("filtroNivelTipo").value;
-  const nivelDesde = document.getElementById("filtroNivelDesde").value;
-  const nivelHasta = document.getElementById("filtroNivelHasta").value;
 
   window.filtrosPartidas = {
     fecha: filtroFecha,
