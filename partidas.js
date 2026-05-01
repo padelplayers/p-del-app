@@ -495,8 +495,39 @@ function cargarFiltroPistas() {
 }
 
 function aplicarFiltrosPartidas() {
+
+  const filtroFecha = document.getElementById("filtroFecha").value;
+  const filtroTipo = document.getElementById("filtroTipo").value;
+  const filtroGenero = document.getElementById("filtroGenero").value;
+  const filtroPista = document.getElementById("filtroPista").value;
+
+  const tipoNivel = document.getElementById("filtroNivelTipo").value;
+  const nivelDesde = document.getElementById("filtroNivelDesde").value;
+  const nivelHasta = document.getElementById("filtroNivelHasta").value;
+
+  window.filtrosPartidas = {
+    fecha: filtroFecha,
+    tipo: filtroTipo,
+    genero: filtroGenero,
+    pista: filtroPista,
+    tipoNivel: tipoNivel,
+    nivelDesde: nivelDesde,
+    nivelHasta: nivelHasta
+  };
+
   mostrar("partidas");
   cargarPartidas();
+}
+
+function cambiarFiltroNivel() {
+  const tipo = document.getElementById("filtroNivelTipo").value;
+  const bloque = document.getElementById("bloqueNivelRango");
+
+  if (tipo === "rango") {
+    bloque.style.display = "block";
+  } else {
+    bloque.style.display = "none";
+  }
 }
 
 function limpiarFiltrosPartidas() {
@@ -504,14 +535,23 @@ function limpiarFiltrosPartidas() {
   const f1 = document.getElementById("filtroFecha");
   const f2 = document.getElementById("filtroTipo");
   const f3 = document.getElementById("filtroGenero");
-  const f4 = document.getElementById("filtroNivel");
-  const f5 = document.getElementById("filtroPista");
+  const f4 = document.getElementById("filtroNivelTipo");
+  const f5 = document.getElementById("filtroNivelDesde");
+  const f6 = document.getElementById("filtroNivelHasta");
+  const f7 = document.getElementById("filtroPista");
 
   if (f1) f1.value = "";
   if (f2) f2.value = "";
   if (f3) f3.value = "";
   if (f4) f4.value = "";
   if (f5) f5.value = "";
+  if (f6) f6.value = "";
+  if (f7) f7.value = "";
+
+  const bloque = document.getElementById("bloqueNivelRango");
+  if (bloque) bloque.style.display = "none";
+
+  window.filtrosPartidas = null;
 
   cargarPartidas();
 }
