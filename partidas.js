@@ -495,8 +495,8 @@ function cargarFiltroPistas() {
 }
 
 function aplicarFiltrosPartidas() {
-  cargarPartidas();
   mostrar("partidas");
+  cargarPartidas();
 }
 
 function limpiarFiltrosPartidas() {
