@@ -401,6 +401,7 @@ if (seccion === "crearPartida") {
 
 if (seccion === "partidas") {
   window.modoPartidas = "proximas";
+  cargarPartidas();
 }
 
 if (seccion === "buscarPartida") {
