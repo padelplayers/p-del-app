@@ -515,15 +515,15 @@ function aplicarFiltrosPartidas() {
   const filtroGenero = document.getElementById("filtroGenero").value;
   const filtroPista = document.getElementById("filtroPista").value;
 
-  window.filtrosPartidas = {
-    fecha: filtroFecha,
-    tipo: filtroTipo,
-    genero: filtroGenero,
-    pista: filtroPista,
-    tipoNivel: tipoNivel,
-    nivelDesde: desde,
-    nivelHasta: hasta
-  };
+ window.filtrosPartidas = {
+  fecha: filtroFecha || "",
+  tipo: (filtroTipo || "").toLowerCase().trim(),
+  genero: filtroGenero || "",
+  pista: filtroPista || "",
+  tipoNivel: tipoNivel || "",
+  nivelDesde: desde || "",
+  nivelHasta: hasta || ""
+};
 
   mostrar("partidas");
   cargarPartidas();
