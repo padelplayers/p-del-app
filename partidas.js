@@ -512,6 +512,7 @@ function aplicarFiltrosPartidas() {
 
   const filtroFecha = document.getElementById("filtroFecha").value;
   const filtroTipo = document.getElementById("filtroTipo").value;
+  const tipoNormalizado = (filtroTipo || "").toLowerCase().trim();
   const filtroGenero = document.getElementById("filtroGenero").value;
   const filtroPista = document.getElementById("filtroPista").value;
 

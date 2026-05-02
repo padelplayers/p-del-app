@@ -406,6 +406,8 @@ if (seccion === "partidas") {
 
 if (seccion === "buscarPartida") {
 
+  window.filtrosPartidas = null;
+
   const f1 = document.getElementById("filtroFecha");
   const f2 = document.getElementById("filtroTipo");
   const f3 = document.getElementById("filtroGenero");
