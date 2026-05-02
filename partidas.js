@@ -250,12 +250,15 @@ function cargarPartidas() {
 
     const filtroFecha = filtros.fecha || "";
     const filtroTipo = filtros.tipo || "";
+    console.log("FILTRO TIPO:", filtroTipo);
     const filtroGenero = filtros.genero || "";
     const filtroPista = filtros.pista || "";
 
     snapshot.forEach(function(doc) {
 
       const p = doc.data() || {};
+
+      console.log("TIPO PARTIDA:", p.tipo);
 
       if (filtroTipo && (p.tipo || "") !== filtroTipo) return;
 
