@@ -257,6 +257,8 @@ function cargarPartidas() {
 
       const p = doc.data() || {};
 
+      if (filtroTipo && (p.tipo || "") !== filtroTipo) return;
+
       // ===============================
       // FECHA
       // ===============================
