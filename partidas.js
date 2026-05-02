@@ -260,8 +260,8 @@ function cargarPartidas() {
 
       console.log("TIPO PARTIDA:", p.tipo);
 
-      if (filtroTipo && (p.tipo || "") !== filtroTipo) return;
-
+      if (filtroTipo && (p.tipo || "").toLowerCase().trim() !== filtroTipo) return;
+      
       // ===============================
       // FECHA
       // ===============================
