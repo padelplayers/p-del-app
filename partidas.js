@@ -249,7 +249,7 @@ function cargarPartidas() {
     const nivelHasta = filtros.nivelHasta || "";
 
     const filtroFecha = filtros.fecha || "";
-    const filtroTipo = filtros.tipo || "";
+    const filtroTipo = (filtros.tipo || "").toLowerCase().trim();
     console.log("FILTRO TIPO:", filtroTipo);
     const filtroGenero = filtros.genero || "";
     const filtroPista = filtros.pista || "";
@@ -514,7 +514,7 @@ function aplicarFiltrosPartidas() {
       return;
     }
   }
-
+  const filtros = window.filtrosPartidas || {};
   const filtroFecha = document.getElementById("filtroFecha").value;
   const filtroTipo = (document.getElementById("filtroTipo").value || "").toLowerCase().trim();
   const tipoNormalizado = (filtroTipo || "").toLowerCase().trim();
