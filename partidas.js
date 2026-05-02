@@ -261,7 +261,7 @@ function cargarPartidas() {
       console.log("TIPO PARTIDA:", p.tipo);
 
       if (filtroTipo && (p.tipo || "").toLowerCase().trim() !== filtroTipo) return;
-      
+
       // ===============================
       // FECHA
       // ===============================
@@ -516,8 +516,7 @@ function aplicarFiltrosPartidas() {
   }
 
   const filtroFecha = document.getElementById("filtroFecha").value;
-  const selectTipo = document.getElementById("filtroTipo");
-const filtroTipo = selectTipo ? selectTipo.options[selectTipo.selectedIndex].value : "";
+  const filtroTipo = (document.getElementById("filtroTipo").value || "").toLowerCase().trim();
   const tipoNormalizado = (filtroTipo || "").toLowerCase().trim();
   const filtroGenero = document.getElementById("filtroGenero").value;
   const filtroPista = document.getElementById("filtroPista").value;
