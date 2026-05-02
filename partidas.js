@@ -524,6 +524,8 @@ function aplicarFiltrosPartidas() {
   const filtroGenero = document.getElementById("filtroGenero").value;
   const filtroPista = document.getElementById("filtroPista").value;
 
+  console.log("VALOR SELECT TIPO:", document.getElementById("filtroTipo").value);
+
  window.filtrosPartidas = {
   fecha: filtroFecha,
   tipo: tipoNormalizado,
