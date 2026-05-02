@@ -523,7 +523,7 @@ function aplicarFiltrosPartidas() {
 
  window.filtrosPartidas = {
   fecha: filtroFecha,
-  tipo: document.getElementById("filtroTipo").value,
+  tipo: (document.getElementById("filtroTipo").value || "").toLowerCase().trim(),
   genero: filtroGenero,
   pista: filtroPista,
   tipoNivel: tipoNivel,
