@@ -317,39 +317,7 @@ function cargarPartidas() {
       const esFutura = fechaPartida >= ahoraGlobal;
       const esPasada = fechaPartida < ahoraGlobal;
 
-      // ===============================
-      // FILTROS
-      // ===============================
-
-      if (filtroFecha && p.fecha !== filtroFecha) return;
-
-      if (filtroTipo && p.tipo !== filtroTipo) return;
-
-      if (filtroGenero && p.genero !== filtroGenero) return;
-
-      if (tipoNivel === "rango") {
-
-        const desde = nivelDesde ? parseFloat(nivelDesde) : null;
-        const hasta = nivelHasta ? parseFloat(nivelHasta) : null;
-
-        const partidaDesde = p.nivel && p.nivel.desde ? parseFloat(p.nivel.desde) : null;
-        const partidaHasta = p.nivel && p.nivel.hasta ? parseFloat(p.nivel.hasta) : null;
-
-        if (partidaDesde !== null && partidaHasta !== null) {
-
-          if (
-            (desde !== null && partidaHasta < desde) ||
-            (hasta !== null && partidaDesde > hasta)
-          ) {
-            return;
-          }
-        }
-      }
-
-      if (filtroPista && p.pistaId !== filtroPista) return;
-
-      if (modoPartidas === "proximas" && !esFutura) return;
-      if (modoPartidas === "pendientes" && !esPasada) return;
+      
 
       // ===============================
       // RENDER
