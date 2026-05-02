@@ -258,9 +258,12 @@ function cargarPartidas() {
 
       const p = doc.data() || {};
 
-      console.log("TIPO PARTIDA:", p.tipo);
+      console.log("TIPO PARTIDA:", p.reservas && p.reservas.tipo);
 
-      if (filtroTipo && (p.tipo || "").toLowerCase().trim() !== filtroTipo) return;
+    if (
+    filtroTipo &&
+    (((p.reservas && p.reservas.tipo) || "").toLowerCase().trim() !== filtroTipo)
+    ) return;
 
       // ===============================
       // FECHA
@@ -516,8 +519,7 @@ function aplicarFiltrosPartidas() {
   }
   const filtros = window.filtrosPartidas || {};
   const filtroFecha = document.getElementById("filtroFecha").value;
- const selectTipo = document.getElementById("filtroTipo");
-const filtroTipo = selectTipo.options[selectTipo.selectedIndex].value.toLowerCase().trim();
+  const filtroTipo = document.getElementById("filtroTipo").value;
   const tipoNormalizado = (filtroTipo || "").toLowerCase().trim();
   const filtroGenero = document.getElementById("filtroGenero").value;
   const filtroPista = document.getElementById("filtroPista").value;
