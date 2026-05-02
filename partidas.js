@@ -522,13 +522,13 @@ function aplicarFiltrosPartidas() {
   const filtroPista = document.getElementById("filtroPista").value;
 
  window.filtrosPartidas = {
-  fecha: filtroFecha || "",
-  tipo: (filtroTipo || "").toLowerCase().trim(),
-  genero: filtroGenero || "",
-  pista: filtroPista || "",
-  tipoNivel: tipoNivel || "",
-  nivelDesde: desde || "",
-  nivelHasta: hasta || ""
+  fecha: filtroFecha,
+  tipo: document.getElementById("filtroTipo").value,
+  genero: filtroGenero,
+  pista: filtroPista,
+  tipoNivel: tipoNivel,
+  nivelDesde: desde,
+  nivelHasta: hasta
 };
 
   mostrar("partidas");
