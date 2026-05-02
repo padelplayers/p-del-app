@@ -524,7 +524,7 @@ const filtroTipo = selectTipo ? selectTipo.options[selectTipo.selectedIndex].val
 
  window.filtrosPartidas = {
   fecha: filtroFecha,
-  tipo: (document.getElementById("filtroTipo").value || "").toLowerCase().trim(),
+  tipo: tipoNormalizado,
   genero: filtroGenero,
   pista: filtroPista,
   tipoNivel: tipoNivel,
