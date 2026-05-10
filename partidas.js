@@ -521,7 +521,13 @@ function aplicarFiltrosPartidas() {
   const filtroFecha = document.getElementById("filtroFecha").value;
   const selectTipo = document.getElementById("filtroTipo");
 
-  const filtroTipo = document.getElementById("filtroTipo").value || "";
+  const elTipo = document.getElementById("filtroTipo");
+
+console.log("ELEMENTO SELECT:", elTipo);
+
+const filtroTipo = elTipo ? elTipo.value : "";
+
+console.log("VALOR REAL SELECT:", filtroTipo);
   const tipoNormalizado = (filtroTipo || "").toLowerCase().trim();
   console.log("TIPO SELECCIONADO:", filtroTipo);
   const filtroGenero = document.getElementById("filtroGenero").value;
