@@ -533,13 +533,13 @@ if (selectTipo && selectTipo.selectedIndex >= 0) {
   console.log("VALOR SELECT TIPO:", document.getElementById("filtroTipo").value);
 
  window.filtrosPartidas = {
-  fecha: filtroFecha,
-  tipo: tipoNormalizado,
-  genero: filtroGenero,
-  pista: filtroPista,
-  tipoNivel: tipoNivel,
-  nivelDesde: desde,
-  nivelHasta: hasta
+  fecha: filtroFecha || "",
+  tipo: filtroTipo || "",
+  genero: filtroGenero || "",
+  pista: filtroPista || "",
+  tipoNivel: tipoNivel || "",
+  nivelDesde: desde || "",
+  nivelHasta: hasta || ""
 };
 
   mostrar("partidas");
