@@ -258,11 +258,11 @@ function cargarPartidas() {
 
       const p = doc.data() || {};
 
-      console.log("TIPO PARTIDA:", p.reservas && p.reservas.tipo);
+      console.log("TIPO PARTIDA:", p.tipo);
 
-    if (
+if (
   filtroTipo &&
-  ((p.reservas?.tipo || "").toLowerCase().trim() !== filtroTipo)
+  ((p.tipo || "").toLowerCase().trim() !== filtroTipo)
 ) return;
 
       // ===============================
@@ -527,6 +527,7 @@ if (selectTipo && selectTipo.selectedIndex >= 0) {
   filtroTipo = selectTipo.options[selectTipo.selectedIndex].value;
 }
   const tipoNormalizado = (filtroTipo || "").toLowerCase().trim();
+  console.log("TIPO SELECCIONADO:", filtroTipo);
   const filtroGenero = document.getElementById("filtroGenero").value;
   const filtroPista = document.getElementById("filtroPista").value;
 
