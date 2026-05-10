@@ -261,9 +261,9 @@ function cargarPartidas() {
       console.log("TIPO PARTIDA:", p.reservas && p.reservas.tipo);
 
     if (
-    filtroTipo &&
-    (((p.reservas && p.reservas.tipo) || "").toLowerCase().trim() !== filtroTipo)
-    ) return;
+  filtroTipo &&
+  ((p.reservas?.tipo || "").toLowerCase().trim() !== filtroTipo)
+) return;
 
       // ===============================
       // FECHA
