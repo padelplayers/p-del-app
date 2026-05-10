@@ -519,7 +519,13 @@ function aplicarFiltrosPartidas() {
   }
   const filtros = window.filtrosPartidas || {};
   const filtroFecha = document.getElementById("filtroFecha").value;
-  const filtroTipo = document.getElementById("filtroTipo").value;
+  const selectTipo = document.getElementById("filtroTipo");
+
+let filtroTipo = "";
+
+if (selectTipo && selectTipo.selectedIndex >= 0) {
+  filtroTipo = selectTipo.options[selectTipo.selectedIndex].value;
+}
   const tipoNormalizado = (filtroTipo || "").toLowerCase().trim();
   const filtroGenero = document.getElementById("filtroGenero").value;
   const filtroPista = document.getElementById("filtroPista").value;
