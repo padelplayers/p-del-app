@@ -517,7 +517,7 @@ function aplicarFiltrosPartidas() {
       return;
     }
   }
-  const filtros = window.filtrosPartidas || {};
+ 
   const filtroFecha = document.getElementById("filtroFecha").value;
   const selectTipo = document.getElementById("filtroTipo");
 
