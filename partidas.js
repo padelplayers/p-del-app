@@ -529,6 +529,7 @@ function aplicarFiltrosPartidas() {
 
   console.log("VALOR SELECT TIPO:", document.getElementById("filtroTipo").value);
 
+ window.vieneDeBusqueda = true; 
  window.filtrosPartidas = {
   fecha: filtroFecha || "",
   tipo: filtroTipo || "",

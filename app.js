@@ -400,8 +400,16 @@ if (seccion === "crearPartida") {
 }
 
 if (seccion === "partidas") {
+  
   window.modoPartidas = "proximas";
-  cargarPartidas();
+
+if (!window.vieneDeBusqueda) {
+  window.filtrosPartidas = {};
+}
+
+window.vieneDeBusqueda = false;
+
+cargarPartidas();
 }
 
 if (seccion === "buscarPartida") {
