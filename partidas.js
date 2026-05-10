@@ -243,7 +243,7 @@ function cargarPartidas() {
 
     // FILTROS DESDE MEMORIA
     const filtros = window.filtrosPartidas || {};
-
+    console.log("FILTROS COMPLETOS:", filtros);
     const tipoNivel = filtros.tipoNivel || "";
     const nivelDesde = filtros.nivelDesde || "";
     const nivelHasta = filtros.nivelHasta || "";
