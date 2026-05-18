@@ -258,12 +258,102 @@ function cargarPartidas() {
 
       const p = doc.data() || {};
 
-      console.log("TIPO PARTIDA:", p.tipo);
+      console.log("[FILTROS PARTIDAS] valores partida", {
+        id: doc.id,
+        fecha: p.fecha,
+        genero: p.genero,
+        pista: p.pista,
+        pistaId: p.pistaId,
+        nivel: p.nivel,
+        tipo: p.tipo
+      });
+
+      console.log("[FILTRO TIPO]", {
+        filtro: filtroTipo,
+        partida: (p.tipo || "ranking").toLowerCase().trim(),
+        pasa: !filtroTipo || ((p.tipo || "ranking").toLowerCase().trim() === filtroTipo)
+      });
 
 if (
   filtroTipo &&
   ((p.tipo || "ranking").toLowerCase().trim() !== filtroTipo)
 ) return;
+
+      console.log("[FILTRO FECHA]", {
+        filtro: filtroFecha,
+        partida: p.fecha || "",
+        pasa: !filtroFecha || ((p.fecha || "") === filtroFecha)
+      });
+
+      if (
+        filtroFecha &&
+        ((p.fecha || "") !== filtroFecha)
+      ) return;
+
+      console.log("[FILTRO GENERO]", {
+        filtro: filtroGenero,
+        partida: (p.genero || "").toLowerCase().trim(),
+        pasa: !filtroGenero || ((p.genero || "").toLowerCase().trim() === filtroGenero)
+      });
+
+      if (
+        filtroGenero &&
+        ((p.genero || "").toLowerCase().trim() !== filtroGenero)
+      ) return;
+
+      console.log("[FILTRO PISTA]", {
+        filtro: filtroPista,
+        partidaPistaId: p.pistaId || "",
+        partidaPista: p.pista || "",
+        pasa: !filtroPista || ((p.pistaId || p.pista || "") === filtroPista)
+      });
+
+      if (
+        filtroPista &&
+        ((p.pistaId || p.pista || "") !== filtroPista)
+      ) return;
+
+      let pasaNivel = true;
+      let nivelPartidaDesde = "";
+      let nivelPartidaHasta = "";
+
+      if (p.nivel && typeof p.nivel === "object") {
+        nivelPartidaDesde = p.nivel.desde || "";
+        nivelPartidaHasta = p.nivel.hasta || "";
+      }
+
+      if (tipoNivel === "cualquiera") {
+        pasaNivel = !p.nivel || p.nivel === "cualquiera";
+      }
+
+      if (tipoNivel === "rango") {
+        const filtroDesdeNum = parseFloat(nivelDesde);
+        const filtroHastaNum = parseFloat(nivelHasta);
+        const partidaDesdeNum = parseFloat(nivelPartidaDesde);
+        const partidaHastaNum = parseFloat(nivelPartidaHasta);
+
+        pasaNivel = !isNaN(partidaDesdeNum) && !isNaN(partidaHastaNum);
+
+        if (pasaNivel && !isNaN(filtroDesdeNum)) {
+          pasaNivel = partidaHastaNum >= filtroDesdeNum;
+        }
+
+        if (pasaNivel && !isNaN(filtroHastaNum)) {
+          pasaNivel = partidaDesdeNum <= filtroHastaNum;
+        }
+      }
+
+      console.log("[FILTRO NIVEL]", {
+        tipoFiltro: tipoNivel,
+        filtroDesde: nivelDesde,
+        filtroHasta: nivelHasta,
+        nivelPartida: p.nivel,
+        nivelPartidaDesde: nivelPartidaDesde,
+        nivelPartidaHasta: nivelPartidaHasta,
+        pasa: pasaNivel
+      });
+
+      if (tipoNivel && !pasaNivel) return;
 
       // ===============================
       // FECHA
@@ -558,6 +648,16 @@ function aplicarFiltrosPartidas() {
   const filtroTipo = elTipo ? elTipo.value : "";
   const filtroGenero = getCampoBusquedaPartida("filtroGenero").value;
   const filtroPista = getCampoBusquedaPartida("filtroPista").value;
+
+  console.log("[FILTROS PARTIDAS] valores reales seleccionados", {
+    filtroFecha: filtroFecha,
+    filtroTipo: filtroTipo,
+    filtroGenero: filtroGenero,
+    filtroPista: filtroPista,
+    filtroNivelTipo: tipoNivel,
+    filtroNivelDesde: desde,
+    filtroNivelHasta: hasta
+  });
 
  window.vieneDeBusqueda = true; 
  window.filtrosPartidas = {
