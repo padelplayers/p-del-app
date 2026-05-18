@@ -335,11 +335,11 @@ if (
         pasaNivel = !isNaN(partidaDesdeNum) && !isNaN(partidaHastaNum);
 
         if (pasaNivel && !isNaN(filtroDesdeNum)) {
-          pasaNivel = partidaHastaNum >= filtroDesdeNum;
+          pasaNivel = partidaDesdeNum === filtroDesdeNum;
         }
 
         if (pasaNivel && !isNaN(filtroHastaNum)) {
-          pasaNivel = partidaDesdeNum <= filtroHastaNum;
+          pasaNivel = partidaHastaNum === filtroHastaNum;
         }
       }
 
