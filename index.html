@@ -754,8 +754,76 @@ Añadir pista
 
 <!-- CHAT -->
 <div id="chat" class="container" style="display:none;">
-  <h2>Chat</h2>
-  <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
+  <div class="chatHeader">
+    <div>
+      <h2>Chat</h2>
+      <div class="chatSubtitulo">General, partidas y privados</div>
+    </div>
+    <button class="btnBlue chatVolver" onclick="mostrar('menu')">Volver</button>
+  </div>
+
+  <div class="chatLayout">
+    <aside class="chatSidebar">
+      <div class="chatSidebarBlock">
+        <div class="chatSidebarTitle">Usuarios online</div>
+        <div id="chatUsuariosOnline" class="chatUserList">
+          <div class="chatUserItem">
+            <span class="chatOnlineDot"></span>
+            <span>Jugadora 1</span>
+          </div>
+          <div class="chatUserItem">
+            <span class="chatOnlineDot"></span>
+            <span>Jugador 2</span>
+          </div>
+          <div class="chatUserItem">
+            <span class="chatOnlineDot"></span>
+            <span>Jugador 3</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chatSidebarBlock">
+        <div class="chatSidebarTitle">Chats recientes</div>
+        <div id="chatRecientes" class="chatRecentList">
+          <button type="button" class="chatRecentItem active" data-chat-tab="general">
+            <span>General</span>
+            <small>Chat del club</small>
+          </button>
+          <button type="button" class="chatRecentItem hasUnread" data-chat-tab="partida-demo">
+            <span>Partida martes</span>
+            <small>Chat de partida</small>
+          </button>
+          <button type="button" class="chatRecentItem" data-chat-tab="privado-demo">
+            <span>Privado</span>
+            <small>Jugador cercano</small>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <section class="chatMain">
+      <div id="chatTabs" class="chatTabs">
+        <button type="button" class="chatTab active" data-chat-tab="general">General</button>
+        <button type="button" class="chatTab hasUnread" data-chat-tab="partida-demo">Chat de partida</button>
+        <button type="button" class="chatTab" data-chat-tab="privado-demo">Chat privado</button>
+      </div>
+
+      <div class="chatActiveHeader">
+        <div>
+          <div id="chatTituloActivo" class="chatActiveTitle">General</div>
+          <div id="chatEstadoActivo" class="chatActiveStatus">Preparado para integrar Firebase</div>
+        </div>
+        <span id="chatTipoActivo" class="chatBadge">general</span>
+      </div>
+
+      <div id="chatMensajes" class="chatMessages" aria-live="polite"></div>
+
+      <form id="chatForm" class="chatComposer">
+        <input id="chatInput" type="text" placeholder="Escribir mensaje" autocomplete="off">
+        <button type="submit" class="btnBlue">Enviar</button>
+      </form>
+    </section>
+  </div>
 </div>
 
 <!-- MEDIA CENTER -->
@@ -980,6 +1048,7 @@ const db = firebase.firestore();
 <script src="jugadores.js"></script>
 <script src="pistas.js"></script>
 <script src="partidas.js"></script>
+<script src="chat.js"></script>
 <script src="app.js"></script>
 <script src="testNivel.js"></script>
 
