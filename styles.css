@@ -3,6 +3,7 @@ body{
   background:#ffffff;
   margin:0;
   text-align:center;
+  --chat-header-height:64px;
 }
 
 .header{
@@ -98,6 +99,37 @@ button{
 #chat{
   max-width:1000px;
   text-align:left;
+  box-sizing:border-box;
+  height:calc(100vh - var(--chat-header-height) - 16px);
+  height:calc(100dvh - var(--chat-header-height) - 16px);
+  margin:8px auto;
+  padding:10px;
+  overflow:hidden;
+}
+
+body:has(#chat[style*="display: block"]){
+  overflow:hidden;
+}
+
+body:has(#chat[style*="display: block"]) .header{
+  height:var(--chat-header-height);
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:8px 10px;
+}
+
+body:has(#chat[style*="display: block"]) .logo{
+  width:auto;
+  height:42px;
+  margin:0;
+}
+
+body:has(#chat[style*="display: block"]) .title{
+  font-size:20px;
+  line-height:1.1;
 }
 
 .chatHeader{
@@ -105,7 +137,7 @@ button{
   justify-content:space-between;
   align-items:center;
   gap:12px;
-  margin-bottom:14px;
+  margin-bottom:10px;
 }
 
 .chatHeader h2{
@@ -129,7 +161,9 @@ button{
   display:grid;
   grid-template-columns:260px 1fr;
   gap:14px;
-  min-height:560px;
+  height:calc(100% - 58px);
+  min-height:0;
+  overflow:hidden;
 }
 
 .chatSidebar{
@@ -137,12 +171,28 @@ button{
   border-radius:10px;
   background:#fafafa;
   padding:12px;
-  max-height:560px;
-  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  overflow:hidden;
 }
 
 .chatSidebarBlock + .chatSidebarBlock{
-  margin-top:18px;
+  margin-top:12px;
+}
+
+.chatSidebarBlock{
+  min-height:0;
+}
+
+.chatSidebarBlock:first-child{
+  flex:0 0 auto;
+}
+
+.chatSidebarBlock:last-child{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
 }
 
 .chatSidebarTitle{
@@ -157,6 +207,8 @@ button{
   display:flex;
   flex-direction:column;
   gap:8px;
+  min-height:0;
+  overflow-y:auto;
 }
 
 .chatUserItem{
@@ -208,6 +260,7 @@ button{
   display:flex;
   flex-direction:column;
   min-width:0;
+  min-height:0;
   border:1px solid #e0e0e0;
   border-radius:10px;
   background:white;
@@ -217,15 +270,17 @@ button{
 .chatTabs{
   display:flex;
   gap:8px;
-  padding:10px;
+  flex:0 0 auto;
+  padding:8px 10px;
   border-bottom:1px solid #e0e0e0;
   overflow-x:auto;
+  overflow-y:hidden;
 }
 
 .chatTab{
   width:auto;
   margin:0;
-  padding:10px 14px;
+  padding:8px 12px;
   border-radius:8px;
   background:#f5f5f5;
   color:#333;
@@ -263,7 +318,8 @@ button{
   align-items:center;
   justify-content:space-between;
   gap:10px;
-  padding:12px 14px;
+  flex:0 0 auto;
+  padding:10px 12px;
   background:#fafafa;
   border-bottom:1px solid #e0e0e0;
 }
@@ -291,17 +347,16 @@ button{
 
 .chatMessages{
   flex:1;
-  min-height:320px;
-  max-height:390px;
+  min-height:0;
   overflow-y:auto;
-  padding:14px;
+  padding:12px;
   background:#fff;
 }
 
 .chatMessage{
   max-width:78%;
-  margin-bottom:10px;
-  padding:10px 12px;
+  margin-bottom:8px;
+  padding:9px 11px;
   border-radius:10px;
   background:#f5f5f5;
   color:#333;
@@ -339,13 +394,15 @@ button{
 .chatComposer{
   display:flex;
   gap:10px;
-  padding:12px;
+  flex:0 0 auto;
+  padding:10px;
   border-top:1px solid #e0e0e0;
   background:#fafafa;
 }
 
 .chatComposer input{
   flex:1;
+  min-width:0;
   width:auto;
   margin:0;
 }
@@ -357,40 +414,156 @@ button{
 }
 
 @media (max-width:760px){
+  body{
+    --chat-header-height:50px;
+  }
+
+  body:has(#chat[style*="display: block"]) .header{
+    gap:8px;
+    padding:6px 8px;
+  }
+
+  body:has(#chat[style*="display: block"]) .logo{
+    height:34px;
+  }
+
+  body:has(#chat[style*="display: block"]) .title{
+    font-size:15px;
+  }
+
   #chat{
-    width:94%;
-    padding:14px;
+    width:100%;
+    height:calc(100dvh - var(--chat-header-height));
+    margin:0;
+    padding:8px;
+    border-radius:0;
+    box-shadow:none;
+    overflow:hidden;
   }
 
   .chatHeader{
-    align-items:flex-start;
-    flex-direction:column;
+    align-items:center;
+    flex-direction:row;
+    gap:8px;
+    margin-bottom:6px;
+  }
+
+  .chatHeader h2{
+    font-size:20px;
+  }
+
+  .chatSubtitulo{
+    display:none;
   }
 
   .chatVolver{
-    width:100%;
+    width:auto;
+    min-width:76px;
+    padding:9px 12px;
+    font-size:14px;
   }
 
   .chatLayout{
     grid-template-columns:1fr;
-    min-height:auto;
+    grid-template-rows:auto minmax(0,1fr);
+    gap:6px;
+    height:calc(100% - 48px);
+    min-height:0;
   }
 
   .chatSidebar{
-    max-height:210px;
+    max-height:104px;
+    padding:8px;
+    border-radius:8px;
+  }
+
+  .chatSidebarBlock + .chatSidebarBlock{
+    margin-top:8px;
+  }
+
+  .chatSidebarTitle{
+    font-size:12px;
+    margin-bottom:5px;
+  }
+
+  .chatUserList,
+  .chatRecentList{
+    flex-direction:row;
+    gap:6px;
+    overflow-x:auto;
+    overflow-y:hidden;
+  }
+
+  .chatUserItem,
+  .chatRecentItem{
+    flex:0 0 auto;
+    width:auto;
+    min-width:118px;
+    padding:7px 8px;
+    font-size:12px;
+  }
+
+  .chatRecentItem small{
+    display:none;
+  }
+
+  .chatMain{
+    min-height:0;
+  }
+
+  .chatTabs{
+    gap:6px;
+    padding:6px;
+  }
+
+  .chatTab{
+    padding:7px 10px;
+    font-size:13px;
+  }
+
+  .chatActiveHeader{
+    padding:8px 9px;
+  }
+
+  .chatActiveTitle{
+    font-size:14px;
+  }
+
+  .chatActiveStatus{
+    display:none;
+  }
+
+  .chatBadge{
+    padding:4px 8px;
+    font-size:11px;
   }
 
   .chatMessages{
-    min-height:300px;
-    max-height:360px;
+    padding:8px;
+  }
+
+  .chatMessage{
+    max-width:88%;
+    margin-bottom:7px;
+    padding:8px 9px;
+    font-size:14px;
   }
 
   .chatComposer{
-    flex-direction:column;
+    gap:7px;
+    padding:8px;
+  }
+
+  .chatComposer input{
+    padding:10px;
+    font-size:15px;
   }
 
   .chatComposer button{
-    width:100%;
+    width:auto;
+    min-width:78px;
+    padding:10px 12px;
+    font-size:14px;
   }
 }
 
