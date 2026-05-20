@@ -324,6 +324,13 @@ function togglePass(){
 
 function mostrar(seccion){
   console.log("MOSTRAR:", seccion);
+  const abriendoChat = seccion === "chat";
+  const chatPantalla = document.getElementById("chat");
+
+  document.body.classList.toggle("chatAbierto", abriendoChat);
+  if (chatPantalla) {
+    chatPantalla.classList.toggle("chatFullscreen", abriendoChat);
+  }
 
   const btnFoto = document.getElementById("btnCambiarFoto");
   if (btnFoto) btnFoto.style.display = "none";
@@ -358,6 +365,17 @@ function mostrar(seccion){
   const actual = document.getElementById(seccion);
   if (actual){
     actual.style.display = "block";
+  }
+
+  if (abriendoChat && chatPantalla) {
+    requestAnimationFrame(function() {
+      const layout = chatPantalla.querySelector(".chatLayout");
+      const main = chatPantalla.querySelector(".chatMain");
+      const messages = chatPantalla.querySelector(".chatMessages");
+      const composer = chatPantalla.querySelector(".chatComposer");
+
+      
+    });
   }
 
   if (seccion === "crearPartida") {
