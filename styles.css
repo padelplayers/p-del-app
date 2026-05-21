@@ -550,7 +550,10 @@ body.chatAbierto{
     padding:5px 7px;
     font-size:11px;
     margin:0;
-  }
+    border:none !important;
+    background:#1565C0 !important;
+    color:white !important;
+}
 
   .chatLayout{
     display:grid;
@@ -653,6 +656,7 @@ body.chatAbierto{
     padding:5px 4px;
     font-size:9px;
     border-radius:8px;
+    box-sizing:border-box;
   }
 
   .chatRecentItem span{
