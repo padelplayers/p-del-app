@@ -32,7 +32,7 @@ html{
   padding:20px;
   width:100%;
   max-width:1200px;
-  margin:20px auto;
+  margin:0;
   border-radius:10px;
   box-shadow:0 4px 12px rgba(0,0,0,0.15);
   box-sizing:border-box;
@@ -149,9 +149,9 @@ body.chatAbierto{
   min-width:72px;
   margin:0;
   padding:7px 10px;
-  border:1px solid #d8e3f0;
-  background:#fff;
-  color:#4d647d;
+  border:none;
+  background:#1565C0;
+  color:white;
   font-size:13px;
   font-weight:bold;
   box-shadow:none;
