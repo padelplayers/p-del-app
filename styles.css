@@ -859,7 +859,8 @@ button[onclick*="mostrar('menu')"]{
   margin:10px 0;
 }
 
-body.chatAbierto .chatVolver{
+
+    body.chatAbierto .chatVolver{
     width:auto;
     min-width:52px;
     margin:0;
@@ -872,14 +873,20 @@ body.chatAbierto .chatVolver{
     line-height:1.1;
     appearance:none;
     -webkit-appearance:none;
-    body.chatAbierto .chatVolver,
+    display:inline-block !important;
+    width:auto !important;
+    background-color:#1565C0 !important;
+    opacity:1 !important;
+    filter:none !important;
+}
+
+body.chatAbierto .chatVolver,
 body.chatAbierto .chatVolver:visited,
 body.chatAbierto .chatVolver:active,
 body.chatAbierto .chatVolver:hover{
     background:#1565C0 !important;
     color:white !important;
     border:none !important;
-}
 }
 
 /* CONTENEDOR PERFIL */
