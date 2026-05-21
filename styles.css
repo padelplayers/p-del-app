@@ -872,6 +872,14 @@ body.chatAbierto .chatVolver{
     line-height:1.1;
     appearance:none;
     -webkit-appearance:none;
+    body.chatAbierto .chatVolver,
+body.chatAbierto .chatVolver:visited,
+body.chatAbierto .chatVolver:active,
+body.chatAbierto .chatVolver:hover{
+    background:#1565C0 !important;
+    color:white !important;
+    border:none !important;
+}
 }
 
 /* CONTENEDOR PERFIL */
