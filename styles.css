@@ -155,6 +155,8 @@ body.chatAbierto{
     font-size:13px;
     font-weight:bold;
     box-shadow:none;
+    appearance:none;
+-webkit-appearance:none;
 }
 
 .chatLayout{
@@ -858,16 +860,18 @@ button[onclick*="mostrar('menu')"]{
 }
 
 body.chatAbierto .chatVolver{
-  width:auto;
-  min-width:52px;
-  margin:0;
-  padding:5px 7px;
-  border:1px solid #d8e3f0;
-  border-radius:8px;
-  background:#fff;
-  color:#4d647d;
-  font-size:11px;
-  line-height:1.1;
+    width:auto;
+    min-width:52px;
+    margin:0;
+    padding:5px 7px;
+    border:none !important;
+    border-radius:8px;
+    background:#1565C0 !important;
+    color:white !important;
+    font-size:11px;
+    line-height:1.1;
+    appearance:none;
+    -webkit-appearance:none;
 }
 
 /* CONTENEDOR PERFIL */
