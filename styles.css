@@ -145,16 +145,16 @@ body.chatAbierto{
 }
 
 .chatVolver{
-  width:auto;
-  min-width:72px;
-  margin:0;
-  padding:7px 10px;
-  border:none;
-  background:#1565C0;
-  color:white;
-  font-size:13px;
-  font-weight:bold;
-  box-shadow:none;
+    width:auto;
+    min-width:72px;
+    margin:0;
+    padding:7px 10px;
+    border:none !important;
+    background:#1565C0 !important;
+    color:white !important;
+    font-size:13px;
+    font-weight:bold;
+    box-shadow:none;
 }
 
 .chatLayout{
@@ -1165,7 +1165,7 @@ body.chatAbierto > .header{
     display:flex !important;
     flex-direction:column !important;
     gap:6px;
-    width:62px;
+    width:110px;
     padding:5px;
     box-sizing:border-box;
   }
