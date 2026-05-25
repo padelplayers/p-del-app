@@ -8,6 +8,7 @@ const chatState = {
       tipo: "general",
       estado: "Preparado para integrar Firebase",
       noLeidos: false,
+      oculto: false,
       mensajes: [
         {
           autor: "Sistema",
@@ -21,7 +22,8 @@ const chatState = {
       titulo: "Partida martes",
       tipo: "partida",
       estado: "Estructura para chat de partida",
-      noLeidos: true,
+      noLeidos: false,
+      oculto: true,
       mensajes: [
         {
           autor: "Sistema",
@@ -32,10 +34,11 @@ const chatState = {
       ]
     },
     "privado-demo": {
-      titulo: "Privado",
+      titulo: "Carlos",
       tipo: "privado",
       estado: "Estructura para chat privado",
       noLeidos: false,
+      oculto: true,
       mensajes: [
         {
           autor: "Sistema",
@@ -90,6 +93,7 @@ function cambiarChatTab(chatId) {
 
   chatState.chatActivo = chatId;
   chatState.chats[chatId].noLeidos = false;
+  chatState.chats[chatId].oculto = false;
 
   actualizarTabsChat();
   renderChatActivo();
@@ -101,10 +105,63 @@ function actualizarTabsChat() {
   botones.forEach(function(btn) {
     const id = btn.dataset.chatTab;
     const chat = chatState.chats[id];
+    if (!chat) return;
+
+    // Lógica Dinámica: General siempre visible. Otros si tienen mensajes, son activos y no están ocultos.
+    const esGeneral = id === "general";
+    const esActivo = id === chatState.chatActivo;
+    const tieneMensajes = chat.mensajes && chat.mensajes.length > 0;
+    const visible = esGeneral || esActivo || (tieneMensajes && !chat.oculto);
+
+    // Única fuente de verdad para visibilidad
+    const visible = esGeneral || esActivo || chat.noLeidos || !chat.oculto;
+
+    btn.style.display = visible ? "flex" : "none";
+    if (visible && !esGeneral && btn.classList.contains('chatTab')) {
+        // Añadir X de cierre si no existe y es una pestaña (no un item de sidebar)
+        if (!btn.querySelector('.chatTabClose')) {
+            btn.innerHTML = chat.titulo + '<span class="chatTabClose" onclick="event.stopPropagation(); cerrarChatTab(\''+id+'\')">✕</span>';
+
+    if (visible && btn.classList.contains('chatTab')) {
+        // Manipulación segura del DOM: Solo actualizamos si el nodo de texto es distinto
+        let textNode = Array.from(btn.childNodes).find(n => n.nodeType === 3);
+        if (!textNode) {
+            textNode = document.createTextNode(chat.titulo);
+            btn.prepend(textNode);
+        } else {
+            if (textNode.textContent !== chat.titulo) {
+                textNode.textContent = chat.titulo;
+            }
+        }
+
+        // Gestionar botón de cierre (X) sin destruir listeners
+        if (!esGeneral && !btn.querySelector('.chatTabClose')) {
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'chatTabClose';
+            closeBtn.textContent = '✕';
+            closeBtn.onclick = function(e) {
+                e.stopPropagation();
+                cerrarChatTab(id);
+            };
+            btn.appendChild(closeBtn);
+        }
+    }
 
     btn.classList.toggle("active", id === chatState.chatActivo);
-    btn.classList.toggle("hasUnread", !!chat && chat.noLeidos && id !== chatState.chatActivo);
+    btn.classList.toggle("hasUnread", chat.noLeidos && id !== chatState.chatActivo);
   });
+}
+
+function cerrarChatTab(chatId) {
+  if (chatId === "general") return;
+  if (chatState.chats[chatId]) {
+    chatState.chats[chatId].oculto = true;
+    if (chatState.chatActivo === chatId) {
+      cambiarChatTab("general");
+    } else {
+      actualizarTabsChat();
+    }
+  }
 }
 
 function renderChatActivo() {
@@ -160,6 +217,7 @@ function marcarChatNoLeido(chatId) {
   if (chatId === chatState.chatActivo) return;
 
   chatState.chats[chatId].noLeidos = true;
+  chatState.chats[chatId].oculto = false; // Reaparece si estaba cerrada
   actualizarTabsChat();
 }
 
@@ -194,5 +252,6 @@ window.cambiarChatTab = cambiarChatTab;
 window.marcarChatNoLeido = marcarChatNoLeido;
 window.registrarListenerChat = registrarListenerChat;
 window.limpiarListenersChat = limpiarListenersChat;
+window.cerrarChatTab = cerrarChatTab;
 
 document.addEventListener("DOMContentLoaded", initChat);

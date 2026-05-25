@@ -311,9 +311,8 @@ body.chatAbierto{
 
 .chatTab.hasUnread,
 .chatRecentItem.hasUnread{
-  border-color:#FFC107;
-  box-shadow:0 0 0 2px rgba(255,193,7,0.20);
-  animation:chatUnreadPulse 1.6s ease-in-out infinite;
+  border: 1px solid #FFC107 !important;
+  box-shadow: 0 0 6px rgba(255, 193, 7, 0.3);
 }
 
 .chatTab.hasUnread:not(.active){
@@ -341,13 +340,29 @@ body.chatAbierto{
   right:8px;
 }
 
-@keyframes chatUnreadPulse{
-  0%,100%{
-    box-shadow:0 0 0 0 rgba(255,193,7,0.25);
-  }
-  50%{
-    box-shadow:0 0 0 5px rgba(255,193,7,0.12);
-  }
+.chatTabClose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 8px;
+  font-size: 9px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.1);
+  transition: all 0.2s;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.chatTab.active .chatTabClose {
+  background: rgba(255,255,255,0.2);
+}
+
+.chatTabClose:hover {
+  opacity: 1;
+  background: #f44336 !important;
+  color: white;
 }
 
 .chatActiveHeader{
@@ -1154,7 +1169,7 @@ body.chatAbierto > .header{
     display:flex !important;
     flex-direction:column !important;
     gap:6px;
-    width:110px;
+    width:85px;
     padding:5px;
     box-sizing:border-box;
   }
