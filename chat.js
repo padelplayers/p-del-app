@@ -107,23 +107,14 @@ function actualizarTabsChat() {
     const chat = chatState.chats[id];
     if (!chat) return;
 
-    // Lógica Dinámica: General siempre visible. Otros si tienen mensajes, son activos y no están ocultos.
     const esGeneral = id === "general";
     const esActivo = id === chatState.chatActivo;
-    const tieneMensajes = chat.mensajes && chat.mensajes.length > 0;
-    const visible = esGeneral || esActivo || (tieneMensajes && !chat.oculto);
 
-    // Única fuente de verdad para visibilidad
     const visible = esGeneral || esActivo || chat.noLeidos || !chat.oculto;
 
     btn.style.display = visible ? "flex" : "none";
-    if (visible && !esGeneral && btn.classList.contains('chatTab')) {
-        // Añadir X de cierre si no existe y es una pestaña (no un item de sidebar)
-        if (!btn.querySelector('.chatTabClose')) {
-            btn.innerHTML = chat.titulo + '<span class="chatTabClose" onclick="event.stopPropagation(); cerrarChatTab(\''+id+'\')">✕</span>';
 
     if (visible && btn.classList.contains('chatTab')) {
-        // Manipulación segura del DOM: Solo actualizamos si el nodo de texto es distinto
         let textNode = Array.from(btn.childNodes).find(n => n.nodeType === 3);
         if (!textNode) {
             textNode = document.createTextNode(chat.titulo);
