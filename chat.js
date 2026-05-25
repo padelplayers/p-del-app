@@ -342,7 +342,7 @@ function gestionarListenerChat(chatId, query) {
 window.eliminarChatTotal = async function(chatId) {
   // 1. Unsubscribe
   if (typeof chatState.listeners[chatId] === "function") {
-    chatState.listenerschatId;
+    chatState.listeners[chatId]();
     delete chatState.listeners[chatId];
   }
 

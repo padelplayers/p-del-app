@@ -1113,9 +1113,6 @@ body.chatAbierto > .header{
   box-sizing:border-box;
 }
 
-#chat.chatFullscreen .chatVolver{
-  /* Hereda de .chatVolver general */
-}
 
 #chat.chatFullscreen .chatLayout{
   display:grid !important;
