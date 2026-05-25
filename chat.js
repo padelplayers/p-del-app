@@ -86,6 +86,7 @@ function initChat() {
 
   chatState.inicializado = true;
   cambiarChatTab(chatState.chatActivo);
+  cargarUsuariosSidebar();
 }
 
 function cambiarChatTab(chatId) {
@@ -155,6 +156,38 @@ function cerrarChatTab(chatId) {
   }
 }
 
+function cargarUsuariosSidebar() {
+  const lista = document.querySelector(".chatUserList");
+  if (!lista) return;
+
+  // Nota: Actualmente carga usuarios registrados. 
+  // Pendiente implementar sistema de presencia real (lastActive) para filtrar "Online".
+  db.collection("usuarios").limit(12).get().then(snapshot => {
+    const fragment = document.createDocumentFragment();
+
+    snapshot.forEach(doc => {
+      const u = doc.data();
+      if (doc.id === auth.currentUser?.uid) return; // No mostrarse a sí mismo
+
+      const div = document.createElement("div");
+      div.className = "chatUserItem";
+      div.style.cursor = "pointer";
+
+      const dot = document.createElement("div");
+      dot.className = "chatOnlineDot";
+
+      const name = document.createElement("span");
+      name.textContent = u.nombre || "Jugador";
+      
+      div.appendChild(dot);
+      div.appendChild(name);
+      fragment.appendChild(div);
+    });
+
+    lista.replaceChildren(fragment);
+  });
+}
+
 function renderChatActivo() {
   const chat = chatState.chats[chatState.chatActivo];
   if (!chat) return;
@@ -171,19 +204,36 @@ function renderChatActivo() {
   if (!mensajes) return;
 
   if (!chat.mensajes || chat.mensajes.length === 0) {
-    mensajes.innerHTML = '<div class="chatEmpty">Sin mensajes todavia</div>';
+    const empty = document.createElement("div");
+    empty.className = "chatEmpty";
+    empty.textContent = "Sin mensajes todavía";
+    mensajes.replaceChildren(empty);
     return;
   }
 
-  mensajes.innerHTML = chat.mensajes.map(function(mensaje) {
-    return (
-      '<div class="chatMessage' + (mensaje.propio ? " mine" : "") + '">' +
-        '<div class="chatMessageName">' + escaparHtml(mensaje.autor || "Jugador") + '</div>' +
-        '<div>' + escaparHtml(mensaje.texto || "") + '</div>' +
-        '<div class="chatMessageMeta">' + escaparHtml(mensaje.hora || "") + '</div>' +
-      '</div>'
-    );
-  }).join("");
+  const fragment = document.createDocumentFragment();
+  chat.mensajes.forEach(function(msg) {
+    const div = document.createElement("div");
+    div.className = "chatMessage" + (msg.propio ? " mine" : "");
+
+    const name = document.createElement("div");
+    name.className = "chatMessageName";
+    name.textContent = msg.autor || "Jugador";
+
+    const text = document.createElement("div");
+    text.textContent = msg.texto || "";
+
+    const meta = document.createElement("div");
+    meta.className = "chatMessageMeta";
+    meta.textContent = msg.hora || "";
+
+    div.appendChild(name);
+    div.appendChild(text);
+    div.appendChild(meta);
+    fragment.appendChild(div);
+  });
+
+  mensajes.replaceChildren(fragment);
 
   mensajes.scrollTop = mensajes.scrollHeight;
 }
