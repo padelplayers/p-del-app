@@ -455,6 +455,7 @@ if (
       </div>
 
       <div style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; background:#E3F2FD; padding:4px 8px; border-radius:12px;">
+      <div onclick="abrirChatPartida('${doc.id}', '${p.fecha || ""}')" style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; background:#E3F2FD; padding:4px 8px; border-radius:12px;">
         <span>💬</span>
         <span>Chat partida</span>
       </div>
@@ -760,8 +761,13 @@ function salirDePartida(partidaId) {
       const ok = confirm("Se cancelará la partida para todos. ¿Continuar?");
       if (!ok) return;
 
-      ref.delete().then(function() {
-        cargarPartidas();
+      // Ciclo de limpieza total determinista: Chat -> Partida -> UI
+      const cleanup = (typeof window.eliminarChatTotal === "function") 
+        ? window.eliminarChatTotal(partidaId) 
+        : Promise.resolve();
+
+      cleanup.finally(() => {
+        ref.delete().then(() => cargarPartidas());
       });
 
       return;

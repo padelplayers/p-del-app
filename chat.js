@@ -100,6 +100,13 @@ function cambiarChatTab(chatId) {
   chatState.chats[chatId].noLeidos = false;
   chatState.chats[chatId].oculto = false;
 
+  // Iniciar listener si es partida real y no tiene uno activo
+  if (chatState.chats[chatId].tipo === "partida" && chatId !== "partida-demo") {
+    const query = db.collection("partidas").doc(chatId)
+      .collection("mensajes").orderBy("at", "asc").limit(100);
+    gestionarListenerChat(chatId, query);
+  }
+
   actualizarTabsChat();
   renderChatActivo();
 }
@@ -110,7 +117,12 @@ function actualizarTabsChat() {
   botones.forEach(function(btn) {
     const id = btn.dataset.chatTab;
     const chat = chatState.chats[id];
-    if (!chat) return;
+    
+    // Cleanup real de tabs huérfanas en el DOM
+    if (!chat) {
+      btn.remove();
+      return;
+    }
 
     const esGeneral = id === "general";
     const esActivo = id === chatState.chatActivo;
@@ -272,17 +284,127 @@ function renderChatActivo() {
   }
 }
 
-function prepararEnvioChat() {
+/**
+ * Gestionar Listener Realtime: desuscripción segura y detección de pending writes.
+ */
+function gestionarListenerChat(chatId, query) {
+  // 1. Destruir listener previo si existe para este chat
+  if (typeof chatState.listeners[chatId] === "function") {
+    chatState.listeners[chatId](); 
+  }
+
+  const unsubscribe = query.onSnapshot({ includeMetadataChanges: true }, snapshot => {
+    const chat = chatState.chats[chatId];
+    if (!chat) return;
+
+    snapshot.docChanges().forEach(change => {
+      const doc = change.doc;
+      const data = doc.data({ serverTimestamps: 'estimate' });
+      const isPending = doc.metadata.hasPendingWrites;
+      const atMillis = data.at ? data.at.toMillis() : Date.now();
+
+      const msgObj = {
+        id: doc.id,
+        autor: data.n || "Jugador",
+        texto: data.t || "",
+        at_val: atMillis,
+        hora: data.at ? new Date(atMillis).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "...",
+        propio: data.u === auth.currentUser?.uid
+      };
+
+      if (change.type === "added" || change.type === "modified") {
+        const idx = chat.mensajes.findIndex(m => m.id === doc.id);
+        if (idx > -1) chat.mensajes[idx] = msgObj;
+        else chat.mensajes.push(msgObj);
+        
+        // Solo marcar no leído si NO es un envío local pendiente y NO es el chat activo
+        if (!isPending && change.type === "added" && data.u !== auth.currentUser?.uid) {
+          if (chatId !== chatState.chatActivo) marcarChatNoLeido(chatId);
+        }
+      } else if (change.type === "removed") {
+        chat.mensajes = chat.mensajes.filter(m => m.id !== doc.id);
+        const el = document.querySelector(`[data-msg-id="${doc.id}"]`);
+        if (el) el.remove();
+      }
+    });
+
+    chat.mensajes.sort((a, b) => a.at_val - b.at_val || a.id.localeCompare(b.id));
+
+    if (chatId === chatState.chatActivo) renderChatActivo();
+  });
+
+  chatState.listeners[chatId] = unsubscribe;
+}
+
+/**
+ * Cleanup Total REAL: Firestore, Listeners, Memoria y DOM.
+ */
+window.eliminarChatTotal = async function(chatId) {
+  // 1. Unsubscribe
+  if (typeof chatState.listeners[chatId] === "function") {
+    chatState.listenerschatId;
+    delete chatState.listeners[chatId];
+  }
+
+  // 2. Borrar subcolección en Firestore (Batch)
+  try {
+    const snap = await db.collection("partidas").doc(chatId).collection("mensajes").get();
+    const batch = db.batch();
+    snap.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+  } catch (e) {
+    console.warn("[CHAT] No se pudo borrar la subcolección:", e.message);
+  }
+
+  // 3. Limpiar estado local
+  delete chatState.chats[chatId];
+  if (chatState.ultimoChatRenderizado === chatId) chatState.ultimoChatRenderizado = null;
+  
+  if (chatState.chatActivo === chatId) {
+    chatState.chatActivo = "general";
+    const msgsEl = document.getElementById("chatMessages");
+    if (msgsEl) msgsEl.replaceChildren();
+  }
+
+  actualizarTabsChat();
+  renderChatActivo();
+};
+
+async function prepararEnvioChat() {
   const input = document.getElementById("chatInput");
   if (!input) return;
 
   const texto = input.value.trim();
   if (!texto) return;
 
-  console.log("[CHAT] envio preparado, pendiente de Firebase", {
-    chatId: chatState.chatActivo,
-    texto: texto
-  });
+  const chatId = chatState.chatActivo;
+  const user = auth.currentUser;
+  if (!user || !chatState.chats[chatId]) return;
+
+  if (chatState.chats[chatId].tipo === "partida" && chatId !== "partida-demo") {
+    try {
+      const batch = db.batch();
+      const partidaRef = db.collection("partidas").doc(chatId);
+      const msgRef = partidaRef.collection("mensajes").doc();
+
+      batch.set(msgRef, {
+        u: user.uid,
+        n: user.displayName || "Jugador",
+        t: texto,
+        at: firebase.firestore.FieldValue.serverTimestamp(),
+        type: "text"
+      });
+
+      batch.update(partidaRef, {
+        lastMessage: texto,
+        lastActivity: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      await batch.commit();
+    } catch (e) {
+      console.error("[CHAT] Error enviando mensaje:", e);
+    }
+  }
 
   input.value = "";
 }
@@ -296,13 +418,18 @@ function marcarChatNoLeido(chatId) {
   actualizarTabsChat();
 }
 
-function registrarListenerChat(chatId, cancelarListener) {
-  if (chatState.listeners[chatId] && typeof chatState.listeners[chatId] === "function") {
-    chatState.listeners[chatId]();
+window.abrirChatPartida = function(id, fecha) {
+  if (!chatState.chats[id]) {
+    chatState.chats[id] = {
+      titulo: "Chat " + fecha,
+      tipo: "partida",
+      mensajes: [],
+      oculto: false
+    };
   }
-
-  chatState.listeners[chatId] = cancelarListener;
-}
+  cambiarChatTab(id);
+  mostrar("chat");
+};
 
 function limpiarListenersChat() {
   Object.keys(chatState.listeners).forEach(function(chatId) {
@@ -313,20 +440,11 @@ function limpiarListenersChat() {
   chatState.listeners = {};
 }
 
-function escaparHtml(texto) {
-  return String(texto)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
 window.initChat = initChat;
 window.cambiarChatTab = cambiarChatTab;
 window.marcarChatNoLeido = marcarChatNoLeido;
-window.registrarListenerChat = registrarListenerChat;
 window.limpiarListenersChat = limpiarListenersChat;
 window.cerrarChatTab = cerrarChatTab;
+window.gestionarListenerChat = gestionarListenerChat;
 
 document.addEventListener("DOMContentLoaded", initChat);
