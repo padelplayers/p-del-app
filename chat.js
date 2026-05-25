@@ -1,6 +1,7 @@
 const chatState = {
   inicializado: false,
   chatActivo: "general",
+  ultimoChatRenderizado: null,
   listeners: {},
   chats: {
     general: {
@@ -11,6 +12,7 @@ const chatState = {
       oculto: false,
       mensajes: [
         {
+          id: "msg_gen_1",
           autor: "Sistema",
           texto: "Chat general preparado.",
           hora: "Ahora",
@@ -26,6 +28,7 @@ const chatState = {
       oculto: true,
       mensajes: [
         {
+          id: "msg_part_1",
           autor: "Sistema",
           texto: "Aqui se cargaran los mensajes de la partida.",
           hora: "Pendiente",
@@ -41,6 +44,7 @@ const chatState = {
       oculto: true,
       mensajes: [
         {
+          id: "msg_priv_1",
           autor: "Sistema",
           texto: "Aqui se cargaran los mensajes privados.",
           hora: "Pendiente",
@@ -188,6 +192,32 @@ function cargarUsuariosSidebar() {
   });
 }
 
+/**
+ * Crea un nodo de mensaje DOM sin inyectarlo.
+ * Arquitectura atómica para permitir actualizaciones futuras (reacciones, edición).
+ */
+function crearNodoMensaje(msg) {
+  const div = document.createElement("div");
+  div.className = "chatMessage" + (msg.propio ? " mine" : "");
+  div.dataset.msgId = msg.id; // Identificador persistente
+
+  const name = document.createElement("div");
+  name.className = "chatMessageName";
+  name.textContent = msg.autor || "Jugador";
+
+  const text = document.createElement("div");
+  text.textContent = msg.texto || "";
+
+  const meta = document.createElement("div");
+  meta.className = "chatMessageMeta";
+  meta.textContent = msg.hora || "";
+
+  div.appendChild(name);
+  div.appendChild(text);
+  div.appendChild(meta);
+  return div;
+}
+
 function renderChatActivo() {
   const chat = chatState.chats[chatState.chatActivo];
   if (!chat) return;
@@ -203,39 +233,43 @@ function renderChatActivo() {
 
   if (!mensajes) return;
 
-  if (!chat.mensajes || chat.mensajes.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "chatEmpty";
-    empty.textContent = "Sin mensajes todavía";
-    mensajes.replaceChildren(empty);
-    return;
+  // Detectar cambio de chat para limpieza inicial
+  const cambioDeChat = chatState.ultimoChatRenderizado !== chatState.chatActivo;
+  if (cambioDeChat) {
+    mensajes.replaceChildren(); // Limpiar solo al cambiar de tab
+    chatState.ultimoChatRenderizado = chatState.chatActivo;
   }
 
+  if (!chat.mensajes || chat.mensajes.length === 0) {
+    if (!mensajes.querySelector('.chatEmpty')) {
+      const empty = document.createElement("div");
+      empty.className = "chatEmpty";
+      empty.textContent = "Sin mensajes todavía";
+      mensajes.replaceChildren(empty);
+    }
+    return;
+  } else {
+    const emptyDiv = mensajes.querySelector('.chatEmpty');
+    if (emptyDiv) emptyDiv.remove();
+  }
+
+  const estaAlFinal = mensajes.scrollHeight - mensajes.scrollTop <= mensajes.clientHeight + 50;
   const fragment = document.createDocumentFragment();
+  let hayNuevos = false;
+
   chat.mensajes.forEach(function(msg) {
-    const div = document.createElement("div");
-    div.className = "chatMessage" + (msg.propio ? " mine" : "");
-
-    const name = document.createElement("div");
-    name.className = "chatMessageName";
-    name.textContent = msg.autor || "Jugador";
-
-    const text = document.createElement("div");
-    text.textContent = msg.texto || "";
-
-    const meta = document.createElement("div");
-    meta.className = "chatMessageMeta";
-    meta.textContent = msg.hora || "";
-
-    div.appendChild(name);
-    div.appendChild(text);
-    div.appendChild(meta);
-    fragment.appendChild(div);
+    if (!mensajes.querySelector('[data-msg-id="' + msg.id + '"]')) {
+      fragment.appendChild(crearNodoMensaje(msg));
+      hayNuevos = true;
+    }
   });
 
-  mensajes.replaceChildren(fragment);
-
-  mensajes.scrollTop = mensajes.scrollHeight;
+  if (hayNuevos) {
+    mensajes.appendChild(fragment);
+    if (cambioDeChat || estaAlFinal) {
+      mensajes.scrollTop = mensajes.scrollHeight;
+    }
+  }
 }
 
 function prepararEnvioChat() {
