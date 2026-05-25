@@ -68,7 +68,6 @@ button{
   border:none;
   border-radius:8px;
   font-size:16px;
-  width:95%;
 }
 
 .btnBlue{
@@ -87,7 +86,8 @@ button{
 
 .menuButton{
   display:block;
-  width:95%;
+  width:100%;
+  max-width:400px;
   margin:12px auto;
   padding:16px;
   font-size:18px;
@@ -145,18 +145,17 @@ body.chatAbierto{
 }
 
 .chatVolver{
-    width:auto;
-    min-width:72px;
-    margin:0;
-    padding:7px 10px;
-    border:none !important;
-    background:#1565C0 !important;
-    color:white !important;
-    font-size:13px;
-    font-weight:bold;
-    box-shadow:none;
-    appearance:none;
--webkit-appearance:none;
+  width: auto !important;
+  min-width: 80px;
+  margin: 0;
+  padding: 8px 12px;
+  background-color: #1565C0 !important;
+  color: #ffffff !important;
+  font-size: 13px;
+  font-weight: bold;
+  border-radius: 8px;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .chatLayout{
@@ -489,6 +488,12 @@ body.chatAbierto{
   body{
     --chat-header-height:46px;
     --chat-mobile-sidebar-width:62px;
+  }
+
+  button:not(.chatVolver):not(.chatComposer button) {
+    width: 95%;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   body.chatAbierto{
@@ -859,36 +864,6 @@ button[onclick*="mostrar('menu')"]{
   margin:10px 0;
 }
 
-
-    body.chatAbierto .chatVolver{
-    width:auto;
-    min-width:52px;
-    margin:0;
-    padding:5px 7px;
-    border:none !important;
-    border-radius:8px;
-    background:#1565C0 !important;
-    color:white !important;
-    font-size:11px;
-    line-height:1.1;
-    appearance:none;
-    -webkit-appearance:none;
-    display:inline-block !important;
-    width:auto !important;
-    background-color:#1565C0 !important;
-    opacity:1 !important;
-    filter:none !important;
-}
-
-body.chatAbierto .chatVolver,
-body.chatAbierto .chatVolver:visited,
-body.chatAbierto .chatVolver:active,
-body.chatAbierto .chatVolver:hover{
-    background:#1565C0 !important;
-    color:white !important;
-    border:none !important;
-}
-
 /* CONTENEDOR PERFIL */
 
 #perfil{
@@ -1121,16 +1096,7 @@ body.chatAbierto > .header{
 }
 
 #chat.chatFullscreen .chatVolver{
-  width:auto !important;
-  min-width:52px !important;
-  margin:0 !important;
-  padding:5px 7px !important;
-  border:none !important;
-  border-radius:8px !important;
-  background:#1565C0 !important;
-  color:white !important;
-  font-size:11px !important;
-  line-height:1.1 !important;
+  /* Hereda de .chatVolver general */
 }
 
 #chat.chatFullscreen .chatLayout{
