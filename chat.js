@@ -158,13 +158,6 @@ function actualizarTabsChat() {
     btn.classList.toggle("active", id === chatState.chatActivo);
     btn.classList.toggle("hasUnread", chat.noLeidos && id !== chatState.chatActivo);
   });
-
-  // Sincronizar estado visual del botón de chat en el menú principal
-  const tieneNoLeidos = Object.values(chatState.chats).some(c => c.noLeidos);
-  const btnMenuChat = document.getElementById("btnMenuChat");
-  if (btnMenuChat) {
-    btnMenuChat.classList.toggle("hasUnread", tieneNoLeidos);
-  }
 }
 
 function cerrarChatTab(chatId) {
