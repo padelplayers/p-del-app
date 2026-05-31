@@ -30,9 +30,6 @@ let otroUid = null;
 
 let esAdmin = false;
 
-let unsubscribePistas = null;
-
-
 // FUNCIONES GLOBALES
 
 window.subirImagen = async function(ruta, archivo) {
@@ -59,21 +56,6 @@ async function borrarImagen(url) {
 
 }
 
-
-auth.onAuthStateChanged(async user => {
-  if (user) {
-
-    const doc = await db.collection("usuarios").doc(user.uid).get();
-    const data = doc.data();
-
-    esAdmin = data && data.rol === "admin";
-
-    mostrar("menu");
-
-  } else {
-    mostrar("login");
-  }
-});
 
 function normalizarTexto(texto){
   return texto
@@ -229,41 +211,47 @@ auth.signInWithEmailAndPassword(email, pass)
 }
 
 function logout(){
-auth.signOut();
+  if (typeof window.limpiarListenersChat === "function") {
+    window.limpiarListenersChat();
+  }
+  auth.signOut();
 }
 
-auth.onAuthStateChanged(user => {
+auth.onAuthStateChanged(async user => {
 
   if (user) {
 
-    db.collection("usuarios").doc(user.uid).get()
-    .then(doc => {
+    const doc = await db.collection("usuarios").doc(user.uid).get();
 
-      if (doc.exists) {
+    if (doc.exists) {
 
-        const data = doc.data();
+      const data = doc.data();
+      esAdmin = data && (data.admin === true || data.rol === "admin");
 
-        document.getElementById("saludo").innerText =
-          "Hola " + data.nombre;
+      document.getElementById("saludo").innerText =
+        "Hola " + (data.nombre || "");
 
-        document.getElementById("seguidores").innerText =
-          Array.isArray(data.seguidores) ? data.seguidores.length : 0;
+      document.getElementById("seguidores").innerText =
+        Array.isArray(data.seguidores) ? data.seguidores.length : 0;
 
-        document.getElementById("seguidos").innerText =
-          Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
+      document.getElementById("seguidos").innerText =
+        Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
 
-        mostrar("menu");
+      mostrar("menu");
 
-      } else {
-        avisoNivelMostrado = false;
-        mostrar("perfilCompletar");
-      }
-
-    });
+    } else {
+      esAdmin = false;
+      avisoNivelMostrado = false;
+      mostrar("perfilCompletar");
+    }
 
     return;
   }
 
+  esAdmin = false;
+  if (typeof window.limpiarListenersChat === "function") {
+    window.limpiarListenersChat();
+  }
   mostrar("login");
 
 });
@@ -291,20 +279,24 @@ if (inputFotoGlobal) {
     const imgPerfil = document.getElementById("fotoPerfil");
     if (imgPerfil) imgPerfil.src = previewURL;
 
-    const docRef = db.collection("usuarios").doc(user.uid);
-    const doc = await docRef.get();
-    const data = doc.data();
+    try {
+      const docRef = db.collection("usuarios").doc(user.uid);
+      const doc = await docRef.get();
+      const data = doc.data();
 
-    if (data && data.fotoPerfil && data.fotoPerfil.includes("firebasestorage")) {
-      await borrarImagen(data.fotoPerfil);
+      if (data && data.fotoPerfil && data.fotoPerfil.includes("firebasestorage")) {
+        await borrarImagen(data.fotoPerfil);
+      }
+
+      const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
+      const url = await subirImagen(ruta, file);
+
+      await docRef.update({
+        fotoPerfil: url
+      });
+    } finally {
+      URL.revokeObjectURL(previewURL);
     }
-
-    const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
-    const url = await subirImagen(ruta, file);
-
-    await docRef.update({
-      fotoPerfil: url
-    });
 
   });
 }
@@ -326,6 +318,14 @@ function mostrar(seccion){
   console.log("MOSTRAR:", seccion);
   const abriendoChat = seccion === "chat";
   const chatPantalla = document.getElementById("chat");
+  const saliendoChat = !abriendoChat && (
+    document.body.classList.contains("chatAbierto") ||
+    (chatPantalla && chatPantalla.style.display !== "none")
+  );
+
+  if (saliendoChat && typeof window.limpiarListenersChat === "function") {
+    window.limpiarListenersChat();
+  }
 
   document.body.classList.toggle("chatAbierto", abriendoChat);
   if (chatPantalla) {
@@ -367,17 +367,6 @@ function mostrar(seccion){
     actual.style.display = "block";
   }
 
-  if (abriendoChat && chatPantalla) {
-    requestAnimationFrame(function() {
-      const layout = chatPantalla.querySelector(".chatLayout");
-      const main = chatPantalla.querySelector(".chatMain");
-      const messages = chatPantalla.querySelector(".chatMessages");
-      const composer = chatPantalla.querySelector(".chatComposer");
-
-      
-    });
-  }
-
   if (seccion === "crearPartida") {
 
   const tipoNivel = document.getElementById("nivelTipo");
@@ -395,17 +384,28 @@ function mostrar(seccion){
   // generar niveles solo una vez
   if (desde && hasta && desde.options.length === 0) {
 
-    let htmlDesde = '<option value="">Desde</option>';
-    let htmlHasta = '<option value="">Hasta</option>';
+    const opcionDesde = document.createElement("option");
+    opcionDesde.value = "";
+    opcionDesde.textContent = "Desde";
+    desde.appendChild(opcionDesde);
+
+    const opcionHasta = document.createElement("option");
+    opcionHasta.value = "";
+    opcionHasta.textContent = "Hasta";
+    hasta.appendChild(opcionHasta);
 
     for (let i = 0.5; i <= 7; i += 0.25) {
       let val = Math.round(i * 100) / 100;
-      htmlDesde += '<option value="' + val + '">' + val + '</option>';
-      htmlHasta += '<option value="' + val + '">' + val + '</option>';
-    }
+      const optDesde = document.createElement("option");
+      optDesde.value = String(val);
+      optDesde.textContent = String(val);
+      desde.appendChild(optDesde);
 
-    desde.innerHTML = htmlDesde;
-    hasta.innerHTML = htmlHasta;
+      const optHasta = document.createElement("option");
+      optHasta.value = String(val);
+      optHasta.textContent = String(val);
+      hasta.appendChild(optHasta);
+    }
   }
 }
 

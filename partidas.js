@@ -1,4 +1,10 @@
-let modoPartidas = "proximas";
+window.modoPartidas = window.modoPartidas || "proximas";
+
+function textoNodo(texto, tag) {
+  const el = document.createElement(tag || "div");
+  el.textContent = texto;
+  return el;
+}
 
 function actualizarBotonesPartidas() {
   const btnProx = document.getElementById("btnProximas");
@@ -6,23 +12,21 @@ function actualizarBotonesPartidas() {
 
   if (!btnProx || !btnPend) return;
 
-  if (modoPartidas === "proximas") {
+  if (window.modoPartidas === "proximas") {
     btnProx.style.background = "#1565C0";
     btnProx.style.color = "#fff";
-
     btnPend.style.background = "#eee";
     btnPend.style.color = "#000";
   } else {
     btnPend.style.background = "#1565C0";
     btnPend.style.color = "#fff";
-
     btnProx.style.background = "#eee";
     btnProx.style.color = "#000";
   }
 }
 
 function cambiarModoPartidas(modo) {
-  modoPartidas = modo;
+  window.modoPartidas = modo;
   actualizarBotonesPartidas();
   cargarPartidas();
 }
@@ -31,162 +35,165 @@ function pintarJugador(uid, slotId) {
   const el = document.getElementById(slotId);
   if (!el) return;
 
-  // ===== LIBRE =====
- if (!uid) {
-  el.innerHTML =
-    "<div onclick='unirseAPartida(\"" + slotId + "\")' style='display:flex; flex-direction:column; align-items:center; gap:4px; color:#999; cursor:pointer;'>" +
+  if (!uid) {
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; gap:4px; color:#999; cursor:pointer;";
+    wrapper.onclick = function() { unirseAPartida(slotId); };
 
-      "<div style='position:relative; width:40px; height:40px;'>" +
+    const fotoWrap = document.createElement("div");
+    fotoWrap.style.cssText = "position:relative; width:40px; height:40px;";
 
-        "<img src='imagen/hombre.jpeg' style='width:40px; height:40px; border-radius:50%; object-fit:cover; opacity:0.3;'>" +
+    const img = document.createElement("img");
+    img.src = "imagen/hombre.jpeg";
+    img.style.cssText = "width:40px; height:40px; border-radius:50%; object-fit:cover; opacity:0.3;";
 
-        "<div style='position:absolute; bottom:-2px; right:-2px; width:18px; height:18px; border-radius:50%; background:#1565C0; color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center;'>+</div>" +
+    const plus = document.createElement("div");
+    plus.style.cssText = "position:absolute; bottom:-2px; right:-2px; width:18px; height:18px; border-radius:50%; background:#1565C0; color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center;";
+    plus.textContent = "+";
 
-      "</div>" +
+    const label = document.createElement("span");
+    label.style.fontSize = "12px";
+    label.textContent = "Libre";
 
-      "<span style='font-size:12px;'>Libre</span>" +
+    fotoWrap.appendChild(img);
+    fotoWrap.appendChild(plus);
+    wrapper.appendChild(fotoWrap);
+    wrapper.appendChild(label);
+    el.replaceChildren(wrapper);
+    return;
+  }
 
-    "</div>";
-  return;
-}
-
-  // ===== JUGADOR =====
   db.collection("usuarios").doc(uid).get().then(doc => {
     if (!doc.exists) return;
 
-   const raw = doc.data() || {};
+    const raw = doc.data() || {};
+    const u = {
+      nombre: raw.nombre,
+      nivel: raw.nivel,
+      imagen: raw.fotoPerfil,
+      genero: raw.sexo
+    };
 
-const u = {
-    nombre: raw.nombre,
-    nivel: raw.nivel,
-    imagen: raw.fotoPerfil,
-    genero: raw.sexo
-};
+    let imgSrc = "imagen/hombre.jpeg";
+    if (u.imagen && u.imagen !== "") imgSrc = u.imagen;
+    else if (u.genero === "mujer") imgSrc = "imagen/mujer.jpeg";
 
-let img = "imagen/hombre.jpeg";
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; gap:4px;";
 
-if (u.imagen && u.imagen !== "") {
-    img = u.imagen;
-} else if (u.genero === "mujer") {
-    img = "imagen/mujer.jpeg";
-}
+    const fotoWrap = document.createElement("div");
+    fotoWrap.style.cssText = "position:relative; width:40px; height:40px;";
 
-    el.innerHTML =
-      "<div style='display:flex; flex-direction:column; align-items:center; gap:4px;'>" +
+    const img = document.createElement("img");
+    img.src = imgSrc;
+    img.style.cssText = "width:40px; height:40px; border-radius:50%; object-fit:cover;";
 
-        "<div style='position:relative; width:40px; height:40px;'>" +
-        "<img src='" + img + "' style='width:40px; height:40px; border-radius:50%; object-fit:cover;'>" +
-        "</div>" +
+    const info = document.createElement("div");
+    info.style.cssText = "font-size:12px; text-align:center; line-height:1.1; max-width:60px;";
 
-        "<div style='font-size:12px; text-align:center; line-height:1.1; max-width:60px;'>" +
-          "<div style='overflow:hidden; text-overflow:ellipsis; white-space:nowrap;'>" +
-            (u.nombre || "Jugador") +
-          "</div>" +
-          "<div style='color:#666;'>Nivel " + (u.nivel || "-") + "</div>" +
-        "</div>" +
+    const nombre = document.createElement("div");
+    nombre.style.cssText = "overflow:hidden; text-overflow:ellipsis; white-space:nowrap;";
+    nombre.textContent = u.nombre || "Jugador";
 
-      "</div>";
+    const nivel = document.createElement("div");
+    nivel.style.color = "#666";
+    nivel.textContent = "Nivel " + (u.nivel || "-");
+
+    fotoWrap.appendChild(img);
+    info.appendChild(nombre);
+    info.appendChild(nivel);
+    wrapper.appendChild(fotoWrap);
+    wrapper.appendChild(info);
+    el.replaceChildren(wrapper);
   });
 }
 
 function crearPartida() {
-  console.log("CLICK CREAR PARTIDA");
-
   const div = document.getElementById("pistaSeleccionada");
   const pistaId = div && div.dataset ? div.dataset.id : null;
-
   const fecha = document.getElementById("fechaPartida")?.value;
   const hora = document.getElementById("horaPartida")?.value;
-  // VALIDAR HORA SI ES HOY
 
-const ahora = new Date();
+  if (!fecha || !hora) {
+    alert("Completa todos los campos");
+    return;
+  }
 
-const partesFecha = fecha.split("-");
-const partesHora = hora.split(":");
+  const ahora = new Date();
+  const partesFecha = fecha.split("-");
+  const partesHora = hora.split(":");
+  const fechaPartida = new Date(
+    parseInt(partesFecha[0]),
+    parseInt(partesFecha[1]) - 1,
+    parseInt(partesFecha[2]),
+    parseInt(partesHora[0]),
+    parseInt(partesHora[1])
+  );
 
-const fechaPartida = new Date(
-  parseInt(partesFecha[0]),
-  parseInt(partesFecha[1]) - 1,
-  parseInt(partesFecha[2]),
-  parseInt(partesHora[0]),
-  parseInt(partesHora[1])
-);
+  const esHoy =
+    parseInt(partesFecha[0]) === ahora.getFullYear() &&
+    parseInt(partesFecha[1]) === (ahora.getMonth() + 1) &&
+    parseInt(partesFecha[2]) === ahora.getDate();
 
-const esHoy =
-  parseInt(partesFecha[0]) === ahora.getFullYear() &&
-  parseInt(partesFecha[1]) === (ahora.getMonth() + 1) &&
-  parseInt(partesFecha[2]) === ahora.getDate();
+  if (esHoy && fechaPartida < ahora) {
+    alert("No puedes seleccionar una hora anterior a la actual");
+    return;
+  }
 
-if (esHoy && fechaPartida < ahora) {
-  alert("No puedes seleccionar una hora anterior a la actual");
-  return;
-}
   const tipo = document.getElementById("tipoPartida")?.value;
   const genero = document.getElementById("generoPartida")?.value;
   const nivelTipo = document.getElementById("nivelTipo").value;
-const nivelDesde = document.getElementById("nivelDesde").value;
-const nivelHasta = document.getElementById("nivelHasta").value;
+  const nivelDesde = document.getElementById("nivelDesde").value;
+  const nivelHasta = document.getElementById("nivelHasta").value;
 
   if (!pistaId) {
     alert("Selecciona una pista");
     return;
   }
 
- if (!fecha || !hora || !tipo || !genero) {
-  alert("Completa todos los campos");
-  return;
-}
-
-if (nivelTipo === "rango") {
-
-  if (!nivelDesde || !nivelHasta) {
-    alert("Selecciona rango de nivel");
+  if (!fecha || !hora || !tipo || !genero) {
+    alert("Completa todos los campos");
     return;
   }
 
-  if (parseFloat(nivelDesde) > parseFloat(nivelHasta)) {
-    alert("Nivel incorrecto");
-    return;
+  if (nivelTipo === "rango") {
+    if (!nivelDesde || !nivelHasta) {
+      alert("Selecciona rango de nivel");
+      return;
+    }
+
+    if (parseFloat(nivelDesde) > parseFloat(nivelHasta)) {
+      alert("Nivel incorrecto");
+      return;
+    }
   }
-}
 
-console.log("pistaId:", pistaId);
-console.log("fecha:", fecha);
-console.log("hora:", hora);
-console.log("tipo:", tipo);
-console.log("genero:", genero);
-
-const user = firebase.auth().currentUser;
+  const user = firebase.auth().currentUser;
 
   db.collection("partidas").add({
-  pistaId: pistaId,
-
-  fecha: fecha,
-  hora: hora,
-  tipo: tipo,
-  genero: genero,
-  creador: user.uid,
-  creadorNombre: user.displayName || "Jugador",
-  nivel: nivelTipo === "cualquiera" ? "cualquiera" : {
-  desde: nivelDesde,
-  hasta: nivelHasta
-},
-
-  jugadores: [user.uid],
-  reservas: [],
-
-  estado: "abierta",
-  creadaPor: user.uid,
-  creadaAt: new Date()
-})
-.then(() => {
-  document.getElementById("pistaSeleccionada").innerText = "Ninguna pista";
-  document.getElementById("pistaSeleccionada").dataset.id = "";
-
-  mostrar("partidas");
-  cargarPartidas();
-});
-
+    pistaId: pistaId,
+    fecha: fecha,
+    hora: hora,
+    tipo: tipo,
+    genero: genero,
+    creador: user.uid,
+    creadorNombre: user.displayName || "Jugador",
+    nivel: nivelTipo === "cualquiera" ? "cualquiera" : {
+      desde: nivelDesde,
+      hasta: nivelHasta
+    },
+    jugadores: [user.uid],
+    reservas: [],
+    estado: "abierta",
+    creadaPor: user.uid,
+    creadaAt: new Date()
+  })
+  .then(() => {
+    document.getElementById("pistaSeleccionada").innerText = "Ninguna pista";
+    document.getElementById("pistaSeleccionada").dataset.id = "";
+    mostrar("partidas");
+    cargarPartidas();
+  });
 }
 
 window.seleccionarPistaPartida = function(id, nombre) {
@@ -202,23 +209,165 @@ window.seleccionarPistaPartida = function(id, nombre) {
 
 function initCrearPartida() {
   const input = document.getElementById("fechaPartida");
+  if (!input) return;
+
   const hoy = new Date().toISOString().split("T")[0];
-
   input.value = "";
-
-  input.addEventListener("change", function () {
+  input.onchange = function() {
     if (this.value < hoy) {
       alert("No puedes seleccionar una fecha anterior a hoy");
       this.value = "";
     }
-  });
+  };
+}
+
+async function eliminarPartidaConChat(partidaId) {
+  if (typeof window.eliminarChatTotal === "function") {
+    const ok = await window.eliminarChatTotal(partidaId);
+    if (ok === false) return false;
+  } else {
+    console.warn("[PARTIDAS] No se elimina la partida porque no esta disponible la limpieza del chat.");
+    return false;
+  }
+
+  await db.collection("partidas").doc(partidaId).delete();
+  return true;
+}
+
+function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
+  const bloque = document.createElement("div");
+  bloque.style.cssText = "border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; background:" + fondo + ";";
+
+  const cabecera = document.createElement("div");
+  cabecera.style.paddingTop = "8px";
+
+  const filaTop = document.createElement("div");
+  filaTop.style.cssText = "display:flex; justify-content:space-between; align-items:center;";
+
+  const fecha = textoNodo((p.fecha || "") + " - " + (p.hora || ""));
+  fecha.style.cssText = "font-size:13px; color:#666;";
+
+  const chatBtn = document.createElement("button");
+  chatBtn.type = "button";
+  chatBtn.style.cssText = "cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; background:#E3F2FD; padding:4px 8px; border-radius:12px; width:auto; margin:0;";
+  chatBtn.textContent = "Chat partida";
+  chatBtn.onclick = function() { abrirChatPartida(id, p.fecha || ""); };
+
+  filaTop.appendChild(fecha);
+  filaTop.appendChild(chatBtn);
+
+  const pistaFila = document.createElement("button");
+  pistaFila.type = "button";
+  pistaFila.style.cssText = "cursor:pointer; display:flex; align-items:center; gap:6px; width:auto; margin:6px 0 0; padding:0; background:transparent; color:inherit;";
+  pistaFila.onclick = function() { verPista(p.pistaId); };
+
+  const pistaTexto = document.createElement("span");
+  pistaTexto.id = "pista_" + id;
+  pistaTexto.style.fontWeight = "500";
+  pistaTexto.textContent = "Cargando pista...";
+  pistaFila.appendChild(pistaTexto);
+
+  const metaFila = document.createElement("div");
+  metaFila.style.cssText = "display:flex; justify-content:space-between; font-size:13px; color:#666; margin-top:4px;";
+  metaFila.appendChild(textoNodo((p.tipo || "ranking") + " - " + nivelTexto + " - " + (p.genero || "")));
+
+  const creador = textoNodo("Creador: -");
+  creador.id = "creador_" + id;
+  metaFila.appendChild(creador);
+
+  cabecera.appendChild(filaTop);
+  cabecera.appendChild(pistaFila);
+  cabecera.appendChild(metaFila);
+
+  if (mostrarSalir) {
+    const salirWrap = document.createElement("div");
+    salirWrap.style.cssText = "margin-top:6px; text-align:right;";
+
+    const salir = document.createElement("button");
+    salir.style.cssText = "background:#e53935; color:white; border:none; padding:6px 10px; border-radius:6px;";
+    salir.textContent = "Salir";
+    salir.onclick = function() { salirDePartida(id); };
+
+    salirWrap.appendChild(salir);
+    cabecera.appendChild(salirWrap);
+  }
+
+  bloque.appendChild(cabecera);
+
+  const jugadoresWrap = document.createElement("div");
+  jugadoresWrap.style.cssText = "text-align:center; margin-top:10px;";
+  const jugadoresTitulo = textoNodo("Jugadores:");
+  jugadoresTitulo.style.fontWeight = "bold";
+  const jugadoresGrid = document.createElement("div");
+  jugadoresGrid.style.cssText = "display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; justify-items:center;";
+
+  for (let i = 1; i <= 4; i++) {
+    const slot = document.createElement("div");
+    slot.className = "jugadorSlot";
+    slot.id = "j" + i + "_" + id;
+    jugadoresGrid.appendChild(slot);
+  }
+
+  jugadoresWrap.appendChild(jugadoresTitulo);
+  jugadoresWrap.appendChild(jugadoresGrid);
+
+  const reservasWrap = document.createElement("div");
+  reservasWrap.style.cssText = "text-align:center; margin-top:10px;";
+  const reservasTitulo = textoNodo("Reservas");
+  reservasTitulo.style.fontWeight = "bold";
+  const reservasGrid = document.createElement("div");
+  reservasGrid.style.cssText = "display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; justify-items:center;";
+
+  for (let i = 1; i <= 2; i++) {
+    const slot = document.createElement("div");
+    slot.className = "jugadorSlot";
+    slot.id = "r" + i + "_" + id;
+    reservasGrid.appendChild(slot);
+  }
+
+  reservasWrap.appendChild(reservasTitulo);
+  reservasWrap.appendChild(reservasGrid);
+  bloque.appendChild(jugadoresWrap);
+  bloque.appendChild(reservasWrap);
+  return bloque;
+}
+
+function cargarDatosPartidaRenderizada(item) {
+  const id = item.id;
+  const p = item.p;
+
+  if (p.pistaId) {
+    db.collection("pistas").doc(p.pistaId).get().then(function(docPista) {
+      if (docPista.exists) {
+        const pista = docPista.data();
+        const texto = (pista.nombre || "") + " - " + (pista.localidad || "");
+        const el = document.getElementById("pista_" + id);
+        if (el) el.innerText = texto;
+      }
+    });
+  }
+
+  for (var i = 0; i < 4; i++) {
+    pintarJugador(p.jugadores[i] || null, "j" + (i + 1) + "_" + id);
+  }
+
+  for (var r = 0; r < 2; r++) {
+    pintarJugador(p.reservas[r] || null, "r" + (r + 1) + "_" + id);
+  }
+
+  if (p.creadaPor) {
+    db.collection("usuarios").doc(p.creadaPor).get().then(function(docUser) {
+      if (docUser.exists) {
+        const u = docUser.data();
+        const el = document.getElementById("creador_" + id);
+        if (el) el.innerText = "Creador: " + (u.nombre || "Jugador");
+      }
+    });
+  }
 }
 
 function cargarPartidas() {
-
-  if (!window.modoPartidas) {
-  window.modoPartidas = "proximas";
-}
+  if (!window.modoPartidas) window.modoPartidas = "proximas";
 
   actualizarBotonesPartidas();
   cargarFiltroPistas();
@@ -226,92 +375,34 @@ function cargarPartidas() {
   const contenedor = document.getElementById("listaPartidas");
   if (!contenedor) return;
 
-  contenedor.innerHTML = "Cargando...";
+  contenedor.replaceChildren(textoNodo("Cargando..."));
 
   db.collection("partidas").get()
   .then(function(snapshot) {
-
     if (snapshot.empty) {
-      contenedor.innerHTML = "No hay partidas";
+      contenedor.replaceChildren(textoNodo("No hay partidas"));
       return;
     }
 
-    let htmlProximas = "";
-    let htmlPendientes = "";
-
+    const proximas = [];
+    const pendientes = [];
     const ahoraGlobal = new Date();
-
-    // FILTROS DESDE MEMORIA
     const filtros = window.filtrosPartidas || {};
-    console.log("FILTROS COMPLETOS:", filtros);
     const tipoNivel = filtros.tipoNivel || "";
     const nivelDesde = filtros.nivelDesde || "";
     const nivelHasta = filtros.nivelHasta || "";
-
     const filtroFecha = filtros.fecha || "";
     const filtroTipo = (filtros.tipo || "").toLowerCase().trim();
-    console.log("FILTRO TIPO:", filtroTipo);
     const filtroGenero = filtros.genero || "";
     const filtroPista = filtros.pista || "";
 
     snapshot.forEach(function(doc) {
-
       const p = doc.data() || {};
 
-      console.log("[FILTROS PARTIDAS] valores partida", {
-        id: doc.id,
-        fecha: p.fecha,
-        genero: p.genero,
-        pista: p.pista,
-        pistaId: p.pistaId,
-        nivel: p.nivel,
-        tipo: p.tipo
-      });
-
-      console.log("[FILTRO TIPO]", {
-        filtro: filtroTipo,
-        partida: (p.tipo || "ranking").toLowerCase().trim(),
-        pasa: !filtroTipo || ((p.tipo || "ranking").toLowerCase().trim() === filtroTipo)
-      });
-
-if (
-  filtroTipo &&
-  ((p.tipo || "ranking").toLowerCase().trim() !== filtroTipo)
-) return;
-
-      console.log("[FILTRO FECHA]", {
-        filtro: filtroFecha,
-        partida: p.fecha || "",
-        pasa: !filtroFecha || ((p.fecha || "") === filtroFecha)
-      });
-
-      if (
-        filtroFecha &&
-        ((p.fecha || "") !== filtroFecha)
-      ) return;
-
-      console.log("[FILTRO GENERO]", {
-        filtro: filtroGenero,
-        partida: (p.genero || "").toLowerCase().trim(),
-        pasa: !filtroGenero || ((p.genero || "").toLowerCase().trim() === filtroGenero)
-      });
-
-      if (
-        filtroGenero &&
-        ((p.genero || "").toLowerCase().trim() !== filtroGenero)
-      ) return;
-
-      console.log("[FILTRO PISTA]", {
-        filtro: filtroPista,
-        partidaPistaId: p.pistaId || "",
-        partidaPista: p.pista || "",
-        pasa: !filtroPista || ((p.pistaId || p.pista || "") === filtroPista)
-      });
-
-      if (
-        filtroPista &&
-        ((p.pistaId || p.pista || "") !== filtroPista)
-      ) return;
+      if (filtroTipo && ((p.tipo || "ranking").toLowerCase().trim() !== filtroTipo)) return;
+      if (filtroFecha && ((p.fecha || "") !== filtroFecha)) return;
+      if (filtroGenero && ((p.genero || "").toLowerCase().trim() !== filtroGenero)) return;
+      if (filtroPista && ((p.pistaId || p.pista || "") !== filtroPista)) return;
 
       let pasaNivel = true;
       let nivelPartidaDesde = "";
@@ -333,37 +424,17 @@ if (
         const partidaHastaNum = parseFloat(nivelPartidaHasta);
 
         pasaNivel = !isNaN(partidaDesdeNum) && !isNaN(partidaHastaNum);
-
-        if (pasaNivel && !isNaN(filtroDesdeNum)) {
-          pasaNivel = filtroDesdeNum >= partidaDesdeNum;
-        }
-
-        if (pasaNivel && !isNaN(filtroHastaNum)) {
-          pasaNivel = filtroHastaNum <= partidaHastaNum;
-        }
+        if (pasaNivel && !isNaN(filtroDesdeNum)) pasaNivel = filtroDesdeNum >= partidaDesdeNum;
+        if (pasaNivel && !isNaN(filtroHastaNum)) pasaNivel = filtroHastaNum <= partidaHastaNum;
       }
-
-      console.log("[FILTRO NIVEL]", {
-        tipoFiltro: tipoNivel,
-        filtroDesde: nivelDesde,
-        filtroHasta: nivelHasta,
-        nivelPartida: p.nivel,
-        nivelPartidaDesde: nivelPartidaDesde,
-        nivelPartidaHasta: nivelPartidaHasta,
-        pasa: pasaNivel
-      });
 
       if (tipoNivel && !pasaNivel) return;
 
-      // ===============================
-      // FECHA
-      // ===============================
       let fechaPartida = null;
 
       if (p.fecha && p.hora) {
         const f = p.fecha.split("-");
         const h = p.hora.split(":");
-
         fechaPartida = new Date(
           parseInt(f[0]),
           parseInt(f[1]) - 1,
@@ -375,27 +446,22 @@ if (
 
       const ahora = new Date();
 
-      // ===============================
-      // BORRADOS AUTOMÁTICOS
-      // ===============================
-
       if (p.estado === "cancelada") {
-        db.collection("partidas").doc(doc.id).delete();
+        eliminarPartidaConChat(doc.id).then(function(ok) { if (ok) cargarPartidas(); });
         return;
       }
 
       if (p.estado === "abierta" && fechaPartida && fechaPartida < ahora) {
-        db.collection("partidas").doc(doc.id).delete();
+        eliminarPartidaConChat(doc.id).then(function(ok) { if (ok) cargarPartidas(); });
         return;
       }
 
       if (p.estado === "finalizada") {
-
         const totalJugadores = (p.jugadores || []).length;
         const votos = p.votaciones || [];
 
         if (totalJugadores > 0 && votos.length >= totalJugadores) {
-          db.collection("partidas").doc(doc.id).delete();
+          eliminarPartidaConChat(doc.id).then(function(ok) { if (ok) cargarPartidas(); });
           return;
         }
 
@@ -404,7 +470,7 @@ if (
           limite.setDate(limite.getDate() + 3);
 
           if (ahora > limite) {
-            db.collection("partidas").doc(doc.id).delete();
+            eliminarPartidaConChat(doc.id).then(function(ok) { if (ok) cargarPartidas(); });
             return;
           }
         }
@@ -412,169 +478,53 @@ if (
 
       if (!fechaPartida) return;
 
-      const esFutura = fechaPartida >= ahoraGlobal;
-      const esPasada = fechaPartida < ahoraGlobal;
-
-      
-
-      // ===============================
-      // RENDER
-      // ===============================
-
       p.jugadores = p.jugadores || [];
       p.reservas = p.reservas || [];
 
       let fondo = "#ffffff";
-
-      if (p.estado === "confirmada" || p.estado === "cerrada") {
-        fondo = "#e3f2fd";
-      }
+      if (p.estado === "confirmada" || p.estado === "cerrada") fondo = "#e3f2fd";
 
       const nivelTexto =
         (p.nivel && p.nivel.desde && p.nivel.hasta)
           ? p.nivel.desde + " - " + p.nivel.hasta
           : "Cualquiera";
 
-      let mostrarSalir = false;
+      const uid = firebase.auth().currentUser.uid;
+      const mostrarSalir = p.jugadores.includes(uid) || p.reservas.includes(uid);
+      const item = {
+        id: doc.id,
+        p: p,
+        nodo: crearBloquePartida(doc.id, p, nivelTexto, mostrarSalir, fondo)
+      };
 
-      if (
-        (p.jugadores || []).includes(firebase.auth().currentUser.uid) ||
-        (p.reservas || []).includes(firebase.auth().currentUser.uid)
-      ) {
-        mostrarSalir = true;
-      }
-
-      let bloque = `
-<div style="border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; background:${fondo};">
-
-  <div style="padding-top:8px;">
-
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div style="font-size:13px; color:#666;">
-        ${p.fecha || ""} - ${p.hora || ""}
-      </div>
-
-      <div style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; background:#E3F2FD; padding:4px 8px; border-radius:12px;">
-      <div onclick="abrirChatPartida('${doc.id}', '${p.fecha || ""}')" style="cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; background:#E3F2FD; padding:4px 8px; border-radius:12px;">
-        <span>💬</span>
-        <span>Chat partida</span>
-      </div>
-    </div>
-
-    <div onclick="verPista('${p.pistaId}')" style="cursor:pointer; display:flex; align-items:center; gap:6px;">
-      <span>📍</span>
-      <span id="pista_${doc.id}" style="font-weight:500;">Cargando pista...</span>
-    </div>
-
-    <div style="display:flex; justify-content:space-between; font-size:13px; color:#666; margin-top:4px;">
-      <div>
-        ${p.tipo || "ranking"} - ${nivelTexto} - ${p.genero || ""}
-      </div>
-
-      <div id="creador_${doc.id}">
-        Creador: -
-      </div>
-    </div>
-
-    ${mostrarSalir ? `
-    <div style="margin-top:6px; text-align:right;">
-      <button onclick="salirDePartida('${doc.id}')" style="background:#e53935; color:white; border:none; padding:6px 10px; border-radius:6px;">
-        Salir
-      </button>
-    </div>
-    ` : ""}
-
-  </div>
-
-  <div style="text-align:center; margin-top:10px;">
-    <div><b>Jugadores:</b></div>
-
-    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; justify-items:center;">
-      <div class="jugadorSlot" id="j1_${doc.id}"></div>
-      <div class="jugadorSlot" id="j2_${doc.id}"></div>
-      <div class="jugadorSlot" id="j3_${doc.id}"></div>
-      <div class="jugadorSlot" id="j4_${doc.id}"></div>
-    </div>
-  </div>
-
-  <div style="text-align:center; margin-top:10px;">
-    <div><b>Reservas</b></div>
-
-    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; justify-items:center;">
-      <div class="jugadorSlot" id="r1_${doc.id}"></div>
-      <div class="jugadorSlot" id="r2_${doc.id}"></div>
-    </div>
-  </div>
-
-</div>
-`;
-
-      if (esFutura) {
-        htmlProximas += bloque;
-      } else {
-        htmlPendientes += bloque;
-      }
-
+      if (fechaPartida >= ahoraGlobal) proximas.push(item);
+      else pendientes.push(item);
     });
 
     let modo = window.modoPartidas;
+    if (modo !== "pendientes" && modo !== "proximas") {
+      modo = "proximas";
+      window.modoPartidas = "proximas";
+    }
 
-if (modo !== "pendientes" && modo !== "proximas") {
-  modo = "proximas";
-  window.modoPartidas = "proximas";
-}
-
-contenedor.innerHTML =
-  (modo === "pendientes")
-    ? htmlPendientes
-    : htmlProximas;
-
-    actualizarBotonesPartidas();
-
-    snapshot.forEach(function(doc) {
-
-      const p = doc.data() || {};
-
-      p.jugadores = p.jugadores || [];
-      p.reservas = p.reservas || [];
-
-      if (p.pistaId) {
-        db.collection("pistas").doc(p.pistaId).get().then(function(docPista) {
-          if (docPista.exists) {
-            const pista = docPista.data();
-            const texto = (pista.nombre || "") + " - " + (pista.localidad || "");
-            const el = document.getElementById("pista_" + doc.id);
-            if (el) el.innerText = texto;
-          }
-        });
-      }
-
-      for (var i = 0; i < 4; i++) {
-        pintarJugador(p.jugadores[i] || null, "j" + (i + 1) + "_" + doc.id);
-      }
-
-      for (var i = 0; i < 2; i++) {
-        pintarJugador(p.reservas[i] || null, "r" + (i + 1) + "_" + doc.id);
-      }
-
-      if (p.creadaPor) {
-        db.collection("usuarios").doc(p.creadaPor).get().then(function(docUser) {
-          if (docUser.exists) {
-            const u = docUser.data();
-            const el = document.getElementById("creador_" + doc.id);
-            if (el) {
-              el.innerText = "Creador: " + (u.nombre || "Jugador");
-            }
-          }
-        });
-      }
-
+    const seleccion = modo === "pendientes" ? pendientes : proximas;
+    const fragment = document.createDocumentFragment();
+    seleccion.forEach(function(item) {
+      fragment.appendChild(item.nodo);
     });
 
+    if (seleccion.length === 0) {
+      contenedor.replaceChildren(textoNodo("No hay partidas"));
+    } else {
+      contenedor.replaceChildren(fragment);
+      seleccion.forEach(cargarDatosPartidaRenderizada);
+    }
+
+    actualizarBotonesPartidas();
   })
   .catch(function(error) {
     console.error("Error cargando partidas:", error);
-    contenedor.innerHTML = "Error cargando partidas";
+    contenedor.replaceChildren(textoNodo("Error cargando partidas"));
   });
 }
 
@@ -617,19 +567,27 @@ function cargarFiltroPistas() {
   const select = document.getElementById("filtroPista");
   if (!select) return;
 
-  select.innerHTML = '<option value="">Todas las pistas</option>';
+  const primera = document.createElement("option");
+  primera.value = "";
+  primera.textContent = "Todas las pistas";
+  select.replaceChildren(primera);
 
   db.collection("pistas").get().then(function(snapshot) {
+    const fragment = document.createDocumentFragment();
+
     snapshot.forEach(function(doc) {
       const p = doc.data() || {};
-      const nombre = (p.nombre || "Pista") + " - " + (p.localidad || "");
-      select.innerHTML += '<option value="' + doc.id + '">' + nombre + '</option>';
+      const option = document.createElement("option");
+      option.value = doc.id;
+      option.textContent = (p.nombre || "Pista") + " - " + (p.localidad || "");
+      fragment.appendChild(option);
     });
+
+    select.appendChild(fragment);
   });
 }
 
 function aplicarFiltrosPartidas() {
-
   const tipoNivel = getCampoBusquedaPartida("filtroNivelTipo") ? getCampoBusquedaPartida("filtroNivelTipo").value : "";
   const desde = getCampoBusquedaPartida("filtroNivelDesde") ? getCampoBusquedaPartida("filtroNivelDesde").value : "";
   const hasta = getCampoBusquedaPartida("filtroNivelHasta") ? getCampoBusquedaPartida("filtroNivelHasta").value : "";
@@ -650,26 +608,16 @@ function aplicarFiltrosPartidas() {
   const filtroGenero = getCampoBusquedaPartida("filtroGenero").value;
   const filtroPista = getCampoBusquedaPartida("filtroPista").value;
 
-  console.log("[FILTROS PARTIDAS] valores reales seleccionados", {
-    filtroFecha: filtroFecha,
-    filtroTipo: filtroTipo,
-    filtroGenero: filtroGenero,
-    filtroPista: filtroPista,
-    filtroNivelTipo: tipoNivel,
-    filtroNivelDesde: desde,
-    filtroNivelHasta: hasta
-  });
-
- window.vieneDeBusqueda = true; 
- window.filtrosPartidas = {
-  fecha: filtroFecha || "",
-  tipo: filtroTipo || "",
-  genero: filtroGenero || "",
-  pista: filtroPista || "",
-  tipoNivel: tipoNivel || "",
-  nivelDesde: desde || "",
-  nivelHasta: hasta || ""
-};
+  window.vieneDeBusqueda = true; 
+  window.filtrosPartidas = {
+    fecha: filtroFecha || "",
+    tipo: filtroTipo || "",
+    genero: filtroGenero || "",
+    pista: filtroPista || "",
+    tipoNivel: tipoNivel || "",
+    nivelDesde: desde || "",
+    nivelHasta: hasta || ""
+  };
 
   mostrar("partidas");
 }
@@ -687,7 +635,6 @@ function cambiarFiltroNivel() {
 
 function limpiarFiltrosPartidas() {
   window.resetearBusquedaPartidas();
-
   cargarPartidas();
 }
 
@@ -699,36 +646,27 @@ function verPista(id) {
 }
 
 function unirseAPartida(slotId) {
-
   const user = firebase.auth().currentUser;
   if (!user) return;
 
   const partidaId = slotId.split("_")[1];
   const esReserva = slotId.startsWith("r");
-
   const ref = db.collection("partidas").doc(partidaId);
 
   ref.get().then(function(doc) {
-
     if (!doc.exists) return;
 
     const p = doc.data();
-
     let jugadores = p.jugadores || [];
     let reservas = p.reservas || [];
 
     if (jugadores.includes(user.uid) || reservas.includes(user.uid)) return;
 
     if (!esReserva) {
-      if (jugadores.length < 4) {
-        jugadores.push(user.uid);
-      } else {
-        reservas.push(user.uid);
-      }
+      if (jugadores.length < 4) jugadores.push(user.uid);
+      else reservas.push(user.uid);
     } else {
-      if (reservas.length < 2) {
-        reservas.push(user.uid);
-      }
+      if (reservas.length < 2) reservas.push(user.uid);
     }
 
     ref.update({
@@ -737,67 +675,48 @@ function unirseAPartida(slotId) {
     }).then(function() {
       cargarPartidas();
     });
-
   });
-
 }
 
 function salirDePartida(partidaId) {
-
   const uid = firebase.auth().currentUser.uid;
   const ref = db.collection("partidas").doc(partidaId);
 
   ref.get().then(function(doc) {
-
     if (!doc.exists) return;
 
     const p = doc.data() || {};
-
     let jugadores = p.jugadores || [];
     let reservas = p.reservas || [];
 
     if (p.creadaPor === uid) {
-
-      const ok = confirm("Se cancelará la partida para todos. ¿Continuar?");
+      const ok = confirm("Se cancelara la partida para todos. Continuar?");
       if (!ok) return;
 
-      // Ciclo de limpieza total determinista: Chat -> Partida -> UI
-      const cleanup = (typeof window.eliminarChatTotal === "function") 
-        ? window.eliminarChatTotal(partidaId) 
-        : Promise.resolve();
-
-      cleanup.finally(() => {
-        ref.delete().then(() => cargarPartidas());
+      eliminarPartidaConChat(partidaId).then(function(borrada) {
+        if (borrada) cargarPartidas();
       });
-
       return;
     }
 
     if (jugadores.includes(uid)) {
       jugadores = jugadores.filter(function(j) { return j !== uid; });
-
       ref.update({ jugadores: jugadores }).then(function() {
         cargarPartidas();
       });
-
       return;
     }
 
     if (reservas.includes(uid)) {
       reservas = reservas.filter(function(r) { return r !== uid; });
-
       ref.update({ reservas: reservas }).then(function() {
         cargarPartidas();
       });
-
-      return;
     }
-
   });
 }
 
 function guardarPartidaFinalizada(p, idPartida) {
-
   const datos = {
     fecha: p.fecha,
     hora: p.hora,

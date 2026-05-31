@@ -160,6 +160,39 @@ function actualizarTabsChat() {
   });
 }
 
+function asegurarEntradaChat(chatId) {
+  const chat = chatState.chats[chatId];
+  if (!chat) return;
+
+  const tabs = document.getElementById("chatTabs");
+  if (tabs && !tabs.querySelector('[data-chat-tab="' + chatId + '"]')) {
+    const tab = document.createElement("button");
+    tab.type = "button";
+    tab.className = "chatTab";
+    tab.dataset.chatTab = chatId;
+    tab.textContent = chat.titulo || "Chat";
+    tabs.appendChild(tab);
+  }
+
+  const recientes = document.getElementById("chatRecientes");
+  if (recientes && !recientes.querySelector('[data-chat-tab="' + chatId + '"]')) {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "chatRecentItem";
+    item.dataset.chatTab = chatId;
+
+    const titulo = document.createElement("span");
+    titulo.textContent = chat.titulo || "Chat";
+
+    const subtitulo = document.createElement("small");
+    subtitulo.textContent = chat.tipo === "partida" ? "Chat de partida" : "Chat";
+
+    item.appendChild(titulo);
+    item.appendChild(subtitulo);
+    recientes.appendChild(item);
+  }
+}
+
 function cerrarChatTab(chatId) {
   if (chatId === "general") return;
   if (chatState.chats[chatId]) {
@@ -331,9 +364,29 @@ function gestionarListenerChat(chatId, query) {
     chat.mensajes.sort((a, b) => a.at_val - b.at_val || a.id.localeCompare(b.id));
 
     if (chatId === chatState.chatActivo) renderChatActivo();
+  }, error => {
+    console.error("[CHAT] Listener error:", error);
+    const chat = chatState.chats[chatId];
+    if (chat) {
+      chat.estado = "Error cargando mensajes";
+      if (chatId === chatState.chatActivo) renderChatActivo();
+    }
   });
 
   chatState.listeners[chatId] = unsubscribe;
+}
+
+async function borrarMensajesChatFirestore(chatId) {
+  const mensajesRef = db.collection("partidas").doc(chatId).collection("mensajes");
+
+  while (true) {
+    const snap = await mensajesRef.limit(450).get();
+    if (snap.empty) return;
+
+    const batch = db.batch();
+    snap.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+  }
 }
 
 /**
@@ -348,12 +401,10 @@ window.eliminarChatTotal = async function(chatId) {
 
   // 2. Borrar subcolección en Firestore (Batch)
   try {
-    const snap = await db.collection("partidas").doc(chatId).collection("mensajes").get();
-    const batch = db.batch();
-    snap.forEach(doc => batch.delete(doc.ref));
-    await batch.commit();
+    await borrarMensajesChatFirestore(chatId);
   } catch (e) {
-    console.warn("[CHAT] No se pudo borrar la subcolección:", e.message);
+    console.warn("[CHAT] No se pudo borrar la subcoleccion:", e.message);
+    return false;
   }
 
   // 3. Limpiar estado local
@@ -362,12 +413,13 @@ window.eliminarChatTotal = async function(chatId) {
   
   if (chatState.chatActivo === chatId) {
     chatState.chatActivo = "general";
-    const msgsEl = document.getElementById("chatMessages");
+    const msgsEl = document.getElementById("chatMensajes");
     if (msgsEl) msgsEl.replaceChildren();
   }
 
   actualizarTabsChat();
   renderChatActivo();
+  return true;
 };
 
 async function prepararEnvioChat() {
@@ -403,7 +455,18 @@ async function prepararEnvioChat() {
       await batch.commit();
     } catch (e) {
       console.error("[CHAT] Error enviando mensaje:", e);
+      return;
     }
+  } else {
+    chatState.chats[chatId].mensajes = chatState.chats[chatId].mensajes || [];
+    chatState.chats[chatId].mensajes.push({
+      id: "local_" + Date.now(),
+      autor: user.displayName || "Jugador",
+      texto: texto,
+      hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+      propio: true
+    });
+    renderChatActivo();
   }
 
   input.value = "";
@@ -423,10 +486,12 @@ window.abrirChatPartida = function(id, fecha) {
     chatState.chats[id] = {
       titulo: "Chat " + fecha,
       tipo: "partida",
+      estado: "Chat de partida",
       mensajes: [],
       oculto: false
     };
   }
+  asegurarEntradaChat(id);
   cambiarChatTab(id);
   mostrar("chat");
 };

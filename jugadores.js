@@ -1,7 +1,7 @@
 function cargarJugadores(){
 
   const contenedor = document.getElementById("listaJugadores");
-  contenedor.innerHTML = "";
+  contenedor.replaceChildren();
 
   db.collection("usuarios").get().then(snapshot => {
 
@@ -12,11 +12,18 @@ function cargarJugadores(){
       const div = document.createElement("div");
       div.className = "jugadorCard";
 
-      div.innerHTML =
-"<div>" +
-"<img src='" + (data.fotoPerfil || "imagen/hombre.jpeg") + "' width='50' />" +
-"<span>" + (data.nombre || "") + "</span>" +
-"</div>";
+      const contenido = document.createElement("div");
+
+      const img = document.createElement("img");
+      img.src = data.fotoPerfil || "imagen/hombre.jpeg";
+      img.width = 50;
+
+      const nombre = document.createElement("span");
+      nombre.textContent = data.nombre || "";
+
+      contenido.appendChild(img);
+      contenido.appendChild(nombre);
+      div.appendChild(contenido);
 
       div.onclick = () => verPerfil(doc.id);
 
