@@ -310,11 +310,20 @@ body.chatAbierto{
 }
 
 .chatTab.hasUnread,
-.chatRecentItem.hasUnread,
-#btnMenuChat.hasUnread{
+.chatRecentItem.hasUnread {
   border: 1px solid #FFC107 !important;
   box-shadow: 0 0 6px rgba(255, 193, 7, 0.3);
   animation: chatUnreadPulse 1s infinite;
+}
+
+#btnMenuChat.hasUnread {
+  animation: chatUnreadAlert 2s infinite ease-in-out !important;
+  border: none !important;
+}
+
+@keyframes chatUnreadAlert {
+  0%, 100% { background-color: #1565C0; color: #fff; }
+  50% { background-color: #FFC107; color: #000; }
 }
 
 @keyframes chatUnreadPulse{
