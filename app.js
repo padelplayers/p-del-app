@@ -211,8 +211,8 @@ auth.signInWithEmailAndPassword(email, pass)
 }
 
 function logout(){
-  if (typeof window.limpiarListenersChat === "function") {
-    window.limpiarListenersChat();
+  if (typeof window.limpiarTodoChat === "function") {
+    window.limpiarTodoChat();
   }
   auth.signOut();
 }
@@ -237,6 +237,10 @@ auth.onAuthStateChanged(async user => {
       document.getElementById("seguidos").innerText =
         Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
 
+      if (typeof window.iniciarListenersChatsPartidas === "function") {
+        window.iniciarListenersChatsPartidas(user.uid);
+      }
+
       mostrar("menu");
 
     } else {
@@ -249,8 +253,8 @@ auth.onAuthStateChanged(async user => {
   }
 
   esAdmin = false;
-  if (typeof window.limpiarListenersChat === "function") {
-    window.limpiarListenersChat();
+  if (typeof window.limpiarTodoChat === "function") {
+    window.limpiarTodoChat();
   }
   mostrar("login");
 

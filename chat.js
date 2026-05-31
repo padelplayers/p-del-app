@@ -3,6 +3,8 @@ const chatState = {
   chatActivo: "general",
   ultimoChatRenderizado: null,
   listeners: {},
+  listenersPartidas: [],
+  uidPartidas: null,
   chats: {
     general: {
       titulo: "General",
@@ -109,6 +111,78 @@ function cambiarChatTab(chatId) {
 
   actualizarTabsChat();
   renderChatActivo();
+}
+
+function crearChatPartidaDesdeDoc(doc) {
+  const data = doc.data() || {};
+
+  if (!data.lastActivity && !data.lastMessage) return;
+
+  const chatId = doc.id;
+
+  if (!chatState.chats[chatId]) {
+    chatState.chats[chatId] = {
+      titulo: "Chat " + (data.fecha || ""),
+      tipo: "partida",
+      estado: data.lastMessage || "Chat de partida",
+      noLeidos: chatId !== chatState.chatActivo,
+      oculto: false,
+      mensajes: []
+    };
+  } else {
+    chatState.chats[chatId].titulo = "Chat " + (data.fecha || "");
+    chatState.chats[chatId].estado = data.lastMessage || "Chat de partida";
+    chatState.chats[chatId].oculto = false;
+  }
+
+  asegurarEntradaChat(chatId);
+
+  if (typeof chatState.listeners[chatId] !== "function") {
+    const query = db.collection("partidas").doc(chatId)
+      .collection("mensajes").orderBy("at", "asc").limit(100);
+    gestionarListenerChat(chatId, query);
+  }
+
+  if (chatId !== chatState.chatActivo) {
+    marcarChatNoLeido(chatId);
+  }
+
+  actualizarTabsChat();
+}
+
+function procesarPartidasChat(snapshot) {
+  snapshot.docChanges().forEach(function(change) {
+    if (change.type === "removed") return;
+    crearChatPartidaDesdeDoc(change.doc);
+  });
+}
+
+function iniciarListenersChatsPartidas(uid) {
+  if (!uid) return;
+  if (chatState.uidPartidas === uid && chatState.listenersPartidas.length > 0) return;
+
+  limpiarListenersPartidas();
+  chatState.uidPartidas = uid;
+
+  const jugadoresQuery = db.collection("partidas").where("jugadores", "array-contains", uid);
+  const reservasQuery = db.collection("partidas").where("reservas", "array-contains", uid);
+
+  chatState.listenersPartidas = [
+    jugadoresQuery.onSnapshot(procesarPartidasChat, function(error) {
+      console.error("[CHAT] Error escuchando partidas como jugador:", error);
+    }),
+    reservasQuery.onSnapshot(procesarPartidasChat, function(error) {
+      console.error("[CHAT] Error escuchando partidas como reserva:", error);
+    })
+  ];
+}
+
+function limpiarListenersPartidas() {
+  chatState.listenersPartidas.forEach(function(cancelar) {
+    if (typeof cancelar === "function") cancelar();
+  });
+  chatState.listenersPartidas = [];
+  chatState.uidPartidas = null;
 }
 
 function actualizarTabsChat() {
@@ -505,10 +579,17 @@ function limpiarListenersChat() {
   chatState.listeners = {};
 }
 
+function limpiarTodoChat() {
+  limpiarListenersChat();
+  limpiarListenersPartidas();
+}
+
 window.initChat = initChat;
 window.cambiarChatTab = cambiarChatTab;
 window.marcarChatNoLeido = marcarChatNoLeido;
 window.limpiarListenersChat = limpiarListenersChat;
+window.limpiarTodoChat = limpiarTodoChat;
+window.iniciarListenersChatsPartidas = iniciarListenersChatsPartidas;
 window.cerrarChatTab = cerrarChatTab;
 window.gestionarListenerChat = gestionarListenerChat;
 
