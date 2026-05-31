@@ -336,6 +336,10 @@ function mostrar(seccion){
     chatPantalla.classList.toggle("chatFullscreen", abriendoChat);
   }
 
+  if (abriendoChat && typeof window.notificarEntradaSeccionChat === "function") {
+    window.notificarEntradaSeccionChat();
+  }
+
   const btnFoto = document.getElementById("btnCambiarFoto");
   if (btnFoto) btnFoto.style.display = "none";
 

@@ -4,7 +4,9 @@ const chatState = {
   ultimoChatRenderizado: null,
   listeners: {},
   listenersPartidas: [],
+  listenerGeneral: null,
   uidPartidas: null,
+  nombresUsuarios: {},
   chats: {
     general: {
       titulo: "General",
@@ -99,8 +101,8 @@ function cambiarChatTab(chatId) {
   if (!chatState.chats[chatId]) return;
 
   chatState.chatActivo = chatId;
-  chatState.chats[chatId].noLeidos = false;
   chatState.chats[chatId].oculto = false;
+  marcarChatLeido(chatId);
 
   // Iniciar listener si es partida real y no tiene uno activo
   if (chatState.chats[chatId].tipo === "partida" && chatId !== "partida-demo") {
@@ -113,6 +115,160 @@ function cambiarChatTab(chatId) {
   renderChatActivo();
 }
 
+function actualizarAvisoMenuChat() {
+  const btn = document.getElementById("btnMenuChat");
+  if (!btn) return;
+
+  const hayNoLeidos = Object.keys(chatState.chats).some(function(chatId) {
+    const chat = chatState.chats[chatId];
+    return chat && chat.noLeidos;
+  });
+
+  btn.classList.toggle("hasUnread", hayNoLeidos);
+}
+
+function estaSeccionChatAbierta() {
+  const chat = document.getElementById("chat");
+  return !!(chat && chat.style.display !== "none");
+}
+
+function marcarChatLeido(chatId) {
+  if (!chatState.chats[chatId]) return;
+  chatState.chats[chatId].noLeidos = false;
+  actualizarTabsChat();
+  actualizarAvisoMenuChat();
+}
+
+function notificarEntradaSeccionChat() {
+  marcarChatLeido(chatState.chatActivo);
+}
+
+async function obtenerNombreUsuario(uid) {
+  if (!uid) return "Jugador";
+  if (chatState.nombresUsuarios[uid]) return chatState.nombresUsuarios[uid];
+
+  try {
+    const doc = await db.collection("usuarios").doc(uid).get();
+    const nombre = doc.exists ? (doc.data().nombre || "Jugador") : "Jugador";
+    chatState.nombresUsuarios[uid] = nombre;
+    return nombre;
+  } catch (e) {
+    return "Jugador";
+  }
+}
+
+async function obtenerNombreUsuarioActual() {
+  const user = auth.currentUser;
+  if (!user) return "Jugador";
+  return obtenerNombreUsuario(user.uid);
+}
+
+function completarNombreMensaje(chatId, msgId, uid) {
+  if (!uid) return;
+
+  obtenerNombreUsuario(uid).then(function(nombre) {
+    const chat = chatState.chats[chatId];
+    if (!chat) return;
+
+    const msg = chat.mensajes.find(m => m.id === msgId);
+    if (!msg) return;
+
+    msg.autor = nombre;
+    const nodo = document.querySelector('[data-msg-id="' + msgId + '"]');
+    const nombreNodo = nodo ? nodo.querySelector(".chatMessageName") : null;
+    if (nombreNodo) nombreNodo.textContent = nombre;
+  });
+}
+
+function construirTituloPartida(data, pistaNombre) {
+  return [pistaNombre || data.pistaNombre || "Pista", data.fecha || "", data.hora || ""]
+    .filter(Boolean)
+    .join(" - ");
+}
+
+function actualizarTituloPartida(chatId, data) {
+  const chat = chatState.chats[chatId];
+  if (!chat) return;
+
+  chat.titulo = construirTituloPartida(data || {}, null);
+  asegurarEntradaChat(chatId);
+  actualizarTabsChat();
+
+  if (data && data.pistaId) {
+    db.collection("pistas").doc(data.pistaId).get().then(function(pistaDoc) {
+      const chatActual = chatState.chats[chatId];
+      if (!chatActual || !pistaDoc.exists) return;
+
+      const pista = pistaDoc.data() || {};
+      chatActual.titulo = construirTituloPartida(data, pista.nombre || "Pista");
+      asegurarEntradaChat(chatId);
+      actualizarTabsChat();
+      if (chatId === chatState.chatActivo) renderChatActivo();
+    });
+  }
+}
+
+function iniciarListenerChatGeneral() {
+  if (typeof chatState.listenerGeneral === "function") return;
+
+  const query = db.collection("chat_general")
+    .orderBy("at", "asc")
+    .limit(100);
+
+  chatState.listenerGeneral = query.onSnapshot({ includeMetadataChanges: true }, snapshot => {
+    const chat = chatState.chats.general;
+    if (!chat) return;
+
+    snapshot.docChanges().forEach(change => {
+      const doc = change.doc;
+      const data = doc.data({ serverTimestamps: "estimate" });
+      const isPending = doc.metadata.hasPendingWrites;
+      const atMillis = data.at ? data.at.toMillis() : Date.now();
+
+      const msgObj = {
+        id: doc.id,
+        autor: data.n || "Jugador",
+        texto: data.t || "",
+        at_val: atMillis,
+        hora: data.at ? new Date(atMillis).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) : "...",
+        propio: data.u === auth.currentUser?.uid
+      };
+      if ((!data.n || data.n === "Jugador") && data.u) {
+        completarNombreMensaje("general", doc.id, data.u);
+      }
+
+      if (change.type === "added" || change.type === "modified") {
+        const idx = chat.mensajes.findIndex(m => m.id === doc.id);
+        if (idx > -1) chat.mensajes[idx] = msgObj;
+        else chat.mensajes.push(msgObj);
+
+        if (!isPending && change.type === "added" && data.u !== auth.currentUser?.uid) {
+          if (chatState.chatActivo !== "general" || !estaSeccionChatAbierta()) marcarChatNoLeido("general");
+        }
+      } else if (change.type === "removed") {
+        chat.mensajes = chat.mensajes.filter(m => m.id !== doc.id);
+        const el = document.querySelector('[data-msg-id="' + doc.id + '"]');
+        if (el) el.remove();
+      }
+    });
+
+    chat.mensajes.sort((a, b) => (a.at_val || 0) - (b.at_val || 0) || a.id.localeCompare(b.id));
+
+    if (chatState.chatActivo === "general") renderChatActivo();
+    actualizarTabsChat();
+    actualizarAvisoMenuChat();
+  }, error => {
+    console.error("[CHAT] Listener general error:", error);
+  });
+}
+
+function limpiarListenerChatGeneral() {
+  if (typeof chatState.listenerGeneral === "function") {
+    chatState.listenerGeneral();
+  }
+  chatState.listenerGeneral = null;
+}
+
 function crearChatPartidaDesdeDoc(doc) {
   const data = doc.data() || {};
 
@@ -122,7 +278,7 @@ function crearChatPartidaDesdeDoc(doc) {
 
   if (!chatState.chats[chatId]) {
     chatState.chats[chatId] = {
-      titulo: "Chat " + (data.fecha || ""),
+      titulo: construirTituloPartida(data, null),
       tipo: "partida",
       estado: data.lastMessage || "Chat de partida",
       noLeidos: chatId !== chatState.chatActivo,
@@ -130,10 +286,12 @@ function crearChatPartidaDesdeDoc(doc) {
       mensajes: []
     };
   } else {
-    chatState.chats[chatId].titulo = "Chat " + (data.fecha || "");
+    chatState.chats[chatId].titulo = construirTituloPartida(data, null);
     chatState.chats[chatId].estado = data.lastMessage || "Chat de partida";
     chatState.chats[chatId].oculto = false;
   }
+
+  actualizarTituloPartida(chatId, data);
 
   asegurarEntradaChat(chatId);
 
@@ -143,7 +301,7 @@ function crearChatPartidaDesdeDoc(doc) {
     gestionarListenerChat(chatId, query);
   }
 
-  if (chatId !== chatState.chatActivo) {
+  if (chatId !== chatState.chatActivo || !estaSeccionChatAbierta()) {
     marcarChatNoLeido(chatId);
   }
 
@@ -152,13 +310,17 @@ function crearChatPartidaDesdeDoc(doc) {
 
 function procesarPartidasChat(snapshot) {
   snapshot.docChanges().forEach(function(change) {
-    if (change.type === "removed") return;
+    if (change.type === "removed") {
+      eliminarChatLocal(change.doc.id);
+      return;
+    }
     crearChatPartidaDesdeDoc(change.doc);
   });
 }
 
 function iniciarListenersChatsPartidas(uid) {
   if (!uid) return;
+  iniciarListenerChatGeneral();
   if (chatState.uidPartidas === uid && chatState.listenersPartidas.length > 0) return;
 
   limpiarListenersPartidas();
@@ -183,6 +345,31 @@ function limpiarListenersPartidas() {
   });
   chatState.listenersPartidas = [];
   chatState.uidPartidas = null;
+}
+
+function eliminarChatLocal(chatId) {
+  if (typeof chatState.listeners[chatId] === "function") {
+    chatState.listeners[chatId]();
+    delete chatState.listeners[chatId];
+  }
+
+  delete chatState.chats[chatId];
+
+  document.querySelectorAll('#chat [data-chat-tab="' + chatId + '"]').forEach(function(el) {
+    el.remove();
+  });
+
+  if (chatState.ultimoChatRenderizado === chatId) chatState.ultimoChatRenderizado = null;
+
+  if (chatState.chatActivo === chatId) {
+    chatState.chatActivo = "general";
+    const mensajes = document.getElementById("chatMensajes");
+    if (mensajes) mensajes.replaceChildren();
+  }
+
+  actualizarTabsChat();
+  renderChatActivo();
+  actualizarAvisoMenuChat();
 }
 
 function actualizarTabsChat() {
@@ -249,7 +436,16 @@ function asegurarEntradaChat(chatId) {
   }
 
   const recientes = document.getElementById("chatRecientes");
-  if (recientes && !recientes.querySelector('[data-chat-tab="' + chatId + '"]')) {
+  if (recientes) {
+    const existente = recientes.querySelector('[data-chat-tab="' + chatId + '"]');
+    if (existente) {
+      const tituloExistente = existente.querySelector("span");
+      const subtituloExistente = existente.querySelector("small");
+      if (tituloExistente) tituloExistente.textContent = chat.titulo || "Chat";
+      if (subtituloExistente) subtituloExistente.textContent = chat.tipo === "partida" ? "Chat de partida" : "Chat";
+      return;
+    }
+
     const item = document.createElement("button");
     item.type = "button";
     item.className = "chatRecentItem";
@@ -418,6 +614,9 @@ function gestionarListenerChat(chatId, query) {
         hora: data.at ? new Date(atMillis).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "...",
         propio: data.u === auth.currentUser?.uid
       };
+      if ((!data.n || data.n === "Jugador") && data.u) {
+        completarNombreMensaje(chatId, doc.id, data.u);
+      }
 
       if (change.type === "added" || change.type === "modified") {
         const idx = chat.mensajes.findIndex(m => m.id === doc.id);
@@ -426,7 +625,7 @@ function gestionarListenerChat(chatId, query) {
         
         // Solo marcar no leído si NO es un envío local pendiente y NO es el chat activo
         if (!isPending && change.type === "added" && data.u !== auth.currentUser?.uid) {
-          if (chatId !== chatState.chatActivo) marcarChatNoLeido(chatId);
+          if (chatId !== chatState.chatActivo || !estaSeccionChatAbierta()) marcarChatNoLeido(chatId);
         }
       } else if (change.type === "removed") {
         chat.mensajes = chat.mensajes.filter(m => m.id !== doc.id);
@@ -481,18 +680,7 @@ window.eliminarChatTotal = async function(chatId) {
     return false;
   }
 
-  // 3. Limpiar estado local
-  delete chatState.chats[chatId];
-  if (chatState.ultimoChatRenderizado === chatId) chatState.ultimoChatRenderizado = null;
-  
-  if (chatState.chatActivo === chatId) {
-    chatState.chatActivo = "general";
-    const msgsEl = document.getElementById("chatMensajes");
-    if (msgsEl) msgsEl.replaceChildren();
-  }
-
-  actualizarTabsChat();
-  renderChatActivo();
+  eliminarChatLocal(chatId);
   return true;
 };
 
@@ -506,6 +694,7 @@ async function prepararEnvioChat() {
   const chatId = chatState.chatActivo;
   const user = auth.currentUser;
   if (!user || !chatState.chats[chatId]) return;
+  const nombre = await obtenerNombreUsuarioActual();
 
   if (chatState.chats[chatId].tipo === "partida" && chatId !== "partida-demo") {
     try {
@@ -515,7 +704,7 @@ async function prepararEnvioChat() {
 
       batch.set(msgRef, {
         u: user.uid,
-        n: user.displayName || "Jugador",
+        n: nombre,
         t: texto,
         at: firebase.firestore.FieldValue.serverTimestamp(),
         type: "text"
@@ -531,11 +720,24 @@ async function prepararEnvioChat() {
       console.error("[CHAT] Error enviando mensaje:", e);
       return;
     }
+  } else if (chatId === "general") {
+    try {
+      await db.collection("chat_general").add({
+        u: user.uid,
+        n: nombre,
+        t: texto,
+        at: firebase.firestore.FieldValue.serverTimestamp(),
+        type: "text"
+      });
+    } catch (e) {
+      console.error("[CHAT] Error enviando mensaje general:", e);
+      return;
+    }
   } else {
     chatState.chats[chatId].mensajes = chatState.chats[chatId].mensajes || [];
     chatState.chats[chatId].mensajes.push({
       id: "local_" + Date.now(),
-      autor: user.displayName || "Jugador",
+      autor: nombre,
       texto: texto,
       hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
       propio: true
@@ -548,11 +750,12 @@ async function prepararEnvioChat() {
 
 function marcarChatNoLeido(chatId) {
   if (!chatState.chats[chatId]) return;
-  if (chatId === chatState.chatActivo) return;
+  if (chatId === chatState.chatActivo && estaSeccionChatAbierta()) return;
 
   chatState.chats[chatId].noLeidos = true;
   chatState.chats[chatId].oculto = false; // Reaparece si estaba cerrada
   actualizarTabsChat();
+  actualizarAvisoMenuChat();
 }
 
 window.abrirChatPartida = function(id, fecha) {
@@ -565,6 +768,11 @@ window.abrirChatPartida = function(id, fecha) {
       oculto: false
     };
   }
+  db.collection("partidas").doc(id).get().then(function(doc) {
+    if (doc.exists && chatState.chats[id]) {
+      actualizarTituloPartida(id, doc.data() || {});
+    }
+  });
   asegurarEntradaChat(id);
   cambiarChatTab(id);
   mostrar("chat");
@@ -582,6 +790,7 @@ function limpiarListenersChat() {
 function limpiarTodoChat() {
   limpiarListenersChat();
   limpiarListenersPartidas();
+  limpiarListenerChatGeneral();
 }
 
 window.initChat = initChat;
@@ -590,6 +799,7 @@ window.marcarChatNoLeido = marcarChatNoLeido;
 window.limpiarListenersChat = limpiarListenersChat;
 window.limpiarTodoChat = limpiarTodoChat;
 window.iniciarListenersChatsPartidas = iniciarListenersChatsPartidas;
+window.notificarEntradaSeccionChat = notificarEntradaSeccionChat;
 window.cerrarChatTab = cerrarChatTab;
 window.gestionarListenerChat = gestionarListenerChat;
 
