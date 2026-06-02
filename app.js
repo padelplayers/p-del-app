@@ -30,6 +30,9 @@ let otroUid = null;
 
 let esAdmin = false;
 
+let unsubscribePistas = null;
+
+
 // FUNCIONES GLOBALES
 
 window.subirImagen = async function(ruta, archivo) {
@@ -56,6 +59,21 @@ async function borrarImagen(url) {
 
 }
 
+
+auth.onAuthStateChanged(async user => {
+  if (user) {
+
+    const doc = await db.collection("usuarios").doc(user.uid).get();
+    const data = doc.data();
+
+    esAdmin = data && data.rol === "admin";
+
+    mostrar("menu");
+
+  } else {
+    mostrar("login");
+  }
+});
 
 function normalizarTexto(texto){
   return texto
@@ -215,6 +233,7 @@ function logout(){
     window.limpiarTodoChat();
   }
   auth.signOut();
+auth.signOut();
 }
 
 auth.onAuthStateChanged(async user => {
@@ -256,6 +275,9 @@ auth.onAuthStateChanged(async user => {
   if (typeof window.limpiarTodoChat === "function") {
     window.limpiarTodoChat();
   }
+  if (typeof window.limpiarListenersChat === "function") {
+    window.limpiarListenersChat();
+  }
   mostrar("login");
 
 });
@@ -287,13 +309,21 @@ if (inputFotoGlobal) {
       const docRef = db.collection("usuarios").doc(user.uid);
       const doc = await docRef.get();
       const data = doc.data();
+    const docRef = db.collection("usuarios").doc(user.uid);
+    const doc = await docRef.get();
+    const data = doc.data();
 
       if (data && data.fotoPerfil && data.fotoPerfil.includes("firebasestorage")) {
         await borrarImagen(data.fotoPerfil);
       }
+    if (data && data.fotoPerfil && data.fotoPerfil.includes("firebasestorage")) {
+      await borrarImagen(data.fotoPerfil);
+    }
 
       const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
       const url = await subirImagen(ruta, file);
+    const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
+    const url = await subirImagen(ruta, file);
 
       await docRef.update({
         fotoPerfil: url
@@ -301,6 +331,9 @@ if (inputFotoGlobal) {
     } finally {
       URL.revokeObjectURL(previewURL);
     }
+    await docRef.update({
+      fotoPerfil: url
+    });
 
   });
 }
@@ -375,6 +408,17 @@ function mostrar(seccion){
     actual.style.display = "block";
   }
 
+  if (abriendoChat && chatPantalla) {
+    requestAnimationFrame(function() {
+      const layout = chatPantalla.querySelector(".chatLayout");
+      const main = chatPantalla.querySelector(".chatMain");
+      const messages = chatPantalla.querySelector(".chatMessages");
+      const composer = chatPantalla.querySelector(".chatComposer");
+
+      
+    });
+  }
+
   if (seccion === "crearPartida") {
 
   const tipoNivel = document.getElementById("nivelTipo");
@@ -396,6 +440,8 @@ function mostrar(seccion){
     opcionDesde.value = "";
     opcionDesde.textContent = "Desde";
     desde.appendChild(opcionDesde);
+    let htmlDesde = '<option value="">Desde</option>';
+    let htmlHasta = '<option value="">Hasta</option>';
 
     const opcionHasta = document.createElement("option");
     opcionHasta.value = "";
@@ -408,12 +454,17 @@ function mostrar(seccion){
       optDesde.value = String(val);
       optDesde.textContent = String(val);
       desde.appendChild(optDesde);
+      htmlDesde += '<option value="' + val + '">' + val + '</option>';
+      htmlHasta += '<option value="' + val + '">' + val + '</option>';
+    }
 
       const optHasta = document.createElement("option");
       optHasta.value = String(val);
       optHasta.textContent = String(val);
       hasta.appendChild(optHasta);
     }
+    desde.innerHTML = htmlDesde;
+    hasta.innerHTML = htmlHasta;
   }
 }
 
@@ -452,7 +503,7 @@ if (seccion === "buscarPartida") {
 if (btnNueva) {
   btnNueva.style.display = window.modoSeleccionPista ? "none" : "inline-block";
 }
-}
+s
 
 function abrirTest(){
   alert("Elige bien tu nivel. No podrás cambiarlo después.");
