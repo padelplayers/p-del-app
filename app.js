@@ -309,14 +309,11 @@ if (inputFotoGlobal) {
       const docRef = db.collection("usuarios").doc(user.uid);
       const doc = await docRef.get();
       const data = doc.data();
-    const doc = await docRef.get();
-    const data = doc.data();
-
+    
       if (data && data.fotoPerfil && data.fotoPerfil.includes("firebasestorage")) {
         await borrarImagen(data.fotoPerfil);
       }
-    if (data && data.fotoPerfil && data.fotoPerfil.includes("firebasestorage")) {
-      await borrarImagen(data.fotoPerfil);
+    
     }
 
       const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
