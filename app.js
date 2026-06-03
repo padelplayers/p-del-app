@@ -455,7 +455,7 @@ function mostrar(seccion){
     desde.innerHTML = htmlDesde;
     hasta.innerHTML = htmlHasta;
   }
-}
+
 
 if (seccion === "pistas"){
   cargarPistas();
@@ -491,6 +491,7 @@ if (seccion === "buscarPartida") {
 
 if (btnNueva) {
   btnNueva.style.display = window.modoSeleccionPista ? "none" : "inline-block";
+}
 }
 
 function abrirTest(){
