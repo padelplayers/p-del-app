@@ -309,7 +309,6 @@ if (inputFotoGlobal) {
       const docRef = db.collection("usuarios").doc(user.uid);
       const doc = await docRef.get();
       const data = doc.data();
-    const docRef = db.collection("usuarios").doc(user.uid);
     const doc = await docRef.get();
     const data = doc.data();
 
