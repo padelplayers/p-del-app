@@ -442,6 +442,13 @@ function cargarPartidas() {
           parseInt(h[0]),
           parseInt(h[1])
         );
+        console.log("[cargarPartidas] datos", {
+          id: doc.id,
+          fecha: p.fecha,
+          hora: p.hora,
+          fechaPartida,
+          ahoraGlobal
+        });
       }
 
       const ahora = new Date();
@@ -497,8 +504,13 @@ function cargarPartidas() {
         nodo: crearBloquePartida(doc.id, p, nivelTexto, mostrarSalir, fondo)
       };
 
-      if (fechaPartida >= ahoraGlobal) proximas.push(item);
-      else pendientes.push(item);
+      if (fechaPartida >= ahoraGlobal) {
+        console.log("[cargarPartidas] PROXIMA", doc.id);
+        proximas.push(item);
+      } else {
+        console.log("[cargarPartidas] PENDIENTE", doc.id);
+        pendientes.push(item);
+      }
     });
 
     let modo = window.modoPartidas;
