@@ -473,7 +473,9 @@ if (!window.vieneDeBusqueda) {
 
 window.vieneDeBusqueda = false;
 
+console.log("ENTRANDO EN PARTIDAS");
 cambiarModoPartidas("proximas");
+console.log("CAMBIAR MODO EJECUTADO");
 }
 
 if (seccion === "buscarPartida") {
@@ -490,7 +492,6 @@ if (seccion === "buscarPartida") {
 if (btnNueva) {
   btnNueva.style.display = window.modoSeleccionPista ? "none" : "inline-block";
 }
-s
 
 function abrirTest(){
   alert("Elige bien tu nivel. No podrás cambiarlo después.");
