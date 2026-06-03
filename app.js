@@ -457,7 +457,6 @@ function mostrar(seccion){
   }
 }
 
-
 if (seccion === "pistas"){
   cargarPistas();
 }
