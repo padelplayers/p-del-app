@@ -457,7 +457,8 @@ function mostrar(seccion){
   }
 }
 
- if (seccion === "pistas"){
+console.log("PRUEBA PISTAS", typeof seccion, seccion);
+if (seccion === "pistas"){
   cargarPistas();
 }
 
