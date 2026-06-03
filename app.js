@@ -313,13 +313,9 @@ if (inputFotoGlobal) {
       if (data && data.fotoPerfil && data.fotoPerfil.includes("firebasestorage")) {
         await borrarImagen(data.fotoPerfil);
       }
-    
-    }
 
       const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
       const url = await subirImagen(ruta, file);
-    const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
-    const url = await subirImagen(ruta, file);
 
       await docRef.update({
         fotoPerfil: url
@@ -327,9 +323,6 @@ if (inputFotoGlobal) {
     } finally {
       URL.revokeObjectURL(previewURL);
     }
-    await docRef.update({
-      fotoPerfil: url
-    });
 
   });
 }
