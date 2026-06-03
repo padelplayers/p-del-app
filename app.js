@@ -467,15 +467,13 @@ if (seccion === "crearPartida") {
 
 if (seccion === "partidas") {
   
-  window.modoPartidas = "proximas";
-
 if (!window.vieneDeBusqueda) {
   delete window.filtrosPartidas;
 }
 
 window.vieneDeBusqueda = false;
 
-cargarPartidas();
+cambiarModoPartidas("proximas");
 }
 
 if (seccion === "buscarPartida") {
