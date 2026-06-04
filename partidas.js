@@ -170,29 +170,55 @@ function crearPartida() {
 
   const user = firebase.auth().currentUser;
 
-  db.collection("partidas").add({
-    pistaId: pistaId,
-    fecha: fecha,
-    hora: hora,
-    tipo: tipo,
-    genero: genero,
-    creador: user.uid,
-    creadorNombre: user.displayName || "Jugador",
-    nivel: nivelTipo === "cualquiera" ? "cualquiera" : {
-      desde: nivelDesde,
-      hasta: nivelHasta
-    },
-    jugadores: [user.uid],
-    reservas: [],
-    estado: "abierta",
-    creadaPor: user.uid,
-    creadaAt: new Date()
-  })
-  .then(() => {
-    document.getElementById("pistaSeleccionada").innerText = "Ninguna pista";
-    document.getElementById("pistaSeleccionada").dataset.id = "";
-    mostrar("partidas");
-    cargarPartidas();
+  db.collection("usuarios").doc(user.uid).get().then(function(docUser) {
+    if (!docUser.exists) return;
+
+    const datosUsuario = docUser.data() || {};
+    const sexoUsuario = datosUsuario.sexo;
+    const nivelUsuario = parseFloat(datosUsuario.nivel);
+
+    if (
+      (genero === "masculino" && sexoUsuario !== "hombre") ||
+      (genero === "femenino" && sexoUsuario !== "mujer")
+    ) {
+      alert("No puedes crear una partida de otro género");
+      return;
+    }
+
+    if (nivelTipo === "rango") {
+      const desdeNum = parseFloat(nivelDesde);
+      const hastaNum = parseFloat(nivelHasta);
+
+      if (isNaN(nivelUsuario) || nivelUsuario < desdeNum || nivelUsuario > hastaNum) {
+        alert("No puedes crear una partida fuera de tu nivel");
+        return;
+      }
+    }
+
+    db.collection("partidas").add({
+      pistaId: pistaId,
+      fecha: fecha,
+      hora: hora,
+      tipo: tipo,
+      genero: genero,
+      creador: user.uid,
+      creadorNombre: user.displayName || "Jugador",
+      nivel: nivelTipo === "cualquiera" ? "cualquiera" : {
+        desde: nivelDesde,
+        hasta: nivelHasta
+      },
+      jugadores: [user.uid],
+      reservas: [],
+      estado: "abierta",
+      creadaPor: user.uid,
+      creadaAt: new Date()
+    })
+    .then(() => {
+      document.getElementById("pistaSeleccionada").innerText = "Ninguna pista";
+      document.getElementById("pistaSeleccionada").dataset.id = "";
+      mostrar("partidas");
+      cargarPartidas();
+    });
   });
 }
 
@@ -677,7 +703,9 @@ function unirseAPartida(slotId) {
     db.collection("usuarios").doc(user.uid).get().then(function(docUser) {
       if (!docUser.exists) return;
 
-      const sexoUsuario = (docUser.data() || {}).sexo;
+      const datosUsuario = docUser.data() || {};
+      const sexoUsuario = datosUsuario.sexo;
+      const nivelUsuario = parseFloat(datosUsuario.nivel);
       const generoPartida = p.genero;
 
       console.log("VALIDACION GENERO");
@@ -691,6 +719,16 @@ function unirseAPartida(slotId) {
         console.log("BLOQUEADO POR GENERO");
         alert("No puedes unirte a esta partida por restricción de género");
         return;
+      }
+
+      if (p.nivel && typeof p.nivel === "object") {
+        const desdeNum = parseFloat(p.nivel.desde);
+        const hastaNum = parseFloat(p.nivel.hasta);
+
+        if (isNaN(nivelUsuario) || nivelUsuario < desdeNum || nivelUsuario > hastaNum) {
+          alert("No puedes unirte a esta partida por restricción de nivel");
+          return;
+        }
       }
 
       let jugadores = p.jugadores || [];
