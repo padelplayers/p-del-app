@@ -445,7 +445,6 @@ function mostrar(seccion){
       desde.appendChild(optDesde);
       htmlDesde += '<option value="' + val + '">' + val + '</option>';
       htmlHasta += '<option value="' + val + '">' + val + '</option>';
-    }
 
       const optHasta = document.createElement("option");
       optHasta.value = String(val);
