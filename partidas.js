@@ -738,20 +738,54 @@ function unirseAPartida(slotId) {
 
       if (jugadores.includes(user.uid) || reservas.includes(user.uid)) return;
 
-      if (!esReserva) {
-        if (jugadores.length < 4) jugadores.push(user.uid);
-        else reservas.push(user.uid);
-      } else {
-        if (reservas.length < 2) reservas.push(user.uid);
+      const completarEntrada = function() {
+        if (!esReserva) {
+          if (jugadores.length < 4) jugadores.push(user.uid);
+          else reservas.push(user.uid);
+        } else {
+          if (reservas.length < 2) reservas.push(user.uid);
+        }
+
+        ref.update({
+          jugadores: jugadores,
+          reservas: reservas
+        }).then(function() {
+          console.log("[unirse] UPDATE OK");
+          cargarPartidas();
+        });
+      };
+
+      if (generoPartida === "mixto") {
+        const participantes = jugadores.concat(reservas);
+
+        Promise.all(participantes.map(function(uid) {
+          return db.collection("usuarios").doc(uid).get();
+        })).then(function(docsUsuarios) {
+          let hombres = 0;
+          let mujeres = 0;
+
+          docsUsuarios.forEach(function(docParticipante) {
+            if (!docParticipante.exists) return;
+
+            const sexoParticipante = (docParticipante.data() || {}).sexo;
+            if (sexoParticipante === "hombre") hombres++;
+            if (sexoParticipante === "mujer") mujeres++;
+          });
+
+          if (
+            (sexoUsuario === "hombre" && hombres >= 2) ||
+            (sexoUsuario === "mujer" && mujeres >= 2)
+          ) {
+            alert("Esta partida es mixta. Debe haber un máximo de 2 hombres y 2 mujeres.");
+            return;
+          }
+
+          completarEntrada();
+        });
+        return;
       }
 
-      ref.update({
-        jugadores: jugadores,
-        reservas: reservas
-      }).then(function() {
-        console.log("[unirse] UPDATE OK");
-        cargarPartidas();
-      });
+      completarEntrada();
     });
   });
 }
