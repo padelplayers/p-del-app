@@ -455,6 +455,7 @@ function mostrar(seccion){
     hasta.innerHTML = htmlHasta;
   }
 
+ }
 
 if (seccion === "pistas"){
   cargarPistas();
