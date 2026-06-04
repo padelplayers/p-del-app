@@ -680,10 +680,15 @@ function unirseAPartida(slotId) {
       const sexoUsuario = (docUser.data() || {}).sexo;
       const generoPartida = p.genero;
 
+      console.log("VALIDACION GENERO");
+      console.log("sexoUsuario=", sexoUsuario);
+      console.log("generoPartida=", generoPartida);
+
       if (
         (generoPartida === "masculino" && sexoUsuario !== "hombre") ||
         (generoPartida === "femenino" && sexoUsuario !== "mujer")
       ) {
+        console.log("BLOQUEADO POR GENERO");
         alert("No puedes unirte a esta partida por restricción de género");
         return;
       }
