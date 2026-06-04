@@ -262,20 +262,21 @@ async function eliminarPartidaConChat(partidaId) {
 
 function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   const bloque = document.createElement("div");
-  bloque.style.cssText = "border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:10px; background:" + fondo + ";";
+  bloque.className = "partidaCard";
+  bloque.style.background = fondo;
 
   const cabecera = document.createElement("div");
-  cabecera.style.paddingTop = "8px";
+  cabecera.className = "partidaCabecera";
 
   const filaTop = document.createElement("div");
-  filaTop.style.cssText = "display:flex; justify-content:space-between; align-items:center;";
+  filaTop.className = "partidaFilaTop";
 
   const fecha = textoNodo((p.fecha || "") + " - " + (p.hora || ""));
-  fecha.style.cssText = "font-size:13px; color:#666;";
+  fecha.className = "partidaFecha";
 
   const chatBtn = document.createElement("button");
   chatBtn.type = "button";
-  chatBtn.style.cssText = "cursor:pointer; display:flex; align-items:center; gap:6px; font-size:12px; background:#E3F2FD; padding:4px 8px; border-radius:12px; width:auto; margin:0;";
+  chatBtn.className = "partidaChatBtn";
   chatBtn.textContent = "Chat partida";
   chatBtn.onclick = function() { abrirChatPartida(id, p.fecha || ""); };
 
@@ -284,17 +285,17 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
 
   const pistaFila = document.createElement("button");
   pistaFila.type = "button";
-  pistaFila.style.cssText = "cursor:pointer; display:flex; align-items:center; gap:6px; width:auto; margin:6px 0 0; padding:0; background:transparent; color:inherit;";
+  pistaFila.className = "partidaPistaBtn";
   pistaFila.onclick = function() { verPista(p.pistaId); };
 
   const pistaTexto = document.createElement("span");
   pistaTexto.id = "pista_" + id;
-  pistaTexto.style.fontWeight = "500";
+  pistaTexto.className = "partidaPistaTexto";
   pistaTexto.textContent = "Cargando pista...";
   pistaFila.appendChild(pistaTexto);
 
   const metaFila = document.createElement("div");
-  metaFila.style.cssText = "display:flex; justify-content:space-between; font-size:13px; color:#666; margin-top:4px;";
+  metaFila.className = "partidaMeta";
   metaFila.appendChild(textoNodo((p.tipo || "ranking") + " - " + nivelTexto + " - " + (p.genero || "")));
 
   const creador = textoNodo("Creador: -");
@@ -307,10 +308,10 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
 
   if (mostrarSalir) {
     const salirWrap = document.createElement("div");
-    salirWrap.style.cssText = "margin-top:6px; text-align:right;";
+    salirWrap.className = "partidaAcciones";
 
     const salir = document.createElement("button");
-    salir.style.cssText = "background:#e53935; color:white; border:none; padding:6px 10px; border-radius:6px;";
+    salir.className = "partidaSalirBtn";
     salir.textContent = "Salir";
     salir.onclick = function() { salirDePartida(id); };
 
@@ -321,11 +322,11 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   bloque.appendChild(cabecera);
 
   const jugadoresWrap = document.createElement("div");
-  jugadoresWrap.style.cssText = "text-align:center; margin-top:10px;";
+  jugadoresWrap.className = "partidaJugadores";
   const jugadoresTitulo = textoNodo("Jugadores:");
-  jugadoresTitulo.style.fontWeight = "bold";
+  jugadoresTitulo.className = "partidaSeccionTitulo";
   const jugadoresGrid = document.createElement("div");
-  jugadoresGrid.style.cssText = "display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; justify-items:center;";
+  jugadoresGrid.className = "partidaJugadoresGrid";
 
   for (let i = 1; i <= 4; i++) {
     const slot = document.createElement("div");
@@ -338,11 +339,11 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   jugadoresWrap.appendChild(jugadoresGrid);
 
   const reservasWrap = document.createElement("div");
-  reservasWrap.style.cssText = "text-align:center; margin-top:10px;";
+  reservasWrap.className = "partidaReservas";
   const reservasTitulo = textoNodo("Reservas");
-  reservasTitulo.style.fontWeight = "bold";
+  reservasTitulo.className = "partidaSeccionTitulo";
   const reservasGrid = document.createElement("div");
-  reservasGrid.style.cssText = "display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; justify-items:center;";
+  reservasGrid.className = "partidaReservasGrid";
 
   for (let i = 1; i <= 2; i++) {
     const slot = document.createElement("div");

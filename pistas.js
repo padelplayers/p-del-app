@@ -217,22 +217,25 @@ async function cargarPistas() {
         imagen.src = data.imagen || "";
         div.appendChild(imagen);
 
+        const info = document.createElement("div");
+        info.className = "cardPistaInfo";
+
         const nombre = document.createElement("strong");
         nombre.textContent = data.nombre || "";
-        div.appendChild(nombre);
+        info.appendChild(nombre);
 
         if (data.verificada) {
           const verificada = document.createElement("span");
           verificada.className = "verificada";
           verificada.textContent = " Verificada";
-          div.appendChild(verificada);
+          info.appendChild(verificada);
         }
 
-        div.appendChild(document.createElement("br"));
-        div.appendChild(crearTextoPista(data.tipo || ""));
-        div.appendChild(crearTextoPista((data.localidad || "") + (data.direccion ? " | " + data.direccion : "")));
-        div.appendChild(crearTextoPista("Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0)));
-        div.appendChild(crearTextoPista(
+        info.appendChild(document.createElement("br"));
+        info.appendChild(crearTextoPista(data.tipo || ""));
+        info.appendChild(crearTextoPista((data.localidad || "") + (data.direccion ? " | " + data.direccion : "")));
+        info.appendChild(crearTextoPista("Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0)));
+        info.appendChild(crearTextoPista(
           (data.precioManana || 0) + " EUR manana | " +
           (data.precioTarde || 0) + " EUR tarde | " +
           (data.precioFestivo || 0) + " EUR finde/festivo"
@@ -249,9 +252,9 @@ async function cargarPistas() {
         } else {
           reserva.textContent = "Tel: " + (data.reserva || "No disponible");
         }
-        div.appendChild(reserva);
+        info.appendChild(reserva);
 
-        div.appendChild(crearTextoPista("Pago: " +
+        info.appendChild(crearTextoPista("Pago: " +
           (data.formaPago === "reserva" ? "Al reservar" :
            data.formaPago === "pista" ? "En pista" :
            "No se paga")
@@ -263,7 +266,7 @@ async function cargarPistas() {
           mapaWrap.appendChild(crearBotonPista("Como llegar", "btnBlue", function() {
             abrirMapa(data.lat, data.lng);
           }));
-          div.appendChild(mapaWrap);
+          info.appendChild(mapaWrap);
         }
 
         if (esAdmin) {
@@ -282,14 +285,16 @@ async function cargarPistas() {
             }));
           }
 
-          div.appendChild(adminWrap);
+          info.appendChild(adminWrap);
         }
 
         if (window.modoSeleccionPista) {
-          div.appendChild(crearBotonPista("Anadir a partida", "btnBlue", function() {
+          info.appendChild(crearBotonPista("Anadir a partida", "btnBlue", function() {
             seleccionarPistaPartida(doc.id, data.nombre || "");
           }));
         }
+
+        div.appendChild(info);
 
         fragment.appendChild(div);
       });

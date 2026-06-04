@@ -1034,13 +1034,6 @@ button[onclick*="mostrar('menu')"]{
   font-weight: bold;
 }
 
-.cardPista img {
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
-  display: block;
-}
-
 .crearPartidaCampo {
   width: 92%;
   margin: 4px auto 8px;
@@ -1060,6 +1053,113 @@ button[onclick*="mostrar('menu')"]{
   box-sizing: border-box;
 }
 
+.partidaCard {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.partidaCabecera {
+  padding-top: 8px;
+}
+
+.partidaFilaTop,
+.partidaMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.partidaFecha,
+.partidaMeta {
+  font-size: 13px;
+  color: #666;
+}
+
+.partidaChatBtn {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  background: #E3F2FD;
+  padding: 4px 8px;
+  border-radius: 12px;
+  width: auto;
+  margin: 0;
+}
+
+.partidaPistaBtn {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  margin: 6px 0 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.partidaPistaTexto,
+.partidaSeccionTitulo {
+  font-weight: bold;
+}
+
+.partidaMeta {
+  margin-top: 4px;
+}
+
+.partidaAcciones {
+  margin-top: 6px;
+  text-align: right;
+}
+
+.partidaSalirBtn {
+  background: #e53935;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.partidaJugadores,
+.partidaReservas {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.partidaJugadoresGrid,
+.partidaReservasGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  justify-items: center;
+}
+
+.cardPista {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.cardPista img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+.cardPistaInfo {
+  padding: 12px;
+  box-sizing: border-box;
+}
+
 @media (min-width:761px) {
   #partidas {
     max-width: 960px;
@@ -1071,29 +1171,30 @@ button[onclick*="mostrar('menu')"]{
     margin: 0 auto;
   }
 
-  #listaPartidas > div {
-    padding: 14px !important;
-    margin: 0 auto 12px !important;
+  .partidaCard {
+    padding: 14px;
+    margin: 0 auto 12px;
     text-align: left;
   }
 
-  #listaPartidas div[style*="grid-template-columns"] {
-    grid-template-columns: repeat(2, 88px) !important;
-    justify-content: center !important;
-    gap: 12px !important;
+  .partidaJugadoresGrid,
+  .partidaReservasGrid {
+    grid-template-columns: repeat(2, 88px);
+    justify-content: center;
+    gap: 12px;
   }
 
-  #listaPartidas .jugadorSlot {
+  .partidaCard .jugadorSlot {
     width: 88px;
   }
 
   #pistas {
-    max-width: 1080px;
+    max-width: 1000px;
     margin: 16px auto;
   }
 
   #listaPistas {
-    max-width: 940px;
+    max-width: 1000px;
     margin: 0 auto;
   }
 
@@ -1103,26 +1204,29 @@ button[onclick*="mostrar('menu')"]{
     column-gap: 22px;
     align-items: start;
     text-align: left;
-    max-width: 900px;
+    max-width: 1000px;
     margin: 0 auto 16px;
     padding: 16px;
     box-sizing: border-box;
+    overflow: visible;
   }
 
   .cardPista img {
-    grid-column: 1;
-    grid-row: 1 / span 12;
     width: 320px;
     height: 220px;
     border-radius: 8px;
   }
 
-  .cardPista strong {
+  .cardPistaInfo {
+    padding: 0;
+  }
+
+  .cardPistaInfo strong {
     font-size: 20px;
     line-height: 1.2;
   }
 
-  .cardPista button {
+  .cardPistaInfo button {
     width: auto;
     min-width: 150px;
     margin: 8px 8px 0 0;
