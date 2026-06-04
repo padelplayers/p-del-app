@@ -983,8 +983,15 @@ Añadir pista
     Elegir pista
   </button>
 
-  <input type="date" id="fechaPartida" lang="en-CA">
-  <input type="time" id="horaPartida">
+  <div class="crearPartidaCampo">
+    <label for="fechaPartida">Fecha</label>
+    <input type="date" id="fechaPartida" lang="en-CA">
+  </div>
+
+  <div class="crearPartidaCampo">
+    <label for="horaPartida">Hora</label>
+    <input type="time" id="horaPartida">
+  </div>
 
   <select id="tipoPartida">
     <option value="">Tipo de partida</option>

@@ -1041,6 +1041,94 @@ button[onclick*="mostrar('menu')"]{
   display: block;
 }
 
+.crearPartidaCampo {
+  width: 92%;
+  margin: 4px auto 8px;
+  text-align: left;
+}
+
+.crearPartidaCampo label {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+
+.crearPartidaCampo input {
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+@media (min-width:761px) {
+  #partidas {
+    max-width: 960px;
+    margin: 16px auto;
+  }
+
+  #listaPartidas {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  #listaPartidas > div {
+    padding: 14px !important;
+    margin: 0 auto 12px !important;
+    text-align: left;
+  }
+
+  #listaPartidas div[style*="grid-template-columns"] {
+    grid-template-columns: repeat(2, 88px) !important;
+    justify-content: center !important;
+    gap: 12px !important;
+  }
+
+  #listaPartidas .jugadorSlot {
+    width: 88px;
+  }
+
+  #pistas {
+    max-width: 1080px;
+    margin: 16px auto;
+  }
+
+  #listaPistas {
+    max-width: 940px;
+    margin: 0 auto;
+  }
+
+  .cardPista {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    column-gap: 22px;
+    align-items: start;
+    text-align: left;
+    max-width: 900px;
+    margin: 0 auto 16px;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  .cardPista img {
+    grid-column: 1;
+    grid-row: 1 / span 12;
+    width: 320px;
+    height: 220px;
+    border-radius: 8px;
+  }
+
+  .cardPista strong {
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
+  .cardPista button {
+    width: auto;
+    min-width: 150px;
+    margin: 8px 8px 0 0;
+  }
+}
+
 /* ===== BUSCADOR PISTAS ===== */
 #buscadorPistas {
   display: flex;
