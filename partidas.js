@@ -673,26 +673,42 @@ function unirseAPartida(slotId) {
     console.log("[unirse] documento encontrado:", doc.id);
 
     const p = doc.data();
-    let jugadores = p.jugadores || [];
-    let reservas = p.reservas || [];
-    console.log("[unirse] jugadores antes:", jugadores);
-    console.log("[unirse] reservas antes:", reservas);
 
-    if (jugadores.includes(user.uid) || reservas.includes(user.uid)) return;
+    db.collection("usuarios").doc(user.uid).get().then(function(docUser) {
+      if (!docUser.exists) return;
 
-    if (!esReserva) {
-      if (jugadores.length < 4) jugadores.push(user.uid);
-      else reservas.push(user.uid);
-    } else {
-      if (reservas.length < 2) reservas.push(user.uid);
-    }
+      const sexoUsuario = (docUser.data() || {}).sexo;
+      const generoPartida = p.genero;
 
-    ref.update({
-      jugadores: jugadores,
-      reservas: reservas
-    }).then(function() {
-      console.log("[unirse] UPDATE OK");
-      cargarPartidas();
+      if (
+        (generoPartida === "masculino" && sexoUsuario !== "hombre") ||
+        (generoPartida === "femenino" && sexoUsuario !== "mujer")
+      ) {
+        alert("No puedes unirte a esta partida por restricción de género");
+        return;
+      }
+
+      let jugadores = p.jugadores || [];
+      let reservas = p.reservas || [];
+      console.log("[unirse] jugadores antes:", jugadores);
+      console.log("[unirse] reservas antes:", reservas);
+
+      if (jugadores.includes(user.uid) || reservas.includes(user.uid)) return;
+
+      if (!esReserva) {
+        if (jugadores.length < 4) jugadores.push(user.uid);
+        else reservas.push(user.uid);
+      } else {
+        if (reservas.length < 2) reservas.push(user.uid);
+      }
+
+      ref.update({
+        jugadores: jugadores,
+        reservas: reservas
+      }).then(function() {
+        console.log("[unirse] UPDATE OK");
+        cargarPartidas();
+      });
     });
   });
 }
