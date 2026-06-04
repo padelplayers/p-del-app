@@ -659,18 +659,24 @@ function verPista(id) {
 
 function unirseAPartida(slotId) {
   const user = firebase.auth().currentUser;
+  console.log("[unirse] uid actual:", user ? user.uid : null);
   if (!user) return;
 
   const partidaId = slotId.split("_")[1];
+  console.log("[unirse] slotId:", slotId);
+  console.log("[unirse] partidaId:", partidaId);
   const esReserva = slotId.startsWith("r");
   const ref = db.collection("partidas").doc(partidaId);
 
   ref.get().then(function(doc) {
     if (!doc.exists) return;
+    console.log("[unirse] documento encontrado:", doc.id);
 
     const p = doc.data();
     let jugadores = p.jugadores || [];
     let reservas = p.reservas || [];
+    console.log("[unirse] jugadores antes:", jugadores);
+    console.log("[unirse] reservas antes:", reservas);
 
     if (jugadores.includes(user.uid) || reservas.includes(user.uid)) return;
 
@@ -685,6 +691,7 @@ function unirseAPartida(slotId) {
       jugadores: jugadores,
       reservas: reservas
     }).then(function() {
+      console.log("[unirse] UPDATE OK");
       cargarPartidas();
     });
   });
