@@ -514,33 +514,28 @@ body.chatAbierto{
     --chat-mobile-sidebar-width:62px;
   }
 
-  button:not(.chatVolver):not(.chatComposer button) {
+  button:not(.chatVolver):not(.chatComposer button):not(.partidaChatBtn) {
     width: 95%;
     margin-left: auto;
     margin-right: auto;
   }
 
   .partidaFilaTop {
-    display: grid !important;
-    grid-template-columns: auto max-content !important;
-    align-items: center !important;
-    column-gap: 8px !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
   }
 
   .partidaFilaTop .partidaFecha {
-    white-space: nowrap !important;
-    min-width: max-content !important;
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
 
-  .partidaFilaTop button.partidaChatBtn {
-    width: max-content !important;
-    min-width: 0 !important;
-    max-width: max-content !important;
-    justify-self: end !important;
-    display: inline-flex !important;
-    padding: 6px 12px !important;
-    box-sizing: border-box !important;
-    white-space: nowrap !important;
+  .partidaChatBtn {
+    width: auto;
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   body.chatAbierto{
