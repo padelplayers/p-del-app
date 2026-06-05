@@ -298,6 +298,10 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   metaFila.className = "partidaMeta";
   metaFila.appendChild(textoNodo((p.tipo || "ranking") + " - " + nivelTexto + " - " + (p.genero || "")));
 
+  const datosPistaPartida = textoNodo("");
+  datosPistaPartida.id = "datosPistaPartida_" + id;
+  metaFila.appendChild(datosPistaPartida);
+
   const creador = textoNodo("Creador: -");
   creador.id = "creador_" + id;
   metaFila.appendChild(creador);
@@ -370,6 +374,55 @@ function cargarDatosPartidaRenderizada(item) {
         const texto = (pista.nombre || "") + " - " + (pista.localidad || "");
         const el = document.getElementById("pista_" + id);
         if (el) el.innerText = texto;
+
+        const datosEl = document.getElementById("datosPistaPartida_" + id);
+        if (datosEl) {
+          const tieneIndoor = Number(pista.indoor) > 0;
+          const tieneOutdoor = Number(pista.outdoor) > 0;
+          let tipoPista = "";
+
+          if (tieneIndoor && tieneOutdoor) {
+            tipoPista = "Indoor/Outdoor";
+          } else if (tieneIndoor) {
+            tipoPista = "Indoor";
+          } else if (tieneOutdoor) {
+            tipoPista = "Outdoor";
+          }
+
+          const partesFecha = (p.fecha || "").split("-");
+          const fechaPartida = partesFecha.length === 3
+            ? new Date(Number(partesFecha[0]), Number(partesFecha[1]) - 1, Number(partesFecha[2]))
+            : null;
+          const diaSemana = fechaPartida ? fechaPartida.getDay() : null;
+          const horaPartida = parseInt((p.hora || "").split(":")[0], 10);
+          let precio = "";
+
+          if (diaSemana === 0 || diaSemana === 6) {
+            precio = pista.precioFestivo;
+          } else if (!isNaN(horaPartida) && horaPartida < 14) {
+            precio = pista.precioManana;
+          } else if (!isNaN(horaPartida)) {
+            precio = pista.precioTarde;
+          }
+
+          let precioTexto = "";
+          if (precio !== undefined && precio !== null && String(precio).trim() !== "" && /\d/.test(String(precio))) {
+            precioTexto = String(precio).trim();
+            if (precioTexto.includes("€/pers.")) {
+              precioTexto = precioTexto;
+            } else if (precioTexto.includes("€")) {
+              precioTexto = precioTexto.replace(/\s*€\s*$/, "€/pers.");
+            } else {
+              precioTexto = precioTexto + "€/pers.";
+            }
+          }
+
+          if (tipoPista && precioTexto) {
+            datosEl.innerText = tipoPista + " · " + precioTexto;
+          } else {
+            datosEl.innerText = tipoPista || precioTexto;
+          }
+        }
       }
     });
   }
