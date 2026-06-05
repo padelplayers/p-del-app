@@ -1162,22 +1162,113 @@ button[onclick*="mostrar('menu')"]{
 
 @media (min-width:761px) {
   #partidas {
-    max-width: 960px;
+    max-width: 1000px;
     margin: 16px auto;
   }
 
   #listaPartidas {
-    max-width: 760px;
+    max-width: 1000px;
     margin: 0 auto;
   }
 
   .partidaCard {
-    padding: 14px;
-    margin: 0 auto 12px;
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 22px;
+    row-gap: 8px;
+    align-items: stretch;
+    padding: 16px;
+    margin: 0 auto 14px;
     text-align: left;
   }
 
-  .partidaJugadoresGrid,
+  .partidaCabecera {
+    display: flex;
+    flex-direction: column;
+    grid-row: 1 / span 2;
+    min-height: 100%;
+    padding-top: 0;
+  }
+
+  .partidaFilaTop {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .partidaFecha {
+    color: #1565C0;
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 1.25;
+  }
+
+  .partidaChatBtn {
+    flex: 0 0 auto;
+    padding: 5px 9px;
+    border-radius: 8px;
+  }
+
+  .partidaPistaBtn {
+    margin-top: 10px;
+    max-width: 100%;
+  }
+
+  .partidaPistaTexto {
+    color: #222;
+    font-size: 19px;
+    line-height: 1.2;
+  }
+
+  .partidaMeta {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 5px;
+    align-items: start;
+    margin-top: 8px;
+    color: #555;
+    line-height: 1.25;
+  }
+
+  .partidaAcciones {
+    margin-top: auto;
+    padding-top: 12px;
+  }
+
+  .partidaSalirBtn {
+    min-width: 90px;
+  }
+
+  .partidaJugadores,
+  .partidaReservas {
+    margin-top: 0;
+    text-align: center;
+  }
+
+  .partidaJugadores {
+    align-self: center;
+  }
+
+  .partidaReservas {
+    align-self: start;
+    padding-top: 2px;
+    border-top: 1px solid rgba(21, 101, 192, 0.18);
+  }
+
+  .partidaSeccionTitulo {
+    display: block;
+    margin-bottom: 7px;
+    color: #1565C0;
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  .partidaJugadoresGrid {
+    grid-template-columns: repeat(4, 88px);
+    justify-content: center;
+    gap: 12px;
+  }
+
   .partidaReservasGrid {
     grid-template-columns: repeat(2, 88px);
     justify-content: center;
