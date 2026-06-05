@@ -15,6 +15,7 @@ if (btnGuardarPista) {
       const lat = document.getElementById("lat").value;
       const lng = document.getElementById("lng").value;
       const reserva = document.getElementById("reserva").value;
+      const direccion = document.getElementById("direccionPista").value;
       const nota = document.getElementById("notaPista").value.trim();
       let urlImagen = "";
       const inputFotoPista = document.getElementById("inputFotoPista");
@@ -50,12 +51,28 @@ if (btnGuardarPista) {
 
       const nombreNorm = normalizarTexto(nombre);
       const localidadNorm = normalizarTexto(localidad);
+      const direccionNorm = normalizarTexto(direccion);
+      const latNum = Number(lat);
+      const lngNum = Number(lng);
+      const margenCoordenadas = 0.00001;
       const snapshot = await db.collection("pistas").get();
       let existe = false;
 
       snapshot.forEach(doc => {
         const data = doc.data();
-        if (data.nombreNorm === nombreNorm && data.localidadNorm === localidadNorm) {
+        const mismaLocalidad = normalizarTexto(data.localidad || "") === localidadNorm;
+        const mismaDireccion = normalizarTexto(data.direccion || "") === direccionNorm;
+        const latExistente = Number(data.lat);
+        const lngExistente = Number(data.lng);
+        const hayCoordenadas = !isNaN(latNum) && !isNaN(lngNum) && !isNaN(latExistente) && !isNaN(lngExistente);
+        const mismasCoordenadas = hayCoordenadas && (
+          Math.abs(latExistente - latNum) <= margenCoordenadas &&
+          Math.abs(lngExistente - lngNum) <= margenCoordenadas
+        );
+        const duplicadaPorDireccion = mismaLocalidad && mismaDireccion;
+        const duplicadaPorCoordenadas = mismasCoordenadas;
+
+        if (duplicadaPorDireccion || duplicadaPorCoordenadas) {
           existe = true;
         }
       });
@@ -85,7 +102,7 @@ if (btnGuardarPista) {
         nombreNorm: nombreNorm,
         localidad: localidad,
         localidadNorm: localidadNorm,
-        direccion: document.getElementById("direccionPista").value,
+        direccion: direccion,
         tipo: tipo,
         indoor: Number(indoor),
         outdoor: Number(outdoor),
