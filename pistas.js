@@ -242,11 +242,11 @@ async function cargarPistas() {
         info.appendChild(crearTextoPista(data.tipo || ""));
         info.appendChild(crearTextoPista((data.localidad || "") + (data.direccion ? " | " + data.direccion : "")));
         info.appendChild(crearTextoPista("Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0)));
-        info.appendChild(crearTextoPista(
+        const precio = crearTextoPista(
           (data.precioManana || 0) + "€/pers. mañana | " +
           (data.precioTarde || 0) + "€/pers. tarde | " +
           (data.precioFestivo || 0) + "€/pers. finde/festivo"
-        ));
+        );
 
         const reserva = document.createElement("div");
         if (data.reserva && data.reserva.startsWith("http")) {
@@ -259,16 +259,21 @@ async function cargarPistas() {
         } else {
           reserva.textContent = "Tel: " + (data.reserva || "No disponible");
         }
-        info.appendChild(reserva);
 
-        info.appendChild(crearTextoPista("Pago: " +
+        const pago = crearTextoPista("Pago: " +
           (data.formaPago === "reserva" ? "Al reservar" :
            data.formaPago === "pista" ? "En pista" :
            "No se paga")
-        ));
+        );
 
-        if ((data.nota || "").trim()) {
-          const nota = crearTextoPista("Nota: " + data.nota.trim());
+        const notaTexto = (data.nota || "").trim();
+
+        info.appendChild(precio);
+        info.appendChild(reserva);
+        info.appendChild(pago);
+
+        if (notaTexto) {
+          const nota = crearTextoPista("Nota: " + notaTexto);
           nota.className = "notaPista";
           info.appendChild(nota);
         }
