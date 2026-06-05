@@ -524,19 +524,21 @@ body.chatAbierto{
     justify-content: space-between;
     align-items: center;
     gap: 8px;
+    flex-wrap: nowrap;
   }
 
-  .partidaFecha {
+  .partidaFilaTop .partidaFecha {
     white-space: nowrap;
     flex: 1 1 auto;
     min-width: 0;
   }
 
-  .partidaChatBtn {
-    width: auto;
+  button.partidaChatBtn {
+    width: auto !important;
+    max-width: max-content;
     flex: 0 0 auto;
-    margin-left: auto;
-    margin-right: 0;
+    margin-left: auto !important;
+    margin-right: 0 !important;
     padding: 4px 8px;
     white-space: nowrap;
   }
@@ -1113,6 +1115,11 @@ button[onclick*="mostrar('menu')"]{
   border-radius: 12px;
   width: auto;
   margin: 0;
+}
+
+.partidaChatBtn::before {
+  content: "💬";
+  margin-right: 4px;
 }
 
 .partidaPistaBtn {
