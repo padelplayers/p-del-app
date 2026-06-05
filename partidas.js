@@ -277,7 +277,7 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   const chatBtn = document.createElement("button");
   chatBtn.type = "button";
   chatBtn.className = "partidaChatBtn";
-  chatBtn.textContent = "Chat partida";
+  chatBtn.textContent = "💬 Chat partida";
   chatBtn.onclick = function() { abrirChatPartida(id, p.fecha || ""); };
 
   filaTop.appendChild(fecha);

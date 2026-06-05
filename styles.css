@@ -520,6 +520,27 @@ body.chatAbierto{
     margin-right: auto;
   }
 
+  .partidaFilaTop {
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .partidaFecha {
+    white-space: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .partidaChatBtn {
+    width: auto;
+    flex: 0 0 auto;
+    margin-left: auto;
+    margin-right: 0;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+
   body.chatAbierto{
     position:fixed;
     inset:0;
