@@ -521,6 +521,7 @@ body.chatAbierto{
   }
 
   .partidaFilaTop {
+    display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 8px;
@@ -529,14 +530,15 @@ body.chatAbierto{
 
   .partidaFilaTop .partidaFecha {
     white-space: nowrap;
-    flex: 1 1 auto;
-    min-width: 0;
+    flex: 0 0 auto;
   }
 
-  button.partidaChatBtn {
-    width: auto !important;
-    max-width: max-content;
-    flex: 0 0 auto;
+  .partidaFilaTop > button.partidaChatBtn {
+    width: fit-content !important;
+    max-width: fit-content !important;
+    flex: 0 0 auto !important;
+    flex-basis: auto !important;
+    align-self: center !important;
     margin-left: auto !important;
     margin-right: 0 !important;
     padding: 4px 8px;
