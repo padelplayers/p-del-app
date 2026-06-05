@@ -521,28 +521,26 @@ body.chatAbierto{
   }
 
   .partidaFilaTop {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: nowrap;
+    display: grid !important;
+    grid-template-columns: auto max-content !important;
+    align-items: center !important;
+    column-gap: 8px !important;
   }
 
   .partidaFilaTop .partidaFecha {
-    white-space: nowrap;
-    flex: 0 0 auto;
+    white-space: nowrap !important;
+    min-width: max-content !important;
   }
 
-  .partidaFilaTop > button.partidaChatBtn {
-    width: fit-content !important;
-    max-width: fit-content !important;
-    flex: 0 0 auto !important;
-    flex-basis: auto !important;
-    align-self: center !important;
-    margin-left: auto !important;
-    margin-right: 0 !important;
-    padding: 4px 8px;
-    white-space: nowrap;
+  .partidaFilaTop button.partidaChatBtn {
+    width: max-content !important;
+    min-width: 0 !important;
+    max-width: max-content !important;
+    justify-self: end !important;
+    display: inline-flex !important;
+    padding: 6px 12px !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
   }
 
   body.chatAbierto{
