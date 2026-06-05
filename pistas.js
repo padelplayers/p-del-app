@@ -15,6 +15,7 @@ if (btnGuardarPista) {
       const lat = document.getElementById("lat").value;
       const lng = document.getElementById("lng").value;
       const reserva = document.getElementById("reserva").value;
+      const nota = document.getElementById("notaPista").value.trim();
       let urlImagen = "";
       const inputFotoPista = document.getElementById("inputFotoPista");
 
@@ -64,6 +65,11 @@ if (btnGuardarPista) {
         return;
       }
 
+      if (nota.length > 120) {
+        alert("La nota no puede superar los 120 caracteres");
+        return;
+      }
+
       const fpEditar = document.getElementById("formaPagoEditar");
       const fpCrear = document.getElementById("formaPago");
       let formaPago = "";
@@ -89,6 +95,7 @@ if (btnGuardarPista) {
         lat: Number(lat),
         lng: Number(lng),
         reserva: reserva,
+        nota: nota,
         formaPago: formaPago,
         creadaPor: auth.currentUser.uid
       };
@@ -236,10 +243,14 @@ async function cargarPistas() {
         info.appendChild(crearTextoPista((data.localidad || "") + (data.direccion ? " | " + data.direccion : "")));
         info.appendChild(crearTextoPista("Indoor: " + (data.indoor || 0) + " | Outdoor: " + (data.outdoor || 0)));
         info.appendChild(crearTextoPista(
-          (data.precioManana || 0) + " EUR manana | " +
-          (data.precioTarde || 0) + " EUR tarde | " +
-          (data.precioFestivo || 0) + " EUR finde/festivo"
+          (data.precioManana || 0) + "€/pers. mañana | " +
+          (data.precioTarde || 0) + "€/pers. tarde | " +
+          (data.precioFestivo || 0) + "€/pers. finde/festivo"
         ));
+
+        if (data.nota) {
+          info.appendChild(crearTextoPista("Nota: " + data.nota));
+        }
 
         const reserva = document.createElement("div");
         if (data.reserva && data.reserva.startsWith("http")) {
