@@ -1162,6 +1162,15 @@ button[onclick*="mostrar('menu')"]{
   box-sizing: border-box;
 }
 
+.notaPista {
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 @media (min-width:761px) {
   #partidas {
     max-width: 1000px;

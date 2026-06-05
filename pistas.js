@@ -248,10 +248,6 @@ async function cargarPistas() {
           (data.precioFestivo || 0) + "€/pers. finde/festivo"
         ));
 
-        if (data.nota) {
-          info.appendChild(crearTextoPista("Nota: " + data.nota));
-        }
-
         const reserva = document.createElement("div");
         if (data.reserva && data.reserva.startsWith("http")) {
           const link = document.createElement("a");
@@ -270,6 +266,12 @@ async function cargarPistas() {
            data.formaPago === "pista" ? "En pista" :
            "No se paga")
         ));
+
+        if ((data.nota || "").trim()) {
+          const nota = crearTextoPista("Nota: " + data.nota.trim());
+          nota.className = "notaPista";
+          info.appendChild(nota);
+        }
 
         if (data.lat && data.lng) {
           const mapaWrap = document.createElement("div");
