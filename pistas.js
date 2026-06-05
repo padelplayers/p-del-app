@@ -57,6 +57,8 @@ if (btnGuardarPista) {
       const margenCoordenadas = 0.00001;
       const snapshot = await db.collection("pistas").get();
       let existe = false;
+      let existePorDireccion = false;
+      let existePorCoordenadas = false;
 
       snapshot.forEach(doc => {
         const data = doc.data();
@@ -74,11 +76,23 @@ if (btnGuardarPista) {
 
         if (duplicadaPorDireccion || duplicadaPorCoordenadas) {
           existe = true;
+          if (duplicadaPorDireccion) existePorDireccion = true;
+          if (duplicadaPorCoordenadas) existePorCoordenadas = true;
         }
       });
 
       if (existe && !window.pistaEditando) {
-        alert("Esta pista ya existe");
+        let mensajeDuplicado = "Esta pista ya existe";
+
+        if (existePorDireccion && existePorCoordenadas) {
+          mensajeDuplicado = "Ya existe una pista con la misma dirección y ubicación.";
+        } else if (existePorDireccion) {
+          mensajeDuplicado = "Ya existe una pista con la misma localidad y dirección.";
+        } else if (existePorCoordenadas) {
+          mensajeDuplicado = "Ya existe una pista con las mismas coordenadas. Comprueba la ubicación seleccionada.";
+        }
+
+        alert(mensajeDuplicado);
         return;
       }
 
