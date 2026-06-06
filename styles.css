@@ -295,7 +295,9 @@ body.chatAbierto{
 
 .chatTab{
   position:relative;
+  flex:0 0 auto;
   width:auto;
+  max-width:180px;
   margin:0;
   padding:7px 11px;
   border-radius:999px;
@@ -303,6 +305,8 @@ body.chatAbierto{
   color:#44546a;
   font-size:13px;
   font-weight:bold;
+  overflow:hidden;
+  text-overflow:ellipsis;
   white-space:nowrap;
 }
 
@@ -735,6 +739,7 @@ body.chatAbierto{
   }
 
   .chatTab{
+    max-width:120px;
     padding:6px 9px;
     font-size:12px;
   }

@@ -172,6 +172,31 @@ function cerrarChatTab(chatId) {
   }
 }
 
+function normalizarTituloChatPartida(titulo, fecha) {
+  const texto = (titulo || "").trim();
+  if (texto && texto !== "Cargando pista...") return texto;
+  return "Partida";
+}
+
+function usuarioPuedeEntrarChatPartida(partida, uid) {
+  if (!partida || !uid) return false;
+  const jugadores = Array.isArray(partida.jugadores) ? partida.jugadores : [];
+  const reservas = Array.isArray(partida.reservas) ? partida.reservas : [];
+  return jugadores.includes(uid) || reservas.includes(uid);
+}
+
+function asegurarTabChat(chatId) {
+  const tabs = document.getElementById("chatTabs");
+  if (!tabs || document.querySelector('#chatTabs [data-chat-tab="' + chatId + '"]')) return;
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "chatTab";
+  btn.dataset.chatTab = chatId;
+  btn.textContent = chatState.chats[chatId]?.titulo || "Partida";
+  tabs.appendChild(btn);
+}
+
 function cargarUsuariosSidebar() {
   const lista = document.querySelector(".chatUserList");
   if (!lista) return;
@@ -418,15 +443,46 @@ function marcarChatNoLeido(chatId) {
   actualizarTabsChat();
 }
 
-window.abrirChatPartida = function(id, fecha) {
+window.abrirChatPartida = async function(id, fecha, titulo) {
+  const user = auth.currentUser;
+  if (!user) {
+    alert("Debes iniciar sesion");
+    return;
+  }
+
+  let partida = null;
+  try {
+    const doc = await db.collection("partidas").doc(id).get();
+    if (!doc.exists) {
+      alert("La partida ya no existe");
+      return;
+    }
+    partida = doc.data() || {};
+  } catch (e) {
+    console.error("[CHAT] Error comprobando acceso a partida:", e);
+    alert("No se pudo abrir el chat de la partida");
+    return;
+  }
+
+  if (!usuarioPuedeEntrarChatPartida(partida, user.uid)) {
+    alert("Solo los jugadores y reservas de esta partida pueden entrar al chat");
+    return;
+  }
+
+  const tituloChat = normalizarTituloChatPartida(titulo, fecha);
+
   if (!chatState.chats[id]) {
     chatState.chats[id] = {
-      titulo: "Chat " + fecha,
+      titulo: tituloChat,
       tipo: "partida",
       mensajes: [],
       oculto: false
     };
+  } else {
+    chatState.chats[id].titulo = tituloChat;
+    chatState.chats[id].oculto = false;
   }
+  asegurarTabChat(id);
   cambiarChatTab(id);
   mostrar("chat");
 };

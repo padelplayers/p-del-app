@@ -356,7 +356,10 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   chatBtn.type = "button";
   chatBtn.className = "partidaChatBtn";
   chatBtn.textContent = "Chat partida";
-  chatBtn.onclick = function() { abrirChatPartida(id, p.fecha || ""); };
+  chatBtn.onclick = function() {
+    const pistaChat = document.getElementById("pista_" + id);
+    abrirChatPartida(id, p.fecha || "", pistaChat ? pistaChat.textContent : "");
+  };
 
   filaTop.appendChild(fecha);
   filaTop.appendChild(chatBtn);
