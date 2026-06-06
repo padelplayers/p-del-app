@@ -1573,10 +1573,25 @@ body.chatAbierto > .header{
   display:none !important;
 }
 
+body #chat .chatSidebar .chatRecentSidebarBlock,
+body #chat .chatSidebar #chatRecientes,
+body.chatAbierto #chat.chatFullscreen .chatSidebar .chatRecentSidebarBlock,
+body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
+  display:none !important;
+  visibility:hidden !important;
+  height:0 !important;
+  min-height:0 !important;
+  max-height:0 !important;
+  overflow:hidden !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
 @media (max-width:768px) {
   #chat .chatTabs,
   #chat.chatFullscreen .chatTabs {
     display:flex !important;
+    flex-direction:row !important;
     flex-wrap:wrap !important;
     overflow-x:visible !important;
     overflow-y:visible !important;
@@ -1587,7 +1602,7 @@ body.chatAbierto > .header{
 
   #chat .chatTabs .chatTab,
   #chat.chatFullscreen .chatTabs .chatTab {
-    flex:0 1 auto !important;
+    flex:0 1 46% !important;
     max-width:46% !important;
     min-width:0 !important;
     white-space:nowrap !important;
@@ -1598,5 +1613,34 @@ body.chatAbierto > .header{
   #chat .chatTabs .chatTabClose,
   #chat.chatFullscreen .chatTabs .chatTabClose {
     flex:0 0 auto !important;
+    display:inline-flex !important;
+  }
+
+  body.chatAbierto #chat.chatFullscreen .chatMain > .chatTabs,
+  body.chatAbierto #chat.chatFullscreen .chatTabs {
+    display:flex !important;
+    flex-direction:row !important;
+    flex-wrap:wrap !important;
+    overflow-x:visible !important;
+    overflow-y:visible !important;
+    white-space:normal !important;
+    height:auto !important;
+    max-height:none !important;
+  }
+
+  body.chatAbierto #chat.chatFullscreen .chatMain > .chatTabs .chatTab,
+  body.chatAbierto #chat.chatFullscreen .chatTabs .chatTab {
+    flex:0 1 46% !important;
+    max-width:46% !important;
+    min-width:0 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  body.chatAbierto #chat.chatFullscreen .chatMain > .chatTabs .chatTabClose,
+  body.chatAbierto #chat.chatFullscreen .chatTabs .chatTabClose {
+    flex:0 0 auto !important;
+    display:inline-flex !important;
   }
 }
