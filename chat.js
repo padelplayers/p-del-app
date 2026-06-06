@@ -8,18 +8,10 @@ const chatState = {
     general: {
       titulo: "General",
       tipo: "general",
-      estado: "Preparado para integrar Firebase",
+      estado: "Chat del club",
       noLeidos: false,
       oculto: false,
-      mensajes: [
-        {
-          id: "msg_gen_1",
-          autor: "Sistema",
-          texto: "Chat general preparado.",
-          hora: "Ahora",
-          propio: false
-        }
-      ]
+      mensajes: []
     },
     "partida-demo": {
       titulo: "Partida martes",
@@ -101,9 +93,9 @@ function cambiarChatTab(chatId) {
   chatState.chats[chatId].noLeidos = false;
   chatState.chats[chatId].oculto = false;
 
-  if (chatState.chats[chatId].tipo === "partida" && chatId !== "partida-demo") {
-    const query = db.collection("partidas").doc(chatId)
-      .collection("mensajes").orderBy("at", "asc").limit(100);
+  const mensajesRef = obtenerMensajesChatRef(chatId);
+  if (mensajesRef) {
+    const query = mensajesRef.orderBy("at", "desc").limit(30);
     gestionarListenerChat(chatId, query);
   } else if (chatState.chatListenerActivo) {
     limpiarListenersChat();
@@ -209,6 +201,21 @@ function asegurarTabChat(chatId) {
   btn.dataset.chatTab = chatId;
   btn.textContent = chatState.chats[chatId]?.tituloCorto || chatState.chats[chatId]?.titulo || "Partida";
   tabs.appendChild(btn);
+}
+
+function obtenerMensajesChatRef(chatId) {
+  const chat = chatState.chats[chatId];
+  if (!chat) return null;
+
+  if (chat.tipo === "general" && chatId === "general") {
+    return db.collection("chats").doc("general").collection("mensajes");
+  }
+
+  if (chat.tipo === "partida" && chatId !== "partida-demo") {
+    return db.collection("partidas").doc(chatId).collection("mensajes");
+  }
+
+  return null;
 }
 
 function cargarUsuariosSidebar() {
@@ -412,6 +419,31 @@ window.eliminarChatTotal = async function(chatId) {
   renderChatActivo();
 };
 
+async function limpiarMensajesAntiguos(chatId) {
+  try {
+    const mensajesRef = obtenerMensajesChatRef(chatId);
+    if (!mensajesRef) return;
+
+    const snap = await mensajesRef.orderBy("at", "desc").get();
+
+    if (snap.size <= 100) return;
+
+    const batch = db.batch();
+    let contador = 0;
+
+    snap.forEach(function(doc) {
+      contador++;
+      if (contador > 100) {
+        batch.delete(doc.ref);
+      }
+    });
+
+    await batch.commit();
+  } catch (e) {
+    console.warn("[CHAT] No se pudo limpiar mensajes antiguos:", e.message);
+  }
+}
+
 async function prepararEnvioChat() {
   const input = document.getElementById("chatInput");
   if (!input) return;
@@ -423,11 +455,11 @@ async function prepararEnvioChat() {
   const user = auth.currentUser;
   if (!user || !chatState.chats[chatId]) return;
 
-  if (chatState.chats[chatId].tipo === "partida" && chatId !== "partida-demo") {
+  const mensajesRef = obtenerMensajesChatRef(chatId);
+  if (mensajesRef) {
     try {
       const batch = db.batch();
-      const partidaRef = db.collection("partidas").doc(chatId);
-      const msgRef = partidaRef.collection("mensajes").doc();
+      const msgRef = mensajesRef.doc();
 
       batch.set(msgRef, {
         u: user.uid,
@@ -437,12 +469,16 @@ async function prepararEnvioChat() {
         type: "text"
       });
 
-      batch.update(partidaRef, {
-        lastMessage: texto,
-        lastActivity: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      if (chatState.chats[chatId].tipo === "partida") {
+        const partidaRef = db.collection("partidas").doc(chatId);
+        batch.update(partidaRef, {
+          lastMessage: texto,
+          lastActivity: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
 
       await batch.commit();
+      await limpiarMensajesAntiguos(chatId);
     } catch (e) {
       console.error("[CHAT] Error enviando mensaje:", e);
     }
