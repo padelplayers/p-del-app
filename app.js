@@ -377,7 +377,6 @@ function mostrar(seccion){
     "testNivel",
     "crearPista",
     "chat",
-    "mediaCenter",
     "instrucciones",
     "partidas",
     "crearPartida",
