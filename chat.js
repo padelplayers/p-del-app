@@ -218,6 +218,24 @@ function obtenerMensajesChatRef(chatId) {
   return null;
 }
 
+async function obtenerNombreAutorChat(user) {
+  if (!user) return "Jugador";
+
+  try {
+    const doc = await db.collection("usuarios").doc(user.uid).get();
+    if (doc.exists) {
+      const data = doc.data() || {};
+      if (data.nombre) return data.nombre;
+    }
+  } catch (e) {
+    console.warn("[CHAT] No se pudo leer el nombre del usuario:", e.message);
+  }
+
+  if (user.displayName) return user.displayName;
+  if (user.email) return user.email.split("@")[0];
+  return "Jugador";
+}
+
 function cargarUsuariosSidebar() {
   const lista = document.querySelector(".chatUserList");
   if (!lista) return;
@@ -460,10 +478,11 @@ async function prepararEnvioChat() {
     try {
       const batch = db.batch();
       const msgRef = mensajesRef.doc();
+      const nombreAutor = await obtenerNombreAutorChat(user);
 
       batch.set(msgRef, {
         u: user.uid,
-        n: user.displayName || "Jugador",
+        n: nombreAutor,
         t: texto,
         at: firebase.firestore.FieldValue.serverTimestamp(),
         type: "text"
@@ -553,6 +572,15 @@ function limpiarListenersChat() {
   chatState.listenerActivo = null;
   chatState.chatListenerActivo = null;
 }
+
+window.notificarEntradaSeccionChat = function() {
+  const chatId = chatState.chatActivo || "general";
+  if (chatState.chatListenerActivo !== chatId) {
+    cambiarChatTab(chatId);
+  } else {
+    renderChatActivo();
+  }
+};
 
 window.initChat = initChat;
 window.cambiarChatTab = cambiarChatTab;
