@@ -929,6 +929,16 @@ body.chatAbierto{
 
 /* BOTÓN VOLVER */
 
+/* JUGADORES */
+
+.jugadorCard img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
 button[onclick*="mostrar('menu')"]{
   background:#1565C0;
   color:white;
