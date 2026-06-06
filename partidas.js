@@ -6,6 +6,36 @@ function textoNodo(texto, tag) {
   return el;
 }
 
+function obtenerFechaHoraPartida(p) {
+  if (!p || !p.fecha || !p.hora) return null;
+
+  const f = p.fecha.split("-");
+  const h = p.hora.split(":");
+  if (f.length !== 3 || h.length < 2) return null;
+
+  return new Date(
+    parseInt(f[0]),
+    parseInt(f[1]) - 1,
+    parseInt(f[2]),
+    parseInt(h[0]),
+    parseInt(h[1])
+  );
+}
+
+function puedeConfirmarPartida(p, uid, ahora) {
+  const fechaPartida = obtenerFechaHoraPartida(p);
+
+  return (
+    uid &&
+    p &&
+    p.creadaPor === uid &&
+    p.estado === "abierta" &&
+    (p.jugadores || []).length === 4 &&
+    fechaPartida &&
+    fechaPartida >= (ahora || new Date())
+  );
+}
+
 function actualizarBotonesPartidas() {
   const btnProx = document.getElementById("btnProximas");
   const btnPend = document.getElementById("btnPendientes");
@@ -260,6 +290,54 @@ async function eliminarPartidaConChat(partidaId) {
   return true;
 }
 
+function confirmarPartida(partidaId) {
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    alert("Debes iniciar sesion");
+    return;
+  }
+
+  const ref = db.collection("partidas").doc(partidaId);
+
+  ref.get().then(function(doc) {
+    if (!doc.exists) {
+      alert("La partida ya no existe");
+      return;
+    }
+
+    const p = doc.data() || {};
+
+    if (p.creadaPor !== user.uid) {
+      alert("Solo el creador puede confirmar la partida");
+      return;
+    }
+
+    if (p.estado !== "abierta") {
+      alert("Esta partida no se puede confirmar");
+      return;
+    }
+
+    if ((p.jugadores || []).length !== 4) {
+      alert("La partida necesita 4 jugadores titulares");
+      return;
+    }
+
+    const fechaPartida = obtenerFechaHoraPartida(p);
+    if (!fechaPartida || fechaPartida < new Date()) {
+      alert("No se puede confirmar una partida cuya fecha u hora ya paso");
+      return;
+    }
+
+    ref.update({
+      estado: "confirmada",
+      confirmadaAt: new Date(),
+      confirmadaPor: user.uid
+    }).then(function() {
+      cargarPartidas();
+    });
+  });
+}
+
 function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   const bloque = document.createElement("div");
   bloque.className = "partidaCard";
@@ -310,16 +388,35 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   cabecera.appendChild(pistaFila);
   cabecera.appendChild(metaFila);
 
-  if (mostrarSalir) {
+  const user = firebase.auth().currentUser;
+  const uidActual = user ? user.uid : null;
+  const esCreador = uidActual && p.creadaPor === uidActual;
+  const confirmarActivo = puedeConfirmarPartida(p, uidActual);
+
+  if (mostrarSalir || esCreador) {
     const salirWrap = document.createElement("div");
     salirWrap.className = "partidaAcciones";
 
-    const salir = document.createElement("button");
-    salir.className = "partidaSalirBtn";
-    salir.textContent = "Salir";
-    salir.onclick = function() { salirDePartida(id); };
+    if (esCreador) {
+      const confirmar = document.createElement("button");
+      confirmar.type = "button";
+      confirmar.textContent = confirmarActivo ? "Confirmar partida" : "Faltan jugadores";
+      confirmar.disabled = !confirmarActivo;
+      confirmar.style.cssText = confirmarActivo
+        ? "background:#1565C0; color:#fff;"
+        : "background:#ddd; color:#777; cursor:not-allowed;";
+      confirmar.onclick = function() { confirmarPartida(id); };
+      salirWrap.appendChild(confirmar);
+    }
 
-    salirWrap.appendChild(salir);
+    if (mostrarSalir) {
+      const salir = document.createElement("button");
+      salir.className = "partidaSalirBtn";
+      salir.textContent = "Salir";
+      salir.onclick = function() { salirDePartida(id); };
+
+      salirWrap.appendChild(salir);
+    }
     cabecera.appendChild(salirWrap);
   }
 
