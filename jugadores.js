@@ -15,10 +15,12 @@ function cargarJugadores(){
       const contenido = document.createElement("div");
 
       const img = document.createElement("img");
+      img.className = "jugadorFoto";
       img.src = data.fotoPerfil || "imagen/hombre.jpeg";
       img.width = 50;
 
       const nombre = document.createElement("span");
+      nombre.className = "jugadorNombre";
       nombre.textContent = data.nombre || "";
 
       contenido.appendChild(img);

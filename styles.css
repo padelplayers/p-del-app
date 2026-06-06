@@ -939,11 +939,9 @@ body.chatAbierto{
 
 .jugadorCard {
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin: 16px auto;
+  align-items: center;
+  margin: 18px auto;
   text-align: center;
 }
 
@@ -951,15 +949,23 @@ body.chatAbierto{
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 
-.jugadorCard img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
+.jugadorFoto {
+  width: 80px !important;
+  height: 80px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  display: block !important;
+  margin: 0 auto !important;
+}
+
+.jugadorNombre {
   display: block;
+  text-align: center;
+  font-size: 18px;
 }
 
 button[onclick*="mostrar('menu')"]{
