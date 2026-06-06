@@ -319,16 +319,33 @@ body.chatAbierto{
 }
 
 .chatTab.hasUnread,
-.chatRecentItem.hasUnread,
-#btnMenuChat.hasUnread {
+.chatRecentItem.hasUnread {
   border: 1px solid #FFC107 !important;
   box-shadow: 0 0 6px rgba(255, 193, 7, 0.3);
   animation: chatUnreadPulse 1s infinite;
 }
 
+#btnMenuChat.hasUnread {
+  border: 1px solid #FFC107 !important;
+  animation: menuChatUnreadPulse 1s infinite;
+}
+
 @keyframes chatUnreadPulse{
   0%,100%{ box-shadow:0 0 4px rgba(255,193,7,0.25); }
   50%{ box-shadow:0 0 12px rgba(255,193,7,0.85); }
+}
+
+@keyframes menuChatUnreadPulse{
+  0%,100%{
+    background:#1565C0;
+    color:white;
+    box-shadow:0 0 4px rgba(21,101,192,0.35);
+  }
+  50%{
+    background:#FFC107;
+    color:#222;
+    box-shadow:0 0 14px rgba(255,193,7,0.9);
+  }
 }
 
 .chatTab.hasUnread:not(.active){

@@ -599,6 +599,7 @@ async function evaluarResumenGeneral(data, uid) {
   if (chatState.chatActivo === "general" && estaPantallaChatVisible()) return;
 
   const lastReadAt = await obtenerLecturaChat(uid, "general");
+  if (chatState.chatActivo === "general" && estaPantallaChatVisible()) return;
   if (!timestampMayor(data.lastActivity, lastReadAt)) return;
 
   chatState.chats.general.noLeidos = true;
@@ -643,6 +644,10 @@ async function marcarGeneralLeido() {
         tipo: "general",
         titulo: "General"
       }, { merge: true });
+
+    chatState.chats.general.noLeidos = false;
+    actualizarTabsChat();
+    actualizarIndicadorMenuChat();
   } catch (e) {
     console.warn("[CHAT] No se pudo marcar General como leido:", e.message);
   }
