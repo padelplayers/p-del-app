@@ -208,7 +208,9 @@ async function obtenerTituloChatPartidaResumen(partidaId, partida) {
       const pistaDoc = await db.collection("pistas").doc(partida.pistaId).get();
       if (pistaDoc.exists) {
         const pista = pistaDoc.data() || {};
-        titulo = pista.nombre || pista.localidad || titulo;
+        const nombre = (pista.nombre || "").trim();
+        const localidad = (pista.localidad || "").trim();
+        titulo = nombre && localidad ? nombre + " - " + localidad : (nombre || localidad || titulo);
       }
     } catch (e) {
       console.warn("[CHAT] No se pudo leer titulo de pista para chat de partida:", e.message);
@@ -605,7 +607,7 @@ async function prepararEnvioChat() {
 
 function marcarChatNoLeido(chatId) {
   if (!chatState.chats[chatId]) return;
-  if (chatId === chatState.chatActivo) return;
+  if (chatId === chatState.chatActivo && estaPantallaChatVisible()) return;
 
   chatState.chats[chatId].noLeidos = true;
   chatState.chats[chatId].oculto = false; // Reaparece si estaba cerrada
@@ -724,6 +726,8 @@ function iniciarListenersResumenPartidas(uid) {
       snapshot.docChanges().forEach(function(change) {
         procesarCambioResumenPartida(change, uid);
       });
+    }, function(error) {
+      console.warn("Error listener resumen partidas:", error);
     });
   });
 }
