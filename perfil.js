@@ -1,6 +1,12 @@
 let unsubscribePerfil = null;
 let unsubscribeUser = null;
 
+function obtenerTotalPerfil(valor) {
+  if (Array.isArray(valor)) return valor.length;
+  if (typeof valor === "number") return valor;
+  return 0;
+}
+
 function configurarBotonChatPrivadoPerfil(uid) {
   const user = auth.currentUser;
   const botones = document.querySelector("#perfil .perfil-botones");
@@ -162,10 +168,13 @@ if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
     : (data.sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg");
 
     document.getElementById("seguidores").innerText =
-      Array.isArray(data.seguidores) ? data.seguidores.length : 0;
+      obtenerTotalPerfil(data.seguidores);
 
     document.getElementById("seguidos").innerText =
-      Array.isArray(data.siguiendo) ? data.siguiendo.length : 0;
+      obtenerTotalPerfil(data.siguiendo);
+
+    const partidasCount = document.getElementById("partidasCount");
+    if (partidasCount) partidasCount.innerText = obtenerTotalPerfil(data.partidos);
 
   });
 
@@ -176,6 +185,14 @@ if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
 
     const perfilActual = document.getElementById("perfil").dataset.uid;
     if (!perfilActual) return;
+
+    if (perfilActual === user.uid) {
+      if (btnSeguir) {
+        btnSeguir.style.display = "none";
+        btnSeguir.onclick = null;
+      }
+      return;
+    }
 
     const siguiendo = miDoc.data()?.siguiendo || [];
     const sigo = siguiendo.includes(perfilActual);
@@ -345,6 +362,19 @@ function cargarPerfil(uid){
   unsubscribePerfil && unsubscribePerfil();
   configurarBotonChatPrivadoPerfil(uid);
 
+  const user = auth.currentUser;
+  const esPerfilPropio = !!(user && uid === user.uid);
+  const btnSeguir = document.getElementById("btnSeguir");
+  const editarBtn = document.getElementById("btnEditar");
+  const eliminarBtn = document.getElementById("btnEliminar");
+
+  if (btnSeguir) {
+    btnSeguir.style.display = esPerfilPropio ? "none" : "block";
+    btnSeguir.onclick = esPerfilPropio ? null : toggleSeguir;
+  }
+  if (editarBtn) editarBtn.style.display = esPerfilPropio ? "block" : "none";
+  if (eliminarBtn) eliminarBtn.style.display = esPerfilPropio ? "block" : "none";
+
   unsubscribePerfil = db.collection("usuarios")
     .doc(uid)
     .onSnapshot(doc => {
@@ -363,13 +393,13 @@ function cargarPerfil(uid){
       if (document.getElementById("perfil").style.display === "block") {
 
   const elPartidos = document.getElementById("partidasCount");
-  if (elPartidos) elPartidos.innerText = data.partidos || 0;
+  if (elPartidos) elPartidos.innerText = obtenerTotalPerfil(data.partidos);
 
   const elSeguidores = document.getElementById("seguidores");
-  if (elSeguidores) elSeguidores.innerText = data.seguidores || 0;
+  if (elSeguidores) elSeguidores.innerText = obtenerTotalPerfil(data.seguidores);
 
   const elSeguidos = document.getElementById("seguidos");
-  if (elSeguidos) elSeguidos.innerText = data.seguidos || 0;
+  if (elSeguidos) elSeguidos.innerText = obtenerTotalPerfil(data.siguiendo);
 
 }
 
