@@ -203,6 +203,8 @@ function asegurarTabChat(chatId) {
   tabs.appendChild(btn);
 }
 
+const chatNombresUsuarios = {};
+
 function obtenerMensajesChatRef(chatId) {
   const chat = chatState.chats[chatId];
   if (!chat) return null;
@@ -220,12 +222,31 @@ function obtenerMensajesChatRef(chatId) {
 
 async function obtenerNombreAutorChat(user) {
   if (!user) return "Jugador";
+  if (chatNombresUsuarios[user.uid]) return chatNombresUsuarios[user.uid];
 
   try {
     const doc = await db.collection("usuarios").doc(user.uid).get();
     if (doc.exists) {
       const data = doc.data() || {};
-      if (data.nombre) return data.nombre;
+      if (data.nombre) {
+        chatNombresUsuarios[user.uid] = data.nombre;
+        return data.nombre;
+      }
+    }
+
+    if (user.email) {
+      const snap = await db.collection("usuarios")
+        .where("email", "==", user.email)
+        .limit(1)
+        .get();
+
+      if (!snap.empty) {
+        const data = snap.docs[0].data() || {};
+        if (data.nombre) {
+          chatNombresUsuarios[user.uid] = data.nombre;
+          return data.nombre;
+        }
+      }
     }
   } catch (e) {
     console.warn("[CHAT] No se pudo leer el nombre del usuario:", e.message);
@@ -580,6 +601,11 @@ window.notificarEntradaSeccionChat = function() {
   } else {
     renderChatActivo();
   }
+};
+
+window.abrirChatGeneral = function() {
+  cambiarChatTab("general");
+  mostrar("chat");
 };
 
 window.initChat = initChat;
