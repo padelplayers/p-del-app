@@ -6,8 +6,10 @@ const chatState = {
   chatListenerActivo: null,
   listenerResumenGeneral: null,
   listenersResumenPartidas: [],
+  listenerResumenPrivados: null,
   ultimoResumenGeneralAt: null,
   ultimosResumenPartidasAt: {},
+  ultimosResumenPrivadosAt: {},
   titulosPartidasCache: {},
   chats: {
     general: {
@@ -113,6 +115,8 @@ function cambiarChatTab(chatId) {
     marcarGeneralLeido();
   } else if (chatState.chats[chatId].tipo === "partida") {
     marcarPartidaLeida(chatId);
+  } else if (chatState.chats[chatId].tipo === "privado") {
+    marcarPrivadoLeido(chatId);
   }
 }
 
@@ -257,6 +261,63 @@ function asegurarChatPartidaResumen(chatId, partida, titulo) {
   actualizarBotonPartidaNoLeido(chatId);
 }
 
+function construirChatPrivadoId(uidA, uidB) {
+  return "privado_" + [uidA, uidB].sort().join("_");
+}
+
+function obtenerOtroUidPrivado(participantes, uid) {
+  if (!Array.isArray(participantes)) return null;
+  return participantes.find(function(participanteUid) {
+    return participanteUid && participanteUid !== uid;
+  }) || null;
+}
+
+async function obtenerNombreUsuarioChat(uid) {
+  if (!uid) return "Jugador";
+  if (chatNombresUsuarios[uid]) return chatNombresUsuarios[uid];
+
+  try {
+    const doc = await db.collection("usuarios").doc(uid).get();
+    if (doc.exists) {
+      const data = doc.data() || {};
+      if (data.nombre) {
+        chatNombresUsuarios[uid] = data.nombre;
+        return data.nombre;
+      }
+    }
+  } catch (e) {
+    console.warn("[CHAT] No se pudo leer nombre de usuario:", e.message);
+  }
+
+  return "Jugador";
+}
+
+function asegurarChatPrivado(chatId, otroUid, nombre) {
+  const titulo = nombre || "Jugador";
+
+  if (!chatState.chats[chatId]) {
+    chatState.chats[chatId] = {
+      titulo: titulo,
+      tituloCorto: titulo,
+      tipo: "privado",
+      estado: "Chat privado",
+      mensajes: [],
+      noLeidos: false,
+      oculto: false,
+      otroUid: otroUid
+    };
+  } else {
+    chatState.chats[chatId].titulo = titulo;
+    chatState.chats[chatId].tituloCorto = titulo;
+    chatState.chats[chatId].tipo = "privado";
+    chatState.chats[chatId].estado = "Chat privado";
+    chatState.chats[chatId].oculto = false;
+    chatState.chats[chatId].otroUid = otroUid;
+  }
+
+  asegurarTabChat(chatId);
+}
+
 function asegurarTabChat(chatId) {
   const tabs = document.getElementById("chatTabs");
   if (!tabs || document.querySelector('#chatTabs [data-chat-tab="' + chatId + '"]')) return;
@@ -281,6 +342,10 @@ function obtenerMensajesChatRef(chatId) {
 
   if (chat.tipo === "partida" && chatId !== "partida-demo") {
     return db.collection("partidas").doc(chatId).collection("mensajes");
+  }
+
+  if (chat.tipo === "privado" && chatId !== "privado-demo") {
+    return db.collection("chatsPrivados").doc(chatId).collection("mensajes");
   }
 
   return null;
@@ -339,6 +404,9 @@ function cargarUsuariosSidebar() {
       const div = document.createElement("div");
       div.className = "chatUserItem";
       div.style.cursor = "pointer";
+      div.onclick = function() {
+        abrirChatPrivado(doc.id, u.nombre || "Jugador");
+      };
 
       const dot = document.createElement("div");
       dot.className = "chatOnlineDot";
@@ -595,6 +663,18 @@ async function prepararEnvioChat() {
         });
       }
 
+      if (chatState.chats[chatId].tipo === "privado") {
+        const privadoRef = db.collection("chatsPrivados").doc(chatId);
+        const otroUid = chatState.chats[chatId].otroUid;
+        batch.set(privadoRef, {
+          participantes: [user.uid, otroUid].sort(),
+          lastMessage: texto,
+          lastActivity: firebase.firestore.FieldValue.serverTimestamp(),
+          lastSender: user.uid,
+          lastSenderName: nombreAutor
+        }, { merge: true });
+      }
+
       await batch.commit();
       await limpiarMensajesAntiguos(chatId);
     } catch (e) {
@@ -732,6 +812,44 @@ function iniciarListenersResumenPartidas(uid) {
   });
 }
 
+function limpiarListenerResumenPrivados() {
+  if (typeof chatState.listenerResumenPrivados === "function") {
+    chatState.listenerResumenPrivados();
+  }
+
+  chatState.listenerResumenPrivados = null;
+  chatState.ultimosResumenPrivadosAt = {};
+}
+
+function procesarCambioResumenPrivado(change, uid) {
+  if (!change || change.type === "removed") return;
+
+  const doc = change.doc;
+  const data = doc.data() || {};
+  const at = data.lastActivity;
+  const atMs = at && typeof at.toMillis === "function" ? at.toMillis() : null;
+  const cacheKey = doc.id + ":" + (atMs || "sinActividad");
+
+  if (chatState.ultimosResumenPrivadosAt[doc.id] === cacheKey) return;
+  chatState.ultimosResumenPrivadosAt[doc.id] = cacheKey;
+
+  evaluarResumenPrivado(doc, uid);
+}
+
+function iniciarListenerResumenPrivados(uid) {
+  limpiarListenerResumenPrivados();
+
+  chatState.listenerResumenPrivados = db.collection("chatsPrivados")
+    .where("participantes", "array-contains", uid)
+    .onSnapshot(function(snapshot) {
+      snapshot.docChanges().forEach(function(change) {
+        procesarCambioResumenPrivado(change, uid);
+      });
+    }, function(error) {
+      console.warn("Error listener resumen privados:", error);
+    });
+}
+
 async function marcarGeneralLeido() {
   const user = auth.currentUser;
   if (!user) return;
@@ -809,6 +927,58 @@ async function evaluarResumenPartida(doc, uid) {
   marcarChatNoLeido(chatId);
 }
 
+async function marcarPrivadoLeido(chatId) {
+  const user = auth.currentUser;
+  const chat = chatState.chats[chatId];
+  if (!user || !chat || chat.tipo !== "privado") return;
+  if (!estaPantallaChatVisible()) return;
+
+  chat.noLeidos = false;
+  actualizarTabsChat();
+  actualizarIndicadorMenuChat();
+
+  try {
+    await db.collection("usuarios").doc(user.uid)
+      .collection("chatLeidos").doc(chatId)
+      .set({
+        lastReadAt: firebase.firestore.FieldValue.serverTimestamp(),
+        tipo: "privado",
+        titulo: chat.titulo || "Chat privado"
+      }, { merge: true });
+
+    chat.noLeidos = false;
+    actualizarTabsChat();
+    actualizarIndicadorMenuChat();
+  } catch (e) {
+    console.warn("[CHAT] No se pudo marcar el privado como leido:", e.message);
+  }
+}
+
+async function evaluarResumenPrivado(doc, uid) {
+  if (!doc || !doc.exists) return;
+
+  const chatId = doc.id;
+  const data = doc.data() || {};
+  const participantes = Array.isArray(data.participantes) ? data.participantes : [];
+  if (!data.lastActivity || data.lastSender === uid || !participantes.includes(uid)) return;
+
+  const otroUid = obtenerOtroUidPrivado(participantes, uid);
+  if (!otroUid) return;
+
+  if (chatState.chatActivo === chatId && estaPantallaChatVisible()) {
+    marcarPrivadoLeido(chatId);
+    return;
+  }
+
+  const lastReadAt = await obtenerLecturaChat(uid, chatId);
+  if (chatState.chatActivo === chatId && estaPantallaChatVisible()) return;
+  if (!timestampMayor(data.lastActivity, lastReadAt)) return;
+
+  const nombre = await obtenerNombreUsuarioChat(otroUid);
+  asegurarChatPrivado(chatId, otroUid, nombre);
+  marcarChatNoLeido(chatId);
+}
+
 window.abrirChatPartida = async function(id, fecha, titulo) {
   const user = auth.currentUser;
   if (!user) {
@@ -858,6 +1028,23 @@ window.abrirChatPartida = async function(id, fecha, titulo) {
   mostrar("chat");
 };
 
+window.abrirChatPrivado = async function(otroUid, nombre) {
+  const user = auth.currentUser;
+  if (!user) {
+    alert("Debes iniciar sesion");
+    return;
+  }
+
+  if (!otroUid || otroUid === user.uid) return;
+
+  const chatId = construirChatPrivadoId(user.uid, otroUid);
+  const titulo = nombre || await obtenerNombreUsuarioChat(otroUid);
+
+  asegurarChatPrivado(chatId, otroUid, titulo);
+  cambiarChatTab(chatId);
+  mostrar("chat");
+};
+
 function limpiarListenersChat() {
   if (typeof chatState.listenerActivo === "function") {
     chatState.listenerActivo();
@@ -879,6 +1066,8 @@ window.notificarEntradaSeccionChat = function() {
     marcarGeneralLeido();
   } else if (chatState.chats[chatId] && chatState.chats[chatId].tipo === "partida") {
     marcarPartidaLeida(chatId);
+  } else if (chatState.chats[chatId] && chatState.chats[chatId].tipo === "privado") {
+    marcarPrivadoLeido(chatId);
   }
 };
 
@@ -890,11 +1079,13 @@ window.abrirChatGeneral = function() {
 window.iniciarListenersChatsPartidas = function(uid) {
   iniciarListenerResumenGeneral(uid);
   iniciarListenersResumenPartidas(uid);
+  iniciarListenerResumenPrivados(uid);
 };
 
 window.limpiarTodoChat = function() {
   limpiarListenersChat();
   limpiarListenersResumenPartidas();
+  limpiarListenerResumenPrivados();
 
   if (typeof chatState.listenerResumenGeneral === "function") {
     chatState.listenerResumenGeneral();

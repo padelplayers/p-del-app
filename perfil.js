@@ -1,6 +1,31 @@
 let unsubscribePerfil = null;
 let unsubscribeUser = null;
 
+function configurarBotonChatPrivadoPerfil(uid) {
+  const user = auth.currentUser;
+  const botones = document.querySelector("#perfil .perfil-botones");
+  if (!user || !botones) return;
+
+  let btn = document.getElementById("btnChatPrivadoPerfil");
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.id = "btnChatPrivadoPerfil";
+    btn.type = "button";
+    btn.className = "btnBlue";
+    btn.textContent = "Chat privado";
+    botones.appendChild(btn);
+  }
+
+  const esPerfilAjeno = uid && uid !== user.uid;
+  btn.style.display = esPerfilAjeno ? "block" : "none";
+  btn.onclick = esPerfilAjeno ? function() {
+    const nombre = document.getElementById("nombrePerfil")?.innerText || "Jugador";
+    if (typeof window.abrirChatPrivado === "function") {
+      window.abrirChatPrivado(uid, nombre);
+    }
+  } : null;
+}
+
 async function eliminarPerfil() {
 
   const user = auth.currentUser;
@@ -78,6 +103,7 @@ if (typeof unsubscribeUser === "function") unsubscribeUser();
   const btnSeguir = document.getElementById("btnSeguir");
   const editarBtn = document.getElementById("btnEditar");
   const eliminarBtn = document.getElementById("btnEliminar");
+  configurarBotonChatPrivadoPerfil(uid);
 
   // control botones
   if (editarBtn) editarBtn.style.display = (user.uid === uid) ? "block" : "none";
@@ -317,6 +343,7 @@ function guardarPerfil(){
 function cargarPerfil(uid){
 
   unsubscribePerfil && unsubscribePerfil();
+  configurarBotonChatPrivadoPerfil(uid);
 
   unsubscribePerfil = db.collection("usuarios")
     .doc(uid)
