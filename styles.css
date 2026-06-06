@@ -931,6 +931,29 @@ body.chatAbierto{
 
 /* JUGADORES */
 
+#listaJugadores {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.jugadorCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 16px auto;
+  text-align: center;
+}
+
+.jugadorCard > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
 .jugadorCard img {
   width: 80px;
   height: 80px;
