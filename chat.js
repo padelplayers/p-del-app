@@ -5,7 +5,10 @@ const chatState = {
   listenerActivo: null,
   chatListenerActivo: null,
   listenerResumenGeneral: null,
+  listenersResumenPartidas: [],
   ultimoResumenGeneralAt: null,
+  ultimosResumenPartidasAt: {},
+  titulosPartidasCache: {},
   chats: {
     general: {
       titulo: "General",
@@ -108,6 +111,8 @@ function cambiarChatTab(chatId) {
 
   if (chatId === "general") {
     marcarGeneralLeido();
+  } else if (chatState.chats[chatId].tipo === "partida") {
+    marcarPartidaLeida(chatId);
   }
 }
 
@@ -190,11 +195,64 @@ function obtenerTituloCortoChatPartida(titulo) {
   return texto;
 }
 
+async function obtenerTituloChatPartidaResumen(partidaId, partida) {
+  if (chatState.titulosPartidasCache[partidaId]) return chatState.titulosPartidasCache[partidaId];
+
+  let titulo = normalizarTituloChatPartida(
+    partida && (partida.titulo || partida.nombrePista || partida.pistaNombre || partida.localidad),
+    partida && partida.fecha
+  );
+
+  if (titulo === "Partida" && partida && partida.pistaId) {
+    try {
+      const pistaDoc = await db.collection("pistas").doc(partida.pistaId).get();
+      if (pistaDoc.exists) {
+        const pista = pistaDoc.data() || {};
+        titulo = pista.nombre || pista.localidad || titulo;
+      }
+    } catch (e) {
+      console.warn("[CHAT] No se pudo leer titulo de pista para chat de partida:", e.message);
+    }
+  }
+
+  chatState.titulosPartidasCache[partidaId] = titulo;
+  return titulo;
+}
+
 function usuarioPuedeEntrarChatPartida(partida, uid) {
   if (!partida || !uid) return false;
   const jugadores = Array.isArray(partida.jugadores) ? partida.jugadores : [];
   const reservas = Array.isArray(partida.reservas) ? partida.reservas : [];
   return jugadores.includes(uid) || reservas.includes(uid);
+}
+
+function actualizarBotonPartidaNoLeido(chatId) {
+  const btn = document.querySelector('.partidaChatBtn[data-partida-id="' + chatId + '"]');
+  if (!btn || !chatState.chats[chatId]) return;
+  btn.classList.toggle("hasUnread", !!chatState.chats[chatId].noLeidos);
+}
+
+function asegurarChatPartidaResumen(chatId, partida, titulo) {
+  if (!chatState.chats[chatId]) {
+    chatState.chats[chatId] = {
+      titulo: titulo,
+      tituloCorto: obtenerTituloCortoChatPartida(titulo),
+      tipo: "partida",
+      estado: "",
+      mensajes: [],
+      noLeidos: false,
+      oculto: false
+    };
+  } else {
+    chatState.chats[chatId].titulo = chatState.chats[chatId].titulo || titulo;
+    chatState.chats[chatId].tituloCorto = chatState.chats[chatId].tituloCorto || obtenerTituloCortoChatPartida(titulo);
+    chatState.chats[chatId].tipo = "partida";
+    chatState.chats[chatId].estado = chatState.chats[chatId].estado || "";
+    chatState.chats[chatId].oculto = false;
+  }
+
+  asegurarTabChat(chatId);
+  actualizarBotonPartidaNoLeido(chatId);
 }
 
 function asegurarTabChat(chatId) {
@@ -529,7 +587,9 @@ async function prepararEnvioChat() {
         const partidaRef = db.collection("partidas").doc(chatId);
         batch.update(partidaRef, {
           lastMessage: texto,
-          lastActivity: firebase.firestore.FieldValue.serverTimestamp()
+          lastActivity: firebase.firestore.FieldValue.serverTimestamp(),
+          lastSender: user.uid,
+          lastSenderName: nombreAutor
         });
       }
 
@@ -551,6 +611,7 @@ function marcarChatNoLeido(chatId) {
   chatState.chats[chatId].oculto = false; // Reaparece si estaba cerrada
   actualizarTabsChat();
   actualizarIndicadorMenuChat();
+  actualizarBotonPartidaNoLeido(chatId);
 }
 
 function actualizarIndicadorMenuChat() {
@@ -627,6 +688,46 @@ function iniciarListenerResumenGeneral(uid) {
     });
 }
 
+function limpiarListenersResumenPartidas() {
+  chatState.listenersResumenPartidas.forEach(function(unsubscribe) {
+    if (typeof unsubscribe === "function") unsubscribe();
+  });
+  chatState.listenersResumenPartidas = [];
+  chatState.ultimosResumenPartidasAt = {};
+}
+
+function procesarCambioResumenPartida(change, uid) {
+  if (!change || change.type === "removed") return;
+
+  const doc = change.doc;
+  const data = doc.data() || {};
+  const at = data.lastActivity;
+  const atMs = at && typeof at.toMillis === "function" ? at.toMillis() : null;
+  const cacheKey = doc.id + ":" + (atMs || "sinActividad");
+
+  if (chatState.ultimosResumenPartidasAt[doc.id] === cacheKey) return;
+  chatState.ultimosResumenPartidasAt[doc.id] = cacheKey;
+
+  evaluarResumenPartida(doc, uid);
+}
+
+function iniciarListenersResumenPartidas(uid) {
+  limpiarListenersResumenPartidas();
+
+  const queries = [
+    db.collection("partidas").where("jugadores", "array-contains", uid),
+    db.collection("partidas").where("reservas", "array-contains", uid)
+  ];
+
+  chatState.listenersResumenPartidas = queries.map(function(query) {
+    return query.onSnapshot(function(snapshot) {
+      snapshot.docChanges().forEach(function(change) {
+        procesarCambioResumenPartida(change, uid);
+      });
+    });
+  });
+}
+
 async function marcarGeneralLeido() {
   const user = auth.currentUser;
   if (!user) return;
@@ -651,6 +752,57 @@ async function marcarGeneralLeido() {
   } catch (e) {
     console.warn("[CHAT] No se pudo marcar General como leido:", e.message);
   }
+}
+
+async function marcarPartidaLeida(chatId) {
+  const user = auth.currentUser;
+  const chat = chatState.chats[chatId];
+  if (!user || !chat || chat.tipo !== "partida") return;
+  if (!estaPantallaChatVisible()) return;
+
+  chat.noLeidos = false;
+  actualizarTabsChat();
+  actualizarIndicadorMenuChat();
+  actualizarBotonPartidaNoLeido(chatId);
+
+  try {
+    await db.collection("usuarios").doc(user.uid)
+      .collection("chatLeidos").doc(chatId)
+      .set({
+        lastReadAt: firebase.firestore.FieldValue.serverTimestamp(),
+        tipo: "partida",
+        titulo: chat.titulo || "Partida"
+      }, { merge: true });
+
+    chat.noLeidos = false;
+    actualizarTabsChat();
+    actualizarIndicadorMenuChat();
+    actualizarBotonPartidaNoLeido(chatId);
+  } catch (e) {
+    console.warn("[CHAT] No se pudo marcar la partida como leida:", e.message);
+  }
+}
+
+async function evaluarResumenPartida(doc, uid) {
+  if (!doc || !doc.exists) return;
+
+  const chatId = doc.id;
+  const data = doc.data() || {};
+  if (!data.lastActivity || data.lastSender === uid) return;
+  if (!usuarioPuedeEntrarChatPartida(data, uid)) return;
+
+  if (chatState.chatActivo === chatId && estaPantallaChatVisible()) {
+    marcarPartidaLeida(chatId);
+    return;
+  }
+
+  const lastReadAt = await obtenerLecturaChat(uid, chatId);
+  if (chatState.chatActivo === chatId && estaPantallaChatVisible()) return;
+  if (!timestampMayor(data.lastActivity, lastReadAt)) return;
+
+  const titulo = await obtenerTituloChatPartidaResumen(chatId, data);
+  asegurarChatPartidaResumen(chatId, data, titulo);
+  marcarChatNoLeido(chatId);
 }
 
 window.abrirChatPartida = async function(id, fecha, titulo) {
@@ -721,6 +873,8 @@ window.notificarEntradaSeccionChat = function() {
 
   if (chatId === "general") {
     marcarGeneralLeido();
+  } else if (chatState.chats[chatId] && chatState.chats[chatId].tipo === "partida") {
+    marcarPartidaLeida(chatId);
   }
 };
 
@@ -731,10 +885,12 @@ window.abrirChatGeneral = function() {
 
 window.iniciarListenersChatsPartidas = function(uid) {
   iniciarListenerResumenGeneral(uid);
+  iniciarListenersResumenPartidas(uid);
 };
 
 window.limpiarTodoChat = function() {
   limpiarListenersChat();
+  limpiarListenersResumenPartidas();
 
   if (typeof chatState.listenerResumenGeneral === "function") {
     chatState.listenerResumenGeneral();
@@ -742,8 +898,10 @@ window.limpiarTodoChat = function() {
 
   chatState.listenerResumenGeneral = null;
   chatState.ultimoResumenGeneralAt = null;
+  chatState.titulosPartidasCache = {};
   Object.keys(chatState.chats).forEach(function(chatId) {
     chatState.chats[chatId].noLeidos = false;
+    actualizarBotonPartidaNoLeido(chatId);
   });
   actualizarTabsChat();
   actualizarIndicadorMenuChat();
@@ -755,5 +913,8 @@ window.marcarChatNoLeido = marcarChatNoLeido;
 window.limpiarListenersChat = limpiarListenersChat;
 window.cerrarChatTab = cerrarChatTab;
 window.gestionarListenerChat = gestionarListenerChat;
+window.chatPartidaTieneNoLeidos = function(chatId) {
+  return !!(chatState.chats[chatId] && chatState.chats[chatId].noLeidos);
+};
 
 document.addEventListener("DOMContentLoaded", initChat);

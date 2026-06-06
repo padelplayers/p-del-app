@@ -355,6 +355,10 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   const chatBtn = document.createElement("button");
   chatBtn.type = "button";
   chatBtn.className = "partidaChatBtn";
+  chatBtn.dataset.partidaId = id;
+  if (typeof window.chatPartidaTieneNoLeidos === "function") {
+    chatBtn.classList.toggle("hasUnread", window.chatPartidaTieneNoLeidos(id));
+  }
   chatBtn.textContent = "Chat partida";
   chatBtn.onclick = function() {
     const pistaChat = document.getElementById("pista_" + id);

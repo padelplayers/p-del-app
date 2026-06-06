@@ -1138,6 +1138,11 @@ button[onclick*="mostrar('menu')"]{
   margin: 0;
 }
 
+.partidaChatBtn.hasUnread {
+  border: 1px solid #FFC107 !important;
+  animation: menuChatUnreadPulse 1s infinite;
+}
+
 .partidaChatBtn::before {
   content: "💬";
   margin-right: 4px;
