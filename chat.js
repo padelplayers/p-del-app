@@ -713,6 +713,10 @@ window.notificarEntradaSeccionChat = function() {
   } else {
     renderChatActivo();
   }
+
+  if (chatId === "general") {
+    marcarGeneralLeido();
+  }
 };
 
 window.abrirChatGeneral = function() {
