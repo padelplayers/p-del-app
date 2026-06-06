@@ -4,6 +4,8 @@ const chatState = {
   ultimoChatRenderizado: null,
   listenerActivo: null,
   chatListenerActivo: null,
+  listenerResumenGeneral: null,
+  ultimoResumenGeneralAt: null,
   chats: {
     general: {
       titulo: "General",
@@ -103,6 +105,10 @@ function cambiarChatTab(chatId) {
 
   actualizarTabsChat();
   renderChatActivo();
+
+  if (chatId === "general") {
+    marcarGeneralLeido();
+  }
 }
 
 function actualizarTabsChat() {
@@ -509,6 +515,16 @@ async function prepararEnvioChat() {
         type: "text"
       });
 
+      if (chatId === "general") {
+        const generalRef = db.collection("chats").doc("general");
+        batch.set(generalRef, {
+          lastMessage: texto,
+          lastActivity: firebase.firestore.FieldValue.serverTimestamp(),
+          lastSender: user.uid,
+          lastSenderName: nombreAutor
+        }, { merge: true });
+      }
+
       if (chatState.chats[chatId].tipo === "partida") {
         const partidaRef = db.collection("partidas").doc(chatId);
         batch.update(partidaRef, {
@@ -534,6 +550,102 @@ function marcarChatNoLeido(chatId) {
   chatState.chats[chatId].noLeidos = true;
   chatState.chats[chatId].oculto = false; // Reaparece si estaba cerrada
   actualizarTabsChat();
+  actualizarIndicadorMenuChat();
+}
+
+function actualizarIndicadorMenuChat() {
+  const btn = document.getElementById("btnMenuChat");
+  if (!btn) return;
+
+  const hayNoLeidos = Object.keys(chatState.chats).some(function(chatId) {
+    return !!chatState.chats[chatId].noLeidos;
+  });
+
+  btn.classList.toggle("hasUnread", hayNoLeidos);
+}
+
+function estaPantallaChatVisible() {
+  const chat = document.getElementById("chat");
+  return !!(
+    chat &&
+    (document.body.classList.contains("chatAbierto") || chat.style.display !== "none")
+  );
+}
+
+async function obtenerLecturaChat(uid, chatId) {
+  try {
+    const doc = await db.collection("usuarios").doc(uid)
+      .collection("chatLeidos").doc(chatId).get();
+
+    if (!doc.exists) return null;
+    return (doc.data() || {}).lastReadAt || null;
+  } catch (e) {
+    console.warn("[CHAT] No se pudo leer estado de lectura:", e.message);
+    return null;
+  }
+}
+
+function timestampMayor(a, b) {
+  if (!a) return false;
+  if (!b) return true;
+
+  const aMs = typeof a.toMillis === "function" ? a.toMillis() : new Date(a).getTime();
+  const bMs = typeof b.toMillis === "function" ? b.toMillis() : new Date(b).getTime();
+  return aMs > bMs;
+}
+
+async function evaluarResumenGeneral(data, uid) {
+  if (!data || !data.lastActivity || data.lastSender === uid) return;
+  if (chatState.chatActivo === "general" && estaPantallaChatVisible()) return;
+
+  const lastReadAt = await obtenerLecturaChat(uid, "general");
+  if (!timestampMayor(data.lastActivity, lastReadAt)) return;
+
+  chatState.chats.general.noLeidos = true;
+  actualizarTabsChat();
+  actualizarIndicadorMenuChat();
+}
+
+function iniciarListenerResumenGeneral(uid) {
+  if (typeof chatState.listenerResumenGeneral === "function") {
+    chatState.listenerResumenGeneral();
+    chatState.listenerResumenGeneral = null;
+  }
+
+  chatState.listenerResumenGeneral = db.collection("chats").doc("general")
+    .onSnapshot(function(doc) {
+      if (!doc.exists) return;
+
+      const data = doc.data() || {};
+      const at = data.lastActivity;
+      const atMs = at && typeof at.toMillis === "function" ? at.toMillis() : null;
+      if (atMs && atMs === chatState.ultimoResumenGeneralAt) return;
+      chatState.ultimoResumenGeneralAt = atMs;
+
+      evaluarResumenGeneral(data, uid);
+    });
+}
+
+async function marcarGeneralLeido() {
+  const user = auth.currentUser;
+  if (!user) return;
+  if (!estaPantallaChatVisible()) return;
+
+  chatState.chats.general.noLeidos = false;
+  actualizarTabsChat();
+  actualizarIndicadorMenuChat();
+
+  try {
+    await db.collection("usuarios").doc(user.uid)
+      .collection("chatLeidos").doc("general")
+      .set({
+        lastReadAt: firebase.firestore.FieldValue.serverTimestamp(),
+        tipo: "general",
+        titulo: "General"
+      }, { merge: true });
+  } catch (e) {
+    console.warn("[CHAT] No se pudo marcar General como leido:", e.message);
+  }
 }
 
 window.abrirChatPartida = async function(id, fecha, titulo) {
@@ -606,6 +718,26 @@ window.notificarEntradaSeccionChat = function() {
 window.abrirChatGeneral = function() {
   cambiarChatTab("general");
   mostrar("chat");
+};
+
+window.iniciarListenersChatsPartidas = function(uid) {
+  iniciarListenerResumenGeneral(uid);
+};
+
+window.limpiarTodoChat = function() {
+  limpiarListenersChat();
+
+  if (typeof chatState.listenerResumenGeneral === "function") {
+    chatState.listenerResumenGeneral();
+  }
+
+  chatState.listenerResumenGeneral = null;
+  chatState.ultimoResumenGeneralAt = null;
+  Object.keys(chatState.chats).forEach(function(chatId) {
+    chatState.chats[chatId].noLeidos = false;
+  });
+  actualizarTabsChat();
+  actualizarIndicadorMenuChat();
 };
 
 window.initChat = initChat;
