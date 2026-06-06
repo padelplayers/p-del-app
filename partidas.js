@@ -682,11 +682,15 @@ function cargarPartidas() {
       };
 
       if (fechaPartida >= ahoraGlobal) {
-        console.log("[cargarPartidas] PROXIMA", doc.id);
-        proximas.push(item);
+        if (p.estado === "abierta" || p.estado === "confirmada") {
+          console.log("[cargarPartidas] PROXIMA", doc.id);
+          proximas.push(item);
+        }
       } else {
-        console.log("[cargarPartidas] PENDIENTE", doc.id);
-        pendientes.push(item);
+        if (p.estado === "confirmada") {
+          console.log("[cargarPartidas] PENDIENTE", doc.id);
+          pendientes.push(item);
+        }
       }
     });
 
