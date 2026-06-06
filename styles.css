@@ -1566,3 +1566,37 @@ body.chatAbierto > .header{
 #login label span {
   white-space: nowrap;
 }
+
+/* Ajuste final chat movil: pestanas visibles y sin chats recientes */
+#chat .chatRecentSidebarBlock,
+#chat #chatRecientes {
+  display:none !important;
+}
+
+@media (max-width:768px) {
+  #chat .chatTabs,
+  #chat.chatFullscreen .chatTabs {
+    display:flex !important;
+    flex-wrap:wrap !important;
+    overflow-x:visible !important;
+    overflow-y:visible !important;
+    white-space:normal !important;
+    height:auto !important;
+    max-height:none !important;
+  }
+
+  #chat .chatTabs .chatTab,
+  #chat.chatFullscreen .chatTabs .chatTab {
+    flex:0 1 auto !important;
+    max-width:46% !important;
+    min-width:0 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  #chat .chatTabs .chatTabClose,
+  #chat.chatFullscreen .chatTabs .chatTabClose {
+    flex:0 0 auto !important;
+  }
+}
