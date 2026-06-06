@@ -2,7 +2,8 @@ const chatState = {
   inicializado: false,
   chatActivo: "general",
   ultimoChatRenderizado: null,
-  listeners: {},
+  listenerActivo: null,
+  chatListenerActivo: null,
   chats: {
     general: {
       titulo: "General",
@@ -100,11 +101,12 @@ function cambiarChatTab(chatId) {
   chatState.chats[chatId].noLeidos = false;
   chatState.chats[chatId].oculto = false;
 
-  // Iniciar listener si es partida real y no tiene uno activo
   if (chatState.chats[chatId].tipo === "partida" && chatId !== "partida-demo") {
     const query = db.collection("partidas").doc(chatId)
       .collection("mensajes").orderBy("at", "asc").limit(100);
     gestionarListenerChat(chatId, query);
+  } else if (chatState.chatListenerActivo) {
+    limpiarListenersChat();
   }
 
   actualizarTabsChat();
@@ -325,9 +327,10 @@ function renderChatActivo() {
  * Gestionar Listener Realtime: desuscripción segura y detección de pending writes.
  */
 function gestionarListenerChat(chatId, query) {
-  // 1. Destruir listener previo si existe para este chat
-  if (typeof chatState.listeners[chatId] === "function") {
-    chatState.listeners[chatId](); 
+  if (typeof chatState.listenerActivo === "function") {
+    chatState.listenerActivo();
+    chatState.listenerActivo = null;
+    chatState.chatListenerActivo = null;
   }
 
   const unsubscribe = query.onSnapshot({ includeMetadataChanges: true }, snapshot => {
@@ -370,7 +373,8 @@ function gestionarListenerChat(chatId, query) {
     if (chatId === chatState.chatActivo) renderChatActivo();
   });
 
-  chatState.listeners[chatId] = unsubscribe;
+  chatState.listenerActivo = unsubscribe;
+  chatState.chatListenerActivo = chatId;
 }
 
 /**
@@ -378,9 +382,10 @@ function gestionarListenerChat(chatId, query) {
  */
 window.eliminarChatTotal = async function(chatId) {
   // 1. Unsubscribe
-  if (typeof chatState.listeners[chatId] === "function") {
-    chatState.listeners[chatId]();
-    delete chatState.listeners[chatId];
+  if (chatState.chatListenerActivo === chatId && typeof chatState.listenerActivo === "function") {
+    chatState.listenerActivo();
+    chatState.listenerActivo = null;
+    chatState.chatListenerActivo = null;
   }
 
   // 2. Borrar subcolección en Firestore (Batch)
@@ -505,12 +510,12 @@ window.abrirChatPartida = async function(id, fecha, titulo) {
 };
 
 function limpiarListenersChat() {
-  Object.keys(chatState.listeners).forEach(function(chatId) {
-    const cancelar = chatState.listeners[chatId];
-    if (typeof cancelar === "function") cancelar();
-  });
+  if (typeof chatState.listenerActivo === "function") {
+    chatState.listenerActivo();
+  }
 
-  chatState.listeners = {};
+  chatState.listenerActivo = null;
+  chatState.chatListenerActivo = null;
 }
 
 window.initChat = initChat;
