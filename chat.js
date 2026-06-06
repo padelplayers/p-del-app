@@ -132,13 +132,14 @@ function actualizarTabsChat() {
     btn.style.display = visible ? "flex" : "none";
 
     if (visible && btn.classList.contains('chatTab')) {
+        const tituloTab = chat.tituloCorto || chat.titulo;
         let textNode = Array.from(btn.childNodes).find(n => n.nodeType === 3);
         if (!textNode) {
-            textNode = document.createTextNode(chat.titulo);
+            textNode = document.createTextNode(tituloTab);
             btn.prepend(textNode);
         } else {
-            if (textNode.textContent !== chat.titulo) {
-                textNode.textContent = chat.titulo;
+            if (textNode.textContent !== tituloTab) {
+                textNode.textContent = tituloTab;
             }
         }
 
@@ -178,6 +179,17 @@ function normalizarTituloChatPartida(titulo, fecha) {
   return "Partida";
 }
 
+function obtenerTituloCortoChatPartida(titulo) {
+  const texto = (titulo || "").trim();
+  const separadores = [" - ", " -- ", " | "];
+  for (const separador of separadores) {
+    if (texto.includes(separador)) {
+      return texto.split(separador)[0].trim() || texto;
+    }
+  }
+  return texto;
+}
+
 function usuarioPuedeEntrarChatPartida(partida, uid) {
   if (!partida || !uid) return false;
   const jugadores = Array.isArray(partida.jugadores) ? partida.jugadores : [];
@@ -193,7 +205,7 @@ function asegurarTabChat(chatId) {
   btn.type = "button";
   btn.className = "chatTab";
   btn.dataset.chatTab = chatId;
-  btn.textContent = chatState.chats[chatId]?.titulo || "Partida";
+  btn.textContent = chatState.chats[chatId]?.tituloCorto || chatState.chats[chatId]?.titulo || "Partida";
   tabs.appendChild(btn);
 }
 
@@ -470,16 +482,21 @@ window.abrirChatPartida = async function(id, fecha, titulo) {
   }
 
   const tituloChat = normalizarTituloChatPartida(titulo, fecha);
+  const tituloCorto = obtenerTituloCortoChatPartida(tituloChat);
 
   if (!chatState.chats[id]) {
     chatState.chats[id] = {
       titulo: tituloChat,
+      tituloCorto: tituloCorto,
       tipo: "partida",
+      estado: "",
       mensajes: [],
       oculto: false
     };
   } else {
     chatState.chats[id].titulo = tituloChat;
+    chatState.chats[id].tituloCorto = tituloCorto;
+    chatState.chats[id].estado = chatState.chats[id].estado || "";
     chatState.chats[id].oculto = false;
   }
   asegurarTabChat(id);
