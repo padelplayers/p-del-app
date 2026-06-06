@@ -1676,4 +1676,39 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
     flex:0 0 auto !important;
     display:inline-flex !important;
   }
+
+  #listaJugadores {
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+  }
+
+  .jugadorCard {
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    text-align:center !important;
+    width:fit-content !important;
+    margin:18px auto !important;
+    gap:8px !important;
+  }
+
+  .jugadorCard > div {
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    text-align:center !important;
+    gap:8px !important;
+  }
+
+  .jugadorCard img {
+    width:80px !important;
+    height:80px !important;
+    border-radius:50% !important;
+    object-fit:cover !important;
+    display:block !important;
+    margin:0 auto !important;
+  }
 }
