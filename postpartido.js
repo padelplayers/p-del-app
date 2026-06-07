@@ -150,6 +150,18 @@ function esPartidaConResultadoPostPartido(p) {
   return tipo === "ranking" || tipo === "competitiva" || tipo === "competitivo";
 }
 
+function puedeValorarPostPartido(p, uidActual) {
+  const jugadores = p && Array.isArray(p.jugadores) ? p.jugadores : [];
+  if (!uidActual || !jugadores.includes(uidActual)) return false;
+  if (!p || p.estado !== "confirmada") return false;
+  if (!esPartidaPendientePostPartido(p)) return false;
+
+  if (esPartidaAmistosaPostPartido(p)) return true;
+  if (!esPartidaConResultadoPostPartido(p)) return false;
+
+  return !!(p.resultado && p.resultado.estado === "validado");
+}
+
 function crearTextoPostPartido(texto) {
   const el = document.createElement("div");
   el.className = "postPartidoTexto";
@@ -162,6 +174,13 @@ function crearBotonPostPartido(texto, accion) {
   btn.type = "button";
   btn.textContent = texto;
   btn.onclick = accion;
+  return btn;
+}
+
+function crearBotonPrimarioPostPartido(texto, accion) {
+  const btn = crearBotonPostPartido(texto, accion);
+  btn.style.background = "#1565C0";
+  btn.style.color = "#fff";
   return btn;
 }
 
@@ -464,9 +483,10 @@ function guardarValoracionesAmistosa(id, jugadoresValorados) {
 
     const p = doc.data() || {};
     const jugadores = Array.isArray(p.jugadores) ? p.jugadores : [];
+    const jugadoresUnicos = new Set(jugadores);
 
-    if (!esPartidaAmistosaPostPartido(p)) {
-      alert("Estas valoraciones solo aplican a partidas amistosas");
+    if (!puedeValorarPostPartido(p, user.uid)) {
+      alert("Esta partida no admite valoraciones en este momento");
       return;
     }
 
@@ -475,8 +495,8 @@ function guardarValoracionesAmistosa(id, jugadoresValorados) {
       return;
     }
 
-    if (!esPartidaPendientePostPartido(p)) {
-      alert("Las valoraciones estarán disponibles 80 minutos después del inicio");
+    if (jugadores.length !== 4 || jugadoresUnicos.size !== 4) {
+      alert("La partida necesita 4 titulares para valorar");
       return;
     }
 
@@ -495,6 +515,7 @@ function guardarValoracionesAmistosa(id, jugadoresValorados) {
       if (!docActualizado.exists) return null;
 
       const partidaActualizada = docActualizado.data() || {};
+      if (!esPartidaAmistosaPostPartido(partidaActualizada)) return null;
       if (!amistosaTieneValoracionesCompletas(partidaActualizada)) return null;
 
       const finalizadaAt = firebase.firestore.FieldValue.serverTimestamp();
@@ -543,9 +564,10 @@ function abrirFormularioValoracionesAmistosa(id) {
 
     const p = doc.data() || {};
     const jugadores = Array.isArray(p.jugadores) ? p.jugadores : [];
+    const jugadoresUnicos = new Set(jugadores);
 
-    if (!esPartidaAmistosaPostPartido(p)) {
-      alert("Estas valoraciones solo aplican a partidas amistosas");
+    if (!puedeValorarPostPartido(p, user.uid)) {
+      alert("Esta partida no admite valoraciones en este momento");
       return;
     }
 
@@ -554,8 +576,8 @@ function abrirFormularioValoracionesAmistosa(id) {
       return;
     }
 
-    if (!esPartidaPendientePostPartido(p)) {
-      alert("Las valoraciones estarán disponibles 80 minutos después del inicio");
+    if (jugadores.length !== 4 || jugadoresUnicos.size !== 4) {
+      alert("La partida necesita 4 titulares para valorar");
       return;
     }
 
@@ -579,7 +601,11 @@ function abrirFormularioValoracionesAmistosa(id) {
         };
       });
     })).then(function(jugadoresValorados) {
-      crearFormularioValoraciones(id, jugadoresValorados);
+      crearFormularioValoraciones(
+        id,
+        jugadoresValorados,
+        esPartidaAmistosaPostPartido(p) ? "amistosa" : "ranking"
+      );
     });
   }).catch(function(error) {
     console.error("Error abriendo valoraciones:", error);
@@ -587,7 +613,7 @@ function abrirFormularioValoracionesAmistosa(id) {
   });
 }
 
-function crearFormularioValoraciones(id, jugadoresValorados) {
+function crearFormularioValoraciones(id, jugadoresValorados, tipoValoracion) {
   cerrarFormularioValoraciones();
 
   const overlay = document.createElement("div");
@@ -601,7 +627,7 @@ function crearFormularioValoraciones(id, jugadoresValorados) {
   titulo.textContent = "Valorar jugadores";
 
   const descripcion = document.createElement("p");
-  descripcion.textContent = "Valora a los otros 3 titulares de esta partida amistosa.";
+  descripcion.textContent = "Valora a los otros 3 titulares de esta partida " + (tipoValoracion || "amistosa") + ".";
 
   const acciones = document.createElement("div");
   acciones.className = "postPartidoModalAcciones";
@@ -644,7 +670,7 @@ window.crearAccionesPostPartido = function(id, p, uidActual) {
 
     const accionesAmistosa = document.createElement("div");
     accionesAmistosa.className = "postPartidoAcciones";
-    accionesAmistosa.appendChild(crearBotonPostPartido("Valorar jugadores", function() {
+    accionesAmistosa.appendChild(crearBotonPrimarioPostPartido("Valorar jugadores", function() {
       window.abrirValoracionesPostPartido(id);
     }));
     box.appendChild(accionesAmistosa);
@@ -656,7 +682,7 @@ window.crearAccionesPostPartido = function(id, p, uidActual) {
   if (!resultado) {
     const acciones = document.createElement("div");
     acciones.className = "postPartidoAcciones";
-    acciones.appendChild(crearBotonPostPartido("Introducir resultado", function() {
+    acciones.appendChild(crearBotonPrimarioPostPartido("Introducir resultado", function() {
       window.abrirFormularioResultado(id);
     }));
     box.appendChild(acciones);
@@ -674,7 +700,7 @@ window.crearAccionesPostPartido = function(id, p, uidActual) {
 
     const accionesPendiente = document.createElement("div");
     accionesPendiente.className = "postPartidoAcciones";
-    accionesPendiente.appendChild(crearBotonPostPartido("Confirmar resultado", function() {
+    accionesPendiente.appendChild(crearBotonPrimarioPostPartido("Confirmar resultado", function() {
       window.confirmarResultadoPartida(id);
     }));
     accionesPendiente.appendChild(crearBotonPostPartido("Rechazar resultado", function() {
@@ -689,7 +715,7 @@ window.crearAccionesPostPartido = function(id, p, uidActual) {
 
     const accionesDisputa = document.createElement("div");
     accionesDisputa.className = "postPartidoAcciones";
-    accionesDisputa.appendChild(crearBotonPostPartido("Proponer nuevo resultado", function() {
+    accionesDisputa.appendChild(crearBotonPrimarioPostPartido("Proponer nuevo resultado", function() {
       window.abrirFormularioResultado(id);
     }));
     box.appendChild(accionesDisputa);
@@ -698,6 +724,21 @@ window.crearAccionesPostPartido = function(id, p, uidActual) {
 
   if (estadoResultado === "validado") {
     box.appendChild(crearTextoPostPartido("Resultado validado. Pendiente de valoraciones."));
+
+    if (p.valoraciones && p.valoraciones[uidActual]) {
+      box.appendChild(crearTextoPostPartido("Ya has valorado esta partida."));
+      return box;
+    }
+
+    if (puedeValorarPostPartido(p, uidActual)) {
+      const accionesValoracion = document.createElement("div");
+      accionesValoracion.className = "postPartidoAcciones";
+      accionesValoracion.appendChild(crearBotonPrimarioPostPartido("Valorar jugadores", function() {
+        window.abrirValoracionesPostPartido(id);
+      }));
+      box.appendChild(accionesValoracion);
+    }
+
     return box;
   }
 
