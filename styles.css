@@ -1921,3 +1921,69 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
     margin:0 auto !important;
   }
 }
+
+.partidaCabeceraAbierta,
+.partidaCabeceraConfirmada,
+.partidaCabeceraCerrada {
+  padding: 10px;
+  border-radius: 8px;
+  color: #fff;
+  box-sizing: border-box;
+}
+
+.partidaCabeceraAbierta {
+  background: #1565C0;
+}
+
+.partidaCabeceraConfirmada {
+  background: #2E7D32;
+}
+
+.partidaCabeceraCerrada {
+  background: #C62828;
+}
+
+.partidaCabeceraAbierta .partidaFecha,
+.partidaCabeceraConfirmada .partidaFecha,
+.partidaCabeceraCerrada .partidaFecha,
+.partidaCabeceraAbierta .partidaMeta,
+.partidaCabeceraConfirmada .partidaMeta,
+.partidaCabeceraCerrada .partidaMeta,
+.partidaCabeceraAbierta .partidaPistaTexto,
+.partidaCabeceraConfirmada .partidaPistaTexto,
+.partidaCabeceraCerrada .partidaPistaTexto,
+.partidaCabeceraAbierta .partidaPistaBtn,
+.partidaCabeceraConfirmada .partidaPistaBtn,
+.partidaCabeceraCerrada .partidaPistaBtn {
+  color: #fff;
+}
+
+.partidaEstadoBadge {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 4px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.partidaCabeceraAbierta .partidaChatBtn,
+.partidaCabeceraConfirmada .partidaChatBtn,
+.partidaCabeceraCerrada .partidaChatBtn {
+  background: #fff;
+  color: #1565C0;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+}
+
+.partidaCabeceraAbierta .partidaAcciones button,
+.partidaCabeceraConfirmada .partidaAcciones button,
+.partidaCabeceraCerrada .partidaAcciones button {
+  border: 1px solid rgba(255, 255, 255, 0.75);
+}

@@ -343,8 +343,24 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   bloque.className = "partidaCard";
   bloque.style.background = fondo;
 
+  const reservasCompletas = (p.reservas || []).length >= 2;
+  let textoEstadoPartida = "";
+  let claseEstadoPartida = "";
+
+  if (p.estado === "abierta") {
+    textoEstadoPartida = "ABIERTA";
+    claseEstadoPartida = "partidaCabeceraAbierta";
+  } else if (p.estado === "confirmada") {
+    textoEstadoPartida = reservasCompletas ? "CERRADA" : "CONFIRMADA";
+    claseEstadoPartida = reservasCompletas ? "partidaCabeceraCerrada" : "partidaCabeceraConfirmada";
+  } else if (p.estado === "cerrada") {
+    textoEstadoPartida = "CERRADA";
+    claseEstadoPartida = "partidaCabeceraCerrada";
+  }
+
   const cabecera = document.createElement("div");
   cabecera.className = "partidaCabecera";
+  if (claseEstadoPartida) cabecera.classList.add(claseEstadoPartida);
 
   const filaTop = document.createElement("div");
   filaTop.className = "partidaFilaTop";
@@ -392,6 +408,11 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   metaFila.appendChild(creador);
 
   cabecera.appendChild(filaTop);
+  if (textoEstadoPartida) {
+    const estadoBadge = textoNodo(textoEstadoPartida, "span");
+    estadoBadge.className = "partidaEstadoBadge";
+    cabecera.appendChild(estadoBadge);
+  }
   cabecera.appendChild(pistaFila);
   cabecera.appendChild(metaFila);
 
