@@ -1753,7 +1753,71 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   padding:0 !important;
 }
 
+#listaClasificacion {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  margin:16px 0;
+}
+
+.clasificacionCard {
+  display:grid;
+  grid-template-columns:auto auto minmax(0, 1fr);
+  align-items:center;
+  gap:12px;
+  padding:12px;
+  border:1px solid #e0e0e0;
+  border-radius:8px;
+  background:#fff;
+}
+
+.clasificacionPos {
+  min-width:32px;
+  font-weight:bold;
+  font-size:20px;
+  color:#1565C0;
+  text-align:center;
+}
+
+.clasificacionFoto {
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  object-fit:cover;
+}
+
+.clasificacionInfo {
+  min-width:0;
+}
+
+.clasificacionNombre {
+  font-weight:bold;
+}
+
+.clasificacionResumen {
+  color:#555;
+  font-size:14px;
+}
+
+.clasificacionStats {
+  grid-column:3;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 12px;
+  color:#333;
+  font-size:13px;
+}
+
 @media (max-width:768px) {
+  .clasificacionCard {
+    grid-template-columns:auto auto minmax(0, 1fr);
+  }
+
+  .clasificacionStats {
+    grid-column:1 / -1;
+    padding-left:44px;
+  }
+
   #chat .chatTabs,
   #chat.chatFullscreen .chatTabs {
     display:flex !important;

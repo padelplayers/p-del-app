@@ -340,6 +340,112 @@ function togglePass(){
 
 // ======================
 
+function crearTextoClasificacion(texto, className) {
+  const el = document.createElement("div");
+  if (className) el.className = className;
+  el.textContent = texto;
+  return el;
+}
+
+function formatearMediaClasificacion(total, valoracionesRecibidas) {
+  if (!valoracionesRecibidas || valoracionesRecibidas <= 0) return "-";
+  const media = Number(total || 0) / valoracionesRecibidas;
+  return media.toFixed(1);
+}
+
+function obtenerFotoClasificacion(data) {
+  if (data.fotoPerfil) return data.fotoPerfil;
+
+  const sexo = String(data.sexo || "").toLowerCase().trim();
+  if (sexo === "femenino" || sexo === "mujer") return "imagen/mujer.jpeg";
+  return "imagen/hombre.jpeg";
+}
+
+function crearCardClasificacion(jugador, posicion) {
+  const card = document.createElement("div");
+  card.className = "clasificacionCard";
+
+  const pos = crearTextoClasificacion(String(posicion), "clasificacionPos");
+
+  const foto = document.createElement("img");
+  foto.className = "clasificacionFoto";
+  foto.src = jugador.foto;
+  foto.alt = jugador.nombre;
+
+  const info = document.createElement("div");
+  info.className = "clasificacionInfo";
+  info.appendChild(crearTextoClasificacion(jugador.nombre, "clasificacionNombre"));
+  info.appendChild(crearTextoClasificacion(jugador.puntos + " puntos · " + jugador.partidos + " partidos", "clasificacionResumen"));
+
+  const stats = document.createElement("div");
+  stats.className = "clasificacionStats";
+  stats.appendChild(crearTextoClasificacion("Puntualidad: " + jugador.mediaPuntualidad));
+  stats.appendChild(crearTextoClasificacion("Actitud: " + jugador.mediaActitud));
+  stats.appendChild(crearTextoClasificacion("Compromiso: " + jugador.mediaCompromiso));
+
+  card.appendChild(pos);
+  card.appendChild(foto);
+  card.appendChild(info);
+  card.appendChild(stats);
+
+  return card;
+}
+
+function cargarClasificacionComunitaria() {
+  const contenedor = document.getElementById("listaClasificacion");
+  if (!contenedor) return;
+
+  contenedor.replaceChildren(crearTextoClasificacion("Cargando..."));
+
+  db.collection("usuarios").get()
+    .then(function(snapshot) {
+      const jugadores = [];
+
+      snapshot.forEach(function(doc) {
+        const data = doc.data() || {};
+        const c = data.clasificacion || {};
+        const puntos = Number(c.puntos || 0);
+        const partidos = Number(c.partidos || 0);
+        const valoracionesRecibidas = Number(c.valoracionesRecibidas || 0);
+        const nombre = data.nombre || "Jugador";
+
+        jugadores.push({
+          uid: doc.id,
+          nombre: nombre,
+          nombreOrden: normalizarTexto(nombre),
+          foto: obtenerFotoClasificacion(data),
+          puntos: puntos,
+          partidos: partidos,
+          mediaPuntualidad: formatearMediaClasificacion(c.puntualidadTotal, valoracionesRecibidas),
+          mediaActitud: formatearMediaClasificacion(c.actitudTotal, valoracionesRecibidas),
+          mediaCompromiso: formatearMediaClasificacion(c.compromisoTotal, valoracionesRecibidas)
+        });
+      });
+
+      jugadores.sort(function(a, b) {
+        if (b.puntos !== a.puntos) return b.puntos - a.puntos;
+        if (b.partidos !== a.partidos) return b.partidos - a.partidos;
+        return a.nombreOrden.localeCompare(b.nombreOrden);
+      });
+
+      if (jugadores.length === 0) {
+        contenedor.replaceChildren(crearTextoClasificacion("No hay jugadores"));
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+      jugadores.forEach(function(jugador, index) {
+        fragment.appendChild(crearCardClasificacion(jugador, index + 1));
+      });
+
+      contenedor.replaceChildren(fragment);
+    })
+    .catch(function(error) {
+      console.error("Error cargando clasificación:", error);
+      contenedor.replaceChildren(crearTextoClasificacion("No se pudo cargar la clasificación"));
+    });
+}
+
 function mostrar(seccion){
   console.log("MOSTRAR:", seccion);
   const abriendoChat = seccion === "chat";
@@ -484,6 +590,10 @@ if (seccion === "buscarPartida") {
   } else {
     delete window.filtrosPartidas;
   }
+}
+
+if (seccion === "clasificacion") {
+  cargarClasificacionComunitaria();
 }
 
   const btnNueva = document.getElementById("btnNuevaPista");
