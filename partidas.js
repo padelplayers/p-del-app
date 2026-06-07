@@ -555,6 +555,45 @@ function cargarDatosPartidaRenderizada(item) {
   }
 }
 
+function partidaTieneValoracionesCompletas(p) {
+  const jugadores = p && Array.isArray(p.jugadores) ? p.jugadores : [];
+  if (jugadores.length !== 4) return false;
+
+  const jugadoresUnicos = new Set(jugadores);
+  if (jugadoresUnicos.size !== 4) return false;
+
+  const valoraciones = p.valoraciones;
+  if (!valoraciones || typeof valoraciones !== "object") return false;
+
+  return jugadores.every(function(uidValorador) {
+    const valoracionValorador = valoraciones[uidValorador];
+    if (!valoracionValorador || typeof valoracionValorador !== "object") return false;
+    if (Object.prototype.hasOwnProperty.call(valoracionValorador, uidValorador)) return false;
+
+    return jugadores.every(function(uidValorado) {
+      if (uidValorado === uidValorador) return true;
+
+      const valoracion = valoracionValorador[uidValorado];
+      return !!valoracion && typeof valoracion === "object";
+    });
+  });
+}
+
+function partidaTieneResultadoValidado(p) {
+  return !!(p && p.resultado && p.resultado.estado === "validado");
+}
+
+function partidaConfirmadaIncompleta(p) {
+  if (!p || p.estado !== "confirmada") return false;
+
+  const tipo = String(p.tipo || "ranking").toLowerCase().trim();
+  const valoracionesCompletas = partidaTieneValoracionesCompletas(p);
+
+  if (tipo === "amistosa") return !valoracionesCompletas;
+
+  return !(partidaTieneResultadoValidado(p) && valoracionesCompletas);
+}
+
 function cargarPartidas() {
   if (!window.modoPartidas) window.modoPartidas = "proximas";
 
@@ -650,6 +689,16 @@ function cargarPartidas() {
       if (p.estado === "abierta" && fechaPartida && fechaPartida < ahora) {
         eliminarPartidaConChat(doc.id).then(function(ok) { if (ok) cargarPartidas(); });
         return;
+      }
+
+      if (p.estado === "confirmada" && fechaPartida) {
+        const limiteConfirmada = new Date(fechaPartida);
+        limiteConfirmada.setDate(limiteConfirmada.getDate() + 3);
+
+        if (ahora > limiteConfirmada && partidaConfirmadaIncompleta(p)) {
+          eliminarPartidaConChat(doc.id).then(function(ok) { if (ok) cargarPartidas(); });
+          return;
+        }
       }
 
       if (p.estado === "finalizada") {
