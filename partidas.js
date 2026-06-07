@@ -701,24 +701,13 @@ function cargarPartidas() {
         }
       }
 
-      if (p.estado === "finalizada") {
-        const totalJugadores = (p.jugadores || []).length;
-        const votos = p.votaciones || [];
-
-        if (totalJugadores > 0 && votos.length >= totalJugadores) {
-          eliminarPartidaConChat(doc.id).then(function(ok) { if (ok) cargarPartidas(); });
-          return;
-        }
-
-        if (fechaPartida) {
-          const limite = new Date(fechaPartida);
-          limite.setDate(limite.getDate() + 3);
-
-          if (ahora > limite) {
-            eliminarPartidaConChat(doc.id).then(function(ok) { if (ok) cargarPartidas(); });
-            return;
-          }
-        }
+      if (
+        p.estado === "finalizada" &&
+        p.clasificacionComunitariaAplicada === true &&
+        p.guardadaEnHistorial === true
+      ) {
+        eliminarPartidaConChat(doc.id).then(function(ok) { if (ok) cargarPartidas(); });
+        return;
       }
 
       if (!fechaPartida) return;
@@ -1060,6 +1049,7 @@ function salirDePartida(partidaId) {
 
 window.guardarPartidaFinalizada = function(p, idPartida) {
   const historialRef = db.collection("historial_partidas").doc(idPartida);
+  const partidaRef = db.collection("partidas").doc(idPartida);
   const datos = {
     idPartida: idPartida,
     tipo: p.tipo || null,
@@ -1078,8 +1068,15 @@ window.guardarPartidaFinalizada = function(p, idPartida) {
     guardadaEnHistorialAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
+  const marcarPartidaEnHistorial = function() {
+    return partidaRef.set({
+      guardadaEnHistorial: true,
+      guardadaEnHistorialAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  };
+
   return historialRef.get().then(function(doc) {
-    if (doc.exists) return null;
-    return historialRef.set(datos);
+    if (doc.exists) return marcarPartidaEnHistorial();
+    return historialRef.set(datos).then(marcarPartidaEnHistorial);
   });
 };
