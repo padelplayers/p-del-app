@@ -342,6 +342,41 @@ function cerrarPartidaRankingTrasValoraciones(idPartida) {
   });
 }
 
+window.cierresRankingEnCurso = window.cierresRankingEnCurso || {};
+
+function rankingNecesitaIntentoCierre(p) {
+  return !!(
+    partidaRankingConDatosCompletosPostPartido(p) &&
+    p.estado !== "finalizada" &&
+    (
+      p.rankingCompetitivoAplicado !== true ||
+      p.clasificacionComunitariaAplicada !== true ||
+      p.guardadaEnHistorial !== true
+    )
+  );
+}
+
+function intentarCerrarRankingAtascada(idPartida, p) {
+  if (!rankingNecesitaIntentoCierre(p)) return Promise.resolve(null);
+  if (window.cierresRankingEnCurso[idPartida]) return Promise.resolve(null);
+
+  window.cierresRankingEnCurso[idPartida] = true;
+
+  return cerrarPartidaRankingTrasValoraciones(idPartida).then(function(resultado) {
+    if (typeof cargarPartidas === "function") cargarPartidas();
+    return resultado;
+  }).catch(function(error) {
+    console.error("Error cerrando ranking atascada:", error);
+    throw error;
+  }).then(function(resultado) {
+    delete window.cierresRankingEnCurso[idPartida];
+    return resultado;
+  }, function(error) {
+    delete window.cierresRankingEnCurso[idPartida];
+    throw error;
+  });
+}
+
 function puedeValorarPostPartido(p, uidActual) {
   const jugadores = p && Array.isArray(p.jugadores) ? p.jugadores : [];
   if (!uidActual || !jugadores.includes(uidActual)) return false;
@@ -910,6 +945,12 @@ function guardarValoracionesAmistosa(id, jugadoresValorados) {
     }
 
     if (p.valoraciones && p.valoraciones[user.uid]) {
+      if (rankingNecesitaIntentoCierre(p)) {
+        return intentarCerrarRankingAtascada(id, p).then(function() {
+          cerrarFormularioValoraciones();
+        });
+      }
+
       alert("Ya has valorado esta partida");
       return;
     }
@@ -1152,6 +1193,10 @@ window.crearAccionesPostPartido = function(id, p, uidActual) {
   }
 
   if (estadoResultado === "validado") {
+    if (rankingNecesitaIntentoCierre(p)) {
+      intentarCerrarRankingAtascada(id, p);
+    }
+
     box.appendChild(crearTextoPostPartido("Resultado validado. Pendiente de valoraciones."));
 
     if (p.valoraciones && p.valoraciones[uidActual]) {
