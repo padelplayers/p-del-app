@@ -1225,6 +1225,107 @@ button[onclick*="mostrar('menu')"]{
   border-radius: 6px;
 }
 
+.postPartidoBox {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #d7e3f3;
+}
+
+.postPartidoTexto {
+  margin: 4px 0;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.postPartidoAcciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.postPartidoAcciones button {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+.postPartidoModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.postPartidoModal {
+  width: min(440px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.postPartidoModal h3 {
+  margin: 0 0 8px;
+}
+
+.postPartidoModal p {
+  margin: 0 0 12px;
+  color: #555;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.postPartidoSetFila {
+  display: grid;
+  grid-template-columns: minmax(82px, 1fr) 72px 72px;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.postPartidoSetCabecera {
+  margin-top: 12px;
+  font-weight: bold;
+}
+
+.postPartidoSetCabecera .postPartidoTexto {
+  margin: 0;
+  text-align: center;
+}
+
+.postPartidoSetLabel {
+  font-size: 14px;
+  color: #333;
+}
+
+.postPartidoSetFila input {
+  width: 100%;
+  padding: 8px;
+  text-align: center;
+}
+
+.postPartidoModalAcciones {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.postPartidoModalAcciones button {
+  margin: 0;
+  padding: 10px 12px;
+}
+
 .partidaJugadores,
 .partidaReservas {
   text-align: center;
