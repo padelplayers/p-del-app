@@ -688,15 +688,18 @@ function cargarPartidas() {
         nodo: crearBloquePartida(doc.id, p, nivelTexto, mostrarSalir, fondo)
       };
 
-      if (fechaPartida >= ahoraGlobal) {
+      const limiteResultado = new Date(fechaPartida.getTime() + 80 * 60 * 1000);
+
+      if (p.estado === "confirmada" && limiteResultado <= ahoraGlobal) {
+        console.log("[cargarPartidas] PENDIENTE", doc.id);
+        pendientes.push(item);
+      } else if (
+        fechaPartida >= ahoraGlobal ||
+        (p.estado === "confirmada" && limiteResultado > ahoraGlobal)
+      ) {
         if (p.estado === "abierta" || p.estado === "confirmada") {
           console.log("[cargarPartidas] PROXIMA", doc.id);
           proximas.push(item);
-        }
-      } else {
-        if (p.estado === "confirmada") {
-          console.log("[cargarPartidas] PENDIENTE", doc.id);
-          pendientes.push(item);
         }
       }
     });
