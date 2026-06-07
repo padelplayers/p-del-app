@@ -626,6 +626,13 @@ function cargarPartidas() {
 
     snapshot.forEach(function(doc) {
       const p = doc.data() || {};
+      console.log(
+        "REVISANDO PARTIDA",
+        doc.id,
+        p.estado,
+        p.clasificacionComunitariaAplicada,
+        p.guardadaEnHistorial
+      );
 
       if (filtroTipo && ((p.tipo || "ranking").toLowerCase().trim() !== filtroTipo)) return;
       if (filtroFecha && ((p.fecha || "") !== filtroFecha)) return;
@@ -706,7 +713,18 @@ function cargarPartidas() {
         p.clasificacionComunitariaAplicada === true &&
         p.guardadaEnHistorial === true
       ) {
-        eliminarPartidaConChat(doc.id).then(function(ok) { if (ok) cargarPartidas(); });
+        console.log(
+          "CONDICION FINALIZADA CUMPLIDA",
+          doc.id
+        );
+        console.log(
+          "BORRANDO FINALIZADA SEGURA",
+          doc.id
+        );
+        eliminarPartidaConChat(doc.id).then(function(ok) {
+          console.log("RESULTADO eliminarPartidaConChat", doc.id, ok);
+          if (ok) cargarPartidas();
+        });
         return;
       }
 
