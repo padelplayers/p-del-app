@@ -712,12 +712,126 @@ window.abrirValoracionesPostPartido = function(id) {
   abrirFormularioValoracionesAmistosa(id);
 };
 
+function validarContextoResultadoPendiente(p, uid) {
+  const jugadores = Array.isArray(p.jugadores) ? p.jugadores : [];
+  const jugadoresUnicos = new Set(jugadores);
+
+  if (jugadores.length !== 4 || jugadoresUnicos.size !== 4) {
+    return { error: "La partida necesita 4 titulares para validar resultado" };
+  }
+
+  if (!jugadores.includes(uid)) {
+    return { error: "Solo los jugadores titulares pueden validar el resultado" };
+  }
+
+  if (p.estado !== "confirmada") {
+    return { error: "Esta partida no admite validacion de resultado en este momento" };
+  }
+
+  if (!p.resultado || typeof p.resultado !== "object") {
+    return { error: "No hay resultado pendiente" };
+  }
+
+  if (p.resultado.estado !== "pendiente") {
+    return { error: "El resultado ya no esta pendiente" };
+  }
+
+  return { jugadores: jugadores, resultado: p.resultado };
+}
+
 window.confirmarResultadoPartida = function(id) {
-  alert("Confirmación de resultado pendiente de implementar");
-  console.log("[postpartido] confirmarResultadoPartida pendiente", id);
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    alert("Debes iniciar sesion");
+    return;
+  }
+
+  const ref = db.collection("partidas").doc(id);
+
+  db.runTransaction(function(transaction) {
+    return transaction.get(ref).then(function(doc) {
+      if (!doc.exists) throw new Error("La partida ya no existe");
+
+      const p = doc.data() || {};
+      const contexto = validarContextoResultadoPendiente(p, user.uid);
+      if (contexto.error) throw new Error(contexto.error);
+
+      const resultadoActual = contexto.resultado;
+      const validaciones = Array.isArray(resultadoActual.validaciones)
+        ? resultadoActual.validaciones.filter(function(uid) { return contexto.jugadores.includes(uid); })
+        : [];
+      const rechazos = Array.isArray(resultadoActual.rechazos)
+        ? resultadoActual.rechazos.filter(function(uid) { return uid !== user.uid; })
+        : [];
+
+      if (!validaciones.includes(user.uid)) validaciones.push(user.uid);
+
+      const titularesValidados = contexto.jugadores.every(function(uid) {
+        return validaciones.includes(uid);
+      });
+
+      const resultadoNuevo = Object.assign({}, resultadoActual, {
+        estado: titularesValidados ? "validado" : "pendiente",
+        validaciones: validaciones,
+        rechazos: rechazos
+      });
+
+      if (titularesValidados) {
+        resultadoNuevo.validadoAt = firebase.firestore.FieldValue.serverTimestamp();
+      }
+
+      transaction.update(ref, { resultado: resultadoNuevo });
+      return titularesValidados;
+    });
+  }).then(function() {
+    if (typeof cargarPartidas === "function") cargarPartidas();
+  }).catch(function(error) {
+    console.error("Error confirmando resultado:", error);
+    alert(error && error.message ? error.message : "No se pudo confirmar el resultado");
+  });
 };
 
 window.rechazarResultadoPartida = function(id) {
-  alert("Rechazo de resultado pendiente de implementar");
-  console.log("[postpartido] rechazarResultadoPartida pendiente", id);
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    alert("Debes iniciar sesion");
+    return;
+  }
+
+  const ref = db.collection("partidas").doc(id);
+
+  db.runTransaction(function(transaction) {
+    return transaction.get(ref).then(function(doc) {
+      if (!doc.exists) throw new Error("La partida ya no existe");
+
+      const p = doc.data() || {};
+      const contexto = validarContextoResultadoPendiente(p, user.uid);
+      if (contexto.error) throw new Error(contexto.error);
+
+      const resultadoActual = contexto.resultado;
+      const validaciones = Array.isArray(resultadoActual.validaciones)
+        ? resultadoActual.validaciones.filter(function(uid) { return uid !== user.uid; })
+        : [];
+      const rechazos = Array.isArray(resultadoActual.rechazos)
+        ? resultadoActual.rechazos.slice()
+        : [];
+
+      if (!rechazos.includes(user.uid)) rechazos.push(user.uid);
+
+      const resultadoNuevo = Object.assign({}, resultadoActual, {
+        estado: "disputa",
+        validaciones: validaciones,
+        rechazos: rechazos,
+        disputaAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      transaction.update(ref, { resultado: resultadoNuevo });
+      return true;
+    });
+  }).then(function() {
+    if (typeof cargarPartidas === "function") cargarPartidas();
+  }).catch(function(error) {
+    console.error("Error rechazando resultado:", error);
+    alert(error && error.message ? error.message : "No se pudo rechazar el resultado");
+  });
 };
