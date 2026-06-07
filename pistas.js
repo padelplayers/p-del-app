@@ -345,13 +345,7 @@ async function cargarPistas() {
       lista.replaceChildren(fragment);
 
       setTimeout(() => {
-        const listaPistas = document.getElementById("listaPistas");
-        if (listaPistas) {
-          window.scrollTo({
-            top: listaPistas.offsetTop - 80,
-            behavior: "smooth"
-          });
-        }
+        window.scrollTo(0, 0);
       }, 200);
     });
 
