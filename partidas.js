@@ -686,7 +686,9 @@ function cargarPartidas() {
           : "Cualquiera";
 
       const uid = firebase.auth().currentUser.uid;
-      const mostrarSalir = p.jugadores.includes(uid) || p.reservas.includes(uid);
+      const mostrarSalir =
+        p.estado === "abierta" &&
+        (p.jugadores.includes(uid) || p.reservas.includes(uid));
       const item = {
         id: doc.id,
         p: p,
