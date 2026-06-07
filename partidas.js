@@ -427,6 +427,11 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
     cabecera.appendChild(salirWrap);
   }
 
+  if (typeof window.crearAccionesPostPartido === "function") {
+    const accionesPostPartido = window.crearAccionesPostPartido(id, p, uidActual);
+    if (accionesPostPartido) cabecera.appendChild(accionesPostPartido);
+  }
+
   bloque.appendChild(cabecera);
 
   const jugadoresWrap = document.createElement("div");
