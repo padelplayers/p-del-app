@@ -1250,6 +1250,8 @@ button[onclick*="mostrar('menu')"]{
   padding: 8px 10px;
   font-size: 14px;
   border-radius: 6px;
+  background: #FFC107;
+  color: #000;
 }
 
 .postPartidoModalOverlay {
@@ -1324,6 +1326,16 @@ button[onclick*="mostrar('menu')"]{
 .postPartidoModalAcciones button {
   margin: 0;
   padding: 10px 12px;
+}
+
+.postPartidoModal:has(.postPartidoValoracionJugador) .postPartidoModalAcciones button:first-child {
+  background: #FFC107;
+  color: #000;
+}
+
+.postPartidoModal:has(.postPartidoValoracionJugador) .postPartidoModalAcciones button:last-child {
+  background: #1565C0;
+  color: #fff;
 }
 
 .postPartidoValoracionJugador {
