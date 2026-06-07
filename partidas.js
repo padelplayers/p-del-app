@@ -404,7 +404,7 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
     const salirWrap = document.createElement("div");
     salirWrap.className = "partidaAcciones";
 
-    if (esCreador) {
+    if (esCreador && p.estado === "abierta") {
       const confirmar = document.createElement("button");
       confirmar.type = "button";
       confirmar.textContent = confirmarActivo ? "Confirmar partida" : "Faltan jugadores";
