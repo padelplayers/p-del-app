@@ -30,6 +30,33 @@ function esPartidaAmistosaPostPartido(p) {
   return obtenerTipoPostPartido(p) === "amistosa";
 }
 
+function amistosaTieneValoracionesCompletas(p) {
+  if (!p || !esPartidaAmistosaPostPartido(p)) return false;
+  if (p.estado !== "confirmada") return false;
+
+  const jugadores = Array.isArray(p.jugadores) ? p.jugadores : [];
+  if (jugadores.length !== 4) return false;
+
+  const jugadoresUnicos = new Set(jugadores);
+  if (jugadoresUnicos.size !== 4) return false;
+
+  const valoraciones = p.valoraciones;
+  if (!valoraciones || typeof valoraciones !== "object") return false;
+
+  return jugadores.every(function(uidValorador) {
+    const valoracionValorador = valoraciones[uidValorador];
+    if (!valoracionValorador || typeof valoracionValorador !== "object") return false;
+    if (Object.prototype.hasOwnProperty.call(valoracionValorador, uidValorador)) return false;
+
+    return jugadores.every(function(uidValorado) {
+      if (uidValorado === uidValorador) return true;
+
+      const valoracion = valoracionValorador[uidValorado];
+      return !!valoracion && typeof valoracion === "object";
+    });
+  });
+}
+
 function esPartidaConResultadoPostPartido(p) {
   const tipo = obtenerTipoPostPartido(p);
   return tipo === "ranking" || tipo === "competitiva" || tipo === "competitivo";
@@ -375,6 +402,18 @@ function guardarValoracionesAmistosa(id, jugadoresValorados) {
         [user.uid]: datosFormulario.valoraciones
       }
     }, { merge: true }).then(function() {
+      return ref.get();
+    }).then(function(docActualizado) {
+      if (!docActualizado.exists) return null;
+
+      const partidaActualizada = docActualizado.data() || {};
+      if (!amistosaTieneValoracionesCompletas(partidaActualizada)) return null;
+
+      return ref.update({
+        estado: "finalizada",
+        finalizadaAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }).then(function() {
       cerrarFormularioValoraciones();
       if (typeof cargarPartidas === "function") cargarPartidas();
     });
