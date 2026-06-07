@@ -1010,15 +1010,27 @@ function salirDePartida(partidaId) {
 }
 
 function guardarPartidaFinalizada(p, idPartida) {
+  const historialRef = db.collection("historial_partidas").doc(idPartida);
   const datos = {
-    fecha: p.fecha,
-    hora: p.hora,
+    idPartida: idPartida,
+    tipo: p.tipo || null,
+    estado: p.estado || null,
+    fecha: p.fecha || null,
+    hora: p.hora || null,
+    pistaId: p.pistaId || null,
+    genero: p.genero || null,
+    nivel: p.nivel || null,
     jugadores: p.jugadores || [],
+    reservas: p.reservas || [],
     resultado: p.resultado || null,
-    valoraciones: p.valoraciones || [],
+    valoraciones: p.valoraciones || {},
     creadaPor: p.creadaPor || null,
-    timestamp: new Date()
+    finalizadaAt: p.finalizadaAt || null,
+    guardadaEnHistorialAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
-  db.collection("historial_partidas").doc(idPartida).set(datos);
+  return historialRef.get().then(function(doc) {
+    if (doc.exists) return null;
+    return historialRef.set(datos);
+  });
 }

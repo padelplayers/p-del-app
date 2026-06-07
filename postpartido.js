@@ -30,9 +30,8 @@ function esPartidaAmistosaPostPartido(p) {
   return obtenerTipoPostPartido(p) === "amistosa";
 }
 
-function amistosaTieneValoracionesCompletas(p) {
+function amistosaTieneValoracionesCompletasBase(p) {
   if (!p || !esPartidaAmistosaPostPartido(p)) return false;
-  if (p.estado !== "confirmada") return false;
 
   const jugadores = Array.isArray(p.jugadores) ? p.jugadores : [];
   if (jugadores.length !== 4) return false;
@@ -53,6 +52,95 @@ function amistosaTieneValoracionesCompletas(p) {
 
       const valoracion = valoracionValorador[uidValorado];
       return !!valoracion && typeof valoracion === "object";
+    });
+  });
+}
+
+function amistosaTieneValoracionesCompletas(p) {
+  return p && p.estado === "confirmada" && amistosaTieneValoracionesCompletasBase(p);
+}
+
+function calcularClasificacionComunitariaAmistosa(p) {
+  if (!p || p.estado !== "finalizada" || !amistosaTieneValoracionesCompletasBase(p)) return null;
+
+  const jugadores = p.jugadores;
+  const valoraciones = p.valoraciones || {};
+  const incrementos = {};
+  const aspectos = ["puntualidad", "actitud", "compromiso"];
+
+  jugadores.forEach(function(uidValorado) {
+    incrementos[uidValorado] = {
+      puntos: 10,
+      partidos: 1,
+      puntualidadTotal: 0,
+      actitudTotal: 0,
+      compromisoTotal: 0,
+      valoracionesRecibidas: 0
+    };
+  });
+
+  for (let i = 0; i < jugadores.length; i++) {
+    const uidValorador = jugadores[i];
+    const valoracionValorador = valoraciones[uidValorador] || {};
+
+    for (let j = 0; j < jugadores.length; j++) {
+      const uidValorado = jugadores[j];
+      if (uidValorado === uidValorador) continue;
+
+      const valoracion = valoracionValorador[uidValorado] || {};
+      for (let k = 0; k < aspectos.length; k++) {
+        const aspecto = aspectos[k];
+        const valor = Number(valoracion[aspecto]);
+
+        if (!Number.isInteger(valor) || valor < 1 || valor > 5) return null;
+
+        incrementos[uidValorado][aspecto + "Total"] += valor;
+        incrementos[uidValorado].puntos += valor;
+      }
+
+      incrementos[uidValorado].valoracionesRecibidas += 1;
+    }
+  }
+
+  return incrementos;
+}
+
+function aplicarClasificacionComunitariaAmistosa(idPartida) {
+  const partidaRef = db.collection("partidas").doc(idPartida);
+
+  return db.runTransaction(function(transaction) {
+    return transaction.get(partidaRef).then(function(doc) {
+      if (!doc.exists) return null;
+
+      const p = doc.data() || {};
+      if (p.clasificacionComunitariaAplicada === true) return null;
+      if (!esPartidaAmistosaPostPartido(p)) return null;
+      if (p.estado !== "finalizada") return null;
+      if (!amistosaTieneValoracionesCompletasBase(p)) return null;
+
+      const incrementos = calcularClasificacionComunitariaAmistosa(p);
+      if (!incrementos) return null;
+
+      Object.keys(incrementos).forEach(function(uid) {
+        const datos = incrementos[uid];
+        const usuarioRef = db.collection("usuarios").doc(uid);
+
+        transaction.update(usuarioRef, {
+          "clasificacion.puntos": firebase.firestore.FieldValue.increment(datos.puntos),
+          "clasificacion.partidos": firebase.firestore.FieldValue.increment(datos.partidos),
+          "clasificacion.puntualidadTotal": firebase.firestore.FieldValue.increment(datos.puntualidadTotal),
+          "clasificacion.actitudTotal": firebase.firestore.FieldValue.increment(datos.actitudTotal),
+          "clasificacion.compromisoTotal": firebase.firestore.FieldValue.increment(datos.compromisoTotal),
+          "clasificacion.valoracionesRecibidas": firebase.firestore.FieldValue.increment(datos.valoracionesRecibidas)
+        });
+      });
+
+      transaction.update(partidaRef, {
+        clasificacionComunitariaAplicada: true,
+        clasificacionComunitariaAplicadaAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      return true;
     });
   });
 }
@@ -409,9 +497,20 @@ function guardarValoracionesAmistosa(id, jugadoresValorados) {
       const partidaActualizada = docActualizado.data() || {};
       if (!amistosaTieneValoracionesCompletas(partidaActualizada)) return null;
 
-      return ref.update({
+      const finalizadaAt = firebase.firestore.FieldValue.serverTimestamp();
+      const partidaFinalizada = Object.assign({}, partidaActualizada, {
         estado: "finalizada",
-        finalizadaAt: firebase.firestore.FieldValue.serverTimestamp()
+        finalizadaAt: finalizadaAt
+      });
+
+      return ref.update({
+        estado: partidaFinalizada.estado,
+        finalizadaAt: partidaFinalizada.finalizadaAt
+      }).then(function() {
+        if (typeof guardarPartidaFinalizada !== "function") return null;
+        return guardarPartidaFinalizada(partidaFinalizada, id);
+      }).then(function() {
+        return aplicarClasificacionComunitariaAmistosa(id);
       });
     }).then(function() {
       cerrarFormularioValoraciones();
