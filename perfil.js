@@ -173,8 +173,9 @@ if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
     document.getElementById("seguidos").innerText =
       obtenerTotalPerfil(data.siguiendo);
 
+    const clasificacion = data.clasificacion || {};
     const partidasCount = document.getElementById("partidasCount");
-    if (partidasCount) partidasCount.innerText = obtenerTotalPerfil(data.partidos);
+    if (partidasCount) partidasCount.innerText = obtenerTotalPerfil(clasificacion.partidos);
 
   });
 
@@ -392,8 +393,9 @@ function cargarPerfil(uid){
 
       if (document.getElementById("perfil").style.display === "block") {
 
+  const clasificacion = data.clasificacion || {};
   const elPartidos = document.getElementById("partidasCount");
-  if (elPartidos) elPartidos.innerText = obtenerTotalPerfil(data.partidos);
+  if (elPartidos) elPartidos.innerText = obtenerTotalPerfil(clasificacion.partidos);
 
   const elSeguidores = document.getElementById("seguidores");
   if (elSeguidores) elSeguidores.innerText = obtenerTotalPerfil(data.seguidores);

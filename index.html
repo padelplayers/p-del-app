@@ -367,6 +367,10 @@ Juego en red
 <div id="pistas" class="container" style="display:none;">
   <h2>Pistas</h2>
 
+  <div class="volverSticky">
+    <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
+  </div>
+
 <button class="btnGreen" onclick="toggleFiltros()">Buscar pista</button>
 
 <div id="filtrosPistas" style="display:none;">
@@ -437,8 +441,6 @@ Juego en red
 onclick="if (!window.modoSeleccionPista) mostrar('crearPista')">
 Añadir pista
 </button>
-  <button id="btnVolverPistas" onclick="mostrar('menu')" class="btnBlue">Volver</button>
-
   <div id="listaPistas"></div>
 </div>
 
@@ -747,9 +749,11 @@ Añadir pista
 
   <h2>Jugadores</h2>
 
-  <div id="listaJugadores"></div>
+  <div class="volverSticky">
+    <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
+  </div>
 
-  <button onclick="mostrar('menu')">Volver</button>
+  <div id="listaJugadores"></div>
 
 </div>
 
@@ -831,6 +835,10 @@ Añadir pista
 <div id="instrucciones" class="container" style="display:none;">
   <h2>Cómo funciona</h2>
 
+  <div class="volverSticky">
+    <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
+  </div>
+
   <div class="card">
     <p><strong>Crear partida:</strong> Selecciona pista, fecha y únete.</p>
     <p><strong>Completar partida:</strong> Con 4 jugadores pasa a completa.</p>
@@ -840,7 +848,6 @@ Añadir pista
     <p><strong>Cierre:</strong> Se actualiza ranking.</p>
   </div>
 
-  <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
 </div>
 
 <!-- PARTIDAS -->
@@ -849,9 +856,12 @@ Añadir pista
 
   <h2>Partidas</h2>
 
+<div class="volverSticky">
+  <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
+</div>
+
 <button onclick="mostrar('buscarPartida')" class="btnGreen">Buscar partida</button>
 <button onclick="mostrar('crearPartida')" class="btnBlue">Crear partida</button>
-<button class="btnBlue" onclick="mostrar('menu')">Volver</button>
 
 <div style="display:flex; gap:10px; margin-top:10px; margin-bottom:10px;">
   <button id="btnProximas" class="btnBlue" onclick="cambiarModoPartidas('proximas')">Próximas partidas</button>
@@ -1021,9 +1031,12 @@ Añadir pista
 <div id="clasificacion" class="container" style="display:none;">
   <h2>Clasificación</h2>
 
+  <div class="volverSticky">
+    <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
+  </div>
+
   <div id="listaClasificacion"></div>
 
-  <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>

@@ -81,6 +81,21 @@ button{
   background:#FFC107;
 }
 
+.volverSticky {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #fff;
+  padding: 8px 0;
+  text-align: center;
+}
+
+.volverSticky .btnBlue {
+  background: #1565C0;
+  color: #fff;
+  margin: 0;
+}
+
 .logout{
   background:#f44336;
   color:white;
