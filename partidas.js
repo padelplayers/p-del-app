@@ -1009,7 +1009,7 @@ function salirDePartida(partidaId) {
   });
 }
 
-function guardarPartidaFinalizada(p, idPartida) {
+window.guardarPartidaFinalizada = function(p, idPartida) {
   const historialRef = db.collection("historial_partidas").doc(idPartida);
   const datos = {
     idPartida: idPartida,
@@ -1033,4 +1033,4 @@ function guardarPartidaFinalizada(p, idPartida) {
     if (doc.exists) return null;
     return historialRef.set(datos);
   });
-}
+};

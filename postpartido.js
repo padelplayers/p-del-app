@@ -507,8 +507,12 @@ function guardarValoracionesAmistosa(id, jugadoresValorados) {
         estado: partidaFinalizada.estado,
         finalizadaAt: partidaFinalizada.finalizadaAt
       }).then(function() {
-        if (typeof guardarPartidaFinalizada !== "function") return null;
-        return guardarPartidaFinalizada(partidaFinalizada, id);
+        if (typeof window.guardarPartidaFinalizada !== "function") {
+          console.error("guardarPartidaFinalizada no disponible");
+          return null;
+        }
+
+        return window.guardarPartidaFinalizada(partidaFinalizada, id);
       }).then(function() {
         return aplicarClasificacionComunitariaAmistosa(id);
       });
