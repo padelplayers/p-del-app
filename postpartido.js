@@ -30,6 +30,10 @@ function esPartidaAmistosaPostPartido(p) {
   return obtenerTipoPostPartido(p) === "amistosa";
 }
 
+function esPartidaRankingPostPartido(p) {
+  return obtenerTipoPostPartido(p) === "ranking";
+}
+
 function amistosaTieneValoracionesCompletasBase(p) {
   if (!p || !esPartidaAmistosaPostPartido(p)) return false;
 
@@ -58,6 +62,44 @@ function amistosaTieneValoracionesCompletasBase(p) {
 
 function amistosaTieneValoracionesCompletas(p) {
   return p && p.estado === "confirmada" && amistosaTieneValoracionesCompletasBase(p);
+}
+
+function partidaTieneValoracionesCompletasPostPartido(p) {
+  const jugadores = p && Array.isArray(p.jugadores) ? p.jugadores : [];
+  if (jugadores.length !== 4) return false;
+
+  const jugadoresUnicos = new Set(jugadores);
+  if (jugadoresUnicos.size !== 4) return false;
+
+  const valoraciones = p.valoraciones;
+  if (!valoraciones || typeof valoraciones !== "object") return false;
+
+  return jugadores.every(function(uidValorador) {
+    const valoracionValorador = valoraciones[uidValorador];
+    if (!valoracionValorador || typeof valoracionValorador !== "object") return false;
+    if (Object.prototype.hasOwnProperty.call(valoracionValorador, uidValorador)) return false;
+
+    return jugadores.every(function(uidValorado) {
+      if (uidValorado === uidValorador) return true;
+
+      const valoracion = valoracionValorador[uidValorado];
+      return !!valoracion && typeof valoracion === "object";
+    });
+  });
+}
+
+function partidaRankingConDatosCompletosPostPartido(p) {
+  return !!(
+    p &&
+    esPartidaRankingPostPartido(p) &&
+    p.resultado &&
+    p.resultado.estado === "validado" &&
+    partidaTieneValoracionesCompletasPostPartido(p)
+  );
+}
+
+function partidaRankingListaParaCierre(p) {
+  return !!(p && p.estado === "confirmada" && partidaRankingConDatosCompletosPostPartido(p));
 }
 
 function calcularClasificacionComunitariaAmistosa(p) {
@@ -145,9 +187,159 @@ function aplicarClasificacionComunitariaAmistosa(idPartida) {
   });
 }
 
+function calcularClasificacionComunitariaRanking(p) {
+  if (!partidaRankingListaParaCierre(p)) return null;
+
+  const jugadores = p.jugadores;
+  const valoraciones = p.valoraciones || {};
+  const incrementos = {};
+  const aspectos = ["puntualidad", "actitud", "compromiso"];
+
+  jugadores.forEach(function(uidValorado) {
+    incrementos[uidValorado] = {
+      puntos: 10,
+      partidos: 1,
+      puntualidadTotal: 0,
+      actitudTotal: 0,
+      compromisoTotal: 0,
+      valoracionesRecibidas: 0
+    };
+  });
+
+  for (let i = 0; i < jugadores.length; i++) {
+    const uidValorador = jugadores[i];
+    const valoracionValorador = valoraciones[uidValorador] || {};
+
+    for (let j = 0; j < jugadores.length; j++) {
+      const uidValorado = jugadores[j];
+      if (uidValorado === uidValorador) continue;
+
+      const valoracion = valoracionValorador[uidValorado] || {};
+      for (let k = 0; k < aspectos.length; k++) {
+        const aspecto = aspectos[k];
+        const valor = Number(valoracion[aspecto]);
+
+        if (!Number.isInteger(valor) || valor < 1 || valor > 5) return null;
+
+        incrementos[uidValorado][aspecto + "Total"] += valor;
+        incrementos[uidValorado].puntos += valor;
+      }
+
+      incrementos[uidValorado].valoracionesRecibidas += 1;
+    }
+  }
+
+  return incrementos;
+}
+
+function aplicarClasificacionComunitariaRanking(idPartida) {
+  const partidaRef = db.collection("partidas").doc(idPartida);
+
+  return db.runTransaction(function(transaction) {
+    return transaction.get(partidaRef).then(function(doc) {
+      if (!doc.exists) return null;
+
+      const p = doc.data() || {};
+      if (p.clasificacionComunitariaAplicada === true) return null;
+      if (!partidaRankingListaParaCierre(p)) return null;
+
+      const incrementos = calcularClasificacionComunitariaRanking(p);
+      if (!incrementos) return null;
+
+      Object.keys(incrementos).forEach(function(uid) {
+        const datos = incrementos[uid];
+        const usuarioRef = db.collection("usuarios").doc(uid);
+
+        transaction.update(usuarioRef, {
+          "clasificacion.puntos": firebase.firestore.FieldValue.increment(datos.puntos),
+          "clasificacion.partidos": firebase.firestore.FieldValue.increment(datos.partidos),
+          "clasificacion.puntualidadTotal": firebase.firestore.FieldValue.increment(datos.puntualidadTotal),
+          "clasificacion.actitudTotal": firebase.firestore.FieldValue.increment(datos.actitudTotal),
+          "clasificacion.compromisoTotal": firebase.firestore.FieldValue.increment(datos.compromisoTotal),
+          "clasificacion.valoracionesRecibidas": firebase.firestore.FieldValue.increment(datos.valoracionesRecibidas)
+        });
+      });
+
+      transaction.update(partidaRef, {
+        clasificacionComunitariaAplicada: true,
+        clasificacionComunitariaAplicadaAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      return true;
+    });
+  });
+}
+
 function esPartidaConResultadoPostPartido(p) {
   const tipo = obtenerTipoPostPartido(p);
   return tipo === "ranking" || tipo === "competitiva" || tipo === "competitivo";
+}
+
+function finalizarPartidaRankingSiCompleta(idPartida) {
+  const partidaRef = db.collection("partidas").doc(idPartida);
+  let debeGuardarHistorial = false;
+
+  return db.runTransaction(function(transaction) {
+    return transaction.get(partidaRef).then(function(doc) {
+      if (!doc.exists) return false;
+
+      const p = doc.data() || {};
+      if (!partidaRankingConDatosCompletosPostPartido(p)) return false;
+      if (p.rankingCompetitivoAplicado !== true) return false;
+      if (p.clasificacionComunitariaAplicada !== true) return false;
+
+      if (p.estado === "finalizada") {
+        debeGuardarHistorial = p.guardadaEnHistorial !== true;
+        return false;
+      }
+
+      if (p.estado !== "confirmada") return false;
+
+      debeGuardarHistorial = true;
+      transaction.update(partidaRef, {
+        estado: "finalizada",
+        finalizadaAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      return true;
+    });
+  }).then(function() {
+    if (!debeGuardarHistorial) return null;
+
+    return partidaRef.get().then(function(docFinalizada) {
+      if (!docFinalizada.exists) return null;
+      if (typeof window.guardarPartidaFinalizada !== "function") {
+        console.error("guardarPartidaFinalizada no disponible");
+        return null;
+      }
+
+      return window.guardarPartidaFinalizada(docFinalizada.data() || {}, idPartida);
+    });
+  });
+}
+
+function cerrarPartidaRankingTrasValoraciones(idPartida) {
+  const partidaRef = db.collection("partidas").doc(idPartida);
+
+  return partidaRef.get().then(function(doc) {
+    if (!doc.exists) return null;
+
+    const p = doc.data() || {};
+    if (!partidaRankingListaParaCierre(p)) return null;
+
+    if (typeof window.aplicarRankingCompetitivo !== "function") {
+      console.error("aplicarRankingCompetitivo no disponible");
+      return null;
+    }
+
+    return window.aplicarRankingCompetitivo(idPartida)
+      .then(function() {
+        return aplicarClasificacionComunitariaRanking(idPartida);
+      })
+      .then(function() {
+        return finalizarPartidaRankingSiCompleta(idPartida);
+      });
+  });
 }
 
 function puedeValorarPostPartido(p, uidActual) {
@@ -732,7 +924,13 @@ function guardarValoracionesAmistosa(id, jugadoresValorados) {
       if (!docActualizado.exists) return null;
 
       const partidaActualizada = docActualizado.data() || {};
-      if (!esPartidaAmistosaPostPartido(partidaActualizada)) return null;
+      if (!esPartidaAmistosaPostPartido(partidaActualizada)) {
+        if (partidaRankingListaParaCierre(partidaActualizada)) {
+          return cerrarPartidaRankingTrasValoraciones(id);
+        }
+
+        return null;
+      }
       if (!amistosaTieneValoracionesCompletas(partidaActualizada)) return null;
 
       const finalizadaAt = firebase.firestore.FieldValue.serverTimestamp();

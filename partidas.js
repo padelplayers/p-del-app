@@ -722,11 +722,22 @@ function cargarPartidas() {
         }
       }
 
-      if (
+      const tipoPartidaLimpieza = String(p.tipo || "ranking").toLowerCase().trim();
+      const puedeLimpiarFinalizada =
         p.estado === "finalizada" &&
-        p.clasificacionComunitariaAplicada === true &&
-        p.guardadaEnHistorial === true
-      ) {
+        p.guardadaEnHistorial === true &&
+        (
+          (
+            tipoPartidaLimpieza === "ranking" &&
+            p.rankingCompetitivoAplicado === true
+          ) ||
+          (
+            tipoPartidaLimpieza !== "ranking" &&
+            p.clasificacionComunitariaAplicada === true
+          )
+        );
+
+      if (puedeLimpiarFinalizada) {
         eliminarPartidaConChat(doc.id).then(function(ok) {
           if (ok) cargarPartidas();
         });
