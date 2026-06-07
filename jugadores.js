@@ -16,7 +16,7 @@ function cargarJugadores(){
 
       const img = document.createElement("img");
       img.className = "jugadorFoto";
-      img.src = data.fotoPerfil || "imagen/hombre.jpeg";
+      img.src = data.fotoPerfil || (data.sexo === "femenino" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg");
       img.width = 50;
 
       const nombre = document.createElement("span");
