@@ -1326,6 +1326,32 @@ button[onclick*="mostrar('menu')"]{
   padding: 10px 12px;
 }
 
+.postPartidoValoracionJugador {
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.postPartidoValoracionJugador h4 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.postPartidoValoracionFila {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) 72px;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.postPartidoValoracionFila select {
+  width: 100%;
+  padding: 8px;
+}
+
 .partidaJugadores,
 .partidaReservas {
   text-align: center;
