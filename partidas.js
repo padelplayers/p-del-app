@@ -685,6 +685,7 @@ function cargarPartidas() {
       const item = {
         id: doc.id,
         p: p,
+        _fechaOrden: fechaPartida.getTime(),
         nodo: crearBloquePartida(doc.id, p, nivelTexto, mostrarSalir, fondo)
       };
 
@@ -709,6 +710,14 @@ function cargarPartidas() {
       modo = "proximas";
       window.modoPartidas = "proximas";
     }
+
+    proximas.sort(function(a, b) {
+      return a._fechaOrden - b._fechaOrden;
+    });
+
+    pendientes.sort(function(a, b) {
+      return b._fechaOrden - a._fechaOrden;
+    });
 
     const seleccion = modo === "pendientes" ? pendientes : proximas;
     const fragment = document.createDocumentFragment();
