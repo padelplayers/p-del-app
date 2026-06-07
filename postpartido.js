@@ -184,6 +184,13 @@ function crearBotonPrimarioPostPartido(texto, accion) {
   return btn;
 }
 
+function crearBotonSecundarioPostPartido(texto, accion) {
+  const btn = crearBotonPostPartido(texto, accion);
+  btn.style.background = "#FFC107";
+  btn.style.color = "#000";
+  return btn;
+}
+
 function cerrarFormularioResultado() {
   const modal = document.getElementById("modalResultadoPostPartido");
   if (modal) modal.remove();
@@ -252,6 +259,116 @@ function leerYValidarSetsResultado() {
   return { error: "No hay ganador claro. El ganador debe ganar 2 sets." };
 }
 
+function resultadoTieneEquiposValidos(resultado, jugadores) {
+  if (!resultado || !Array.isArray(jugadores) || jugadores.length !== 4) return false;
+  if (!Array.isArray(resultado.equipo1) || !Array.isArray(resultado.equipo2)) return false;
+  if (resultado.equipo1.length !== 2 || resultado.equipo2.length !== 2) return false;
+
+  const seleccionados = resultado.equipo1.concat(resultado.equipo2);
+  const seleccionadosUnicos = new Set(seleccionados);
+  if (seleccionados.length !== 4 || seleccionadosUnicos.size !== 4) return false;
+
+  return seleccionados.every(function(uid) {
+    return jugadores.includes(uid);
+  });
+}
+
+function leerYValidarEquiposResultado(jugadores) {
+  const ids = [
+    "resultadoEquipo1Jugador1",
+    "resultadoEquipo1Jugador2",
+    "resultadoEquipo2Jugador1",
+    "resultadoEquipo2Jugador2"
+  ];
+  const seleccionados = ids.map(function(id) {
+    const select = document.getElementById(id);
+    return select ? select.value : "";
+  });
+
+  if (seleccionados.some(function(uid) { return !uid; })) {
+    return { error: "Selecciona los 4 jugadores de los equipos." };
+  }
+
+  const seleccionadosUnicos = new Set(seleccionados);
+  if (seleccionadosUnicos.size !== 4) {
+    return { error: "No puede repetirse ningun jugador en los equipos." };
+  }
+
+  if (!seleccionados.every(function(uid) { return jugadores.includes(uid); })) {
+    return { error: "Todos los jugadores seleccionados deben ser titulares." };
+  }
+
+  return {
+    equipo1: [seleccionados[0], seleccionados[1]],
+    equipo2: [seleccionados[2], seleccionados[3]]
+  };
+}
+
+function cargarDatosJugadoresPostPartido(jugadores) {
+  return Promise.all(jugadores.map(function(uid) {
+    return db.collection("usuarios").doc(uid).get().then(function(docUsuario) {
+      const datos = docUsuario.exists ? (docUsuario.data() || {}) : {};
+      return {
+        uid: uid,
+        nombre: datos.nombre || "Jugador"
+      };
+    });
+  }));
+}
+
+function nombreJugadorPostPartido(uid, mapaNombres) {
+  return mapaNombres[uid] || "Jugador";
+}
+
+function textoGanadorResultado(ganador) {
+  if (ganador === "A") return "Equipo 1";
+  if (ganador === "B") return "Equipo 2";
+  return "-";
+}
+
+function crearResumenResultadoPendiente(resultado, jugadores) {
+  const resumen = document.createElement("div");
+  resumen.className = "postPartidoResultadoResumen";
+  resumen.appendChild(crearTextoPostPartido("Resultado propuesto:"));
+  resumen.appendChild(crearTextoPostPartido("Cargando equipos..."));
+
+  cargarDatosJugadoresPostPartido(jugadores).then(function(datosJugadores) {
+    const mapaNombres = {};
+    datosJugadores.forEach(function(jugador) {
+      mapaNombres[jugador.uid] = jugador.nombre;
+    });
+
+    const fragment = document.createDocumentFragment();
+    fragment.appendChild(crearTextoPostPartido("Resultado propuesto:"));
+    fragment.appendChild(crearTextoPostPartido(
+      "Equipo 1: " +
+      nombreJugadorPostPartido(resultado.equipo1[0], mapaNombres) +
+      " / " +
+      nombreJugadorPostPartido(resultado.equipo1[1], mapaNombres)
+    ));
+    fragment.appendChild(crearTextoPostPartido(
+      "Equipo 2: " +
+      nombreJugadorPostPartido(resultado.equipo2[0], mapaNombres) +
+      " / " +
+      nombreJugadorPostPartido(resultado.equipo2[1], mapaNombres)
+    ));
+
+    (resultado.sets || []).forEach(function(set, index) {
+      fragment.appendChild(crearTextoPostPartido(
+        "Set " + (index + 1) + ": " + set.a + " - " + set.b
+      ));
+    });
+
+    fragment.appendChild(crearTextoPostPartido("Ganador: " + textoGanadorResultado(resultado.ganador)));
+    resumen.replaceChildren(fragment);
+  }).catch(function(error) {
+    console.error("Error cargando resumen de resultado:", error);
+    resumen.replaceChildren(crearTextoPostPartido("No se pudo cargar el resumen del resultado."));
+  });
+
+  return resumen;
+}
+
 function guardarResultadoPropuesto(id) {
   const user = firebase.auth().currentUser;
   if (!user) {
@@ -296,17 +413,31 @@ function guardarResultadoPropuesto(id) {
       return;
     }
 
+    const equipos = leerYValidarEquiposResultado(jugadores);
+    if (equipos.error) {
+      alert(equipos.error);
+      return;
+    }
+
     if (p.resultado && p.resultado.estado === "validado") {
       alert("El resultado ya está validado");
       return;
     }
 
-    if (p.resultado && p.resultado.estado === "pendiente") {
+    if (
+      p.resultado &&
+      p.resultado.estado === "pendiente" &&
+      resultadoTieneEquiposValidos(p.resultado, jugadores)
+    ) {
       alert("Ya hay un resultado pendiente de validación");
       return;
     }
 
-    if (p.resultado && p.resultado.estado !== "disputa") {
+    if (
+      p.resultado &&
+      p.resultado.estado !== "disputa" &&
+      !(p.resultado.estado === "pendiente" && !resultadoTieneEquiposValidos(p.resultado, jugadores))
+    ) {
       alert("Este resultado no se puede sobrescribir");
       return;
     }
@@ -314,6 +445,8 @@ function guardarResultadoPropuesto(id) {
     return ref.update({
       resultado: {
         estado: "pendiente",
+        equipo1: equipos.equipo1,
+        equipo2: equipos.equipo2,
         sets: validacion.sets,
         ganador: validacion.ganador,
         propuestoPor: user.uid,
@@ -348,7 +481,52 @@ function crearFilaSetResultado(numero, opcional) {
   return fila;
 }
 
-function crearFormularioResultado(id) {
+function crearSelectJugadorResultado(id, jugadoresDatos) {
+  const select = document.createElement("select");
+  select.id = id;
+
+  const vacia = document.createElement("option");
+  vacia.value = "";
+  vacia.textContent = "Seleccionar";
+  select.appendChild(vacia);
+
+  jugadoresDatos.forEach(function(jugador) {
+    const option = document.createElement("option");
+    option.value = jugador.uid;
+    option.textContent = jugador.nombre || "Jugador";
+    select.appendChild(option);
+  });
+
+  return select;
+}
+
+function crearFilaSelectorEquipoResultado(labelTexto, selectId, jugadoresDatos) {
+  const fila = document.createElement("label");
+  fila.className = "postPartidoValoracionFila";
+  fila.style.gridTemplateColumns = "minmax(90px, 1fr) minmax(160px, 2fr)";
+
+  const texto = document.createElement("span");
+  texto.textContent = labelTexto;
+
+  fila.appendChild(texto);
+  fila.appendChild(crearSelectJugadorResultado(selectId, jugadoresDatos));
+  return fila;
+}
+
+function crearBloqueEquipoResultado(tituloTexto, selectId1, selectId2, jugadoresDatos) {
+  const bloque = document.createElement("div");
+  bloque.className = "postPartidoValoracionJugador";
+
+  const titulo = document.createElement("h4");
+  titulo.textContent = tituloTexto;
+
+  bloque.appendChild(titulo);
+  bloque.appendChild(crearFilaSelectorEquipoResultado("Jugador 1", selectId1, jugadoresDatos));
+  bloque.appendChild(crearFilaSelectorEquipoResultado("Jugador 2", selectId2, jugadoresDatos));
+  return bloque;
+}
+
+function construirFormularioResultado(id, jugadoresDatos) {
   cerrarFormularioResultado();
 
   const overlay = document.createElement("div");
@@ -362,7 +540,7 @@ function crearFormularioResultado(id) {
   titulo.textContent = "Introducir resultado";
 
   const descripcion = document.createElement("p");
-  descripcion.textContent = "Pareja A: jugadores 1 y 2. Pareja B: jugadores 3 y 4.";
+  descripcion.textContent = "Selecciona los equipos reales de la partida.";
 
   const cabecera = document.createElement("div");
   cabecera.className = "postPartidoSetFila postPartidoSetCabecera";
@@ -373,8 +551,8 @@ function crearFormularioResultado(id) {
   const acciones = document.createElement("div");
   acciones.className = "postPartidoModalAcciones";
 
-  const cancelar = crearBotonPostPartido("Cancelar", cerrarFormularioResultado);
-  const guardar = crearBotonPostPartido("Guardar resultado", function() {
+  const cancelar = crearBotonSecundarioPostPartido("Cancelar", cerrarFormularioResultado);
+  const guardar = crearBotonPrimarioPostPartido("Guardar resultado", function() {
     guardarResultadoPropuesto(id);
   });
 
@@ -383,6 +561,18 @@ function crearFormularioResultado(id) {
 
   modal.appendChild(titulo);
   modal.appendChild(descripcion);
+  modal.appendChild(crearBloqueEquipoResultado(
+    "Equipo 1",
+    "resultadoEquipo1Jugador1",
+    "resultadoEquipo1Jugador2",
+    jugadoresDatos
+  ));
+  modal.appendChild(crearBloqueEquipoResultado(
+    "Equipo 2",
+    "resultadoEquipo2Jugador1",
+    "resultadoEquipo2Jugador2",
+    jugadoresDatos
+  ));
   modal.appendChild(cabecera);
   modal.appendChild(crearFilaSetResultado(1, false));
   modal.appendChild(crearFilaSetResultado(2, false));
@@ -390,6 +580,33 @@ function crearFormularioResultado(id) {
   modal.appendChild(acciones);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
+}
+
+function crearFormularioResultado(id) {
+  const ref = db.collection("partidas").doc(id);
+
+  ref.get().then(function(doc) {
+    if (!doc.exists) {
+      alert("La partida ya no existe");
+      return;
+    }
+
+    const p = doc.data() || {};
+    const jugadores = Array.isArray(p.jugadores) ? p.jugadores : [];
+    const jugadoresUnicos = new Set(jugadores);
+
+    if (jugadores.length !== 4 || jugadoresUnicos.size !== 4) {
+      alert("La partida necesita 4 titulares para introducir resultado");
+      return;
+    }
+
+    return cargarDatosJugadoresPostPartido(jugadores).then(function(jugadoresDatos) {
+      construirFormularioResultado(id, jugadoresDatos);
+    });
+  }).catch(function(error) {
+    console.error("Error abriendo formulario de resultado:", error);
+    alert("No se pudo abrir el formulario de resultado");
+  });
 }
 
 function crearSelectValoracion(uidValorado, aspecto) {
@@ -693,6 +910,20 @@ window.crearAccionesPostPartido = function(id, p, uidActual) {
     const validaciones = Array.isArray(resultado.validaciones) ? resultado.validaciones : [];
     box.appendChild(crearTextoPostPartido("Resultado pendiente de validación"));
 
+    if (!resultadoTieneEquiposValidos(resultado, jugadores)) {
+      box.appendChild(crearTextoPostPartido("Resultado pendiente sin equipos registrados. Debe proponerse de nuevo."));
+
+      const accionesSinEquipos = document.createElement("div");
+      accionesSinEquipos.className = "postPartidoAcciones";
+      accionesSinEquipos.appendChild(crearBotonPrimarioPostPartido("Proponer nuevo resultado", function() {
+        window.abrirFormularioResultado(id);
+      }));
+      box.appendChild(accionesSinEquipos);
+      return box;
+    }
+
+    box.appendChild(crearResumenResultadoPendiente(resultado, jugadores));
+
     if (validaciones.includes(uidActual)) {
       box.appendChild(crearTextoPostPartido("Resultado validado por ti"));
       return box;
@@ -775,6 +1006,10 @@ function validarContextoResultadoPendiente(p, uid) {
 
   if (p.resultado.estado !== "pendiente") {
     return { error: "El resultado ya no esta pendiente" };
+  }
+
+  if (!resultadoTieneEquiposValidos(p.resultado, jugadores)) {
+    return { error: "Resultado pendiente sin equipos registrados. Debe proponerse de nuevo." };
   }
 
   return { jugadores: jugadores, resultado: p.resultado };
