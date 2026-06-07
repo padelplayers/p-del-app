@@ -1,6 +1,24 @@
 const btnNuevaPista = document.getElementById("btnNuevaPista");
 const btnGuardarPista = document.getElementById("guardarPista");
 
+function resetScrollPistas() {
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+
+  setTimeout(function() {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, 50);
+
+  setTimeout(function() {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, 250);
+}
+
 if (btnGuardarPista) {
   btnGuardarPista.onclick = async () => {
     try {
@@ -345,7 +363,7 @@ async function cargarPistas() {
       lista.replaceChildren(fragment);
 
       setTimeout(() => {
-        window.scrollTo(0, 0);
+        resetScrollPistas();
       }, 200);
     });
 
