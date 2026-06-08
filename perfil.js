@@ -93,13 +93,55 @@ async function eliminarPerfil() {
   const uid = user.uid;
 
   try {
+    alert("Vas a eliminar tu cuenta. Esta accion no se puede deshacer.");
 
-    // 1. limpiar referencias
+    const confirmacion = prompt("Escribe ELIMINAR para confirmar el borrado definitivo de tu cuenta");
+    if (confirmacion !== "ELIMINAR") {
+      alert("Eliminacion cancelada");
+      return;
+    }
+
+    if (!user.email || !firebase.auth.EmailAuthProvider) {
+      alert("No se puede reautenticar esta cuenta desde la app");
+      return;
+    }
+
+    const password = prompt("Introduce tu contrasena actual para confirmar la eliminacion");
+    if (!password) {
+      alert("Eliminacion cancelada");
+      return;
+    }
+
+    const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+    try {
+      await user.reauthenticateWithCredential(credential);
+    } catch (errorReauth) {
+      console.error(errorReauth);
+      alert("No se pudo confirmar tu identidad. No se ha borrado nada.");
+      return;
+    }
+
+    const userRef = db.collection("usuarios").doc(uid);
+    const userDoc = await userRef.get();
+    const datosPerfil = userDoc.exists ? (userDoc.data() || {}) : {};
+    const fotoPerfil = datosPerfil.fotoPerfil || "";
+
+    // 1. borrar subcoleccion chatLeidos del propio usuario
+    const chatLeidosSnap = await userRef.collection("chatLeidos").get();
+    if (!chatLeidosSnap.empty) {
+      const batchChatLeidos = db.batch();
+      chatLeidosSnap.forEach(doc => batchChatLeidos.delete(doc.ref));
+      await batchChatLeidos.commit();
+    }
+
+    // 2. limpiar referencias sociales
     const snapshot = await db.collection("usuarios").get();
 
     const updates = [];
 
     snapshot.forEach(doc => {
+      if (doc.id === uid) return;
+
       const data = doc.data();
 
       if (data.siguiendo && data.siguiendo.includes(uid)) {
@@ -121,13 +163,23 @@ async function eliminarPerfil() {
 
     await Promise.all(updates);
 
-    // 2. borrar Firestore
-    await db.collection("usuarios").doc(uid).delete();
+    // 3. borrar foto de Storage si existe y la utilidad esta disponible
+    if (
+      fotoPerfil &&
+      fotoPerfil.includes("firebasestorage") &&
+      typeof borrarImagen === "function"
+    ) {
+      await borrarImagen(fotoPerfil);
+    }
 
-    // 3. borrar Auth
+    // 4. borrar Firestore
+    await userRef.delete();
+
+    // 5. borrar Auth
     await user.delete();
 
-    alert("Perfil eliminado");
+    alert("Cuenta eliminada");
+    await auth.signOut();
     mostrar("login");
 
   } catch (error) {
@@ -137,6 +189,8 @@ async function eliminarPerfil() {
     if (error.code === "auth/requires-recent-login") {
       alert("Vuelve a iniciar sesión para eliminar la cuenta");
       await auth.signOut();
+    } else {
+      alert("No se pudo eliminar la cuenta. No se ha completado el borrado.");
     }
 
   }
