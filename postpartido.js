@@ -117,6 +117,20 @@ function partidaTieneValoracionesCompletasPostPartido(p) {
   return valoracionesCompletasParaParticipantesPostPartido(p, obtenerParticipantesValoracionPostPartido(p));
 }
 
+function mensajeBloqueoSustitucionPostPartido(p) {
+  if (!p || p.sustitucionPendiente !== true) return "";
+
+  if (p.sustitucionTipo === "reserva_subida_pendiente_aceptar") {
+    return "Sustitución pendiente de aceptar. El postpartido se activará cuando el reserva confirme su participación.";
+  }
+
+  if (p.sustitucionTipo === "sin_reserva_compatible") {
+    return "Sustitución pendiente. Falta cubrir una plaza antes de cerrar la partida.";
+  }
+
+  return "";
+}
+
 function partidaRankingConDatosCompletosPostPartido(p) {
   return !!(
     p &&
@@ -412,6 +426,7 @@ function puedeValorarPostPartido(p, uidActual) {
   const jugadores = p && Array.isArray(p.jugadores) ? p.jugadores : [];
   if (!uidActual) return false;
   if (!p || p.estado !== "confirmada") return false;
+  if (mensajeBloqueoSustitucionPostPartido(p)) return false;
   if (!esPartidaPendientePostPartido(p)) return false;
 
   if (esPartidaAmistosaPostPartido(p)) {
@@ -873,6 +888,12 @@ function crearFormularioResultado(id) {
     const jugadores = Array.isArray(p.jugadores) ? p.jugadores : [];
     const jugadoresUnicos = new Set(jugadores);
     const jugadoresPermitidos = obtenerJugadoresPermitidosResultadoRanking(p);
+    const mensajeBloqueo = mensajeBloqueoSustitucionPostPartido(p);
+
+    if (mensajeBloqueo) {
+      alert(mensajeBloqueo);
+      return;
+    }
 
     if (jugadores.length !== 4 || jugadoresUnicos.size !== 4) {
       alert("La partida necesita 4 titulares para introducir resultado");
@@ -980,6 +1001,12 @@ function guardarValoracionesAmistosa(id, jugadoresValorados) {
     const p = doc.data() || {};
     const jugadores = obtenerParticipantesValoracionPostPartido(p);
     const jugadoresUnicos = new Set(jugadores);
+    const mensajeBloqueo = mensajeBloqueoSustitucionPostPartido(p);
+
+    if (mensajeBloqueo) {
+      alert(mensajeBloqueo);
+      return;
+    }
 
     if (!puedeValorarPostPartido(p, user.uid)) {
       alert("Esta partida no admite valoraciones en este momento");
@@ -1073,6 +1100,12 @@ function abrirFormularioValoracionesAmistosa(id) {
     const p = doc.data() || {};
     const jugadores = obtenerParticipantesValoracionPostPartido(p);
     const jugadoresUnicos = new Set(jugadores);
+    const mensajeBloqueo = mensajeBloqueoSustitucionPostPartido(p);
+
+    if (mensajeBloqueo) {
+      alert(mensajeBloqueo);
+      return;
+    }
 
     if (!puedeValorarPostPartido(p, user.uid)) {
       alert("Esta partida no admite valoraciones en este momento");
@@ -1267,8 +1300,14 @@ window.crearAccionesPostPartido = function(id, p, uidActual) {
 
   const resultado = p.resultado || null;
   const estadoResultado = resultado && resultado.estado;
+  const mensajeBloqueo = mensajeBloqueoSustitucionPostPartido(p);
   const box = document.createElement("div");
   box.className = "postPartidoBox";
+
+  if (mensajeBloqueo) {
+    box.appendChild(crearTextoPostPartido(mensajeBloqueo));
+    return box;
+  }
 
   if (esPartidaAmistosaPostPartido(p)) {
     box.appendChild(crearTextoPostPartido("Partida amistosa. No necesita resultado."));
@@ -1384,6 +1423,11 @@ window.abrirValoracionesPostPartido = function(id) {
 
 function validarContextoResultadoPendiente(p, uid) {
   const jugadoresPermitidos = obtenerJugadoresPermitidosResultadoRanking(p);
+  const mensajeBloqueo = mensajeBloqueoSustitucionPostPartido(p);
+
+  if (mensajeBloqueo) {
+    return { error: mensajeBloqueo };
+  }
 
   if (jugadoresPermitidos.length < 4) {
     return { error: "La partida necesita jugadores titulares o reservas suficientes para validar resultado" };
