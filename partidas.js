@@ -68,6 +68,29 @@ function normalizarSexoPartida(valor) {
   return sexo;
 }
 
+function arrayUnicoPartida(valores) {
+  const lista = Array.isArray(valores) ? valores.filter(function(uid) { return !!uid; }) : [];
+  return lista.filter(function(uid, index) {
+    return lista.indexOf(uid) === index;
+  });
+}
+
+function datosSustitucionResueltaPartida() {
+  return {
+    sustitucionPendiente: false,
+    sustitucionPendienteDesde: firebase.firestore.FieldValue.delete(),
+    sustitucionPendienteUid: firebase.firestore.FieldValue.delete()
+  };
+}
+
+function datosSustitucionPendientePartida(uid) {
+  return {
+    sustitucionPendiente: true,
+    sustitucionPendienteDesde: firebase.firestore.FieldValue.serverTimestamp(),
+    sustitucionPendienteUid: uid
+  };
+}
+
 function pintarJugador(uid, slotId) {
   const el = document.getElementById(slotId);
   if (!el) return;
@@ -419,6 +442,12 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
     const estadoBadge = textoNodo(textoEstadoPartida, "span");
     estadoBadge.className = "partidaEstadoBadge";
     cabecera.appendChild(estadoBadge);
+  }
+  if (p.sustitucionPendiente === true) {
+    const sustitucionBadge = textoNodo("SustituciÃ³n pendiente", "span");
+    sustitucionBadge.className = "partidaEstadoBadge";
+    sustitucionBadge.style.cssText = "background:#FFC107; color:#000; border-color:#FFC107; font-weight:bold;";
+    cabecera.appendChild(sustitucionBadge);
   }
   cabecera.appendChild(pistaFila);
   cabecera.appendChild(metaFila);
@@ -793,8 +822,15 @@ function cargarPartidas() {
           : "Cualquiera";
 
       const uid = firebase.auth().currentUser.uid;
+      const puedeSalirPartida =
+        p.estado === "abierta" ||
+        (
+          p.estado === "confirmada" &&
+          !p.resultado &&
+          (!p.valoraciones || Object.keys(p.valoraciones).length === 0)
+        );
       const mostrarSalir =
-        p.estado === "abierta" &&
+        puedeSalirPartida &&
         (p.jugadores.includes(uid) || p.reservas.includes(uid));
       const item = {
         id: doc.id,
@@ -1019,8 +1055,10 @@ function unirseAPartida(slotId) {
         }
       }
 
-      let jugadores = p.jugadores || [];
-      let reservas = p.reservas || [];
+      let jugadores = arrayUnicoPartida(p.jugadores);
+      let reservas = arrayUnicoPartida(p.reservas).filter(function(uidReserva) {
+        return !jugadores.includes(uidReserva);
+      });
       const entraComoReserva = esReserva || jugadores.length >= 4;
       console.log("[unirse] jugadores antes:", jugadores);
       console.log("[unirse] reservas antes:", reservas);
@@ -1043,10 +1081,16 @@ function unirseAPartida(slotId) {
           }
         }
 
-        ref.update({
+        const datosUpdate = {
           jugadores: jugadores,
           reservas: reservas
-        }).then(function() {
+        };
+
+        if (!entraComoReserva && jugadores.length === 4 && p.sustitucionPendiente === true) {
+          Object.assign(datosUpdate, datosSustitucionResueltaPartida());
+        }
+
+        ref.update(datosUpdate).then(function() {
           console.log("[unirse] UPDATE OK");
           cargarPartidas();
         });
@@ -1095,6 +1139,38 @@ function unirseAPartida(slotId) {
   });
 }
 
+function obtenerSexoUsuarioPartida(uid) {
+  return db.collection("usuarios").doc(uid).get().then(function(docUsuario) {
+    if (!docUsuario.exists) return "";
+    return normalizarSexoPartida((docUsuario.data() || {}).sexo);
+  });
+}
+
+function elegirReservaSustitutaPartida(p, reservas, uidSale) {
+  if (!Array.isArray(reservas) || reservas.length === 0) return Promise.resolve(null);
+
+  if (p.genero !== "mixto") return Promise.resolve(reservas[0]);
+
+  return obtenerSexoUsuarioPartida(uidSale).then(function(sexoSale) {
+    if (sexoSale !== "masculino" && sexoSale !== "femenino") return null;
+
+    return Promise.all(reservas.map(function(uidReserva) {
+      return obtenerSexoUsuarioPartida(uidReserva).then(function(sexoReserva) {
+        return {
+          uid: uidReserva,
+          sexo: sexoReserva
+        };
+      });
+    })).then(function(reservasDatos) {
+      const reservaValida = reservasDatos.find(function(reserva) {
+        return reserva.sexo === sexoSale;
+      });
+
+      return reservaValida ? reservaValida.uid : null;
+    });
+  });
+}
+
 function salirDePartida(partidaId) {
   const uid = firebase.auth().currentUser.uid;
   const ref = db.collection("partidas").doc(partidaId);
@@ -1103,10 +1179,33 @@ function salirDePartida(partidaId) {
     if (!doc.exists) return;
 
     const p = doc.data() || {};
-    let jugadores = p.jugadores || [];
-    let reservas = p.reservas || [];
+    let jugadores = arrayUnicoPartida(p.jugadores);
+    let reservas = arrayUnicoPartida(p.reservas).filter(function(uidReserva) {
+      return !jugadores.includes(uidReserva);
+    });
 
-    if (p.creadaPor === uid) {
+    if (p.creadaPor === uid && p.estado === "confirmada") {
+      const ok = confirm("Eres el creador de la partida. Si sales, se cancelara la partida para todos. Continuar?");
+      if (!ok) return;
+
+      eliminarPartidaConChat(partidaId).then(function(borrada) {
+        if (borrada) cargarPartidas();
+      });
+      return;
+    }
+
+    if (
+      p.estado === "confirmada" &&
+      (
+        p.resultado ||
+        (p.valoraciones && Object.keys(p.valoraciones).length > 0)
+      )
+    ) {
+      alert("No se puede abandonar una partida con resultado o valoraciones iniciadas.");
+      return;
+    }
+
+    if (p.creadaPor === uid && !jugadores.includes(uid) && p.estado !== "confirmada") {
       const ok = confirm("Se cancelara la partida para todos. Continuar?");
       if (!ok) return;
 
@@ -1117,16 +1216,37 @@ function salirDePartida(partidaId) {
     }
 
     if (jugadores.includes(uid)) {
-      jugadores = jugadores.filter(function(j) { return j !== uid; });
-      ref.update({ jugadores: jugadores }).then(function() {
-        cargarPartidas();
+      const indiceSale = jugadores.indexOf(uid);
+
+      elegirReservaSustitutaPartida(p, reservas, uid).then(function(uidReservaSustituta) {
+        const datosUpdate = {};
+        jugadores = jugadores.filter(function(j) { return j !== uid; });
+
+        if (uidReservaSustituta) {
+          jugadores.splice(indiceSale, 0, uidReservaSustituta);
+          reservas = reservas.filter(function(r) { return r !== uidReservaSustituta; });
+          Object.assign(datosUpdate, datosSustitucionResueltaPartida());
+        } else if (p.estado === "confirmada") {
+          Object.assign(datosUpdate, datosSustitucionPendientePartida(uid));
+        } else {
+          Object.assign(datosUpdate, datosSustitucionResueltaPartida());
+        }
+
+        datosUpdate.jugadores = arrayUnicoPartida(jugadores).slice(0, 4);
+        datosUpdate.reservas = arrayUnicoPartida(reservas).filter(function(uidReserva) {
+          return !datosUpdate.jugadores.includes(uidReserva);
+        }).slice(0, 2);
+
+        ref.update(datosUpdate).then(function() {
+          cargarPartidas();
+        });
       });
       return;
     }
 
     if (reservas.includes(uid)) {
       reservas = reservas.filter(function(r) { return r !== uid; });
-      ref.update({ reservas: reservas }).then(function() {
+      ref.update({ reservas: arrayUnicoPartida(reservas).slice(0, 2) }).then(function() {
         cargarPartidas();
       });
     }
