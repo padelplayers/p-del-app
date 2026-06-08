@@ -110,6 +110,12 @@ async function cambiarChatTab(chatId) {
       if (chatState.chatActivo !== chatId) return;
       if (fechaAlta) {
         query = mensajesRef.where("at", ">=", fechaAlta).orderBy("at", "desc").limit(30);
+        chatState.chats.general.mensajes = [];
+        if (chatState.chatActivo === "general") {
+          const mensajes = document.getElementById("chatMensajes");
+          if (mensajes) mensajes.replaceChildren();
+          chatState.ultimoChatRenderizado = null;
+        }
       }
     }
     gestionarListenerChat(chatId, query);
