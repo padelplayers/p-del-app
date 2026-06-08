@@ -61,6 +61,7 @@ async function borrarImagen(url) {
 
 
 auth.onAuthStateChanged(async user => {
+  console.log("[presencia] onAuthStateChanged user:", user ? user.uid : null);
   if (user) {
 
     const doc = await db.collection("usuarios").doc(user.uid).get();
@@ -84,12 +85,20 @@ function normalizarTexto(texto){
 }
 
 async function actualizarPresenciaUsuario(uid, online) {
+  console.log("[presencia] llamada:", uid, online);
   if (!uid) return;
 
-  await db.collection("usuarios").doc(uid).set({
-    online: online,
-    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true });
+  try {
+    console.log("[presencia] set merge usuarios/" + uid, online);
+    await db.collection("usuarios").doc(uid).set({
+      online: online,
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    console.log("[presencia] set OK:", uid, online);
+  } catch (error) {
+    console.error("[presencia] set ERROR:", uid, online, error);
+    throw error;
+  }
 }
 
 function recuperarPassword() {
@@ -231,6 +240,7 @@ let pass = passInput.value;
 auth.signInWithEmailAndPassword(email, pass)
   .then(async cred => {
     const uid = cred && cred.user ? cred.user.uid : auth.currentUser?.uid;
+    console.log("[presencia] login OK uid:", cred.user.uid);
     if (uid) {
       try {
         console.log("[online] marcar online true:", uid);
@@ -256,6 +266,7 @@ async function logout(){
   const user = auth.currentUser;
   if (user) {
     const uid = user.uid;
+    console.log("[presencia] logout uid:", uid);
     try {
       console.log("[online] marcar online false:", uid);
       await actualizarPresenciaUsuario(uid, false);
@@ -269,6 +280,7 @@ async function logout(){
 }
 
 auth.onAuthStateChanged(async user => {
+  console.log("[presencia] onAuthStateChanged user:", user ? user.uid : null);
 
   if (user) {
 
