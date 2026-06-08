@@ -1202,17 +1202,26 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
   });
 }
 
-function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid) {
+function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
+  opciones = opciones || {};
+  const confirmarCreador = opciones.confirmarCreador !== false;
+  const refrescar = opciones.refrescar !== false;
+  const silencioso = opciones.silencioso === true;
+  const propagarError = opciones.propagarError === true;
+
   return ref.get().then(function(docInicial) {
     if (!docInicial.exists) return;
 
     const pInicial = docInicial.data() || {};
     if (pInicial.creadaPor === uid && (pInicial.estado === "abierta" || pInicial.estado === "confirmada")) {
-      const ok = confirm("Eres el creador de la partida. Si sales, se cancelará la partida para todos. Continuar?");
+      const ok = confirmarCreador
+        ? confirm("Eres el creador de la partida. Si sales, se cancelará la partida para todos. Continuar?")
+        : true;
       if (!ok) return;
 
       return eliminarPartidaConChat(partidaId).then(function(borrada) {
-        if (borrada) cargarPartidas();
+        if (!borrada && propagarError) throw new Error("No se pudo cancelar la partida del creador.");
+        if (borrada && refrescar) cargarPartidas();
       });
     }
 
@@ -1282,10 +1291,11 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid) {
         return false;
       });
     }).then(function(actualizada) {
-      if (actualizada) cargarPartidas();
+      if (actualizada && refrescar) cargarPartidas();
     });
   }).catch(function(error) {
-    alert(error && error.message ? error.message : "No se pudo salir de la partida");
+    if (!silencioso) alert(error && error.message ? error.message : "No se pudo salir de la partida");
+    if (propagarError) throw error;
   });
 }
 

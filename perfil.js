@@ -85,6 +85,40 @@ function configurarBotonChatPrivadoPerfil(uid) {
   } : null;
 }
 
+async function resolverPartidasActivasAntesDeEliminarPerfil(uid) {
+  if (!uid) return;
+
+  if (typeof ejecutarSalirDePartidaTransaccional !== "function") {
+    throw new Error("No esta disponible la salida transaccional de partidas.");
+  }
+
+  const consultas = await Promise.all([
+    db.collection("partidas").where("jugadores", "array-contains", uid).get(),
+    db.collection("partidas").where("reservas", "array-contains", uid).get()
+  ]);
+
+  const partidasActivas = {};
+
+  consultas.forEach(function(snapshot) {
+    snapshot.forEach(function(doc) {
+      const p = doc.data() || {};
+      if (p.estado !== "abierta" && p.estado !== "confirmada") return;
+      partidasActivas[doc.id] = doc.ref;
+    });
+  });
+
+  const ids = Object.keys(partidasActivas);
+  for (let i = 0; i < ids.length; i++) {
+    const partidaId = ids[i];
+    await ejecutarSalirDePartidaTransaccional(partidaId, partidasActivas[partidaId], uid, {
+      confirmarCreador: false,
+      refrescar: false,
+      silencioso: true,
+      propagarError: true
+    });
+  }
+}
+
 async function eliminarPerfil() {
 
   const user = auth.currentUser;
@@ -125,6 +159,8 @@ async function eliminarPerfil() {
     const userDoc = await userRef.get();
     const datosPerfil = userDoc.exists ? (userDoc.data() || {}) : {};
     const fotoPerfil = datosPerfil.fotoPerfil || "";
+
+    await resolverPartidasActivasAntesDeEliminarPerfil(uid);
 
     // 1. borrar subcoleccion chatLeidos del propio usuario
     const chatLeidosSnap = await userRef.collection("chatLeidos").get();
