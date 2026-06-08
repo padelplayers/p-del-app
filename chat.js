@@ -424,6 +424,25 @@ async function obtenerNombreAutorChat(user) {
   return "Jugador";
 }
 
+const CHAT_PRESENCIA_MAX_AGE_MS = 120000;
+
+function obtenerMillisLastSeenChat(valor) {
+  if (!valor) return 0;
+  if (typeof valor.toMillis === "function") return valor.toMillis();
+  if (valor instanceof Date) return valor.getTime();
+  if (typeof valor === "number") return valor;
+  return 0;
+}
+
+function usuarioOnlineVigenteChat(usuario) {
+  if (!usuario || usuario.online !== true) return false;
+
+  const lastSeenMs = obtenerMillisLastSeenChat(usuario.lastSeen);
+  if (!lastSeenMs) return false;
+
+  return Date.now() - lastSeenMs <= CHAT_PRESENCIA_MAX_AGE_MS;
+}
+
 function cargarUsuariosSidebar() {
   const lista = document.querySelector(".chatUserList");
   if (!lista) return;
@@ -442,6 +461,8 @@ function cargarUsuariosSidebar() {
       if (doc.id === auth.currentUser?.uid) {
         return;
       } // No mostrarse a sí mismo
+
+      if (!usuarioOnlineVigenteChat(u)) return;
 
       const div = document.createElement("div");
       div.className = "chatUserItem";

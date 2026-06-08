@@ -119,6 +119,129 @@ async function resolverPartidasActivasAntesDeEliminarPerfil(uid) {
   }
 }
 
+async function borrarSnapshotEnBatchesPerfil(snapshot) {
+  if (!snapshot || snapshot.empty) return;
+
+  let batch = db.batch();
+  let contador = 0;
+  const commits = [];
+
+  snapshot.forEach(function(doc) {
+    batch.delete(doc.ref);
+    contador++;
+
+    if (contador >= 450) {
+      commits.push(batch.commit());
+      batch = db.batch();
+      contador = 0;
+    }
+  });
+
+  if (contador > 0) commits.push(batch.commit());
+  await Promise.all(commits);
+}
+
+async function borrarMensajesQueryPerfil(query) {
+  const snapshot = await query.get();
+  await borrarSnapshotEnBatchesPerfil(snapshot);
+}
+
+async function recalcularUltimoMensajeChatPerfil(parentRef, mensajesRef) {
+  const snapshot = await mensajesRef.orderBy("at", "desc").limit(1).get();
+
+  if (!snapshot.empty) {
+    const mensaje = snapshot.docs[0].data() || {};
+    await parentRef.set({
+      lastMessage: mensaje.t || "",
+      lastActivity: mensaje.at || null,
+      lastSender: mensaje.u || null,
+      lastSenderName: mensaje.n || ""
+    }, { merge: true });
+    return;
+  }
+
+  await parentRef.set({
+    lastMessage: "",
+    lastActivity: null,
+    lastSender: null,
+    lastSenderName: ""
+  }, { merge: true });
+}
+
+async function eliminarMensajesGeneralUsuarioPerfil(uid) {
+  const generalRef = db.collection("chats").doc("general");
+  const mensajesRef = generalRef.collection("mensajes");
+  const generalDoc = await generalRef.get();
+  const debeRecalcular = generalDoc.exists && (generalDoc.data() || {}).lastSender === uid;
+
+  await borrarMensajesQueryPerfil(mensajesRef.where("u", "==", uid));
+
+  if (debeRecalcular) {
+    await recalcularUltimoMensajeChatPerfil(generalRef, mensajesRef);
+  }
+}
+
+async function eliminarChatsPrivadosUsuarioPerfil(uid) {
+  const snapshot = await db.collection("chatsPrivados")
+    .where("participantesMap." + uid, "==", true)
+    .get();
+
+  for (let i = 0; i < snapshot.docs.length; i++) {
+    const privadoRef = snapshot.docs[i].ref;
+    const mensajesSnap = await privadoRef.collection("mensajes").get();
+    await borrarSnapshotEnBatchesPerfil(mensajesSnap);
+    await privadoRef.delete();
+  }
+}
+
+async function obtenerPartidasCandidatasMensajesUsuarioPerfil(uid) {
+  const consultas = await Promise.all([
+    db.collection("partidas").where("jugadores", "array-contains", uid).get(),
+    db.collection("partidas").where("reservas", "array-contains", uid).get(),
+    db.collection("partidas").where("creadaPor", "==", uid).get(),
+    db.collection("partidas").where("creador", "==", uid).get()
+  ]);
+
+  const partidas = {};
+  consultas.forEach(function(snapshot) {
+    snapshot.forEach(function(doc) {
+      partidas[doc.id] = doc.ref;
+    });
+  });
+
+  return Object.keys(partidas).map(function(id) {
+    return partidas[id];
+  });
+}
+
+async function eliminarMensajesPartidasUsuarioPerfil(uid) {
+  const partidasRefs = await obtenerPartidasCandidatasMensajesUsuarioPerfil(uid);
+
+  for (let i = 0; i < partidasRefs.length; i++) {
+    const partidaRef = partidasRefs[i];
+    const partidaDoc = await partidaRef.get();
+    if (!partidaDoc.exists) continue;
+
+    const partida = partidaDoc.data() || {};
+    const mensajesRef = partidaRef.collection("mensajes");
+    const debeRecalcular = partida.lastSender === uid;
+
+    await borrarMensajesQueryPerfil(mensajesRef.where("u", "==", uid));
+
+    if (debeRecalcular) {
+      await recalcularUltimoMensajeChatPerfil(partidaRef, mensajesRef);
+    }
+  }
+}
+
+async function eliminarMensajesUsuarioAntesDeEliminarPerfil(uid) {
+  if (!uid) return;
+
+  await eliminarMensajesGeneralUsuarioPerfil(uid);
+  await eliminarChatsPrivadosUsuarioPerfil(uid);
+  await eliminarMensajesPartidasUsuarioPerfil(uid);
+}
+
 async function eliminarPerfil() {
 
   const user = auth.currentUser;
@@ -159,6 +282,8 @@ async function eliminarPerfil() {
     const userDoc = await userRef.get();
     const datosPerfil = userDoc.exists ? (userDoc.data() || {}) : {};
     const fotoPerfil = datosPerfil.fotoPerfil || "";
+
+    await eliminarMensajesUsuarioAntesDeEliminarPerfil(uid);
 
     await resolverPartidasActivasAntesDeEliminarPerfil(uid);
 

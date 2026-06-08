@@ -31,6 +31,11 @@ let otroUid = null;
 let esAdmin = false;
 
 let unsubscribePistas = null;
+let presenciaInterval = null;
+let presenciaUidActual = null;
+let presenciaEventosRegistrados = false;
+
+const PRESENCIA_HEARTBEAT_MS = 30000;
 
 
 // FUNCIONES GLOBALES
@@ -94,6 +99,69 @@ async function actualizarPresenciaUsuario(uid, online) {
   } catch (error) {
     throw error;
   }
+}
+
+function registrarEventosPresenciaAvanzada() {
+  if (presenciaEventosRegistrados) return;
+  presenciaEventosRegistrados = true;
+
+  window.addEventListener("pagehide", function() {
+    const user = auth.currentUser;
+    if (user) actualizarPresenciaUsuario(user.uid, false).catch(function() {});
+  });
+
+  window.addEventListener("beforeunload", function() {
+    const user = auth.currentUser;
+    if (user) actualizarPresenciaUsuario(user.uid, false).catch(function() {});
+  });
+
+  document.addEventListener("visibilitychange", function() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    if (document.visibilityState === "visible") {
+      iniciarPresenciaAvanzada(user.uid);
+    }
+  });
+}
+
+function detenerPresenciaAvanzada(uid, marcarOffline) {
+  if (presenciaInterval) {
+    clearInterval(presenciaInterval);
+    presenciaInterval = null;
+  }
+
+  const uidSalida = uid || presenciaUidActual;
+  presenciaUidActual = null;
+
+  if (marcarOffline && uidSalida) {
+    return actualizarPresenciaUsuario(uidSalida, false);
+  }
+
+  return Promise.resolve();
+}
+
+function iniciarPresenciaAvanzada(uid) {
+  if (!uid) return Promise.resolve();
+
+  registrarEventosPresenciaAvanzada();
+  presenciaUidActual = uid;
+
+  if (presenciaInterval) clearInterval(presenciaInterval);
+
+  presenciaInterval = setInterval(function() {
+    const user = auth.currentUser;
+    if (!user || user.uid !== uid) {
+      detenerPresenciaAvanzada(null, false);
+      return;
+    }
+
+    actualizarPresenciaUsuario(uid, true).catch(function(error) {
+      console.warn("No se pudo renovar presencia:", error.message);
+    });
+  }, PRESENCIA_HEARTBEAT_MS);
+
+  return actualizarPresenciaUsuario(uid, true);
 }
 
 function recuperarPassword() {
@@ -221,6 +289,7 @@ async function guardarPerfilRegistro(){
   }
 
   await userRef.set(datosPerfil, { merge: true });
+  await iniciarPresenciaAvanzada(auth.currentUser.uid);
 
   await userRef.collection("chatLeidos").doc("general").set({
     lastReadAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -275,7 +344,7 @@ async function logout(){
   if (user) {
     const uid = user.uid;
     try {
-      await actualizarPresenciaUsuario(uid, false);
+      await detenerPresenciaAvanzada(uid, true);
     } catch (error) {
       console.warn("No se pudo marcar usuario offline:", error.message);
     }
@@ -296,7 +365,7 @@ auth.onAuthStateChanged(async user => {
       esAdmin = data && (data.admin === true || data.rol === "admin");
 
       try {
-        await actualizarPresenciaUsuario(user.uid, true);
+        await iniciarPresenciaAvanzada(user.uid);
       } catch (error) {
         throw error;
       }
@@ -326,6 +395,7 @@ auth.onAuthStateChanged(async user => {
   }
 
   esAdmin = false;
+  detenerPresenciaAvanzada(null, false);
   if (typeof window.limpiarTodoChat === "function") {
     window.limpiarTodoChat();
   }
