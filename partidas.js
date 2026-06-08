@@ -444,7 +444,7 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
     cabecera.appendChild(estadoBadge);
   }
   if (p.sustitucionPendiente === true) {
-    const sustitucionBadge = textoNodo("SustituciÃ³n pendiente", "span");
+    const sustitucionBadge = textoNodo("Sustitución pendiente", "span");
     sustitucionBadge.className = "partidaEstadoBadge";
     sustitucionBadge.style.cssText = "background:#FFC107; color:#000; border-color:#FFC107; font-weight:bold;";
     cabecera.appendChild(sustitucionBadge);
@@ -1007,6 +1007,236 @@ function verPista(id) {
   mostrar("pistas");
 }
 
+function obtenerSexoUsuarioPartidaTransaccion(transaction, uid) {
+  return transaction.get(db.collection("usuarios").doc(uid)).then(function(docUsuario) {
+    if (!docUsuario.exists) return "";
+    return normalizarSexoPartida((docUsuario.data() || {}).sexo);
+  });
+}
+
+function elegirReservaSustitutaPartidaTransaccion(transaction, p, reservas, uidSale) {
+  if (!Array.isArray(reservas) || reservas.length === 0) return Promise.resolve(null);
+
+  if (p.genero !== "mixto") return Promise.resolve(reservas[0]);
+
+  return obtenerSexoUsuarioPartidaTransaccion(transaction, uidSale).then(function(sexoSale) {
+    if (sexoSale !== "masculino" && sexoSale !== "femenino") return null;
+
+    return Promise.all(reservas.map(function(uidReserva) {
+      return obtenerSexoUsuarioPartidaTransaccion(transaction, uidReserva).then(function(sexoReserva) {
+        return {
+          uid: uidReserva,
+          sexo: sexoReserva
+        };
+      });
+    })).then(function(reservasDatos) {
+      const reservaValida = reservasDatos.find(function(reserva) {
+        return reserva.sexo === sexoSale;
+      });
+
+      return reservaValida ? reservaValida.uid : null;
+    });
+  });
+}
+
+function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
+  return db.collection("usuarios").doc(user.uid).get().then(function(docUser) {
+    if (!docUser.exists) return false;
+
+    const datosUsuario = docUser.data() || {};
+    const sexoUsuario = normalizarSexoPartida(datosUsuario.sexo);
+    const nivelUsuario = parseFloat(datosUsuario.nivel);
+
+    return db.runTransaction(function(transaction) {
+      return transaction.get(ref).then(function(doc) {
+        if (!doc.exists) return false;
+
+        const p = doc.data() || {};
+        const generoPartida = p.genero;
+
+        if (
+          (generoPartida === "masculino" && sexoUsuario !== "masculino") ||
+          (generoPartida === "femenino" && sexoUsuario !== "femenino")
+        ) {
+          throw new Error("No puedes unirte a esta partida por restricción de género");
+        }
+
+        if (p.nivel && typeof p.nivel === "object") {
+          const desdeNum = parseFloat(p.nivel.desde);
+          const hastaNum = parseFloat(p.nivel.hasta);
+
+          if (isNaN(nivelUsuario) || nivelUsuario < desdeNum || nivelUsuario > hastaNum) {
+            throw new Error("No puedes unirte a esta partida por restricción de nivel");
+          }
+        }
+
+        let jugadores = arrayUnicoPartida(p.jugadores);
+        let reservas = arrayUnicoPartida(p.reservas).filter(function(uidReserva) {
+          return !jugadores.includes(uidReserva);
+        });
+        const entraComoReserva = esReserva || jugadores.length >= 4;
+
+        if (jugadores.includes(user.uid) || reservas.includes(user.uid)) return false;
+
+        const completarEntrada = function() {
+          if (!esReserva) {
+            if (jugadores.length < 4) jugadores.push(user.uid);
+            else if (reservas.length < 2) reservas.push(user.uid);
+            else throw new Error("La partida ya tiene el máximo de reservas");
+          } else {
+            if (reservas.length < 2) reservas.push(user.uid);
+            else throw new Error("La partida ya tiene el máximo de reservas");
+          }
+
+          jugadores = arrayUnicoPartida(jugadores).slice(0, 4);
+          reservas = arrayUnicoPartida(reservas).filter(function(uidReserva) {
+            return !jugadores.includes(uidReserva);
+          }).slice(0, 2);
+
+          const datosUpdate = {
+            jugadores: jugadores,
+            reservas: reservas
+          };
+
+          if (!entraComoReserva && jugadores.length === 4 && p.sustitucionPendiente === true) {
+            Object.assign(datosUpdate, datosSustitucionResueltaPartida());
+          }
+
+          transaction.update(ref, datosUpdate);
+          return true;
+        };
+
+        if (generoPartida === "mixto") {
+          const participantes = entraComoReserva ? reservas : jugadores;
+
+          return Promise.all(participantes.map(function(uid) {
+            return transaction.get(db.collection("usuarios").doc(uid));
+          })).then(function(docsUsuarios) {
+            let hombres = 0;
+            let mujeres = 0;
+
+            docsUsuarios.forEach(function(docParticipante) {
+              if (!docParticipante.exists) return;
+
+              const sexoParticipante = normalizarSexoPartida((docParticipante.data() || {}).sexo);
+              if (sexoParticipante === "masculino") hombres++;
+              if (sexoParticipante === "femenino") mujeres++;
+            });
+
+            if (entraComoReserva && (
+              (sexoUsuario === "masculino" && hombres >= 1) ||
+              (sexoUsuario === "femenino" && mujeres >= 1)
+            )) {
+              throw new Error("En partidas mixtas solo puede haber un reserva masculino y una reserva femenina.");
+            }
+
+            if (!entraComoReserva && (
+              (sexoUsuario === "masculino" && hombres >= 2) ||
+              (sexoUsuario === "femenino" && mujeres >= 2)
+            )) {
+              throw new Error("Esta partida es mixta. Debe haber un máximo de 2 hombres y 2 mujeres.");
+            }
+
+            return completarEntrada();
+          });
+        }
+
+        return completarEntrada();
+      });
+    });
+  }).then(function(actualizada) {
+    if (actualizada) {
+      console.log("[unirse] UPDATE OK");
+      cargarPartidas();
+    }
+  }).catch(function(error) {
+    alert(error && error.message ? error.message : "No se pudo unir a la partida");
+  });
+}
+
+function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid) {
+  return ref.get().then(function(docInicial) {
+    if (!docInicial.exists) return;
+
+    const pInicial = docInicial.data() || {};
+    if (pInicial.creadaPor === uid && (pInicial.estado === "abierta" || pInicial.estado === "confirmada")) {
+      const ok = confirm("Eres el creador de la partida. Si sales, se cancelará la partida para todos. Continuar?");
+      if (!ok) return;
+
+      return eliminarPartidaConChat(partidaId).then(function(borrada) {
+        if (borrada) cargarPartidas();
+      });
+    }
+
+    return db.runTransaction(function(transaction) {
+      return transaction.get(ref).then(function(doc) {
+        if (!doc.exists) return false;
+
+        const p = doc.data() || {};
+        let jugadores = arrayUnicoPartida(p.jugadores);
+        let reservas = arrayUnicoPartida(p.reservas).filter(function(uidReserva) {
+          return !jugadores.includes(uidReserva);
+        });
+
+        if (p.creadaPor === uid && (p.estado === "abierta" || p.estado === "confirmada")) {
+          throw new Error("El creador debe cancelar la partida para salir.");
+        }
+
+        if (
+          p.estado === "confirmada" &&
+          (
+            p.resultado ||
+            (p.valoraciones && Object.keys(p.valoraciones).length > 0)
+          )
+        ) {
+          throw new Error("No se puede abandonar una partida con resultado o valoraciones iniciadas.");
+        }
+
+        if (jugadores.includes(uid)) {
+          const indiceSale = jugadores.indexOf(uid);
+
+          return elegirReservaSustitutaPartidaTransaccion(transaction, p, reservas, uid).then(function(uidReservaSustituta) {
+            const datosUpdate = {};
+            jugadores = jugadores.filter(function(j) { return j !== uid; });
+
+            if (uidReservaSustituta) {
+              jugadores.splice(indiceSale, 0, uidReservaSustituta);
+              reservas = reservas.filter(function(r) { return r !== uidReservaSustituta; });
+              Object.assign(datosUpdate, datosSustitucionResueltaPartida());
+            } else if (p.estado === "confirmada") {
+              Object.assign(datosUpdate, datosSustitucionPendientePartida(uid));
+            } else {
+              Object.assign(datosUpdate, datosSustitucionResueltaPartida());
+            }
+
+            datosUpdate.jugadores = arrayUnicoPartida(jugadores).slice(0, 4);
+            datosUpdate.reservas = arrayUnicoPartida(reservas).filter(function(uidReserva) {
+              return !datosUpdate.jugadores.includes(uidReserva);
+            }).slice(0, 2);
+
+            transaction.update(ref, datosUpdate);
+            return true;
+          });
+        }
+
+        if (reservas.includes(uid)) {
+          reservas = reservas.filter(function(r) { return r !== uid; });
+          transaction.update(ref, {
+            reservas: arrayUnicoPartida(reservas).slice(0, 2)
+          });
+          return true;
+        }
+
+        return false;
+      });
+    }).then(function(actualizada) {
+      if (actualizada) cargarPartidas();
+    });
+  }).catch(function(error) {
+    alert(error && error.message ? error.message : "No se pudo salir de la partida");
+  });
+}
+
 function unirseAPartida(slotId) {
   const user = firebase.auth().currentUser;
   console.log("[unirse] uid actual:", user ? user.uid : null);
@@ -1017,6 +1247,7 @@ function unirseAPartida(slotId) {
   console.log("[unirse] partidaId:", partidaId);
   const esReserva = slotId.startsWith("r");
   const ref = db.collection("partidas").doc(partidaId);
+  return ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user);
 
   ref.get().then(function(doc) {
     if (!doc.exists) return;
@@ -1174,6 +1405,7 @@ function elegirReservaSustitutaPartida(p, reservas, uidSale) {
 function salirDePartida(partidaId) {
   const uid = firebase.auth().currentUser.uid;
   const ref = db.collection("partidas").doc(partidaId);
+  return ejecutarSalirDePartidaTransaccional(partidaId, ref, uid);
 
   ref.get().then(function(doc) {
     if (!doc.exists) return;
