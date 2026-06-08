@@ -7,22 +7,32 @@ function obtenerTotalPerfil(valor) {
   return 0;
 }
 
+function existeValorNivelPerfil(valor) {
+  return valor !== undefined && valor !== null && valor !== "";
+}
+
+function normalizarNumeroNivelPerfil(valor, fallback) {
+  if (!existeValorNivelPerfil(valor)) return fallback;
+  const numero = Number(String(valor).replace(",", "."));
+  return isNaN(numero) ? fallback : numero;
+}
+
 function formatearNivelPerfil(valor) {
-  const numero = parseFloat(valor);
-  if (isNaN(numero)) return "0.00";
+  const numero = Number(valor);
+  if (isNaN(numero)) return "";
   return numero.toFixed(2);
 }
 
 function renderizarEvolucionNivelPerfil(data) {
-  const nivelActual = formatearNivelPerfil(data && data.nivel);
-  const nivelInicial = formatearNivelPerfil(
-    data && data.nivelInicial !== undefined && data.nivelInicial !== null && data.nivelInicial !== ""
-      ? data.nivelInicial
-      : nivelActual
-  );
+  let nivelActualNum = normalizarNumeroNivelPerfil(data && data.nivel, null);
+  const nivelInicialNum = normalizarNumeroNivelPerfil(data && data.nivelInicial, nivelActualNum);
+  if (nivelActualNum === null && nivelInicialNum !== null) nivelActualNum = nivelInicialNum;
 
-  let delta = parseFloat(data && data.nivelDelta);
-  if (isNaN(delta)) delta = parseFloat(nivelActual) - parseFloat(nivelInicial);
+  const nivelActual = nivelActualNum === null ? "0.00" : formatearNivelPerfil(nivelActualNum);
+  const nivelInicial = nivelInicialNum === null ? "0.00" : formatearNivelPerfil(nivelInicialNum);
+
+  let delta = normalizarNumeroNivelPerfil(data && data.nivelDelta, null);
+  if (delta === null) delta = (nivelActualNum || 0) - (nivelInicialNum || 0);
   if (Math.abs(delta) < 0.005) delta = 0;
 
   const nivelPerfil = document.getElementById("nivelPerfil");

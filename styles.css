@@ -932,6 +932,31 @@ body.chatAbierto{
   color:#666;
 }
 
+@media (max-width:760px){
+  .perfil-top{
+    align-items:flex-start;
+  }
+
+  .perfil-info{
+    min-width:0;
+    flex:1;
+  }
+
+  .nivelEvolucionPerfil{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:2px;
+    margin-top:4px;
+    line-height:1.35;
+    font-size:12.5px;
+  }
+
+  .nivelEvolucionPerfil > div{
+    white-space:nowrap;
+  }
+}
+
 .nombre{
   font-size:20px;
   font-weight:bold;
