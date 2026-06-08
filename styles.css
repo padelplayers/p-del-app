@@ -932,6 +932,25 @@ body.chatAbierto{
   color:#666;
 }
 
+.postPartidoReservasParticipantes{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin:12px 0;
+}
+
+.postPartidoReservaParticipanteFila{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:#333;
+  font-weight:600;
+}
+
+.postPartidoReservaParticipanteFila input{
+  width:auto;
+}
+
 @media (max-width:760px){
   .perfil-top{
     align-items:flex-start;

@@ -45,7 +45,7 @@ function mediaEquipoRanking(equipo, niveles) {
   }, 0) / equipo.length;
 }
 
-function resultadoRankingValido(resultado, jugadores) {
+function resultadoRankingValido(resultado, jugadoresPermitidos) {
   if (!resultado || resultado.estado !== "validado") return false;
   if (!Array.isArray(resultado.equipo1) || !Array.isArray(resultado.equipo2)) return false;
   if (resultado.equipo1.length !== 2 || resultado.equipo2.length !== 2) return false;
@@ -56,7 +56,7 @@ function resultadoRankingValido(resultado, jugadores) {
   if (seleccionados.length !== 4 || unicos.size !== 4) return false;
 
   return seleccionados.every(function(uid) {
-    return jugadores.includes(uid);
+    return jugadoresPermitidos.includes(uid);
   });
 }
 
@@ -67,18 +67,21 @@ window.aplicarRankingCompetitivo = async function(idPartida) {
     const partidaDoc = await transaction.get(partidaRef);
     if (!partidaDoc.exists) return null;
 
-    const p = partidaDoc.data() || {};
-    const tipo = String(p.tipo || "ranking").toLowerCase().trim();
-    const jugadores = Array.isArray(p.jugadores) ? p.jugadores : [];
-    const jugadoresUnicos = new Set(jugadores);
+   const p = partidaDoc.data() || {};
+   const tipo = String(p.tipo || "ranking").toLowerCase().trim();
+   const titulares = Array.isArray(p.jugadores) ? p.jugadores : [];
+   const reservas = Array.isArray(p.reservas) ? p.reservas : [];
+   const jugadoresPermitidos = titulares.concat(reservas).filter(function(uid, index, lista) {
+     return !!uid && lista.indexOf(uid) === index;
+   });
 
-    if (p.rankingCompetitivoAplicado === true) return null;
-    if (tipo !== "ranking") return null;
-    if (jugadores.length !== 4 || jugadoresUnicos.size !== 4) return null;
-    if (!resultadoRankingValido(p.resultado, jugadores)) return null;
+   if (p.rankingCompetitivoAplicado === true) return null;
+   if (tipo !== "ranking") return null;
+   if (!resultadoRankingValido(p.resultado, jugadoresPermitidos)) return null;
 
-    const resultado = p.resultado;
-    const equipoGanador = resultado.ganador === "A" ? resultado.equipo1 : resultado.equipo2;
+   const resultado = p.resultado;
+   const jugadores = resultado.equipo1.concat(resultado.equipo2);
+   const equipoGanador = resultado.ganador === "A" ? resultado.equipo1 : resultado.equipo2;
     const equipoPerdedor = resultado.ganador === "A" ? resultado.equipo2 : resultado.equipo1;
     const usuarioRefs = jugadores.map(function(uid) {
       return db.collection("usuarios").doc(uid);

@@ -61,6 +61,13 @@ function cambiarModoPartidas(modo) {
   cargarPartidas();
 }
 
+function normalizarSexoPartida(valor) {
+  const sexo = String(valor || "").toLowerCase().trim();
+  if (sexo === "masculino" || sexo === "hombre") return "masculino";
+  if (sexo === "femenino" || sexo === "mujer") return "femenino";
+  return sexo;
+}
+
 function pintarJugador(uid, slotId) {
   const el = document.getElementById(slotId);
   if (!el) return;
@@ -204,12 +211,12 @@ function crearPartida() {
     if (!docUser.exists) return;
 
     const datosUsuario = docUser.data() || {};
-    const sexoUsuario = datosUsuario.sexo;
+    const sexoUsuario = normalizarSexoPartida(datosUsuario.sexo);
     const nivelUsuario = parseFloat(datosUsuario.nivel);
 
     if (
-      (genero === "masculino" && sexoUsuario !== "hombre") ||
-      (genero === "femenino" && sexoUsuario !== "mujer")
+      (genero === "masculino" && sexoUsuario !== "masculino") ||
+      (genero === "femenino" && sexoUsuario !== "femenino")
     ) {
       alert("No puedes crear una partida de otro género");
       return;
@@ -577,11 +584,11 @@ function cargarDatosPartidaRenderizada(item) {
 }
 
 function partidaTieneValoracionesCompletas(p) {
-  const jugadores = p && Array.isArray(p.jugadores) ? p.jugadores : [];
-  if (jugadores.length !== 4) return false;
+  const jugadores = participantesValoracionesPartida(p);
+  if (jugadores.length < 2) return false;
 
   const jugadoresUnicos = new Set(jugadores);
-  if (jugadoresUnicos.size !== 4) return false;
+  if (jugadoresUnicos.size !== jugadores.length) return false;
 
   const valoraciones = p.valoraciones;
   if (!valoraciones || typeof valoraciones !== "object") return false;
@@ -607,6 +614,28 @@ function partidaTieneResultadoValidado(p) {
 function esTipoRanking(tipo) {
   const valor = String(tipo || "ranking").toLowerCase().trim();
   return valor === "ranking" || valor === "competitiva" || valor === "competitivo";
+}
+
+function participantesValoracionesPartida(p) {
+  if (!p) return [];
+
+  if (esTipoRanking(p.tipo) && p.resultado && p.resultado.estado === "validado") {
+    const equipo1 = Array.isArray(p.resultado.equipo1) ? p.resultado.equipo1 : [];
+    const equipo2 = Array.isArray(p.resultado.equipo2) ? p.resultado.equipo2 : [];
+    const participantesRanking = equipo1.concat(equipo2);
+    if (participantesRanking.length === 4 && new Set(participantesRanking).size === 4) {
+      return participantesRanking;
+    }
+  }
+
+  if (String(p.tipo || "").toLowerCase().trim() === "amistosa") {
+    const participantes = Array.isArray(p.participantesPostPartido) ? p.participantesPostPartido : [];
+    if (participantes.length >= 4 && new Set(participantes).size === participantes.length) {
+      return participantes;
+    }
+  }
+
+  return Array.isArray(p.jugadores) ? p.jugadores : [];
 }
 
 function partidaConfirmadaIncompleta(p) {
@@ -963,7 +992,7 @@ function unirseAPartida(slotId) {
       if (!docUser.exists) return;
 
       const datosUsuario = docUser.data() || {};
-      const sexoUsuario = datosUsuario.sexo;
+      const sexoUsuario = normalizarSexoPartida(datosUsuario.sexo);
       const nivelUsuario = parseFloat(datosUsuario.nivel);
       const generoPartida = p.genero;
 
@@ -972,8 +1001,8 @@ function unirseAPartida(slotId) {
       console.log("generoPartida=", generoPartida);
 
       if (
-        (generoPartida === "masculino" && sexoUsuario !== "hombre") ||
-        (generoPartida === "femenino" && sexoUsuario !== "mujer")
+        (generoPartida === "masculino" && sexoUsuario !== "masculino") ||
+        (generoPartida === "femenino" && sexoUsuario !== "femenino")
       ) {
         console.log("BLOQUEADO POR GENERO");
         alert("No puedes unirte a esta partida por restricción de género");
@@ -992,6 +1021,7 @@ function unirseAPartida(slotId) {
 
       let jugadores = p.jugadores || [];
       let reservas = p.reservas || [];
+      const entraComoReserva = esReserva || jugadores.length >= 4;
       console.log("[unirse] jugadores antes:", jugadores);
       console.log("[unirse] reservas antes:", reservas);
 
@@ -1000,9 +1030,17 @@ function unirseAPartida(slotId) {
       const completarEntrada = function() {
         if (!esReserva) {
           if (jugadores.length < 4) jugadores.push(user.uid);
-          else reservas.push(user.uid);
+          else if (reservas.length < 2) reservas.push(user.uid);
+          else {
+            alert("La partida ya tiene el máximo de reservas");
+            return;
+          }
         } else {
           if (reservas.length < 2) reservas.push(user.uid);
+          else {
+            alert("La partida ya tiene el máximo de reservas");
+            return;
+          }
         }
 
         ref.update({
@@ -1015,7 +1053,7 @@ function unirseAPartida(slotId) {
       };
 
       if (generoPartida === "mixto") {
-        const participantes = jugadores.concat(reservas);
+        const participantes = entraComoReserva ? reservas : jugadores;
 
         Promise.all(participantes.map(function(uid) {
           return db.collection("usuarios").doc(uid).get();
@@ -1026,15 +1064,23 @@ function unirseAPartida(slotId) {
           docsUsuarios.forEach(function(docParticipante) {
             if (!docParticipante.exists) return;
 
-            const sexoParticipante = (docParticipante.data() || {}).sexo;
-            if (sexoParticipante === "hombre") hombres++;
-            if (sexoParticipante === "mujer") mujeres++;
+            const sexoParticipante = normalizarSexoPartida((docParticipante.data() || {}).sexo);
+            if (sexoParticipante === "masculino") hombres++;
+            if (sexoParticipante === "femenino") mujeres++;
           });
 
-          if (
-            (sexoUsuario === "hombre" && hombres >= 2) ||
-            (sexoUsuario === "mujer" && mujeres >= 2)
-          ) {
+          if (entraComoReserva && (
+            (sexoUsuario === "masculino" && hombres >= 1) ||
+            (sexoUsuario === "femenino" && mujeres >= 1)
+          )) {
+            alert("En partidas mixtas solo puede haber un reserva masculino y una reserva femenina.");
+            return;
+          }
+
+          if (!entraComoReserva && (
+            (sexoUsuario === "masculino" && hombres >= 2) ||
+            (sexoUsuario === "femenino" && mujeres >= 2)
+          )) {
             alert("Esta partida es mixta. Debe haber un máximo de 2 hombres y 2 mujeres.");
             return;
           }
@@ -1101,6 +1147,7 @@ window.guardarPartidaFinalizada = function(p, idPartida) {
     nivel: p.nivel || null,
     jugadores: p.jugadores || [],
     reservas: p.reservas || [],
+    participantesPostPartido: p.participantesPostPartido || null,
     resultado: p.resultado || null,
     valoraciones: p.valoraciones || {},
     creadaPor: p.creadaPor || null,
