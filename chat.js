@@ -11,6 +11,7 @@ const chatState = {
   ultimosResumenPartidasAt: {},
   ultimosResumenPrivadosAt: {},
   titulosPartidasCache: {},
+  fechasAltaUsuariosCache: {},
   chats: {
     general: {
       titulo: "General",
@@ -93,7 +94,7 @@ function initChat() {
   cargarUsuariosSidebar();
 }
 
-function cambiarChatTab(chatId) {
+async function cambiarChatTab(chatId) {
   if (!chatState.chats[chatId]) return;
 
   chatState.chatActivo = chatId;
@@ -102,7 +103,15 @@ function cambiarChatTab(chatId) {
 
   const mensajesRef = obtenerMensajesChatRef(chatId);
   if (mensajesRef) {
-    const query = mensajesRef.orderBy("at", "desc").limit(30);
+    let query = mensajesRef.orderBy("at", "desc").limit(30);
+    if (chatId === "general") {
+      const user = auth.currentUser;
+      const fechaAlta = user ? await obtenerFechaAltaUsuarioChat(user.uid) : null;
+      if (chatState.chatActivo !== chatId) return;
+      if (fechaAlta) {
+        query = mensajesRef.where("at", ">=", fechaAlta).orderBy("at", "desc").limit(30);
+      }
+    }
     gestionarListenerChat(chatId, query);
   } else if (chatState.chatListenerActivo) {
     limpiarListenersChat();
@@ -758,6 +767,25 @@ async function obtenerLecturaChat(uid, chatId) {
   }
 }
 
+async function obtenerFechaAltaUsuarioChat(uid) {
+  if (!uid) return null;
+  if (Object.prototype.hasOwnProperty.call(chatState.fechasAltaUsuariosCache, uid)) {
+    return chatState.fechasAltaUsuariosCache[uid];
+  }
+
+  try {
+    const doc = await db.collection("usuarios").doc(uid).get();
+    const data = doc.exists ? (doc.data() || {}) : {};
+    const fechaAlta = data.fechaAlta || data.createdAt || null;
+    chatState.fechasAltaUsuariosCache[uid] = fechaAlta;
+    return fechaAlta;
+  } catch (e) {
+    console.warn("[CHAT] No se pudo leer fechaAlta del usuario:", e.message);
+    chatState.fechasAltaUsuariosCache[uid] = null;
+    return null;
+  }
+}
+
 function timestampMayor(a, b) {
   if (!a) return false;
   if (!b) return true;
@@ -770,6 +798,9 @@ function timestampMayor(a, b) {
 async function evaluarResumenGeneral(data, uid) {
   if (!data || !data.lastActivity || data.lastSender === uid) return;
   if (chatState.chatActivo === "general" && estaPantallaChatVisible()) return;
+
+  const fechaAlta = await obtenerFechaAltaUsuarioChat(uid);
+  if (fechaAlta && !timestampMayor(data.lastActivity, fechaAlta)) return;
 
   const lastReadAt = await obtenerLecturaChat(uid, "general");
   if (chatState.chatActivo === "general" && estaPantallaChatVisible()) return;
@@ -1132,6 +1163,9 @@ window.iniciarListenersChatsPartidas = function(uid) {
   iniciarListenerResumenGeneral(uid);
   iniciarListenersResumenPartidas(uid);
   iniciarListenerResumenPrivados(uid);
+  if (chatState.chatActivo === "general") {
+    cambiarChatTab("general");
+  }
 };
 
 window.limpiarTodoChat = function() {
@@ -1146,6 +1180,7 @@ window.limpiarTodoChat = function() {
   chatState.listenerResumenGeneral = null;
   chatState.ultimoResumenGeneralAt = null;
   chatState.titulosPartidasCache = {};
+  chatState.fechasAltaUsuariosCache = {};
   Object.keys(chatState.chats).forEach(function(chatId) {
     chatState.chats[chatId].noLeidos = false;
     actualizarBotonPartidaNoLeido(chatId);

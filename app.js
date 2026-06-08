@@ -193,7 +193,10 @@ async function guardarPerfilRegistro(){
     });
   }
 
-  await db.collection("usuarios").doc(auth.currentUser.uid).set({
+  const userRef = db.collection("usuarios").doc(auth.currentUser.uid);
+  const userDoc = await userRef.get();
+  const datosUsuarioExistente = userDoc.exists ? (userDoc.data() || {}) : {};
+  const datosPerfil = {
     nombre: nombre,
     nombreNormalizado: nombreNormalizado,
     email: auth.currentUser.email,
@@ -211,6 +214,19 @@ async function guardarPerfilRegistro(){
     online: true,
     lastSeen: firebase.firestore.FieldValue.serverTimestamp()
 
+  };
+
+  if (!datosUsuarioExistente.fechaAlta) {
+    datosPerfil.fechaAlta = firebase.firestore.FieldValue.serverTimestamp();
+  }
+
+  await userRef.set(datosPerfil, { merge: true });
+
+  await userRef.collection("chatLeidos").doc("general").set({
+    lastReadAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    tipo: "general",
+    titulo: "General"
   }, { merge: true });
 
   mostrar("menu");
