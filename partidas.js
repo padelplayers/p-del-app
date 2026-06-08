@@ -1203,11 +1203,6 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
 }
 
 function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
-  console.log("### DIAG_ELIMINAR_PERFIL ejecutarSalirDePartidaTransaccional INICIO ###", {
-    partidaId: partidaId,
-    uid: uid,
-    opciones: opciones || null
-  });
   opciones = opciones || {};
   const confirmarCreador = opciones.confirmarCreador !== false;
   const refrescar = opciones.refrescar !== false;
@@ -1215,73 +1210,29 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
   const propagarError = opciones.propagarError === true;
 
   return ref.get().then(function(docInicial) {
-    console.log("### DIAG_ELIMINAR_PERFIL salida docInicial ###", {
-      partidaId: partidaId,
-      uid: uid,
-      existe: docInicial.exists
-    });
     if (!docInicial.exists) return;
 
     const pInicial = docInicial.data() || {};
-    console.log("### DIAG_ELIMINAR_PERFIL salida estado inicial ###", {
-      partidaId: partidaId,
-      uid: uid,
-      estado: pInicial.estado,
-      creadaPor: pInicial.creadaPor,
-      esCreador: pInicial.creadaPor === uid,
-      enJugadores: Array.isArray(pInicial.jugadores) && pInicial.jugadores.includes(uid),
-      enReservas: Array.isArray(pInicial.reservas) && pInicial.reservas.includes(uid)
-    });
     if (pInicial.creadaPor === uid && (pInicial.estado === "abierta" || pInicial.estado === "confirmada")) {
-      console.log("### DIAG_ELIMINAR_PERFIL salida rama creador cancelar ###", {
-        partidaId: partidaId,
-        uid: uid,
-        estado: pInicial.estado
-      });
       const ok = confirmarCreador
         ? confirm("Eres el creador de la partida. Si sales, se cancelará la partida para todos. Continuar?")
         : true;
       if (!ok) return;
 
       return eliminarPartidaConChat(partidaId).then(function(borrada) {
-        console.log("### DIAG_ELIMINAR_PERFIL salida resultado cancelar creador ###", {
-          partidaId: partidaId,
-          uid: uid,
-          borrada: borrada
-        });
         if (!borrada && propagarError) throw new Error("No se pudo cancelar la partida del creador.");
         if (borrada && refrescar) cargarPartidas();
       });
     }
 
-    console.log("### DIAG_ELIMINAR_PERFIL salida entra runTransaction ###", {
-      partidaId: partidaId,
-      uid: uid
-    });
     return db.runTransaction(function(transaction) {
       return transaction.get(ref).then(function(doc) {
-        console.log("### DIAG_ELIMINAR_PERFIL salida transaction.get ###", {
-          partidaId: partidaId,
-          uid: uid,
-          existe: doc.exists
-        });
         if (!doc.exists) return false;
 
         const p = doc.data() || {};
         let jugadores = arrayUnicoPartida(p.jugadores);
         let reservas = arrayUnicoPartida(p.reservas).filter(function(uidReserva) {
           return !jugadores.includes(uidReserva);
-        });
-        console.log("### DIAG_ELIMINAR_PERFIL salida transaction estado ###", {
-          partidaId: partidaId,
-          uid: uid,
-          estado: p.estado,
-          creadaPor: p.creadaPor,
-          esCreador: p.creadaPor === uid,
-          enJugadores: jugadores.includes(uid),
-          enReservas: reservas.includes(uid),
-          jugadores: jugadores,
-          reservas: reservas
         });
 
         if (p.creadaPor === uid && (p.estado === "abierta" || p.estado === "confirmada")) {
@@ -1324,12 +1275,6 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
               return !datosUpdate.jugadores.includes(uidReserva);
             }).slice(0, 2);
 
-            console.log("### DIAG_ELIMINAR_PERFIL salida transaction update titular ###", {
-              partidaId: partidaId,
-              uid: uid,
-              uidReservaSustituta: uidReservaSustituta || null,
-              datosUpdate: datosUpdate
-            });
             transaction.update(ref, datosUpdate);
             return true;
           });
@@ -1337,37 +1282,18 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
 
         if (reservas.includes(uid)) {
           reservas = reservas.filter(function(r) { return r !== uid; });
-          console.log("### DIAG_ELIMINAR_PERFIL salida transaction update reserva ###", {
-            partidaId: partidaId,
-            uid: uid,
-            reservas: arrayUnicoPartida(reservas).slice(0, 2)
-          });
           transaction.update(ref, {
             reservas: arrayUnicoPartida(reservas).slice(0, 2)
           });
           return true;
         }
 
-        console.log("### DIAG_ELIMINAR_PERFIL salida transaction sin cambios ###", {
-          partidaId: partidaId,
-          uid: uid
-        });
         return false;
       });
     }).then(function(actualizada) {
-      console.log("### DIAG_ELIMINAR_PERFIL salida transaction FIN ###", {
-        partidaId: partidaId,
-        uid: uid,
-        actualizada: actualizada
-      });
       if (actualizada && refrescar) cargarPartidas();
     });
   }).catch(function(error) {
-    console.log("### DIAG_ELIMINAR_PERFIL salida ERROR ###", {
-      partidaId: partidaId,
-      uid: uid,
-      message: error && error.message ? error.message : String(error)
-    });
     if (!silencioso) alert(error && error.message ? error.message : "No se pudo salir de la partida");
     if (propagarError) throw error;
   });
