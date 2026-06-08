@@ -86,9 +86,11 @@ function configurarBotonChatPrivadoPerfil(uid) {
 }
 
 async function resolverPartidasActivasAntesDeEliminarPerfil(uid) {
+  console.log("### DIAG_ELIMINAR_PERFIL resolverPartidasActivasAntesDeEliminarPerfil INICIO ###", { uid: uid });
   if (!uid) return;
 
   if (typeof ejecutarSalirDePartidaTransaccional !== "function") {
+    console.log("### DIAG_ELIMINAR_PERFIL resolver ERROR funcion salida no disponible ###");
     throw new Error("No esta disponible la salida transaccional de partidas.");
   }
 
@@ -97,29 +99,61 @@ async function resolverPartidasActivasAntesDeEliminarPerfil(uid) {
     db.collection("partidas").where("reservas", "array-contains", uid).get()
   ]);
 
+  console.log("### DIAG_ELIMINAR_PERFIL resolver consultas ###", {
+    uid: uid,
+    jugadoresCount: consultas[0].size,
+    reservasCount: consultas[1].size
+  });
+
   const partidasActivas = {};
 
   consultas.forEach(function(snapshot) {
     snapshot.forEach(function(doc) {
       const p = doc.data() || {};
+      console.log("### DIAG_ELIMINAR_PERFIL resolver partida encontrada ###", {
+        partidaId: doc.id,
+        uid: uid,
+        estado: p.estado,
+        enJugadores: Array.isArray(p.jugadores) && p.jugadores.includes(uid),
+        enReservas: Array.isArray(p.reservas) && p.reservas.includes(uid)
+      });
       if (p.estado !== "abierta" && p.estado !== "confirmada") return;
       partidasActivas[doc.id] = doc.ref;
     });
   });
 
   const ids = Object.keys(partidasActivas);
+  console.log("### DIAG_ELIMINAR_PERFIL resolver partidas activas deduplicadas ###", {
+    uid: uid,
+    total: ids.length,
+    ids: ids
+  });
+
   for (let i = 0; i < ids.length; i++) {
     const partidaId = ids[i];
+    console.log("### DIAG_ELIMINAR_PERFIL resolver llama salida ###", {
+      uid: uid,
+      partidaId: partidaId
+    });
     await ejecutarSalirDePartidaTransaccional(partidaId, partidasActivas[partidaId], uid, {
       confirmarCreador: false,
       refrescar: false,
       silencioso: true,
       propagarError: true
     });
+    console.log("### DIAG_ELIMINAR_PERFIL resolver salida terminada ###", {
+      uid: uid,
+      partidaId: partidaId
+    });
   }
+
+  console.log("### DIAG_ELIMINAR_PERFIL resolver FIN ###", { uid: uid });
 }
 
 async function eliminarPerfil() {
+  console.log("### DIAG_ELIMINAR_PERFIL eliminarPerfil INICIO ###", {
+    uid: auth.currentUser ? auth.currentUser.uid : null
+  });
 
   const user = auth.currentUser;
   if (!user) return;
