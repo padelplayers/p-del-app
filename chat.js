@@ -868,7 +868,7 @@ function iniciarListenerResumenPrivados(uid) {
   limpiarListenerResumenPrivados();
 
   chatState.listenerResumenPrivados = db.collection("chatsPrivados")
-    .where("participantes", "array-contains", uid)
+    .where("participantesMap." + uid, "==", true)
     .onSnapshot(function(snapshot) {
       snapshot.docChanges().forEach(function(change) {
         procesarCambioResumenPrivado(change, uid);
