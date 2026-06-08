@@ -95,6 +95,8 @@ async function actualizarPresenciaUsuario(uid, online) {
       lastSeen: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     console.log("[presencia] set OK:", uid, online);
+    const snap = await db.collection("usuarios").doc(uid).get();
+    console.log("[presencia] doc tras set:", uid, snap.exists, snap.data());
   } catch (error) {
     console.error("[presencia] set ERROR:", uid, online, error);
     throw error;
