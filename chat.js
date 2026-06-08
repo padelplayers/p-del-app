@@ -297,6 +297,7 @@ function asegurarChatPrivado(chatId, otroUid, nombre) {
 
   if (!chatState.chats[chatId]) {
     chatState.chats[chatId] = {
+      id: chatId,
       titulo: titulo,
       tituloCorto: titulo,
       tipo: "privado",
@@ -307,6 +308,7 @@ function asegurarChatPrivado(chatId, otroUid, nombre) {
       otroUid: otroUid
     };
   } else {
+    chatState.chats[chatId].id = chatId;
     chatState.chats[chatId].titulo = titulo;
     chatState.chats[chatId].tituloCorto = titulo;
     chatState.chats[chatId].tipo = "privado";
@@ -316,6 +318,22 @@ function asegurarChatPrivado(chatId, otroUid, nombre) {
   }
 
   asegurarTabChat(chatId);
+}
+
+async function asegurarDocumentoChatPrivado(chat) {
+  const user = auth.currentUser;
+  if (!user || !chat || chat.tipo !== "privado" || !chat.id || !chat.otroUid) return;
+
+  const participantes = [user.uid, chat.otroUid].sort();
+  const participantesMap = {};
+  participantesMap[user.uid] = true;
+  participantesMap[chat.otroUid] = true;
+
+  await db.collection("chatsPrivados").doc(chat.id).set({
+    participantes: participantes,
+    participantesMap: participantesMap,
+    actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
 }
 
 function asegurarTabChat(chatId) {
@@ -626,11 +644,16 @@ async function prepararEnvioChat() {
 
   const chatId = chatState.chatActivo;
   const user = auth.currentUser;
-  if (!user || !chatState.chats[chatId]) return;
+  const chat = chatState.chats[chatId];
+  if (!user || !chat) return;
 
   const mensajesRef = obtenerMensajesChatRef(chatId);
   if (mensajesRef) {
     try {
+      if (chat.tipo === "privado") {
+        await asegurarDocumentoChatPrivado(chat);
+      }
+
       const batch = db.batch();
       const msgRef = mensajesRef.doc();
       const nombreAutor = await obtenerNombreAutorChat(user);
@@ -653,7 +676,7 @@ async function prepararEnvioChat() {
         }, { merge: true });
       }
 
-      if (chatState.chats[chatId].tipo === "partida") {
+      if (chat.tipo === "partida") {
         const partidaRef = db.collection("partidas").doc(chatId);
         batch.update(partidaRef, {
           lastMessage: texto,
@@ -663,11 +686,16 @@ async function prepararEnvioChat() {
         });
       }
 
-      if (chatState.chats[chatId].tipo === "privado") {
+      if (chat.tipo === "privado") {
         const privadoRef = db.collection("chatsPrivados").doc(chatId);
-        const otroUid = chatState.chats[chatId].otroUid;
+        const otroUid = chat.otroUid;
+        const participantesMap = {};
+        participantesMap[user.uid] = true;
+        participantesMap[otroUid] = true;
         batch.set(privadoRef, {
           participantes: [user.uid, otroUid].sort(),
+          participantesMap: participantesMap,
+          actualizadoAt: firebase.firestore.FieldValue.serverTimestamp(),
           lastMessage: texto,
           lastActivity: firebase.firestore.FieldValue.serverTimestamp(),
           lastSender: user.uid,
@@ -677,12 +705,12 @@ async function prepararEnvioChat() {
 
       await batch.commit();
       await limpiarMensajesAntiguos(chatId);
+      input.value = "";
     } catch (e) {
       console.error("[CHAT] Error enviando mensaje:", e);
+      alert("No se pudo enviar el mensaje. Intentalo de nuevo.");
     }
   }
-
-  input.value = "";
 }
 
 function marcarChatNoLeido(chatId) {
@@ -1041,6 +1069,12 @@ window.abrirChatPrivado = async function(otroUid, nombre) {
   const titulo = nombre || await obtenerNombreUsuarioChat(otroUid);
 
   asegurarChatPrivado(chatId, otroUid, titulo);
+  try {
+    await asegurarDocumentoChatPrivado(chatState.chats[chatId]);
+  } catch (e) {
+    console.error("[CHAT] No se pudo preparar el chat privado:", e);
+  }
+
   cambiarChatTab(chatId);
   mostrar("chat");
 };
