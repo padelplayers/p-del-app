@@ -83,6 +83,15 @@ function normalizarTexto(texto){
     .trim();
 }
 
+async function actualizarPresenciaUsuario(uid, online) {
+  if (!uid) return;
+
+  await db.collection("usuarios").doc(uid).set({
+    online: online,
+    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+}
+
 function recuperarPassword() {
   const email = document.getElementById("email").value.trim();
 
@@ -194,7 +203,9 @@ async function guardarPerfilRegistro(){
     partidos: 0,
     seguidores: [],
     siguiendo: [],
-    admin: false
+    admin: false,
+    online: true,
+    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
 
   }, { merge: true });
 
@@ -218,8 +229,17 @@ let email = emailInput.value;
 let pass = passInput.value;
 
 auth.signInWithEmailAndPassword(email, pass)
-  .then(user => {
-    console.log("LOGIN OK", user);
+  .then(async cred => {
+    const uid = cred && cred.user ? cred.user.uid : auth.currentUser?.uid;
+    if (uid) {
+      try {
+        console.log("[online] marcar online true:", uid);
+        await actualizarPresenciaUsuario(uid, true);
+      } catch (error) {
+        console.error("[online] error actualizando presencia:", error);
+      }
+    }
+    console.log("LOGIN OK", cred);
   })
   .catch(e => {
     console.log("ERROR LOGIN", e);
@@ -238,10 +258,7 @@ async function logout(){
     const uid = user.uid;
     try {
       console.log("[online] marcar online false:", uid);
-      await db.collection("usuarios").doc(uid).set({
-        online: false,
-        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+      await actualizarPresenciaUsuario(uid, false);
     } catch (error) {
       console.error("[online] error actualizando presencia:", error);
       console.warn("No se pudo marcar usuario offline:", error.message);
@@ -264,10 +281,7 @@ auth.onAuthStateChanged(async user => {
 
       try {
         console.log("[online] marcar online true:", user.uid);
-        await db.collection("usuarios").doc(user.uid).set({
-          online: true,
-          lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
+        await actualizarPresenciaUsuario(user.uid, true);
       } catch (error) {
         console.error("[online] error actualizando presencia:", error);
         throw error;
