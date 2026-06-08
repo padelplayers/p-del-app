@@ -7,6 +7,7 @@ const chatState = {
   listenerResumenGeneral: null,
   listenersResumenPartidas: [],
   listenerResumenPrivados: null,
+  listenerUsuariosOnline: null,
   ultimoResumenGeneralAt: null,
   ultimosResumenPartidasAt: {},
   ultimosResumenPrivadosAt: {},
@@ -91,7 +92,9 @@ function initChat() {
 
   chatState.inicializado = true;
   cambiarChatTab(chatState.chatActivo);
-  cargarUsuariosSidebar();
+  if (auth.currentUser) {
+    cargarUsuariosSidebar();
+  }
 }
 
 async function cambiarChatTab(chatId) {
@@ -424,8 +427,14 @@ async function obtenerNombreAutorChat(user) {
 function cargarUsuariosSidebar() {
   const lista = document.querySelector(".chatUserList");
   if (!lista) return;
+  if (!auth.currentUser) return;
 
-  db.collection("usuarios").where("online", "==", true).onSnapshot(snapshot => {
+  if (typeof chatState.listenerUsuariosOnline === "function") {
+    chatState.listenerUsuariosOnline();
+    chatState.listenerUsuariosOnline = null;
+  }
+
+  chatState.listenerUsuariosOnline = db.collection("usuarios").where("online", "==", true).onSnapshot(snapshot => {
     const fragment = document.createDocumentFragment();
 
     snapshot.forEach(doc => {
@@ -456,6 +465,14 @@ function cargarUsuariosSidebar() {
   }, error => {
     console.warn("[CHAT] No se pudo cargar usuarios online:", error.message);
   });
+}
+
+function limpiarListenerUsuariosOnline() {
+  if (typeof chatState.listenerUsuariosOnline === "function") {
+    chatState.listenerUsuariosOnline();
+  }
+
+  chatState.listenerUsuariosOnline = null;
 }
 
 /**
@@ -548,6 +565,16 @@ function gestionarListenerChat(chatId, query) {
     chatState.chatListenerActivo = null;
   }
 
+  const chatInicial = chatState.chats[chatId];
+  if (chatInicial) {
+    chatInicial.mensajes = [];
+    if (chatId === chatState.chatActivo) {
+      const mensajes = document.getElementById("chatMensajes");
+      if (mensajes) mensajes.replaceChildren();
+      chatState.ultimoChatRenderizado = null;
+    }
+  }
+
   const unsubscribe = query.onSnapshot({ includeMetadataChanges: true }, snapshot => {
     const chat = chatState.chats[chatId];
     if (!chat) return;
@@ -571,6 +598,11 @@ function gestionarListenerChat(chatId, query) {
         const idx = chat.mensajes.findIndex(m => m.id === doc.id);
         if (idx > -1) chat.mensajes[idx] = msgObj;
         else chat.mensajes.push(msgObj);
+
+        if (change.type === "modified" && chatId === chatState.chatActivo) {
+          const el = document.querySelector(`[data-msg-id="${doc.id}"]`);
+          if (el) el.replaceWith(crearNodoMensaje(msgObj));
+        }
         
         // Solo marcar no leído si NO es un envío local pendiente y NO es el chat activo
         if (!isPending && change.type === "added" && data.u !== auth.currentUser?.uid) {
@@ -611,6 +643,7 @@ window.eliminarChatTotal = async function(chatId) {
     await batch.commit();
   } catch (e) {
     console.warn("[CHAT] No se pudo borrar la subcolección:", e.message);
+    return false;
   }
 
   // 3. Limpiar estado local
@@ -625,6 +658,7 @@ window.eliminarChatTotal = async function(chatId) {
 
   actualizarTabsChat();
   renderChatActivo();
+  return true;
 };
 
 async function limpiarMensajesAntiguos(chatId) {
@@ -632,21 +666,30 @@ async function limpiarMensajesAntiguos(chatId) {
     const mensajesRef = obtenerMensajesChatRef(chatId);
     if (!mensajesRef) return;
 
-    const snap = await mensajesRef.orderBy("at", "desc").get();
+    let quedanPorBorrar = true;
+    while (quedanPorBorrar) {
+      const snap = await mensajesRef.orderBy("at", "desc").get();
 
-    if (snap.size <= 100) return;
+      if (snap.size <= 100) return;
 
-    const batch = db.batch();
-    let contador = 0;
+      const batch = db.batch();
+      let contador = 0;
+      let borrados = 0;
 
-    snap.forEach(function(doc) {
-      contador++;
-      if (contador > 100) {
-        batch.delete(doc.ref);
+      snap.forEach(function(doc) {
+        contador++;
+        if (contador > 100 && borrados < 450) {
+          batch.delete(doc.ref);
+          borrados++;
+        }
+      });
+
+      if (!borrados) {
+        quedanPorBorrar = false;
+      } else {
+        await batch.commit();
       }
-    });
-
-    await batch.commit();
+    }
   } catch (e) {
     console.warn("[CHAT] No se pudo limpiar mensajes antiguos:", e.message);
   }
@@ -1173,6 +1216,7 @@ window.iniciarListenersChatsPartidas = function(uid) {
   iniciarListenerResumenGeneral(uid);
   iniciarListenersResumenPartidas(uid);
   iniciarListenerResumenPrivados(uid);
+  cargarUsuariosSidebar();
   if (chatState.chatActivo === "general") {
     cambiarChatTab("general");
   }
@@ -1182,6 +1226,7 @@ window.limpiarTodoChat = function() {
   limpiarListenersChat();
   limpiarListenersResumenPartidas();
   limpiarListenerResumenPrivados();
+  limpiarListenerUsuariosOnline();
 
   if (typeof chatState.listenerResumenGeneral === "function") {
     chatState.listenerResumenGeneral();
