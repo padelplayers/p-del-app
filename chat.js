@@ -657,7 +657,6 @@ async function prepararEnvioChat() {
       const batch = db.batch();
       const msgRef = mensajesRef.doc();
       const nombreAutor = await obtenerNombreAutorChat(user);
-      let resumenPrivado = null;
 
       batch.set(msgRef, {
         u: user.uid,
@@ -693,7 +692,7 @@ async function prepararEnvioChat() {
         const participantesMap = {};
         participantesMap[user.uid] = true;
         participantesMap[otroUid] = true;
-        resumenPrivado = {
+        batch.set(privadoRef, {
           participantes: [user.uid, otroUid].sort(),
           participantesMap: participantesMap,
           actualizadoAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -701,14 +700,10 @@ async function prepararEnvioChat() {
           lastActivity: firebase.firestore.FieldValue.serverTimestamp(),
           lastSender: user.uid,
           lastSenderName: nombreAutor
-        };
-        batch.set(privadoRef, resumenPrivado, { merge: true });
+        }, { merge: true });
       }
 
       await batch.commit();
-      if (chat.tipo === "privado") {
-        console.log("[privados] padre actualizado:", chat.id, resumenPrivado);
-      }
       await limpiarMensajesAntiguos(chatId);
       input.value = "";
     } catch (e) {
@@ -870,20 +865,16 @@ function procesarCambioResumenPrivado(change, uid) {
 }
 
 function iniciarListenerResumenPrivados(uid) {
-  console.log("[privados] iniciarListenerResumenPrivados uid:", uid);
   limpiarListenerResumenPrivados();
 
-  console.log("[privados] query participantesMap:", "participantesMap." + uid);
   chatState.listenerResumenPrivados = db.collection("chatsPrivados")
     .where("participantesMap." + uid, "==", true)
     .onSnapshot(function(snapshot) {
-      console.log("[privados] snapshot recibido size:", snapshot.size);
       snapshot.docChanges().forEach(function(change) {
-        console.log("[privados] cambio:", change.type, change.doc.id, change.doc.data());
         procesarCambioResumenPrivado(change, uid);
       });
     }, function(error) {
-      console.error("[privados] error listener resumen privados:", error);
+      console.warn("Error listener resumen privados:", error);
     });
 }
 
@@ -993,51 +984,41 @@ async function marcarPrivadoLeido(chatId) {
 
 async function evaluarResumenPrivado(doc, uid) {
   if (!doc || !doc.exists) {
-    console.log("[privados] descartado por documento inexistente");
     return;
   }
 
   const chatId = doc.id;
   const data = doc.data() || {};
-  console.log("[privados] evaluarResumenPrivado:", doc.id, doc.data(), "uid:", uid);
   const participantes = Array.isArray(data.participantes) ? data.participantes : [];
   if (!data.lastActivity) {
-    console.log("[privados] descartado por sin lastActivity", doc.id);
     return;
   }
   if (data.lastSender === uid) {
-    console.log("[privados] descartado por lastSender propio", doc.id);
     return;
   }
   if (!participantes.includes(uid)) {
-    console.log("[privados] descartado porque participantes no incluye uid", doc.id);
     return;
   }
 
   const otroUid = obtenerOtroUidPrivado(participantes, uid);
   if (!otroUid) {
-    console.log("[privados] descartado porque no se pudo obtener otroUid", doc.id);
     return;
   }
 
   if (chatState.chatActivo === chatId && estaPantallaChatVisible()) {
-    console.log("[privados] descartado porque chat ya está activo/leído", doc.id);
     marcarPrivadoLeido(chatId);
     return;
   }
 
   const lastReadAt = await obtenerLecturaChat(uid, chatId);
   if (chatState.chatActivo === chatId && estaPantallaChatVisible()) {
-    console.log("[privados] descartado porque chat ya está activo/leído", doc.id);
     return;
   }
   if (!timestampMayor(data.lastActivity, lastReadAt)) {
-    console.log("[privados] descartado porque chat ya está activo/leído", doc.id);
     return;
   }
 
   const nombre = await obtenerNombreUsuarioChat(otroUid);
-  console.log("[privados] creando tab/no leído:", doc.id);
   asegurarChatPrivado(chatId, otroUid, nombre);
   marcarChatNoLeido(chatId);
 }
