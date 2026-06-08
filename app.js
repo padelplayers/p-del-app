@@ -235,13 +235,16 @@ async function logout(){
 
   const user = auth.currentUser;
   if (user) {
+    const uid = user.uid;
     try {
-      await db.collection("usuarios").doc(user.uid).set({
+      console.log("[online] marcar online false:", uid);
+      await db.collection("usuarios").doc(uid).set({
         online: false,
         lastSeen: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
-    } catch (e) {
-      console.warn("No se pudo marcar usuario offline:", e.message);
+    } catch (error) {
+      console.error("[online] error actualizando presencia:", error);
+      console.warn("No se pudo marcar usuario offline:", error.message);
     }
   }
 
@@ -259,10 +262,16 @@ auth.onAuthStateChanged(async user => {
       const data = doc.data();
       esAdmin = data && (data.admin === true || data.rol === "admin");
 
-      await db.collection("usuarios").doc(user.uid).set({
-        online: true,
-        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+      try {
+        console.log("[online] marcar online true:", user.uid);
+        await db.collection("usuarios").doc(user.uid).set({
+          online: true,
+          lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      } catch (error) {
+        console.error("[online] error actualizando presencia:", error);
+        throw error;
+      }
 
       document.getElementById("saludo").innerText =
         "Hola " + (data.nombre || "");
