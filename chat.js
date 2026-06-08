@@ -410,17 +410,12 @@ function cargarUsuariosSidebar() {
   const lista = document.querySelector(".chatUserList");
   if (!lista) return;
 
-  console.log("[online] iniciar listener usuarios online");
-  console.log("[online] usuario actual:", auth.currentUser && auth.currentUser.uid);
   db.collection("usuarios").where("online", "==", true).onSnapshot(snapshot => {
-    console.log("[online] snapshot size:", snapshot.size);
     const fragment = document.createDocumentFragment();
 
     snapshot.forEach(doc => {
       const u = doc.data();
-      console.log("[online] usuario recibido:", doc.id, u.nombre, u.online);
       if (doc.id === auth.currentUser?.uid) {
-        console.log("[online] excluido por ser usuario actual:", doc.id);
         return;
       } // No mostrarse a sí mismo
 

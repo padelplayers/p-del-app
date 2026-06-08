@@ -61,7 +61,6 @@ async function borrarImagen(url) {
 
 
 auth.onAuthStateChanged(async user => {
-  console.log("[presencia] onAuthStateChanged user:", user ? user.uid : null);
   if (user) {
 
     const doc = await db.collection("usuarios").doc(user.uid).get();
@@ -85,26 +84,14 @@ function normalizarTexto(texto){
 }
 
 async function actualizarPresenciaUsuario(uid, online) {
-  console.log("[presencia] llamada:", uid, online);
   if (!uid) return;
 
   try {
-    console.log("[presencia] set merge usuarios/" + uid, online);
     await db.collection("usuarios").doc(uid).set({
       online: online,
       lastSeen: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
-    console.log("[presencia] set OK:", uid, online);
-    const snap = await db.collection("usuarios").doc(uid).get();
-    const data = snap.data() || {};
-    console.log("[presencia] online tras set:", {
-      uid,
-      online: data.online,
-      lastSeen: data.lastSeen || null,
-      keys: Object.keys(data)
-    });
   } catch (error) {
-    console.error("[presencia] set ERROR:", uid, online, error);
     throw error;
   }
 }
@@ -248,13 +235,10 @@ let pass = passInput.value;
 auth.signInWithEmailAndPassword(email, pass)
   .then(async cred => {
     const uid = cred && cred.user ? cred.user.uid : auth.currentUser?.uid;
-    console.log("[presencia] login OK uid:", cred.user.uid);
     if (uid) {
       try {
-        console.log("[online] marcar online true:", uid);
         await actualizarPresenciaUsuario(uid, true);
       } catch (error) {
-        console.error("[online] error actualizando presencia:", error);
       }
     }
     console.log("LOGIN OK", cred);
@@ -274,12 +258,9 @@ async function logout(){
   const user = auth.currentUser;
   if (user) {
     const uid = user.uid;
-    console.log("[presencia] logout uid:", uid);
     try {
-      console.log("[online] marcar online false:", uid);
       await actualizarPresenciaUsuario(uid, false);
     } catch (error) {
-      console.error("[online] error actualizando presencia:", error);
       console.warn("No se pudo marcar usuario offline:", error.message);
     }
   }
@@ -288,7 +269,6 @@ async function logout(){
 }
 
 auth.onAuthStateChanged(async user => {
-  console.log("[presencia] onAuthStateChanged user:", user ? user.uid : null);
 
   if (user) {
 
@@ -300,10 +280,8 @@ auth.onAuthStateChanged(async user => {
       esAdmin = data && (data.admin === true || data.rol === "admin");
 
       try {
-        console.log("[online] marcar online true:", user.uid);
         await actualizarPresenciaUsuario(user.uid, true);
       } catch (error) {
-        console.error("[online] error actualizando presencia:", error);
         throw error;
       }
 
