@@ -604,6 +604,11 @@ function partidaTieneResultadoValidado(p) {
   return !!(p && p.resultado && p.resultado.estado === "validado");
 }
 
+function esTipoRanking(tipo) {
+  const valor = String(tipo || "ranking").toLowerCase().trim();
+  return valor === "ranking" || valor === "competitiva" || valor === "competitivo";
+}
+
 function partidaConfirmadaIncompleta(p) {
   if (!p || p.estado !== "confirmada") return false;
 
@@ -722,17 +727,18 @@ function cargarPartidas() {
         }
       }
 
-      const tipoPartidaLimpieza = String(p.tipo || "ranking").toLowerCase().trim();
+      const esRankingLimpieza = esTipoRanking(p.tipo);
       const puedeLimpiarFinalizada =
         p.estado === "finalizada" &&
         p.guardadaEnHistorial === true &&
         (
           (
-            tipoPartidaLimpieza === "ranking" &&
-            p.rankingCompetitivoAplicado === true
+            esRankingLimpieza &&
+            p.rankingCompetitivoAplicado === true &&
+            p.clasificacionComunitariaAplicada === true
           ) ||
           (
-            tipoPartidaLimpieza !== "ranking" &&
+            !esRankingLimpieza &&
             p.clasificacionComunitariaAplicada === true
           )
         );

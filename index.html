@@ -35,6 +35,12 @@
             <div>· Posición: <span id="posicionPerfil"></span></div>
           </div>
 
+          <div class="perfilNivelEvolucion">
+            <div>Nivel inicial: <span id="nivelInicialPerfil">0.00</span></div>
+            <div>Nivel actual: <span id="nivelActualPerfil">0.00</span></div>
+            <div id="nivelDeltaPerfil" class="nivelDeltaIgual">0.00</div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -1029,7 +1035,8 @@ Añadir pista
 
 <!-- CLASIFICACIÓN -->
 <div id="clasificacion" class="container" style="display:none;">
-  <h2>Clasificación</h2>
+  <h2>Clasificación de Reputación</h2>
+  <p class="clasificacionIntro">La reputación se obtiene mediante la participación, puntualidad, actitud y compromiso mostrados en las partidas.</p>
 
   <div class="volverSticky">
     <button class="btnBlue" onclick="mostrar('menu')">Volver</button>

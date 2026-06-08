@@ -7,6 +7,49 @@ function obtenerTotalPerfil(valor) {
   return 0;
 }
 
+function formatearNivelPerfil(valor) {
+  const numero = parseFloat(valor);
+  if (isNaN(numero)) return "0.00";
+  return numero.toFixed(2);
+}
+
+function renderizarEvolucionNivelPerfil(data) {
+  const nivelActual = formatearNivelPerfil(data && data.nivel);
+  const nivelInicial = formatearNivelPerfil(
+    data && data.nivelInicial !== undefined && data.nivelInicial !== null && data.nivelInicial !== ""
+      ? data.nivelInicial
+      : nivelActual
+  );
+
+  let delta = parseFloat(data && data.nivelDelta);
+  if (isNaN(delta)) delta = parseFloat(nivelActual) - parseFloat(nivelInicial);
+  if (Math.abs(delta) < 0.005) delta = 0;
+
+  const nivelPerfil = document.getElementById("nivelPerfil");
+  if (nivelPerfil) nivelPerfil.innerText = nivelActual + " nivel";
+
+  const nivelInicialPerfil = document.getElementById("nivelInicialPerfil");
+  if (nivelInicialPerfil) nivelInicialPerfil.innerText = nivelInicial;
+
+  const nivelActualPerfil = document.getElementById("nivelActualPerfil");
+  if (nivelActualPerfil) nivelActualPerfil.innerText = nivelActual;
+
+  const nivelDeltaPerfil = document.getElementById("nivelDeltaPerfil");
+  if (nivelDeltaPerfil) {
+    nivelDeltaPerfil.classList.remove("nivelDeltaSube", "nivelDeltaBaja", "nivelDeltaIgual");
+    if (delta > 0) {
+      nivelDeltaPerfil.innerText = "▲ +" + delta.toFixed(2);
+      nivelDeltaPerfil.classList.add("nivelDeltaSube");
+    } else if (delta < 0) {
+      nivelDeltaPerfil.innerText = "▼ " + delta.toFixed(2);
+      nivelDeltaPerfil.classList.add("nivelDeltaBaja");
+    } else {
+      nivelDeltaPerfil.innerText = "0.00";
+      nivelDeltaPerfil.classList.add("nivelDeltaIgual");
+    }
+  }
+}
+
 function configurarBotonChatPrivadoPerfil(uid) {
   const user = auth.currentUser;
   const botones = document.querySelector("#perfil .perfil-botones");
@@ -158,7 +201,7 @@ if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
 
 
     document.getElementById("nombrePerfil").innerText = data.nombre || "";
-    document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
+    renderizarEvolucionNivelPerfil(data);
     document.getElementById("manoPerfil").innerText = data.mano || "-";
     document.getElementById("posicionPerfil").innerText = data.posicion || "-";
     console.log("FOTO PERFIL:", data.fotoPerfil);
@@ -385,7 +428,7 @@ function cargarPerfil(uid){
       const data = doc.data();
 
       document.getElementById("nombrePerfil").innerText = data.nombre || "";
-      document.getElementById("nivelPerfil").innerText = (data.nivel || 0) + " nivel";
+      renderizarEvolucionNivelPerfil(data);
       document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
 
       document.getElementById("manoPerfil").innerText = data.mano || "-";

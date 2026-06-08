@@ -903,6 +903,35 @@ body.chatAbierto{
   text-align:left;
 }
 
+.perfilNivelEvolucion{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  font-size:13px;
+  color:#555;
+}
+
+.perfilNivelEvolucion span{
+  font-weight:bold;
+  color:#1565C0;
+}
+
+#nivelDeltaPerfil{
+  font-weight:bold;
+}
+
+.nivelDeltaSube{
+  color:#2e7d32;
+}
+
+.nivelDeltaBaja{
+  color:#c62828;
+}
+
+.nivelDeltaIgual{
+  color:#666;
+}
+
 .nombre{
   font-size:20px;
   font-weight:bold;
@@ -1785,6 +1814,13 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   flex-direction:column;
   gap:12px;
   margin:16px 0;
+}
+
+.clasificacionIntro {
+  margin:0 0 12px;
+  color:#555;
+  font-size:14px;
+  line-height:1.4;
 }
 
 .clasificacionCard {
