@@ -523,21 +523,34 @@ function leerYValidarSetsResultado() {
   return { error: "No hay ganador claro. El ganador debe ganar 2 sets." };
 }
 
-function resultadoTieneEquiposValidos(resultado, jugadores) {
-  if (!resultado || !Array.isArray(jugadores) || jugadores.length !== 4) return false;
+function obtenerJugadoresPermitidosResultadoRanking(p) {
+  const titulares = arrayUnicoPostPartido(p && p.jugadores);
+  const reservas = arrayUnicoPostPartido(p && p.reservas);
+  return arrayUnicoPostPartido(titulares.concat(reservas));
+}
+
+function obtenerJugadoresResultadoValidos(resultado) {
+  if (!resultado || !Array.isArray(resultado.equipo1) || !Array.isArray(resultado.equipo2)) return [];
+  const seleccionados = resultado.equipo1.concat(resultado.equipo2);
+  if (seleccionados.length !== 4) return [];
+  if (new Set(seleccionados).size !== 4) return [];
+  return seleccionados;
+}
+
+function resultadoTieneEquiposValidos(resultado, jugadoresPermitidos) {
+  if (!resultado || !Array.isArray(jugadoresPermitidos) || jugadoresPermitidos.length < 4) return false;
   if (!Array.isArray(resultado.equipo1) || !Array.isArray(resultado.equipo2)) return false;
   if (resultado.equipo1.length !== 2 || resultado.equipo2.length !== 2) return false;
 
-  const seleccionados = resultado.equipo1.concat(resultado.equipo2);
-  const seleccionadosUnicos = new Set(seleccionados);
-  if (seleccionados.length !== 4 || seleccionadosUnicos.size !== 4) return false;
+  const seleccionados = obtenerJugadoresResultadoValidos(resultado);
+  if (seleccionados.length !== 4) return false;
 
   return seleccionados.every(function(uid) {
-    return jugadores.includes(uid);
+    return jugadoresPermitidos.includes(uid);
   });
 }
 
-function leerYValidarEquiposResultado(jugadores) {
+function leerYValidarEquiposResultado(jugadoresPermitidos) {
   const ids = [
     "resultadoEquipo1Jugador1",
     "resultadoEquipo1Jugador2",
@@ -558,8 +571,8 @@ function leerYValidarEquiposResultado(jugadores) {
     return { error: "No puede repetirse ningun jugador en los equipos." };
   }
 
-  if (!seleccionados.every(function(uid) { return jugadores.includes(uid); })) {
-    return { error: "Todos los jugadores seleccionados deben ser titulares." };
+  if (!seleccionados.every(function(uid) { return jugadoresPermitidos.includes(uid); })) {
+    return { error: "Todos los jugadores seleccionados deben ser titulares o reservas de esta partida." };
   }
 
   return {
@@ -656,9 +669,10 @@ function guardarResultadoPropuesto(id) {
 
     const p = doc.data() || {};
     const jugadores = Array.isArray(p.jugadores) ? p.jugadores : [];
+    const jugadoresPermitidos = obtenerJugadoresPermitidosResultadoRanking(p);
 
-    if (!jugadores.includes(user.uid)) {
-      alert("Solo los jugadores titulares pueden introducir resultado");
+    if (!jugadoresPermitidos.includes(user.uid)) {
+      alert("Solo los jugadores titulares o reservas pueden introducir resultado");
       return;
     }
 
@@ -677,7 +691,7 @@ function guardarResultadoPropuesto(id) {
       return;
     }
 
-    const equipos = leerYValidarEquiposResultado(jugadores);
+    const equipos = leerYValidarEquiposResultado(jugadoresPermitidos);
     if (equipos.error) {
       alert(equipos.error);
       return;
@@ -691,7 +705,7 @@ function guardarResultadoPropuesto(id) {
     if (
       p.resultado &&
       p.resultado.estado === "pendiente" &&
-      resultadoTieneEquiposValidos(p.resultado, jugadores)
+      resultadoTieneEquiposValidos(p.resultado, jugadoresPermitidos)
     ) {
       alert("Ya hay un resultado pendiente de validación");
       return;
@@ -700,7 +714,7 @@ function guardarResultadoPropuesto(id) {
     if (
       p.resultado &&
       p.resultado.estado !== "disputa" &&
-      !(p.resultado.estado === "pendiente" && !resultadoTieneEquiposValidos(p.resultado, jugadores))
+      !(p.resultado.estado === "pendiente" && !resultadoTieneEquiposValidos(p.resultado, jugadoresPermitidos))
     ) {
       alert("Este resultado no se puede sobrescribir");
       return;
@@ -858,13 +872,14 @@ function crearFormularioResultado(id) {
     const p = doc.data() || {};
     const jugadores = Array.isArray(p.jugadores) ? p.jugadores : [];
     const jugadoresUnicos = new Set(jugadores);
+    const jugadoresPermitidos = obtenerJugadoresPermitidosResultadoRanking(p);
 
     if (jugadores.length !== 4 || jugadoresUnicos.size !== 4) {
       alert("La partida necesita 4 titulares para introducir resultado");
       return;
     }
 
-    return cargarDatosJugadoresPostPartido(jugadores).then(function(jugadoresDatos) {
+    return cargarDatosJugadoresPostPartido(jugadoresPermitidos).then(function(jugadoresDatos) {
       construirFormularioResultado(id, jugadoresDatos);
     });
   }).catch(function(error) {
@@ -1243,9 +1258,11 @@ function abrirSelectorReservasParticipantesAmistosa(id, p) {
 window.crearAccionesPostPartido = function(id, p, uidActual) {
   const jugadores = p && Array.isArray(p.jugadores) ? p.jugadores : [];
   const participantesValoracion = obtenerParticipantesValoracionPostPartido(p);
+  const participantesResultado = obtenerJugadoresResultadoValidos(p && p.resultado);
   const reservas = p && Array.isArray(p.reservas) ? p.reservas : [];
   const puedeConfigurarReservasAmistosa = esPartidaAmistosaPostPartido(p) && reservas.length > 0 && participantesValoracion.length === 0 && jugadores.includes(uidActual);
-  if (!uidActual || (!jugadores.includes(uidActual) && !participantesValoracion.includes(uidActual))) return null;
+  const puedeActuarResultadoRanking = esPartidaConResultadoPostPartido(p) && reservas.includes(uidActual);
+  if (!uidActual || (!jugadores.includes(uidActual) && !participantesValoracion.includes(uidActual) && !participantesResultado.includes(uidActual) && !puedeActuarResultadoRanking)) return null;
   if (!esPartidaPendientePostPartido(p)) return null;
 
   const resultado = p.resultado || null;
@@ -1284,9 +1301,10 @@ window.crearAccionesPostPartido = function(id, p, uidActual) {
 
   if (estadoResultado === "pendiente") {
     const validaciones = Array.isArray(resultado.validaciones) ? resultado.validaciones : [];
+    const jugadoresPermitidos = obtenerJugadoresPermitidosResultadoRanking(p);
     box.appendChild(crearTextoPostPartido("Resultado pendiente de validación"));
 
-    if (!resultadoTieneEquiposValidos(resultado, jugadores)) {
+    if (!resultadoTieneEquiposValidos(resultado, jugadoresPermitidos)) {
       box.appendChild(crearTextoPostPartido("Resultado pendiente sin equipos registrados. Debe proponerse de nuevo."));
 
       const accionesSinEquipos = document.createElement("div");
@@ -1298,7 +1316,7 @@ window.crearAccionesPostPartido = function(id, p, uidActual) {
       return box;
     }
 
-    box.appendChild(crearResumenResultadoPendiente(resultado, jugadores));
+    box.appendChild(crearResumenResultadoPendiente(resultado, jugadoresPermitidos));
 
     if (validaciones.includes(uidActual)) {
       box.appendChild(crearTextoPostPartido("Resultado validado por ti"));
@@ -1365,15 +1383,10 @@ window.abrirValoracionesPostPartido = function(id) {
 };
 
 function validarContextoResultadoPendiente(p, uid) {
-  const jugadores = Array.isArray(p.jugadores) ? p.jugadores : [];
-  const jugadoresUnicos = new Set(jugadores);
+  const jugadoresPermitidos = obtenerJugadoresPermitidosResultadoRanking(p);
 
-  if (jugadores.length !== 4 || jugadoresUnicos.size !== 4) {
-    return { error: "La partida necesita 4 titulares para validar resultado" };
-  }
-
-  if (!jugadores.includes(uid)) {
-    return { error: "Solo los jugadores titulares pueden validar el resultado" };
+  if (jugadoresPermitidos.length < 4) {
+    return { error: "La partida necesita jugadores titulares o reservas suficientes para validar resultado" };
   }
 
   if (p.estado !== "confirmada") {
@@ -1388,11 +1401,16 @@ function validarContextoResultadoPendiente(p, uid) {
     return { error: "El resultado ya no esta pendiente" };
   }
 
-  if (!resultadoTieneEquiposValidos(p.resultado, jugadores)) {
+  if (!resultadoTieneEquiposValidos(p.resultado, jugadoresPermitidos)) {
     return { error: "Resultado pendiente sin equipos registrados. Debe proponerse de nuevo." };
   }
 
-  return { jugadores: jugadores, resultado: p.resultado };
+  const jugadoresResultado = obtenerJugadoresResultadoValidos(p.resultado);
+  if (!jugadoresResultado.includes(uid)) {
+    return { error: "Solo los jugadores del resultado pueden validar el resultado" };
+  }
+
+  return { jugadores: jugadoresResultado, resultado: p.resultado };
 }
 
 window.confirmarResultadoPartida = function(id) {
