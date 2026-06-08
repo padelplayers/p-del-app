@@ -181,6 +181,11 @@ function crearBotonPista(texto, clase, onClick) {
   return boton;
 }
 
+function esPistaPrivadaComunidad(data) {
+  const tipo = String((data && data.tipo) || "").toLowerCase().trim();
+  return tipo === "privada" || tipo === "privada comunidad";
+}
+
 async function cargarPistas() {
   esAdmin = false;
   const user = auth.currentUser;
@@ -292,15 +297,18 @@ async function cargarPistas() {
         );
 
         const reserva = document.createElement("div");
-        if (data.reserva && data.reserva.startsWith("http")) {
+        if (esPistaPrivadaComunidad(data)) {
+          reserva.textContent = "Reserva: Solo puede reservar el creador de la pista";
+        } else if (data.reserva && data.reserva.startsWith("http")) {
+          reserva.appendChild(document.createTextNode("Reserva: "));
           const link = document.createElement("a");
           link.href = data.reserva;
           link.target = "_blank";
           link.rel = "noopener";
-          link.textContent = "Reservar";
+          link.textContent = "WEB";
           reserva.appendChild(link);
         } else {
-          reserva.textContent = "Tel: " + (data.reserva || "No disponible");
+          reserva.textContent = "Reserva: " + data.reserva;
         }
 
         const pago = crearTextoPista("Pago: " +
@@ -411,6 +419,7 @@ window.abrirEditarPista = async function(id) {
   document.getElementById("editarLat").value = data.lat || "";
   document.getElementById("editarLng").value = data.lng || "";
   document.getElementById("editarReserva").value = data.reserva || "";
+  document.getElementById("editarNotaPista").value = (data.nota || "").trim();
 
   const fp = document.getElementById("formaPagoEditar");
   if (fp) fp.value = data.formaPago || "";
@@ -431,6 +440,13 @@ const btnActualizar = document.getElementById("btnActualizarPista");
 
 if (btnActualizar) {
   btnActualizar.onclick = async () => {
+    const nota = document.getElementById("editarNotaPista").value.trim();
+
+    if (nota.length > 120) {
+      alert("La nota no puede superar los 120 caracteres");
+      return;
+    }
+
     await db.collection("pistas").doc(window.pistaEditando).update({
       nombre: document.getElementById("editarNombrePista").value,
       localidad: document.getElementById("editarLocalidadPista").value,
@@ -444,6 +460,7 @@ if (btnActualizar) {
       lat: document.getElementById("editarLat").value,
       lng: document.getElementById("editarLng").value,
       reserva: document.getElementById("editarReserva").value,
+      nota: nota,
       formaPago: document.getElementById("formaPagoEditar").value,
       verificada: true
     });
