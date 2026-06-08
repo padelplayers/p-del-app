@@ -802,19 +802,20 @@ function timestampMayor(a, b) {
 }
 
 async function evaluarResumenGeneral(data, uid) {
-  if (!data || !data.lastActivity || data.lastSender === uid) return;
-  if (chatState.chatActivo === "general" && estaPantallaChatVisible()) return;
+  if (!data || !data.lastActivity || data.lastSender === uid) return "procesado";
+  if (chatState.chatActivo === "general" && estaPantallaChatVisible()) return "visible";
 
   const fechaAlta = await obtenerFechaAltaUsuarioChat(uid);
-  if (fechaAlta && !timestampMayor(data.lastActivity, fechaAlta)) return;
+  if (fechaAlta && !timestampMayor(data.lastActivity, fechaAlta)) return "procesado";
 
   const lastReadAt = await obtenerLecturaChat(uid, "general");
-  if (chatState.chatActivo === "general" && estaPantallaChatVisible()) return;
-  if (!timestampMayor(data.lastActivity, lastReadAt)) return;
+  if (chatState.chatActivo === "general" && estaPantallaChatVisible()) return "visible";
+  if (!timestampMayor(data.lastActivity, lastReadAt)) return "procesado";
 
   chatState.chats.general.noLeidos = true;
   actualizarTabsChat();
   actualizarIndicadorMenuChat();
+  return "procesado";
 }
 
 function iniciarListenerResumenGeneral(uid) {
@@ -831,9 +832,12 @@ function iniciarListenerResumenGeneral(uid) {
       const at = data.lastActivity;
       const atMs = at && typeof at.toMillis === "function" ? at.toMillis() : null;
       if (atMs && atMs === chatState.ultimoResumenGeneralAt) return;
-      chatState.ultimoResumenGeneralAt = atMs;
 
-      evaluarResumenGeneral(data, uid);
+      evaluarResumenGeneral(data, uid).then(function(resultado) {
+        if (resultado !== "visible") {
+          chatState.ultimoResumenGeneralAt = atMs;
+        }
+      });
     });
 }
 
