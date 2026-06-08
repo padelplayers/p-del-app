@@ -228,12 +228,24 @@ auth.signInWithEmailAndPassword(email, pass)
 
 }
 
-function logout(){
+async function logout(){
   if (typeof window.limpiarTodoChat === "function") {
     window.limpiarTodoChat();
   }
+
+  const user = auth.currentUser;
+  if (user) {
+    try {
+      await db.collection("usuarios").doc(user.uid).set({
+        online: false,
+        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    } catch (e) {
+      console.warn("No se pudo marcar usuario offline:", e.message);
+    }
+  }
+
   auth.signOut();
-auth.signOut();
 }
 
 auth.onAuthStateChanged(async user => {
@@ -246,6 +258,11 @@ auth.onAuthStateChanged(async user => {
 
       const data = doc.data();
       esAdmin = data && (data.admin === true || data.rol === "admin");
+
+      await db.collection("usuarios").doc(user.uid).set({
+        online: true,
+        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
 
       document.getElementById("saludo").innerText =
         "Hola " + (data.nombre || "");

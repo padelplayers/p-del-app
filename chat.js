@@ -410,9 +410,7 @@ function cargarUsuariosSidebar() {
   const lista = document.querySelector(".chatUserList");
   if (!lista) return;
 
-  // Nota: Actualmente carga usuarios registrados. 
-  // Pendiente implementar sistema de presencia real (lastActive) para filtrar "Online".
-  db.collection("usuarios").limit(12).get().then(snapshot => {
+  db.collection("usuarios").where("online", "==", true).onSnapshot(snapshot => {
     const fragment = document.createDocumentFragment();
 
     snapshot.forEach(doc => {
@@ -438,6 +436,8 @@ function cargarUsuariosSidebar() {
     });
 
     lista.replaceChildren(fragment);
+  }, error => {
+    console.warn("[CHAT] No se pudo cargar usuarios online:", error.message);
   });
 }
 
