@@ -96,7 +96,13 @@ async function actualizarPresenciaUsuario(uid, online) {
     }, { merge: true });
     console.log("[presencia] set OK:", uid, online);
     const snap = await db.collection("usuarios").doc(uid).get();
-    console.log("[presencia] doc tras set:", uid, snap.exists, snap.data());
+    const data = snap.data() || {};
+    console.log("[presencia] online tras set:", {
+      uid,
+      online: data.online,
+      lastSeen: data.lastSeen || null,
+      keys: Object.keys(data)
+    });
   } catch (error) {
     console.error("[presencia] set ERROR:", uid, online, error);
     throw error;
