@@ -28,7 +28,22 @@ function mostrarAvisoPwaSiProcede() {
   aviso.style.display = "flex";
 }
 
+function actualizarTextoAvisoPwa() {
+  const aviso = document.getElementById("pwaAviso");
+  if (!aviso) return;
+
+  const titulo = aviso.querySelector("h3");
+  const texto = aviso.querySelector("p");
+
+  if (titulo) titulo.textContent = "Instala Pádel Players Morvedre";
+  if (texto) {
+    texto.textContent = "Instala la app para disfrutar de una experiencia más completa. Accede más rápido a tus partidas, chats y clasificaciones, y recuerda entrar periódicamente para consultar el estado de tus partidas y avisos importantes.";
+  }
+}
+
 function initPwaBasica() {
+  actualizarTextoAvisoPwa();
+
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js").catch(function(error) {
       console.warn("No se pudo registrar service worker:", error.message);
