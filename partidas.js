@@ -1259,7 +1259,9 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
             reservas: reservas,
             jugadoresAntes: jugadoresAntes,
             entroComoReserva: entraComoReserva,
-            creadaPor: p.creadaPor || p.creador || null,
+            estado: p.estado || null,
+            creadaPor: p.creadaPor || null,
+            creador: p.creador || null,
             fecha: p.fecha || null,
             hora: p.hora || null
           };
@@ -1307,18 +1309,28 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
     if (actualizada) {
       console.log("[unirse] UPDATE OK");
       const avisos = [];
-      if (!actualizada.entroComoReserva && actualizada.jugadoresAntes < 4 && actualizada.jugadores.length === 4) {
-        avisos.push(notificarPartida(actualizada.creadaPor, {
-          tipo: "partida_completa",
-          titulo: "Partida completa",
-          mensaje: "Tu partida ya tiene 4 jugadores. Recuerda realizar la reserva en el club y confirmar la partida. Si no hay disponibilidad en el club, debes cancelar la partida.",
-          partidaId: partidaId,
-          accion: "abrir_partida",
-          dedupeKey: "partida_completa_" + partidaId,
-          prioridad: "alta",
-          emailCritico: true,
-          data: { jugadores: actualizada.jugadores }
-        }));
+      if (!actualizada.entroComoReserva && actualizada.jugadoresAntes < 4 && actualizada.jugadores.length === 4 && actualizada.estado === "abierta") {
+        const creadorAviso = actualizada.creadaPor || actualizada.creador || null;
+
+        if (creadorAviso) {
+          avisos.push(notificarPartida(creadorAviso, {
+            tipo: "partida_completa",
+            titulo: "Partida completa",
+            mensaje: "La partida ya tiene 4 jugadores. Recuerda realizar la reserva en el club y confirmar la partida. Si ya no hay disponibilidad en el club para esa fecha y hora, cancela la partida.",
+            partidaId: partidaId,
+            accion: "abrir_partida",
+            dedupeKey: "partida_completa_" + partidaId,
+            prioridad: "alta",
+            emailCritico: true,
+            data: { jugadores: actualizada.jugadores }
+          }));
+        } else {
+          console.warn("[partida_completa] No se pudo crear aviso: partida sin creador fiable", {
+            partidaId: partidaId,
+            creadaPor: actualizada.creadaPor,
+            creador: actualizada.creador
+          });
+        }
       }
 
       Promise.all(avisos).then(function() {
