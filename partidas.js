@@ -465,6 +465,28 @@ async function cancelarPartidaPorFaltaDisponibilidad(partidaId) {
       return;
     }
 
+    const destinatarios = arrayUnicoPartida((p.jugadores || []).concat(p.reservas || [])).filter(function(uid) {
+      return uid !== user.uid;
+    });
+
+    if (destinatarios.length > 0) {
+      if (typeof window.crearNotificacionesParaUids !== "function") {
+        alert("No se pudo crear el aviso de cancelacion. Intentalo de nuevo.");
+        return;
+      }
+
+      await window.crearNotificacionesParaUids(destinatarios, {
+        origen: "partidas",
+        tipo: "partida_cancelada",
+        titulo: "Partida cancelada",
+        mensaje: "El creador ha cancelado la partida porque no podía realizarse o no había disponibilidad en el club.",
+        dedupeKey: "partida_cancelada_" + partidaId,
+        prioridad: "alta",
+        caducaAt: caducidadNotificacionPartida(30),
+        data: { partidaId: partidaId, motivo: "sin_disponibilidad_club" }
+      });
+    }
+
     const borrada = await eliminarPartidaConChat(partidaId);
     if (!borrada) {
       alert("No se pudo cancelar la partida. Intentalo de nuevo.");
