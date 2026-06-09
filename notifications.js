@@ -77,6 +77,18 @@ function crearNotificacionesParaUids(uids, datos) {
   }));
 }
 
+function resolverNotificacionPorDedupe(uid, dedupeKey) {
+  if (!uid || !dedupeKey) return Promise.resolve(false);
+
+  const docId = crearDocIdNotificacion(uid + "_" + dedupeKey);
+  return db.collection("notificaciones").doc(docId).set({
+    resuelta: true,
+    resueltaAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true }).then(function() {
+    return true;
+  });
+}
+
 async function limpiarNotificacionesAntiguas(uid) {
   if (!uid) return;
 
@@ -287,6 +299,7 @@ function initNotificacionesUI() {
 
 window.crearNotificacionInterna = crearNotificacionInterna;
 window.crearNotificacionesParaUids = crearNotificacionesParaUids;
+window.resolverNotificacionPorDedupe = resolverNotificacionPorDedupe;
 window.limpiarNotificacionesAntiguas = limpiarNotificacionesAntiguas;
 window.escucharNotificaciones = escucharNotificaciones;
 window.detenerNotificacionesInternas = detenerNotificacionesInternas;

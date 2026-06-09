@@ -1430,6 +1430,13 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
       return;
     }
 
+    if (pInicial.sustitucionPendiente === true && arrayUnicoPartida(pInicial.jugadores).includes(uid)) {
+      const mensaje = "Hay una sustitución pendiente de aceptar o rechazar. Espera a que se resuelva antes de realizar otra salida.";
+      if (!silencioso) alert(mensaje);
+      if (propagarError) throw new Error(mensaje);
+      return;
+    }
+
     if (pInicial.creadaPor === uid && pInicial.estado === "confirmada") {
       const mensaje = "No puedes abandonar una partida confirmada porque eres el responsable de la reserva realizada en el club.";
       if (!silencioso) alert(mensaje);
@@ -1511,6 +1518,10 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
 
         if (p.cambioCreadorPendiente === true) {
           throw new Error("La partida necesita un nuevo creador antes de permitir salidas.");
+        }
+
+        if (p.sustitucionPendiente === true && jugadores.includes(uid)) {
+          throw new Error("Hay una sustitución pendiente de aceptar o rechazar. Espera a que se resuelva antes de realizar otra salida.");
         }
 
         if (p.creadaPor === uid && (p.estado === "abierta" || p.estado === "confirmada")) {
@@ -1751,17 +1762,27 @@ function aceptarSustitucionPartida(idPartida) {
     const destinatarios = arrayUnicoPartida(actualizada.jugadores.concat(actualizada.creadaPor || [])).filter(function(uid) {
       return uid !== actualizada.uidReserva;
     });
+    const dedupePendiente = "reserva_pendiente_aceptar_" + idPartida + "_" + actualizada.uidReserva;
+    const resolverPendiente = typeof window.resolverNotificacionPorDedupe === "function"
+      ? window.resolverNotificacionPorDedupe(actualizada.uidReserva, dedupePendiente)
+        .catch(function(error) {
+          console.warn("No se pudo resolver el aviso pendiente de reserva:", error.message);
+          return false;
+        })
+      : Promise.resolve(false);
 
-    return notificarPartida(destinatarios, {
-      tipo: "reserva_subida_titular",
-      titulo: "Reserva confirmada",
-      mensaje: "La reserva ha confirmado su participación y la partida vuelve a estar completa.",
-      partidaId: idPartida,
-      accion: "abrir_partida",
-      dedupeKey: "reserva_subida_titular_" + idPartida + "_" + actualizada.uidReserva,
-      prioridad: "alta",
-      emailCritico: true,
-      data: { uidReserva: actualizada.uidReserva }
+    return resolverPendiente.then(function() {
+      return notificarPartida(destinatarios, {
+        tipo: "reserva_subida_titular",
+        titulo: "Reserva confirmada",
+        mensaje: "La reserva ha confirmado su participación y la partida vuelve a estar completa.",
+        partidaId: idPartida,
+        accion: "abrir_partida",
+        dedupeKey: "reserva_subida_titular_" + idPartida + "_" + actualizada.uidReserva,
+        prioridad: "alta",
+        emailCritico: true,
+        data: { uidReserva: actualizada.uidReserva }
+      });
     }).then(function() {
       cargarPartidas();
     });
@@ -1840,6 +1861,14 @@ function rechazarSustitucionPartida(idPartida) {
     const destinatariosRechazo = arrayUnicoPartida(actualizada.jugadoresTrasRechazo.concat(actualizada.creadaPor || [])).filter(function(uid) {
       return uid !== actualizada.uidReservaRechaza;
     });
+    const dedupePendiente = "reserva_pendiente_aceptar_" + idPartida + "_" + actualizada.uidReservaRechaza;
+    const resolverPendiente = typeof window.resolverNotificacionPorDedupe === "function"
+      ? window.resolverNotificacionPorDedupe(actualizada.uidReservaRechaza, dedupePendiente)
+        .catch(function(error) {
+          console.warn("No se pudo resolver el aviso pendiente de reserva:", error.message);
+          return false;
+        })
+      : Promise.resolve(false);
     const avisos = [
       notificarPartida(destinatariosRechazo, {
         tipo: "reserva_rechazada",
@@ -1889,7 +1918,9 @@ function rechazarSustitucionPartida(idPartida) {
       }));
     }
 
-    return Promise.all(avisos).then(function() {
+    return resolverPendiente.then(function() {
+      return Promise.all(avisos);
+    }).then(function() {
       cargarPartidas();
     });
   }).catch(function(error) {
