@@ -542,7 +542,7 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
       confirmar.textContent = confirmarActivo ? "Confirmar partida" : "Faltan jugadores";
       confirmar.disabled = !confirmarActivo;
       confirmar.style.cssText = confirmarActivo
-        ? "background:#1565C0; color:#fff;"
+        ? "background:#FFC107; color:#0D47A1;"
         : "background:#ddd; color:#777; cursor:not-allowed;";
       confirmar.onclick = function() { confirmarPartida(id); };
       salirWrap.appendChild(confirmar);
@@ -1300,8 +1300,11 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
       const debeEliminar = titularesRestantes.length === 0 || !cambioCreadorCaducaAt || ahora >= cambioCreadorCaducaAt;
 
       if (debeEliminar) {
+        const mensajeCancelar = titularesRestantes.length === 0
+          ? "Eres el único jugador de esta partida. Si sales, la partida se eliminará. ¿Continuar?"
+          : "Faltan menos de 8 horas para la partida. Si el creador abandona ahora, la partida se cancelará. ¿Continuar?";
         const ok = confirmarCreador
-          ? confirm("Eres el creador de la partida. Si sales, se cancelará la partida para todos. Continuar?")
+          ? confirm(mensajeCancelar)
           : true;
         if (!ok) return;
 
