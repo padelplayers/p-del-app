@@ -2088,11 +2088,11 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  width: 95%;
-  max-width: 432px;
+  width: 100%;
+  max-width: 400px;
   margin: 0 auto 8px;
   padding: 0 16px;
-  box-sizing: border-box;
+  box-sizing: content-box;
 }
 
 .saludoNotificaciones h3 {
@@ -2148,7 +2148,7 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
 
 @media (max-width:760px) {
   .saludoNotificaciones {
-    max-width: 432px;
+    max-width: 400px;
     width: 95%;
     margin: 0 auto 8px;
   }
