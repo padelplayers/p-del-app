@@ -1556,7 +1556,7 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
             transaction.update(ref, datosUpdate);
             return {
               tipoAviso: uidReservaSustituta && p.estado === "confirmada"
-                ? "reserva_subida_titular"
+                ? "reserva_pendiente_aceptar"
                 : (!uidReservaSustituta && p.estado === "confirmada" ? "sin_reserva_compatible" : null),
               uidReservaSustituta: uidReservaSustituta || null,
               uidSale: uid,
@@ -1583,14 +1583,14 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
       if (!actualizada) return;
 
       let aviso = Promise.resolve();
-      if (actualizada.tipoAviso === "reserva_subida_titular") {
+      if (actualizada.tipoAviso === "reserva_pendiente_aceptar") {
         aviso = notificarPartida(actualizada.uidReservaSustituta, {
-          tipo: "reserva_subida_titular",
-          titulo: "Has subido a titular",
-          mensaje: "Has pasado de reserva a titular en la partida del " + textoFechaAvisoPartida(actualizada) + ".",
+          tipo: "reserva_pendiente_aceptar",
+          titulo: "Confirma tu plaza",
+          mensaje: "Has sido propuesto para cubrir una baja en una partida confirmada. Confirma si puedes jugar.",
           partidaId: partidaId,
           accion: "abrir_partida",
-          dedupeKey: "reserva_subida_titular_" + partidaId + "_" + actualizada.uidReservaSustituta,
+          dedupeKey: "reserva_pendiente_aceptar_" + partidaId + "_" + actualizada.uidReservaSustituta,
           prioridad: "alta",
           emailCritico: true,
           data: { sale: actualizada.uidSale }
@@ -1599,7 +1599,7 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
         aviso = notificarPartida(actualizada.jugadores.concat(actualizada.creadaPor || []), {
           tipo: "sin_reserva_compatible",
           titulo: "Falta cubrir una plaza",
-          mensaje: "Un jugador ha abandonado la partida del " + textoFechaAvisoPartida(actualizada) + " y no hay reserva compatible.",
+          mensaje: "No hay reservas compatibles para completar la partida.",
           partidaId: partidaId,
           accion: "abrir_partida",
           dedupeKey: "sin_reserva_compatible_" + partidaId + "_" + actualizada.uidSale,
@@ -1737,10 +1737,34 @@ function aceptarSustitucionPartida(idPartida) {
         }).slice(0, 2)
       }, datosSustitucionResueltaPartida()));
 
-      return true;
+      return {
+        uidReserva: user.uid,
+        jugadores: jugadores.slice(0, 4),
+        creadaPor: p.creadaPor || p.creador || null,
+        fecha: p.fecha || null,
+        hora: p.hora || null
+      };
     });
   }).then(function(actualizada) {
-    if (actualizada) cargarPartidas();
+    if (!actualizada) return;
+
+    const destinatarios = arrayUnicoPartida(actualizada.jugadores.concat(actualizada.creadaPor || [])).filter(function(uid) {
+      return uid !== actualizada.uidReserva;
+    });
+
+    return notificarPartida(destinatarios, {
+      tipo: "reserva_subida_titular",
+      titulo: "Reserva confirmada",
+      mensaje: "La reserva ha confirmado su participación y la partida vuelve a estar completa.",
+      partidaId: idPartida,
+      accion: "abrir_partida",
+      dedupeKey: "reserva_subida_titular_" + idPartida + "_" + actualizada.uidReserva,
+      prioridad: "alta",
+      emailCritico: true,
+      data: { uidReserva: actualizada.uidReserva }
+    }).then(function() {
+      cargarPartidas();
+    });
   }).catch(function(error) {
     alert(error && error.message ? error.message : "No se pudo aceptar la sustitución");
   });
@@ -1775,6 +1799,7 @@ function rechazarSustitucionPartida(idPartida) {
       jugadores = jugadores.filter(function(uidJugador) {
         return uidJugador !== user.uid;
       });
+      const jugadoresTrasRechazo = jugadores.slice();
 
       return elegirReservaSustitutaPartidaTransaccion(transaction, p, reservas, uidSale).then(function(nuevoReservaUid) {
         const datosUpdate = {
@@ -1798,11 +1823,75 @@ function rechazarSustitucionPartida(idPartida) {
         }).slice(0, 2);
 
         transaction.update(ref, datosUpdate);
-        return true;
+        return {
+          uidReservaRechaza: user.uid,
+          uidNuevaReserva: nuevoReservaUid || null,
+          uidSale: uidSale,
+          jugadoresTrasRechazo: jugadoresTrasRechazo,
+          creadaPor: p.creadaPor || p.creador || null,
+          fecha: p.fecha || null,
+          hora: p.hora || null
+        };
       });
     });
   }).then(function(actualizada) {
-    if (actualizada) cargarPartidas();
+    if (!actualizada) return;
+
+    const destinatariosRechazo = arrayUnicoPartida(actualizada.jugadoresTrasRechazo.concat(actualizada.creadaPor || [])).filter(function(uid) {
+      return uid !== actualizada.uidReservaRechaza;
+    });
+    const avisos = [
+      notificarPartida(destinatariosRechazo, {
+        tipo: "reserva_rechazada",
+        titulo: "Reserva rechazada",
+        mensaje: "La reserva propuesta ha rechazado cubrir la baja.",
+        partidaId: idPartida,
+        accion: "abrir_partida",
+        dedupeKey: "reserva_rechazada_" + idPartida + "_" + actualizada.uidReservaRechaza,
+        prioridad: "alta",
+        emailCritico: true,
+        data: {
+          uidReserva: actualizada.uidReservaRechaza,
+          uidSale: actualizada.uidSale
+        }
+      })
+    ];
+
+    if (actualizada.uidNuevaReserva) {
+      avisos.push(notificarPartida(actualizada.uidNuevaReserva, {
+        tipo: "reserva_pendiente_aceptar",
+        titulo: "Confirma tu plaza",
+        mensaje: "Has sido propuesto para cubrir una baja en una partida confirmada. Confirma si puedes jugar.",
+        partidaId: idPartida,
+        accion: "abrir_partida",
+        dedupeKey: "reserva_pendiente_aceptar_" + idPartida + "_" + actualizada.uidNuevaReserva,
+        prioridad: "alta",
+        emailCritico: true,
+        data: { sale: actualizada.uidSale }
+      }));
+    } else {
+      const destinatariosSinReserva = destinatariosRechazo.filter(function(uid) {
+        return uid !== actualizada.uidSale;
+      });
+      avisos.push(notificarPartida(destinatariosSinReserva, {
+        tipo: "sin_reserva_compatible",
+        titulo: "Falta cubrir una plaza",
+        mensaje: "No hay reservas compatibles para completar la partida.",
+        partidaId: idPartida,
+        accion: "abrir_partida",
+        dedupeKey: "sin_reserva_compatible_" + idPartida + "_" + actualizada.uidSale,
+        prioridad: "alta",
+        emailCritico: true,
+        data: {
+          sale: actualizada.uidSale,
+          uidReservaRechaza: actualizada.uidReservaRechaza
+        }
+      }));
+    }
+
+    return Promise.all(avisos).then(function() {
+      cargarPartidas();
+    });
   }).catch(function(error) {
     alert(error && error.message ? error.message : "No se pudo rechazar la sustitución");
   });
