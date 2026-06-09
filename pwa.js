@@ -2,10 +2,13 @@ window.pwaState = window.pwaState || {
   deferredPrompt: null
 };
 
+const PWA_INSTALADA_KEY = "pwaInstalada";
+
 function pwaEstaInstalada() {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
-    window.navigator.standalone === true
+    window.navigator.standalone === true ||
+    localStorage.getItem(PWA_INSTALADA_KEY) === "true"
   );
 }
 
@@ -41,6 +44,17 @@ function actualizarTextoAvisoPwa() {
   }
 }
 
+function actualizarTextoAvisoPwa() {
+  const aviso = document.getElementById("pwaAviso");
+  if (!aviso) return;
+
+  const titulo = aviso.querySelector("h3");
+  const texto = aviso.querySelector("p");
+
+  if (titulo) titulo.textContent = "Instala P\u00e1del Players Morvedre";
+  if (texto) texto.textContent = "Instala la app para disfrutar de una experiencia m\u00e1s completa. Accede m\u00e1s r\u00e1pido a tus partidas, chats y clasificaciones, y recuerda entrar peri\u00f3dicamente para consultar el estado de tus partidas y avisos importantes.";
+}
+
 function initPwaBasica() {
   actualizarTextoAvisoPwa();
 
@@ -56,6 +70,7 @@ function initPwaBasica() {
   });
 
   window.addEventListener("appinstalled", function() {
+    localStorage.setItem(PWA_INSTALADA_KEY, "true");
     window.pwaState.deferredPrompt = null;
     cerrarAvisoPwa();
   });
@@ -67,7 +82,11 @@ function initPwaBasica() {
     instalar.onclick = function() {
       if (window.pwaState.deferredPrompt) {
         window.pwaState.deferredPrompt.prompt();
-        window.pwaState.deferredPrompt.userChoice.finally(function() {
+        window.pwaState.deferredPrompt.userChoice.then(function(choice) {
+          if (choice && choice.outcome === "accepted") {
+            localStorage.setItem(PWA_INSTALADA_KEY, "true");
+          }
+        }).finally(function() {
           window.pwaState.deferredPrompt = null;
           cerrarAvisoPwa();
         });
