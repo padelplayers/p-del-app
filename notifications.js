@@ -1,7 +1,8 @@
 window.notificacionesState = window.notificacionesState || {
   unsubscribe: null,
   idsVistos: new Set(),
-  uid: null
+  uid: null,
+  items: []
 };
 
 function normalizarArrayUidsNotificaciones(uids) {
@@ -217,6 +218,7 @@ function escucharNotificaciones(uid) {
         return (fechaB ? fechaB.getTime() : 0) - (fechaA ? fechaA.getTime() : 0);
       });
 
+      window.notificacionesState.items = items;
       renderizarCampanaNotificaciones(items);
 
       snapshot.docChanges().forEach(function(change) {
@@ -236,11 +238,20 @@ function detenerNotificacionesInternas() {
   }
   window.notificacionesState.uid = null;
   window.notificacionesState.idsVistos = new Set();
+  window.notificacionesState.items = [];
   renderizarCampanaNotificaciones([]);
 }
 
 function marcarNotificacionLeida(id) {
   if (!id) return Promise.resolve();
+  window.notificacionesState.items = (window.notificacionesState.items || []).map(function(item) {
+    if (item.id !== id) return item;
+    return Object.assign({}, item, {
+      data: Object.assign({}, item.data, { leida: true })
+    });
+  });
+  renderizarCampanaNotificaciones(window.notificacionesState.items);
+
   return db.collection("notificaciones").doc(id).set({
     leida: true,
     leidaAt: firebase.firestore.FieldValue.serverTimestamp()

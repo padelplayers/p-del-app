@@ -420,7 +420,11 @@ function confirmarPartida(partidaId) {
       confirmadaAt: new Date(),
       confirmadaPor: user.uid
     }).then(function() {
-      return notificarPartida(arrayUnicoPartida((p.jugadores || []).concat(p.reservas || [])), {
+      const destinatarios = arrayUnicoPartida((p.jugadores || []).concat(p.reservas || [])).filter(function(uid) {
+        return uid !== user.uid;
+      });
+
+      return notificarPartida(destinatarios, {
         tipo: "partida_confirmada",
         titulo: "Partida confirmada",
         mensaje: "La partida del " + textoFechaAvisoPartida(p) + " ha sido confirmada.",
@@ -1307,7 +1311,7 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
         avisos.push(notificarPartida(actualizada.creadaPor, {
           tipo: "partida_completa",
           titulo: "Partida completa",
-          mensaje: "Tu partida ya tiene 4 jugadores. Recuerda realizar la reserva en el club y confirmar la partida.",
+          mensaje: "Tu partida ya tiene 4 jugadores. Recuerda realizar la reserva en el club y confirmar la partida. Si no hay disponibilidad en el club, debes cancelar la partida.",
           partidaId: partidaId,
           accion: "abrir_partida",
           dedupeKey: "partida_completa_" + partidaId,
