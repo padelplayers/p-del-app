@@ -29,11 +29,18 @@ function puedeConfirmarPartida(p, uid, ahora) {
     uid &&
     p &&
     p.creadaPor === uid &&
+    p.cambioCreadorPendiente !== true &&
     p.estado === "abierta" &&
     (p.jugadores || []).length === 4 &&
     fechaPartida &&
     fechaPartida >= (ahora || new Date())
   );
+}
+
+function obtenerCaducidadCambioCreadorPartida(p) {
+  const fechaPartida = obtenerFechaHoraPartida(p);
+  if (!fechaPartida) return null;
+  return new Date(fechaPartida.getTime() - 8 * 60 * 60 * 1000);
 }
 
 function actualizarBotonesPartidas() {
@@ -357,6 +364,11 @@ function confirmarPartida(partidaId) {
 
     const p = doc.data() || {};
 
+    if (p.cambioCreadorPendiente === true) {
+      alert("La partida necesita un nuevo creador antes de poder confirmarse.");
+      return;
+    }
+
     if (p.creadaPor !== user.uid) {
       alert("Solo el creador puede confirmar la partida");
       return;
@@ -472,23 +484,59 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
     sustitucionBadge.style.cssText = "background:#FFC107; color:#000; border-color:#FFC107; font-weight:bold;";
     cabecera.appendChild(sustitucionBadge);
   }
+  if (p.cambioCreadorPendiente === true) {
+    const cambioCreadorBadge = textoNodo("Cambio de creador pendiente", "span");
+    cambioCreadorBadge.className = "partidaEstadoBadge";
+    cambioCreadorBadge.style.cssText = "background:#FFC107; color:#000; border-color:#FFC107; font-weight:bold;";
+    cabecera.appendChild(cambioCreadorBadge);
+  }
   cabecera.appendChild(pistaFila);
   cabecera.appendChild(metaFila);
 
   const user = firebase.auth().currentUser;
   const uidActual = user ? user.uid : null;
-  const esCreador = uidActual && p.creadaPor === uidActual;
+  const cambioCreadorPendiente = p.cambioCreadorPendiente === true;
+  const candidatosCambioCreador = arrayUnicoPartida(p.cambioCreadorCandidatos);
+  const puedeAceptarCambioCreador = cambioCreadorPendiente && uidActual && candidatosCambioCreador.includes(uidActual);
+  const esCreador = uidActual && p.creadaPor === uidActual && !cambioCreadorPendiente;
   const confirmarActivo = puedeConfirmarPartida(p, uidActual);
   const puedeResponderSustitucion =
     p.sustitucionTipo === "reserva_subida_pendiente_aceptar" &&
     uidActual &&
     p.sustitucionEntraUid === uidActual;
 
+  if (cambioCreadorPendiente) {
+    const cambioCreadorBox = document.createElement("div");
+    cambioCreadorBox.className = "partidaAcciones";
+    cambioCreadorBox.style.flexDirection = "column";
+    cambioCreadorBox.style.alignItems = "stretch";
+
+    const avisoCambio = textoNodo("La partida necesita un nuevo creador.");
+    avisoCambio.style.fontWeight = "bold";
+    cambioCreadorBox.appendChild(avisoCambio);
+
+    const detalleCambio = textoNodo("El primero que acepte será responsable de comprobar disponibilidad y realizar la reserva cuando la partida se complete.");
+    detalleCambio.style.fontSize = "13px";
+    detalleCambio.style.color = "#555";
+    cambioCreadorBox.appendChild(detalleCambio);
+
+    if (puedeAceptarCambioCreador) {
+      const aceptarCambio = document.createElement("button");
+      aceptarCambio.type = "button";
+      aceptarCambio.textContent = "Aceptar ser creador";
+      aceptarCambio.style.cssText = "background:#1565C0; color:#fff;";
+      aceptarCambio.onclick = function() { aceptarCambioCreadorPartida(id); };
+      cambioCreadorBox.appendChild(aceptarCambio);
+    }
+
+    cabecera.appendChild(cambioCreadorBox);
+  }
+
   if (mostrarSalir || esCreador) {
     const salirWrap = document.createElement("div");
     salirWrap.className = "partidaAcciones";
 
-    if (esCreador && p.estado === "abierta") {
+    if (esCreador && p.estado === "abierta" && !cambioCreadorPendiente) {
       const confirmar = document.createElement("button");
       confirmar.type = "button";
       confirmar.textContent = confirmarActivo ? "Confirmar partida" : "Faltan jugadores";
@@ -818,6 +866,20 @@ function cargarPartidas() {
         return;
       }
 
+      if (p.cambioCreadorPendiente === true) {
+        let caducaCambioCreador = p.cambioCreadorCaducaAt || null;
+        if (caducaCambioCreador && typeof caducaCambioCreador.toDate === "function") {
+          caducaCambioCreador = caducaCambioCreador.toDate();
+        } else if (caducaCambioCreador) {
+          caducaCambioCreador = new Date(caducaCambioCreador);
+        }
+
+        if (caducaCambioCreador && caducaCambioCreador <= ahora) {
+          eliminarPartidaConChat(doc.id).then(function(ok) { if (ok) cargarPartidas(); });
+          return;
+        }
+      }
+
       if (p.estado === "abierta" && fechaPartida && fechaPartida < ahora) {
         eliminarPartidaConChat(doc.id).then(function(ok) { if (ok) cargarPartidas(); });
         return;
@@ -879,6 +941,7 @@ function cargarPartidas() {
         );
       const mostrarSalir =
         puedeSalirPartida &&
+        p.cambioCreadorPendiente !== true &&
         (p.jugadores.includes(uid) || p.reservas.includes(uid));
       const item = {
         id: doc.id,
@@ -1213,15 +1276,50 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
     if (!docInicial.exists) return;
 
     const pInicial = docInicial.data() || {};
-    if (pInicial.creadaPor === uid && (pInicial.estado === "abierta" || pInicial.estado === "confirmada")) {
-      const ok = confirmarCreador
-        ? confirm("Eres el creador de la partida. Si sales, se cancelará la partida para todos. Continuar?")
-        : true;
-      if (!ok) return;
+    if (pInicial.cambioCreadorPendiente === true) {
+      const mensaje = "La partida necesita un nuevo creador antes de permitir salidas.";
+      if (!silencioso) alert(mensaje);
+      if (propagarError) throw new Error(mensaje);
+      return;
+    }
 
-      return eliminarPartidaConChat(partidaId).then(function(borrada) {
-        if (!borrada && propagarError) throw new Error("No se pudo cancelar la partida del creador.");
-        if (borrada && refrescar) cargarPartidas();
+    if (pInicial.creadaPor === uid && pInicial.estado === "confirmada") {
+      const mensaje = "No puedes abandonar una partida confirmada porque eres el responsable de la reserva realizada en el club.";
+      if (!silencioso) alert(mensaje);
+      if (propagarError) throw new Error(mensaje);
+      return;
+    }
+
+    if (pInicial.creadaPor === uid && pInicial.estado === "abierta") {
+      const jugadoresIniciales = arrayUnicoPartida(pInicial.jugadores);
+      const titularesRestantes = jugadoresIniciales.filter(function(jugadorUid) {
+        return jugadorUid !== uid;
+      });
+      const cambioCreadorCaducaAt = obtenerCaducidadCambioCreadorPartida(pInicial);
+      const ahora = new Date();
+      const debeEliminar = titularesRestantes.length === 0 || !cambioCreadorCaducaAt || ahora >= cambioCreadorCaducaAt;
+
+      if (debeEliminar) {
+        const ok = confirmarCreador
+          ? confirm("Eres el creador de la partida. Si sales, se cancelará la partida para todos. Continuar?")
+          : true;
+        if (!ok) return;
+
+        return eliminarPartidaConChat(partidaId).then(function(borrada) {
+          if (!borrada && propagarError) throw new Error("No se pudo cancelar la partida del creador.");
+          if (borrada && refrescar) cargarPartidas();
+        });
+      }
+
+      return ref.update({
+        jugadores: titularesRestantes,
+        cambioCreadorPendiente: true,
+        creadorAnterior: uid,
+        cambioCreadorDesde: firebase.firestore.FieldValue.serverTimestamp(),
+        cambioCreadorCaducaAt: cambioCreadorCaducaAt,
+        cambioCreadorCandidatos: titularesRestantes
+      }).then(function() {
+        if (refrescar) cargarPartidas();
       });
     }
 
@@ -1234,6 +1332,10 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
         let reservas = arrayUnicoPartida(p.reservas).filter(function(uidReserva) {
           return !jugadores.includes(uidReserva);
         });
+
+        if (p.cambioCreadorPendiente === true) {
+          throw new Error("La partida necesita un nuevo creador antes de permitir salidas.");
+        }
 
         if (p.creadaPor === uid && (p.estado === "abierta" || p.estado === "confirmada")) {
           throw new Error("El creador debe cancelar la partida para salir.");
@@ -1296,6 +1398,55 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
   }).catch(function(error) {
     if (!silencioso) alert(error && error.message ? error.message : "No se pudo salir de la partida");
     if (propagarError) throw error;
+  });
+}
+
+function aceptarCambioCreadorPartida(idPartida) {
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+
+  const ref = db.collection("partidas").doc(idPartida);
+
+  return db.runTransaction(function(transaction) {
+    return transaction.get(ref).then(function(doc) {
+      if (!doc.exists) throw new Error("La partida ya no existe");
+
+      const p = doc.data() || {};
+      const candidatos = arrayUnicoPartida(p.cambioCreadorCandidatos);
+
+      if (p.cambioCreadorPendiente !== true) {
+        throw new Error("El cambio de creador ya no está disponible.");
+      }
+
+      if (p.estado !== "abierta") {
+        throw new Error("Esta partida ya no admite cambio de creador.");
+      }
+
+      if (!candidatos.includes(user.uid)) {
+        throw new Error("Solo los jugadores titulares restantes pueden aceptar ser creador.");
+      }
+
+      const jugadores = arrayUnicoPartida(p.jugadores);
+      if (!jugadores.includes(user.uid)) {
+        throw new Error("Solo los jugadores titulares restantes pueden aceptar ser creador.");
+      }
+
+      transaction.update(ref, {
+        creadaPor: user.uid,
+        creador: user.uid,
+        cambioCreadorPendiente: false,
+        creadorAnterior: null,
+        cambioCreadorDesde: null,
+        cambioCreadorCaducaAt: null,
+        cambioCreadorCandidatos: []
+      });
+
+      return true;
+    });
+  }).then(function(actualizada) {
+    if (actualizada) cargarPartidas();
+  }).catch(function(error) {
+    alert(error && error.message ? error.message : "No se pudo aceptar ser creador");
   });
 }
 
