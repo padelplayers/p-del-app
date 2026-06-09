@@ -275,6 +275,16 @@ function abrirAccionNotificacion(id, n) {
   cerrarPanelNotificaciones();
   if (n && n.partidaId && typeof mostrar === "function") {
     mostrar("partidas");
+    if (n.accion === "validar_resultado") {
+      if (typeof cambiarModoPartidas === "function") {
+        cambiarModoPartidas("pendientes");
+      } else {
+        window.modoPartidas = "pendientes";
+        if (typeof cargarPartidas === "function") cargarPartidas();
+      }
+      return;
+    }
+
     if (typeof cargarPartidas === "function") cargarPartidas();
   }
 }

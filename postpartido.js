@@ -320,6 +320,59 @@ function esPartidaConResultadoPostPartido(p) {
   return tipo === "ranking" || tipo === "competitiva" || tipo === "competitivo";
 }
 
+function notificarPostPartido(uids, datos) {
+  if (typeof window.crearNotificacionesParaUids !== "function") return Promise.resolve();
+
+  const lista = arrayUnicoPostPartido(Array.isArray(uids) ? uids : [uids]);
+  if (lista.length === 0) return Promise.resolve();
+
+  return window.crearNotificacionesParaUids(lista, Object.assign({
+    origen: "postpartido",
+    prioridad: "alta",
+    caducaAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    emailCritico: false
+  }, datos)).catch(function(error) {
+    console.warn("No se pudo crear aviso de postpartido:", error.message);
+  });
+}
+
+function resolverAvisoPostPartido(uid, dedupeKey) {
+  if (typeof window.resolverNotificacionPorDedupe !== "function") return Promise.resolve(false);
+  return window.resolverNotificacionPorDedupe(uid, dedupeKey).catch(function(error) {
+    console.warn("No se pudo resolver aviso de postpartido:", error.message);
+    return false;
+  });
+}
+
+function obtenerVersionResultadoPostPartido(resultado) {
+  return resultado && resultado.resultadoVersion ? resultado.resultadoVersion : "sin_version";
+}
+
+function resolverAvisosResultadoPendiente(idPartida, resultado, uids) {
+  const version = obtenerVersionResultadoPostPartido(resultado);
+  const dedupeKeys = [
+    "resultado_pendiente_" + idPartida + "_" + version,
+    "nuevo_resultado_propuesto_" + idPartida + "_" + version
+  ];
+  return Promise.all(arrayUnicoPostPartido(uids).map(function(uid) {
+    return Promise.all(dedupeKeys.map(function(dedupeKey) {
+      return resolverAvisoPostPartido(uid, dedupeKey);
+    }));
+  }));
+}
+
+function resolverAvisosDisputaResultado(idPartida, resultado, uids) {
+  const rechazos = arrayUnicoPostPartido(resultado && resultado.rechazos);
+  const destinatarios = arrayUnicoPostPartido(uids);
+
+  return Promise.all(rechazos.map(function(uidRechaza) {
+    const dedupeKey = "resultado_disputa_" + idPartida + "_" + uidRechaza;
+    return Promise.all(destinatarios.map(function(uid) {
+      return resolverAvisoPostPartido(uid, dedupeKey);
+    }));
+  }));
+}
+
 function finalizarPartidaRankingSiCompleta(idPartida) {
   const partidaRef = db.collection("partidas").doc(idPartida);
   let debeGuardarHistorial = false;
@@ -566,12 +619,7 @@ function resultadoTieneEquiposValidos(resultado, jugadoresPermitidos) {
 }
 
 function leerYValidarEquiposResultado(jugadoresPermitidos) {
-  const ids = [
-    "resultadoEquipo1Jugador1",
-    "resultadoEquipo1Jugador2",
-    "resultadoEquipo2Jugador1",
-    "resultadoEquipo2Jugador2"
-  ];
+  const ids = obtenerIdsSelectsResultado();
   const seleccionados = ids.map(function(id) {
     const select = document.getElementById(id);
     return select ? select.value : "";
@@ -594,6 +642,65 @@ function leerYValidarEquiposResultado(jugadoresPermitidos) {
     equipo1: [seleccionados[0], seleccionados[1]],
     equipo2: [seleccionados[2], seleccionados[3]]
   };
+}
+
+function obtenerIdsSelectsResultado() {
+  return [
+    "resultadoEquipo1Jugador1",
+    "resultadoEquipo1Jugador2",
+    "resultadoEquipo2Jugador1",
+    "resultadoEquipo2Jugador2"
+  ];
+}
+
+function actualizarOpcionesSelectsResultado() {
+  const ids = obtenerIdsSelectsResultado();
+  const valores = ids.map(function(id) {
+    const select = document.getElementById(id);
+    return select ? select.value : "";
+  });
+
+  ids.forEach(function(id, index) {
+    const select = document.getElementById(id);
+    if (!select) return;
+
+    Array.prototype.slice.call(select.options).forEach(function(option) {
+      if (!option.value) {
+        option.disabled = false;
+        option.hidden = false;
+        return;
+      }
+
+      const usadoEnOtroSelect = valores.some(function(valor, valorIndex) {
+        return valorIndex !== index && valor === option.value;
+      });
+      option.disabled = usadoEnOtroSelect;
+      option.hidden = usadoEnOtroSelect;
+    });
+  });
+}
+
+function fijarEquiposFormularioResultado(resultado, bloqueado) {
+  if (!resultado) return;
+
+  const valores = []
+    .concat(Array.isArray(resultado.equipo1) ? resultado.equipo1 : [])
+    .concat(Array.isArray(resultado.equipo2) ? resultado.equipo2 : []);
+  const ids = obtenerIdsSelectsResultado();
+
+  ids.forEach(function(id, index) {
+    const select = document.getElementById(id);
+    if (!select) return;
+    select.value = valores[index] || "";
+    select.disabled = bloqueado === true;
+  });
+
+  actualizarOpcionesSelectsResultado();
+}
+
+function equiposCorregidosFormularioResultado() {
+  const modal = document.getElementById("modalResultadoPostPartido");
+  return !!(modal && modal.dataset.equiposCorregidos === "true");
 }
 
 function cargarDatosJugadoresPostPartido(jugadores) {
@@ -706,12 +813,6 @@ function guardarResultadoPropuesto(id) {
       return;
     }
 
-    const equipos = leerYValidarEquiposResultado(jugadoresPermitidos);
-    if (equipos.error) {
-      alert(equipos.error);
-      return;
-    }
-
     if (p.resultado && p.resultado.estado === "validado") {
       alert("El resultado ya está validado");
       return;
@@ -735,18 +836,81 @@ function guardarResultadoPropuesto(id) {
       return;
     }
 
-    return ref.update({
-      resultado: {
-        estado: "pendiente",
-        equipo1: equipos.equipo1,
-        equipo2: equipos.equipo2,
-        sets: validacion.sets,
-        ganador: validacion.ganador,
-        propuestoPor: user.uid,
-        propuestoAt: firebase.firestore.FieldValue.serverTimestamp(),
-        validaciones: [user.uid],
-        rechazos: []
+    const resultadoAnterior = p.resultado || null;
+    const vieneDeDisputa = resultadoAnterior && resultadoAnterior.estado === "disputa";
+    const corrigeEquipos = vieneDeDisputa && equiposCorregidosFormularioResultado();
+    let equipos = null;
+
+    if (vieneDeDisputa && !corrigeEquipos) {
+      equipos = {
+        equipo1: Array.isArray(resultadoAnterior.equipo1) ? resultadoAnterior.equipo1.slice() : [],
+        equipo2: Array.isArray(resultadoAnterior.equipo2) ? resultadoAnterior.equipo2.slice() : []
+      };
+
+      if (!resultadoTieneEquiposValidos(equipos, jugadoresPermitidos)) {
+        alert("El resultado anterior no tiene equipos validos. Pulsa Corregir equipos para seleccionarlos de nuevo.");
+        return;
       }
+    } else {
+      equipos = leerYValidarEquiposResultado(jugadoresPermitidos);
+      if (equipos.error) {
+        alert(equipos.error);
+        return;
+      }
+    }
+
+    const resultadoVersion = Date.now();
+    const resultadoNuevo = {
+      estado: "pendiente",
+      equipo1: equipos.equipo1,
+      equipo2: equipos.equipo2,
+      sets: validacion.sets,
+      ganador: validacion.ganador,
+      propuestoPor: user.uid,
+      propuestoAt: firebase.firestore.FieldValue.serverTimestamp(),
+      resultadoVersion: resultadoVersion,
+      equiposCorregidos: corrigeEquipos === true,
+      validaciones: [user.uid],
+      rechazos: []
+    };
+    const participantesResultado = obtenerJugadoresResultadoValidos(resultadoNuevo);
+    const destinatarios = participantesResultado.filter(function(uid) {
+      return uid !== user.uid;
+    });
+    const tipoAviso = vieneDeDisputa ? "nuevo_resultado_propuesto" : "resultado_pendiente";
+    let mensajeAviso = vieneDeDisputa
+      ? "Se ha propuesto un nuevo resultado. Debes validarlo o rechazarlo. Si no respondes podrán aplicarse penalizaciones."
+      : "Se ha introducido un resultado. Debes validarlo o rechazarlo. La validación del resultado es obligatoria. La falta de respuesta puede conllevar penalizaciones.";
+
+    if (vieneDeDisputa && corrigeEquipos) {
+      mensajeAviso = "Se ha propuesto un nuevo resultado corrigiendo los equipos. Debes validarlo o rechazarlo. Si no respondes podrán aplicarse penalizaciones.";
+    }
+
+    return ref.update({
+      resultado: resultadoNuevo
+    }).then(function() {
+      const participantesDisputa = vieneDeDisputa
+        ? arrayUnicoPostPartido(obtenerJugadoresResultadoValidos(resultadoAnterior).concat(participantesResultado).concat(resultadoAnterior.propuestoPor || []))
+        : [];
+      const resolverDisputa = vieneDeDisputa
+        ? resolverAvisosDisputaResultado(id, resultadoAnterior, participantesDisputa)
+        : Promise.resolve();
+
+      return resolverDisputa.then(function() {
+        return notificarPostPartido(destinatarios, {
+          tipo: tipoAviso,
+          titulo: vieneDeDisputa ? "Nuevo resultado propuesto" : "Resultado pendiente",
+          mensaje: mensajeAviso,
+          partidaId: id,
+          accion: "validar_resultado",
+          dedupeKey: tipoAviso + "_" + id + "_" + resultadoVersion,
+          data: {
+            resultadoVersion: resultadoVersion,
+            propuestoPor: user.uid,
+            equiposCorregidos: corrigeEquipos === true
+          }
+        });
+      });
     }).then(function() {
       cerrarFormularioResultado();
       if (typeof cargarPartidas === "function") cargarPartidas();
@@ -777,6 +941,7 @@ function crearFilaSetResultado(numero, opcional) {
 function crearSelectJugadorResultado(id, jugadoresDatos) {
   const select = document.createElement("select");
   select.id = id;
+  select.onchange = actualizarOpcionesSelectsResultado;
 
   const vacia = document.createElement("option");
   vacia.value = "";
@@ -819,8 +984,11 @@ function crearBloqueEquipoResultado(tituloTexto, selectId1, selectId2, jugadores
   return bloque;
 }
 
-function construirFormularioResultado(id, jugadoresDatos) {
+function construirFormularioResultado(id, jugadoresDatos, p) {
   cerrarFormularioResultado();
+  p = p || {};
+  const resultadoDisputa = p.resultado && p.resultado.estado === "disputa" ? p.resultado : null;
+  const bloquearEquipos = !!(resultadoDisputa && resultadoTieneEquiposValidos(resultadoDisputa, obtenerJugadoresPermitidosResultadoRanking(p)));
 
   const overlay = document.createElement("div");
   overlay.id = "modalResultadoPostPartido";
@@ -828,12 +996,15 @@ function construirFormularioResultado(id, jugadoresDatos) {
 
   const modal = document.createElement("div");
   modal.className = "postPartidoModal";
+  modal.dataset.equiposCorregidos = "false";
 
   const titulo = document.createElement("h3");
-  titulo.textContent = "Introducir resultado";
+  titulo.textContent = resultadoDisputa ? "Proponer nuevo resultado" : "Introducir resultado";
 
   const descripcion = document.createElement("p");
-  descripcion.textContent = "Selecciona los equipos reales de la partida.";
+  descripcion.textContent = bloquearEquipos
+    ? "Equipos del resultado rechazado. Modifica solo el marcador o corrige equipos si hace falta."
+    : "Selecciona los equipos reales de la partida.";
 
   const cabecera = document.createElement("div");
   cabecera.className = "postPartidoSetFila postPartidoSetCabecera";
@@ -850,6 +1021,21 @@ function construirFormularioResultado(id, jugadoresDatos) {
   });
 
   acciones.appendChild(cancelar);
+
+  if (bloquearEquipos) {
+    const corregirEquipos = crearBotonPostPartido("Corregir equipos", function() {
+      modal.dataset.equiposCorregidos = "true";
+      obtenerIdsSelectsResultado().forEach(function(selectId) {
+        const select = document.getElementById(selectId);
+        if (select) select.disabled = false;
+      });
+      descripcion.textContent = "Corrige los equipos y modifica el marcador.";
+      corregirEquipos.disabled = true;
+      actualizarOpcionesSelectsResultado();
+    });
+    acciones.appendChild(corregirEquipos);
+  }
+
   acciones.appendChild(guardar);
 
   modal.appendChild(titulo);
@@ -873,6 +1059,12 @@ function construirFormularioResultado(id, jugadoresDatos) {
   modal.appendChild(acciones);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
+
+  if (bloquearEquipos) {
+    fijarEquiposFormularioResultado(resultadoDisputa, true);
+  } else {
+    actualizarOpcionesSelectsResultado();
+  }
 }
 
 function crearFormularioResultado(id) {
@@ -901,7 +1093,7 @@ function crearFormularioResultado(id) {
     }
 
     return cargarDatosJugadoresPostPartido(jugadoresPermitidos).then(function(jugadoresDatos) {
-      construirFormularioResultado(id, jugadoresDatos);
+      construirFormularioResultado(id, jugadoresDatos, p);
     });
   }).catch(function(error) {
     console.error("Error abriendo formulario de resultado:", error);
@@ -1499,10 +1691,37 @@ window.confirmarResultadoPartida = function(id) {
       }
 
       transaction.update(ref, { resultado: resultadoNuevo });
-      return titularesValidados;
+      return {
+        titularesValidados: titularesValidados,
+        jugadores: contexto.jugadores,
+        resultadoAnterior: resultadoActual,
+        resultadoNuevo: resultadoNuevo
+      };
     });
-  }).then(function() {
-    if (typeof cargarPartidas === "function") cargarPartidas();
+  }).then(function(resultado) {
+    if (!resultado) return;
+
+    const resolver = resultado.titularesValidados
+      ? resolverAvisosResultadoPendiente(id, resultado.resultadoAnterior, resultado.jugadores)
+      : resolverAvisosResultadoPendiente(id, resultado.resultadoAnterior, [user.uid]);
+
+    return resolver.then(function() {
+      if (!resultado.titularesValidados) return;
+
+      return notificarPostPartido(resultado.jugadores, {
+        tipo: "resultado_validado",
+        titulo: "Resultado validado",
+        mensaje: "El resultado ha sido validado. Ya puedes completar las valoraciones de los jugadores.",
+        partidaId: id,
+        accion: "valorar_jugadores",
+        dedupeKey: "resultado_validado_" + id,
+        data: {
+          resultadoVersion: obtenerVersionResultadoPostPartido(resultado.resultadoNuevo)
+        }
+      });
+    }).then(function() {
+      if (typeof cargarPartidas === "function") cargarPartidas();
+    });
   }).catch(function(error) {
     console.error("Error confirmando resultado:", error);
     alert(error && error.message ? error.message : "No se pudo confirmar el resultado");
@@ -1544,10 +1763,35 @@ window.rechazarResultadoPartida = function(id) {
       });
 
       transaction.update(ref, { resultado: resultadoNuevo });
-      return true;
+      return {
+        jugadores: contexto.jugadores,
+        resultadoAnterior: resultadoActual,
+        resultadoNuevo: resultadoNuevo
+      };
     });
-  }).then(function() {
-    if (typeof cargarPartidas === "function") cargarPartidas();
+  }).then(function(resultado) {
+    if (!resultado) return;
+
+    const destinatarios = arrayUnicoPostPartido(resultado.jugadores.concat(resultado.resultadoAnterior.propuestoPor || [])).filter(function(uid) {
+      return uid !== user.uid;
+    });
+
+    return resolverAvisosResultadoPendiente(id, resultado.resultadoAnterior, resultado.jugadores).then(function() {
+      return notificarPostPartido(destinatarios, {
+        tipo: "resultado_disputa",
+        titulo: "Resultado en disputa",
+        mensaje: "Un jugador ha rechazado el resultado. La partida entra en disputa. Utilizad el chat de partida para llegar a un acuerdo. Si no se completa el resultado dentro del plazo establecido podrán aplicarse penalizaciones.",
+        partidaId: id,
+        accion: "abrir_partida",
+        dedupeKey: "resultado_disputa_" + id + "_" + user.uid,
+        data: {
+          resultadoVersion: obtenerVersionResultadoPostPartido(resultado.resultadoAnterior),
+          rechazadoPor: user.uid
+        }
+      });
+    }).then(function() {
+      if (typeof cargarPartidas === "function") cargarPartidas();
+    });
   }).catch(function(error) {
     console.error("Error rechazando resultado:", error);
     alert(error && error.message ? error.message : "No se pudo rechazar el resultado");
