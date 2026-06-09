@@ -383,6 +383,14 @@ auth.onAuthStateChanged(async user => {
         window.iniciarListenersChatsPartidas(user.uid);
       }
 
+      if (typeof window.escucharNotificaciones === "function") {
+        window.escucharNotificaciones(user.uid);
+      }
+
+      if (typeof window.mostrarAvisoPwaSiProcede === "function") {
+        window.mostrarAvisoPwaSiProcede();
+      }
+
       mostrar("menu");
 
     } else {
@@ -401,6 +409,9 @@ auth.onAuthStateChanged(async user => {
   }
   if (typeof window.limpiarListenersChat === "function") {
     window.limpiarListenersChat();
+  }
+  if (typeof window.detenerNotificacionesInternas === "function") {
+    window.detenerNotificacionesInternas();
   }
   mostrar("login");
 

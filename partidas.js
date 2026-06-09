@@ -43,6 +43,31 @@ function obtenerCaducidadCambioCreadorPartida(p) {
   return new Date(fechaPartida.getTime() - 8 * 60 * 60 * 1000);
 }
 
+function caducidadNotificacionPartida(dias) {
+  return new Date(Date.now() + (dias || 30) * 24 * 60 * 60 * 1000);
+}
+
+function notificarPartida(uids, datos) {
+  if (typeof window.crearNotificacionesParaUids !== "function") return Promise.resolve();
+
+  const lista = arrayUnicoPartida(Array.isArray(uids) ? uids : [uids]);
+  if (lista.length === 0) return Promise.resolve();
+
+  return window.crearNotificacionesParaUids(lista, Object.assign({
+    origen: "partidas",
+    prioridad: "normal",
+    caducaAt: caducidadNotificacionPartida(30),
+    emailCritico: false
+  }, datos)).catch(function(error) {
+    console.warn("No se pudo crear notificacion:", error.message);
+  });
+}
+
+function textoFechaAvisoPartida(p) {
+  if (!p) return "";
+  return ((p.fecha || "") + " " + (p.hora || "")).trim();
+}
+
 function actualizarBotonesPartidas() {
   const btnProx = document.getElementById("btnProximas");
   const btnPend = document.getElementById("btnPendientes");
@@ -394,6 +419,16 @@ function confirmarPartida(partidaId) {
       estado: "confirmada",
       confirmadaAt: new Date(),
       confirmadaPor: user.uid
+    }).then(function() {
+      return notificarPartida(arrayUnicoPartida((p.jugadores || []).concat(p.reservas || [])), {
+        tipo: "partida_confirmada",
+        titulo: "Partida confirmada",
+        mensaje: "La partida del " + textoFechaAvisoPartida(p) + " ha sido confirmada.",
+        partidaId: partidaId,
+        accion: "abrir_partida",
+        dedupeKey: "partida_confirmada_" + partidaId,
+        data: { estado: "confirmada" }
+      });
     }).then(function() {
       cargarPartidas();
     });
@@ -1190,6 +1225,7 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
         if (jugadores.includes(user.uid) || reservas.includes(user.uid)) return false;
 
         const completarEntrada = function() {
+          const jugadoresAntes = jugadores.length;
           if (!esReserva) {
             if (jugadores.length < 4) jugadores.push(user.uid);
             else if (reservas.length < 2) reservas.push(user.uid);
@@ -1214,7 +1250,15 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
           }
 
           transaction.update(ref, datosUpdate);
-          return true;
+          return {
+            jugadores: jugadores,
+            reservas: reservas,
+            jugadoresAntes: jugadoresAntes,
+            entroComoReserva: entraComoReserva,
+            creadaPor: p.creadaPor || p.creador || null,
+            fecha: p.fecha || null,
+            hora: p.hora || null
+          };
         };
 
         if (generoPartida === "mixto") {
@@ -1258,7 +1302,24 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
   }).then(function(actualizada) {
     if (actualizada) {
       console.log("[unirse] UPDATE OK");
-      cargarPartidas();
+      const avisos = [];
+      if (!actualizada.entroComoReserva && actualizada.jugadoresAntes < 4 && actualizada.jugadores.length === 4) {
+        avisos.push(notificarPartida(actualizada.creadaPor, {
+          tipo: "partida_completa",
+          titulo: "Partida completa",
+          mensaje: "Tu partida ya tiene 4 jugadores. Recuerda realizar la reserva en el club y confirmar la partida.",
+          partidaId: partidaId,
+          accion: "abrir_partida",
+          dedupeKey: "partida_completa_" + partidaId,
+          prioridad: "alta",
+          emailCritico: true,
+          data: { jugadores: actualizada.jugadores }
+        }));
+      }
+
+      Promise.all(avisos).then(function() {
+        cargarPartidas();
+      });
     }
   }).catch(function(error) {
     alert(error && error.message ? error.message : "No se pudo unir a la partida");
@@ -1308,7 +1369,18 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
           : true;
         if (!ok) return;
 
-        return eliminarPartidaConChat(partidaId).then(function(borrada) {
+        return notificarPartida(titularesRestantes.concat(pInicial.reservas || []), {
+          tipo: "partida_cancelada",
+          titulo: "Partida cancelada",
+          mensaje: "La partida del " + textoFechaAvisoPartida(pInicial) + " se ha cancelado.",
+          partidaId: partidaId,
+          accion: "abrir_partida",
+          dedupeKey: "partida_cancelada_" + partidaId,
+          prioridad: "alta",
+          data: { motivo: titularesRestantes.length === 0 ? "sin_jugadores" : "menos_8h" }
+        }).then(function() {
+          return eliminarPartidaConChat(partidaId);
+        }).then(function(borrada) {
           if (!borrada && propagarError) throw new Error("No se pudo cancelar la partida del creador.");
           if (borrada && refrescar) cargarPartidas();
         });
@@ -1321,6 +1393,21 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
         cambioCreadorDesde: firebase.firestore.FieldValue.serverTimestamp(),
         cambioCreadorCaducaAt: cambioCreadorCaducaAt,
         cambioCreadorCandidatos: titularesRestantes
+      }).then(function() {
+        return notificarPartida(titularesRestantes, {
+          tipo: "cambio_creador_pendiente",
+          titulo: "La partida necesita un nuevo creador",
+          mensaje: "El creador ha abandonado la partida. El primero que acepte será el nuevo responsable.",
+          partidaId: partidaId,
+          accion: "aceptar_ser_creador",
+          dedupeKey: "cambio_creador_pendiente_" + partidaId,
+          prioridad: "alta",
+          emailCritico: true,
+          data: {
+            creadorAnterior: uid,
+            candidatos: titularesRestantes
+          }
+        });
       }).then(function() {
         if (refrescar) cargarPartidas();
       });
@@ -1381,7 +1468,18 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
             }).slice(0, 2);
 
             transaction.update(ref, datosUpdate);
-            return true;
+            return {
+              tipoAviso: uidReservaSustituta && p.estado === "confirmada"
+                ? "reserva_subida_titular"
+                : (!uidReservaSustituta && p.estado === "confirmada" ? "sin_reserva_compatible" : null),
+              uidReservaSustituta: uidReservaSustituta || null,
+              uidSale: uid,
+              jugadores: datosUpdate.jugadores,
+              reservas: datosUpdate.reservas,
+              creadaPor: p.creadaPor || p.creador || null,
+              fecha: p.fecha || null,
+              hora: p.hora || null
+            };
           });
         }
 
@@ -1390,13 +1488,44 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
           transaction.update(ref, {
             reservas: arrayUnicoPartida(reservas).slice(0, 2)
           });
-          return true;
+          return { tipoAviso: null };
         }
 
         return false;
       });
     }).then(function(actualizada) {
-      if (actualizada && refrescar) cargarPartidas();
+      if (!actualizada) return;
+
+      let aviso = Promise.resolve();
+      if (actualizada.tipoAviso === "reserva_subida_titular") {
+        aviso = notificarPartida(actualizada.uidReservaSustituta, {
+          tipo: "reserva_subida_titular",
+          titulo: "Has subido a titular",
+          mensaje: "Has pasado de reserva a titular en la partida del " + textoFechaAvisoPartida(actualizada) + ".",
+          partidaId: partidaId,
+          accion: "abrir_partida",
+          dedupeKey: "reserva_subida_titular_" + partidaId + "_" + actualizada.uidReservaSustituta,
+          prioridad: "alta",
+          emailCritico: true,
+          data: { sale: actualizada.uidSale }
+        });
+      } else if (actualizada.tipoAviso === "sin_reserva_compatible") {
+        aviso = notificarPartida(actualizada.jugadores.concat(actualizada.creadaPor || []), {
+          tipo: "sin_reserva_compatible",
+          titulo: "Falta cubrir una plaza",
+          mensaje: "Un jugador ha abandonado la partida del " + textoFechaAvisoPartida(actualizada) + " y no hay reserva compatible.",
+          partidaId: partidaId,
+          accion: "abrir_partida",
+          dedupeKey: "sin_reserva_compatible_" + partidaId + "_" + actualizada.uidSale,
+          prioridad: "alta",
+          emailCritico: true,
+          data: { sale: actualizada.uidSale }
+        });
+      }
+
+      return aviso.then(function() {
+        if (refrescar) cargarPartidas();
+      });
     });
   }).catch(function(error) {
     if (!silencioso) alert(error && error.message ? error.message : "No se pudo salir de la partida");
@@ -1444,10 +1573,27 @@ function aceptarCambioCreadorPartida(idPartida) {
         cambioCreadorCandidatos: []
       });
 
-      return true;
+      return {
+        candidatos: candidatos,
+        creadorAnterior: p.creadorAnterior || null,
+        fecha: p.fecha || null,
+        hora: p.hora || null
+      };
     });
-  }).then(function(actualizada) {
-    if (actualizada) cargarPartidas();
+  }).then(function(resultado) {
+    if (!resultado) return;
+
+    return notificarPartida(resultado.candidatos.concat(resultado.creadorAnterior || []), {
+      tipo: "cambio_creador_aceptado",
+      titulo: "Nuevo creador de partida",
+      mensaje: "La partida del " + textoFechaAvisoPartida(resultado) + " ya tiene nuevo creador.",
+      partidaId: idPartida,
+      accion: "abrir_partida",
+      dedupeKey: "cambio_creador_aceptado_" + idPartida,
+      data: { nuevoCreador: user.uid }
+    }).then(function() {
+      cargarPartidas();
+    });
   }).catch(function(error) {
     alert(error && error.message ? error.message : "No se pudo aceptar ser creador");
   });

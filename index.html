@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pádel Players Morvedre</title>
+<meta name="theme-color" content="#1565C0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Padel Morvedre">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="logo.png">
 <link rel="stylesheet" href="styles.css?v=9">
 </head>
 
@@ -12,6 +17,32 @@
 <div class="header">
 <img src="logo.png" class="logo">
 <div class="title">Pádel Players Morvedre</div>
+</div>
+
+<button id="notificacionesBtn" class="notificacionesBtn" type="button" aria-label="Notificaciones">
+  <span class="notificacionesIcono">!</span>
+  <span id="notificacionesContador" class="notificacionesContador" style="display:none;">0</span>
+</button>
+
+<div id="notificacionesPanel" class="notificacionesPanel">
+  <div class="notificacionesPanelHeader">
+    <strong>Avisos</strong>
+    <button id="notificacionesCerrar" type="button">Cerrar</button>
+  </div>
+  <div id="notificacionesLista" class="notificacionesLista"></div>
+</div>
+
+<div id="notificacionesPopup" class="notificacionesPopupWrap"></div>
+
+<div id="pwaAviso" class="pwaAviso" style="display:none;">
+  <div class="pwaAvisoBox">
+    <h3>Instala PÃ¡del Players Morvedre</h3>
+    <p>Instala la app en tu mÃ³vil para acceder mÃ¡s rÃ¡pido, mantener tu sesiÃ³n iniciada y usar PÃ¡del Players Morvedre con una experiencia similar a una aplicaciÃ³n.</p>
+    <div class="pwaAvisoAcciones">
+      <button id="pwaInstalarBtn" type="button" class="btnBlue">Instalar app</button>
+      <button id="pwaAhoraNoBtn" type="button">Ahora no</button>
+    </div>
+  </div>
 </div>
 
 <!-- PERFIL -->
@@ -1078,6 +1109,8 @@ const db = firebase.firestore();
 <script src="nivel.js?v=1"></script>
 <script src="postpartido.js?v=7"></script>
 <script src="chat.js?v=8"></script>
+<script src="notifications.js?v=1"></script>
+<script src="pwa.js?v=1"></script>
 <script src="app.js?v=10"></script>
 <script src="testNivel.js"></script>
 
