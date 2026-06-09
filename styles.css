@@ -2086,12 +2086,12 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
 .saludoNotificaciones {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: center;
+  gap: 80px;
   width: 100%;
   max-width: 400px;
   margin: 0 auto 8px;
-  padding: 0 86px;
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -2099,6 +2099,7 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   margin: 0;
   min-width: 0;
   flex: 1 1 auto;
+  flex-grow: 0;
   text-align: left;
   line-height: 1.2;
 }
@@ -2151,7 +2152,8 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
     max-width: 400px;
     width: 95%;
     margin: 0 auto 8px;
-    padding: 0 44px;
+    padding: 0;
+    gap: 64px;
   }
 
   .notificacionesBtn {
