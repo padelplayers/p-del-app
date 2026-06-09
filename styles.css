@@ -2089,22 +2089,28 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   justify-content: space-between;
   gap: 8px;
   width: 100%;
-  margin: 0 0 8px;
+  max-width: 400px;
+  margin: 0 auto 8px;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .saludoNotificaciones h3 {
   margin: 0;
   min-width: 0;
+  flex: 1 1 auto;
+  text-align: left;
+  line-height: 1.2;
 }
 
 .notificacionesBtn {
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
-  width: 34px !important;
-  height: 34px !important;
-  min-width: 34px !important;
-  max-width: 34px !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
   padding: 0 !important;
   margin: 0 !important;
   border-radius: 50%;
@@ -2119,7 +2125,7 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
 }
 
 .notificacionesIcono {
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1;
 }
 
@@ -2138,6 +2144,25 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   justify-content: center;
   box-sizing: border-box;
   border: 1px solid #fff;
+}
+
+@media (max-width:760px) {
+  .saludoNotificaciones {
+    max-width: 400px;
+    width: 95%;
+    margin: 0 auto 8px;
+  }
+
+  .notificacionesBtn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    max-width: 34px !important;
+  }
+
+  .notificacionesIcono {
+    font-size: 16px;
+  }
 }
 
 .notificacionesPanel {
