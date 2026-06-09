@@ -9,6 +9,14 @@ function pwaEstaInstalada() {
   );
 }
 
+function esDispositivoMovilPwa() {
+  const ua = navigator.userAgent || navigator.vendor || "";
+  const esAndroid = /Android/i.test(ua);
+  const esIphone = /iPhone/i.test(ua);
+  const esIpad = /iPad/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return esAndroid || esIphone || esIpad;
+}
+
 function cerrarAvisoPwa() {
   const aviso = document.getElementById("pwaAviso");
   if (aviso) aviso.style.display = "none";
@@ -16,7 +24,7 @@ function cerrarAvisoPwa() {
 
 function mostrarAvisoPwaSiProcede() {
   const aviso = document.getElementById("pwaAviso");
-  if (!aviso || pwaEstaInstalada()) return;
+  if (!aviso || pwaEstaInstalada() || !esDispositivoMovilPwa()) return;
   aviso.style.display = "flex";
 }
 

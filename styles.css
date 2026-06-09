@@ -2083,40 +2083,59 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   border: 1px solid rgba(255, 255, 255, 0.75);
 }
 
+.saludoNotificaciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.saludoNotificaciones h3 {
+  margin: 0;
+  min-width: 0;
+}
+
 .notificacionesBtn {
-  position: fixed;
-  top: 14px;
-  right: 14px;
-  z-index: 1200;
-  width: 42px;
-  height: 42px;
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
   border-radius: 50%;
-  border: 1px solid rgba(21, 101, 192, 0.22);
-  background: #fff;
+  border: 1px solid #1565C0;
+  background: #FFC107;
   color: #1565C0;
-  font-weight: bold;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: none;
 }
 
 .notificacionesIcono {
-  font-size: 22px;
+  font-size: 17px;
   line-height: 1;
 }
 
 .notificacionesContador {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 18px;
-  height: 18px;
+  top: -5px;
+  right: -5px;
+  min-width: 16px;
+  height: 16px;
   padding: 0 5px;
   border-radius: 999px;
   background: #C62828;
   color: #fff;
-  font-size: 11px;
+  font-size: 10px;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  border: 1px solid #fff;
 }
 
 .notificacionesPanel {
