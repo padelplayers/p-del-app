@@ -60,7 +60,7 @@ async function crearNotificacionInterna(datos) {
   };
 
   if (payload.dedupeKey) {
-    const docId = crearDocIdNotificacion(payload.dedupeKey);
+    const docId = crearDocIdNotificacion(payload.uid + "_" + payload.dedupeKey);
     await db.collection("notificaciones").doc(docId).set(payload, { merge: true });
     return docId;
   }
@@ -110,13 +110,13 @@ function renderizarCampanaNotificaciones(notificaciones) {
   contador.textContent = String(noLeidas.length);
   contador.style.display = noLeidas.length > 0 ? "inline-flex" : "none";
 
-  if (notificaciones.length === 0) {
+  if (noLeidas.length === 0) {
     lista.replaceChildren(crearTextoNotificacion("No tienes avisos"));
     return;
   }
 
   const fragment = document.createDocumentFragment();
-  notificaciones.forEach(function(item) {
+  noLeidas.forEach(function(item) {
     const n = item.data;
     const fila = document.createElement("div");
     fila.className = "notificacionItem" + (n.leida ? " leida" : "");
