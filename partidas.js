@@ -1580,6 +1580,8 @@ function aceptarCambioCreadorPartida(idPartida) {
       return {
         candidatos: candidatos,
         creadorAnterior: p.creadorAnterior || null,
+        estado: p.estado || null,
+        jugadores: jugadores,
         fecha: p.fecha || null,
         hora: p.hora || null
       };
@@ -1587,15 +1589,33 @@ function aceptarCambioCreadorPartida(idPartida) {
   }).then(function(resultado) {
     if (!resultado) return;
 
-    return notificarPartida(resultado.candidatos.concat(resultado.creadorAnterior || []), {
-      tipo: "cambio_creador_aceptado",
-      titulo: "Nuevo creador de partida",
-      mensaje: "La partida del " + textoFechaAvisoPartida(resultado) + " ya tiene nuevo creador.",
-      partidaId: idPartida,
-      accion: "abrir_partida",
-      dedupeKey: "cambio_creador_aceptado_" + idPartida,
-      data: { nuevoCreador: user.uid }
-    }).then(function() {
+    const avisos = [
+      notificarPartida(resultado.candidatos.concat(resultado.creadorAnterior || []), {
+        tipo: "cambio_creador_aceptado",
+        titulo: "Nuevo creador de partida",
+        mensaje: "La partida del " + textoFechaAvisoPartida(resultado) + " ya tiene nuevo creador.",
+        partidaId: idPartida,
+        accion: "abrir_partida",
+        dedupeKey: "cambio_creador_aceptado_" + idPartida,
+        data: { nuevoCreador: user.uid }
+      })
+    ];
+
+    if (resultado.estado === "abierta" && resultado.jugadores.length === 4) {
+      avisos.push(notificarPartida(user.uid, {
+        tipo: "partida_completa",
+        titulo: "Partida completa",
+        mensaje: "Tu partida ya tiene 4 jugadores. Recuerda realizar la reserva en el club y confirmar la partida. Si no hay disponibilidad en el club, debes cancelar la partida.",
+        partidaId: idPartida,
+        accion: "abrir_partida",
+        dedupeKey: "partida_completa_" + idPartida,
+        prioridad: "alta",
+        emailCritico: true,
+        data: { jugadores: resultado.jugadores }
+      }));
+    }
+
+    return Promise.all(avisos).then(function() {
       cargarPartidas();
     });
   }).catch(function(error) {
