@@ -439,6 +439,45 @@ function confirmarPartida(partidaId) {
   });
 }
 
+async function cancelarPartidaPorFaltaDisponibilidad(partidaId) {
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    alert("Debes iniciar sesion");
+    return;
+  }
+
+  const ok = confirm("Vas a cancelar esta partida para todos los jugadores porque no puede realizarse. ¿Continuar?");
+  if (!ok) return;
+
+  try {
+    const ref = db.collection("partidas").doc(partidaId);
+    const doc = await ref.get();
+
+    if (!doc.exists) {
+      alert("La partida ya no existe");
+      return;
+    }
+
+    const p = doc.data() || {};
+    if (!puedeConfirmarPartida(p, user.uid)) {
+      alert("Esta partida ya no se puede cancelar desde aqui.");
+      cargarPartidas();
+      return;
+    }
+
+    const borrada = await eliminarPartidaConChat(partidaId);
+    if (!borrada) {
+      alert("No se pudo cancelar la partida. Intentalo de nuevo.");
+      return;
+    }
+
+    cargarPartidas();
+  } catch (error) {
+    console.error("[cancelarPartidaPorFaltaDisponibilidad]", error);
+    alert(error && error.message ? error.message : "No se pudo cancelar la partida");
+  }
+}
+
 function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   const bloque = document.createElement("div");
   bloque.className = "partidaCard";
@@ -585,6 +624,15 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
         : "background:#ddd; color:#777; cursor:not-allowed;";
       confirmar.onclick = function() { confirmarPartida(id); };
       salirWrap.appendChild(confirmar);
+
+      if (confirmarActivo) {
+        const cancelarPartida = document.createElement("button");
+        cancelarPartida.type = "button";
+        cancelarPartida.textContent = "Cancelar partida";
+        cancelarPartida.style.cssText = "background:#C62828; color:#fff;";
+        cancelarPartida.onclick = function() { cancelarPartidaPorFaltaDisponibilidad(id); };
+        salirWrap.appendChild(cancelarPartida);
+      }
     }
 
     if (mostrarSalir) {
