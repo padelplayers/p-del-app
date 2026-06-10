@@ -589,10 +589,26 @@ function crearCardClasificacion(jugador, posicion) {
     crearFilaValoracionClasificacion("Compromiso", jugador.mediaCompromiso)
   );
 
+  const datos = document.createElement("div");
+  datos.className = "clasificacionDatos";
+
+  datos.appendChild(
+    crearTextoClasificacion("Fiabilidad: -", "clasificacionDato fiabilidad")
+  );
+
+  datos.appendChild(
+    crearTextoClasificacion("Abandonos: -", "clasificacionDato abandonos")
+  );
+
+  datos.appendChild(
+    crearTextoClasificacion("Penalizaciones activas: -", "clasificacionDato penalizaciones")
+  );
+
   card.appendChild(pos);
   card.appendChild(foto);
   card.appendChild(info);
   card.appendChild(stats);
+  card.appendChild(datos);
 
   return card;
 }
