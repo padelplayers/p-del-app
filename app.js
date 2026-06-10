@@ -477,8 +477,13 @@ function togglePass(){
 
 function crearTextoClasificacion(texto, className) {
   const el = document.createElement("div");
-  if (className) el.className = className;
+
+  if (className) {
+    el.className = className;
+  }
+
   el.textContent = texto;
+
   return el;
 }
 
@@ -496,6 +501,49 @@ function obtenerFotoClasificacion(data) {
   return "imagen/hombre.jpeg";
 }
 
+function crearEstrellasClasificacion(valor) {
+  const contenedor = document.createElement("span");
+  contenedor.className = "clasificacionEstrellas";
+
+  const numero = Number(valor);
+  const media = isNaN(numero) ? 0 : numero;
+
+  for (let i = 1; i <= 5; i++) {
+    const estrella = document.createElement("span");
+    estrella.className = "clasificacionEstrella";
+
+    if (media >= i) {
+      estrella.textContent = "★";
+      estrella.classList.add("llena");
+    } else if (media >= i - 0.5) {
+      estrella.textContent = "★";
+      estrella.classList.add("media");
+    } else {
+      estrella.textContent = "★";
+      estrella.classList.add("vacia");
+    }
+
+    contenedor.appendChild(estrella);
+  }
+
+  return contenedor;
+}
+
+function crearFilaValoracionClasificacion(nombre, valor) {
+  const fila = document.createElement("div");
+  fila.className = "clasificacionValoracion";
+
+  const etiqueta = crearTextoClasificacion(nombre, "clasificacionValoracionNombre");
+  const estrellas = crearEstrellasClasificacion(valor);
+  const numero = crearTextoClasificacion(valor, "clasificacionValoracionNumero");
+
+  fila.appendChild(etiqueta);
+  fila.appendChild(estrellas);
+  fila.appendChild(numero);
+
+  return fila;
+}
+
 function crearCardClasificacion(jugador, posicion) {
   const card = document.createElement("div");
   card.className = "clasificacionCard";
@@ -509,14 +557,37 @@ function crearCardClasificacion(jugador, posicion) {
 
   const info = document.createElement("div");
   info.className = "clasificacionInfo";
-  info.appendChild(crearTextoClasificacion(jugador.nombre, "clasificacionNombre"));
-  info.appendChild(crearTextoClasificacion("Reputación: " + jugador.puntos + " pts · " + jugador.partidos + " partidos", "clasificacionResumen"));
+
+  const nombre = crearTextoClasificacion(jugador.nombre, "clasificacionNombre");
+
+  const reputacion = crearTextoClasificacion(
+    "Reputación: " + jugador.puntos + " pts",
+    "clasificacionReputacion"
+  );
+
+  const partidos = crearTextoClasificacion(
+    jugador.partidos + " partidos",
+    "clasificacionPartidos"
+  );
+
+  info.appendChild(nombre);
+  info.appendChild(reputacion);
+  info.appendChild(partidos);
 
   const stats = document.createElement("div");
   stats.className = "clasificacionStats";
-  stats.appendChild(crearTextoClasificacion("Puntualidad: " + jugador.mediaPuntualidad));
-  stats.appendChild(crearTextoClasificacion("Actitud: " + jugador.mediaActitud));
-  stats.appendChild(crearTextoClasificacion("Compromiso: " + jugador.mediaCompromiso));
+
+  stats.appendChild(
+    crearFilaValoracionClasificacion("Puntualidad", jugador.mediaPuntualidad)
+  );
+
+  stats.appendChild(
+    crearFilaValoracionClasificacion("Actitud", jugador.mediaActitud)
+  );
+
+  stats.appendChild(
+    crearFilaValoracionClasificacion("Compromiso", jugador.mediaCompromiso)
+  );
 
   card.appendChild(pos);
   card.appendChild(foto);

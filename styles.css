@@ -1869,13 +1869,14 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
 
 .clasificacionCard {
   display:grid;
-  grid-template-columns:auto auto minmax(0, 1fr);
+  grid-template-columns:44px 64px minmax(0, 1fr) auto;
   align-items:center;
-  gap:12px;
-  padding:12px;
-  border:1px solid #e0e0e0;
-  border-radius:8px;
+  gap:14px;
+  padding:14px 16px;
+  border:2px solid #1565C0;
+  border-radius:14px;
   background:#fff;
+  box-shadow:0 3px 10px rgba(0,0,0,0.08);
 }
 
 .clasificacionPos {
@@ -1913,6 +1914,47 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   gap:6px 12px;
   color:#333;
   font-size:13px;
+}
+
+.clasificacionValoracion {
+  display:grid;
+  grid-template-columns:90px 90px 36px;
+  align-items:center;
+  gap:6px;
+}
+
+.clasificacionValoracionNombre {
+  font-weight:bold;
+  color:#1565C0;
+}
+
+.clasificacionEstrellas {
+  display:flex;
+  gap:1px;
+  line-height:1;
+}
+
+.clasificacionEstrella {
+  font-size:15px;
+}
+
+.clasificacionEstrella.llena {
+  color:#FFC107;
+}
+
+.clasificacionEstrella.media {
+  color:#FFC107;
+  opacity:0.55;
+}
+
+.clasificacionEstrella.vacia {
+  color:#cfcfcf;
+}
+
+.clasificacionValoracionNumero {
+  font-weight:bold;
+  color:#333;
+  text-align:right;
 }
 
 @media (max-width:768px) {
