@@ -1889,8 +1889,8 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
 }
 
 .clasificacionFoto {
-  width:56px;
-  height:56px;
+  width:90px;
+  height:90px;
   border-radius:50%;
   object-fit:cover;
 }
