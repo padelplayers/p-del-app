@@ -1914,6 +1914,8 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   gap:8px;
   color:#333;
   font-size:13px;
+  border-left:1px solid #d6d6d6;
+  padding-left:22px;
 }
 
 .clasificacionDatos {
@@ -1922,7 +1924,11 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   gap:8px;
   color:#333;
   font-size:14px;
+  border-left:1px solid #d6d6d6;
+  padding-left:22px;
 }
+
+
 
 .clasificacionValoracion {
   display:grid;
