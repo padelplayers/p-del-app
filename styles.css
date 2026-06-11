@@ -1902,6 +1902,13 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   gap:10px;
 }
 
+.clasificacionNombre {
+  font-size:28px;
+  font-weight:bold;
+  color:#1565C0;
+  margin-bottom:2px;
+}
+
 .clasificacionInfoFila {
   display:flex;
   align-items:center;
