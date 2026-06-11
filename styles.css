@@ -1897,10 +1897,11 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
 
 .clasificacionInfo {
   min-width:0;
+  width:210px;
   display:flex;
   flex-direction:column;
   gap:10px;
-  padding-left:18px;
+  justify-self:center;
 }
 
 .clasificacionNombre {
