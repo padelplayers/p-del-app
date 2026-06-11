@@ -1899,11 +1899,22 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   min-width:0;
 }
 
-.clasificacionNombre {
-  font-size:28px;
-  font-weight:bold;
-  color:#1565C0;
-  margin-bottom:8px;
+.clasificacionInfoFila {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:14px;
+  color:#333;
+  line-height:1.35;
+}
+
+.clasificacionInfoEtiqueta {
+  font-weight:normal;
+}
+
+.clasificacionInfoValor {
+  font-weight:normal;
+  white-space:nowrap;
 }
 
 .clasificacionResumen {

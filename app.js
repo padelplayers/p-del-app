@@ -560,15 +560,15 @@ function crearCardClasificacion(jugador, posicion) {
 
   const nombre = crearTextoClasificacion(jugador.nombre, "clasificacionNombre");
 
-  const reputacion = crearTextoClasificacion(
-    "Reputación: " + jugador.puntos + " pts",
-    "clasificacionReputacion"
-  );
+  const reputacion = document.createElement("div");
+  reputacion.className = "clasificacionInfoFila";
+  reputacion.appendChild(crearTextoClasificacion("Reputación:", "clasificacionInfoEtiqueta"));
+  reputacion.appendChild(crearTextoClasificacion(jugador.puntos + " pts", "clasificacionInfoValor"));
 
-  const partidos = crearTextoClasificacion(
-    jugador.partidos + " partidos",
-    "clasificacionPartidos"
-  );
+  const partidos = document.createElement("div");
+  partidos.className = "clasificacionInfoFila";
+  partidos.appendChild(crearTextoClasificacion("Partidos:", "clasificacionInfoEtiqueta"));
+  partidos.appendChild(crearTextoClasificacion(String(jugador.partidos), "clasificacionInfoValor"));
 
   info.appendChild(nombre);
   info.appendChild(reputacion);
