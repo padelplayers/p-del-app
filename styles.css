@@ -1897,6 +1897,9 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
 
 .clasificacionInfo {
   min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
 }
 
 .clasificacionInfoFila {
