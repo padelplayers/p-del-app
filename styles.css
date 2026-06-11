@@ -1916,6 +1916,14 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   font-size:13px;
 }
 
+.clasificacionDatos {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  color:#333;
+  font-size:14px;
+}
+
 .clasificacionValoracion {
   display:grid;
   grid-template-columns:90px 90px 36px;
