@@ -548,7 +548,27 @@ function crearCardClasificacion(jugador, posicion) {
   const card = document.createElement("div");
   card.className = "clasificacionCard";
 
+  const puesto = document.createElement("div");
+  puesto.className = "clasificacionPuesto";
+
+  if (posicion === 1 || posicion === 2 || posicion === 3) {
+    const logoTop = document.createElement("img");
+    logoTop.className = "clasificacionLogoTop";
+
+    if (posicion === 1) {
+      logoTop.src = "logo-oro.png";
+    } else if (posicion === 2) {
+      logoTop.src = "logo-plata.png";
+    } else {
+      logoTop.src = "logo-bronce.png";
+    }
+
+    logoTop.alt = "Puesto " + posicion;
+    puesto.appendChild(logoTop);
+  }
+
   const pos = crearTextoClasificacion(String(posicion), "clasificacionPos");
+  puesto.appendChild(pos);
 
   const foto = document.createElement("img");
   foto.className = "clasificacionFoto";
@@ -604,7 +624,7 @@ function crearCardClasificacion(jugador, posicion) {
     crearTextoClasificacion("Penalizaciones activas: -", "clasificacionDato penalizaciones")
   );
 
-  card.appendChild(pos);
+  card.appendChild(puesto);
   card.appendChild(foto);
   card.appendChild(info);
   card.appendChild(stats);

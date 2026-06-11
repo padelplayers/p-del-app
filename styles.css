@@ -1888,6 +1888,19 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   text-align:center;
 }
 
+.clasificacionPuesto {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.clasificacionLogoTop {
+  width:54px;
+  height:54px;
+  object-fit:contain;
+}
+
 .clasificacionFoto {
   width:90px;
   height:90px;
