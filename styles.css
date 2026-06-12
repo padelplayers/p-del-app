@@ -1869,7 +1869,7 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
 
 .clasificacionCard {
   display:grid;
- grid-template-columns:90px 90px 260px 250px 220px;
+ grid-template-columns:70px 90px 260px 250px 220px;
   align-items:center;
   justify-content:center;
   column-gap:12px;
