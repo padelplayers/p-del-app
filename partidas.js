@@ -1548,11 +1548,7 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
             if (uidReservaSustituta) {
               jugadores.splice(indiceSale, 0, uidReservaSustituta);
               reservas = reservas.filter(function(r) { return r !== uidReservaSustituta; });
-              if (p.estado === "confirmada") {
-                Object.assign(datosUpdate, datosSustitucionReservaPendientePartida(uid, uidReservaSustituta));
-              } else {
-                Object.assign(datosUpdate, datosSustitucionResueltaPartida());
-              }
+              Object.assign(datosUpdate, datosSustitucionReservaPendientePartida(uid, uidReservaSustituta));
             } else if (p.estado === "confirmada") {
               Object.assign(datosUpdate, datosSustitucionPendientePartida(uid));
             } else {
@@ -1566,7 +1562,7 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
 
             transaction.update(ref, datosUpdate);
             return {
-              tipoAviso: uidReservaSustituta && p.estado === "confirmada"
+              tipoAviso: uidReservaSustituta
                 ? "reserva_pendiente_aceptar"
                 : (!uidReservaSustituta && p.estado === "confirmada" ? "sin_reserva_compatible" : null),
               uidReservaSustituta: uidReservaSustituta || null,
@@ -1598,7 +1594,7 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
         aviso = notificarPartida(actualizada.uidReservaSustituta, {
           tipo: "reserva_pendiente_aceptar",
           titulo: "Confirma tu plaza",
-          mensaje: "Has sido propuesto para cubrir una baja en una partida confirmada. Confirma si puedes jugar.",
+          mensaje: "Has sido propuesto para cubrir una baja en una partida. Confirma si puedes jugar.",
           partidaId: partidaId,
           accion: "abrir_partida",
           dedupeKey: "reserva_pendiente_aceptar_" + partidaId + "_" + actualizada.uidReservaSustituta,
@@ -1741,7 +1737,7 @@ function aceptarSustitucionPartida(idPartida) {
       }
 
       transaction.update(ref, Object.assign({
-        estado: "confirmada",
+        estado: p.estado === "confirmada" ? "confirmada" : "abierta",
         jugadores: jugadores.slice(0, 4),
         reservas: arrayUnicoPartida(p.reservas).filter(function(uidReserva) {
           return !jugadores.includes(uidReserva);
@@ -1824,7 +1820,7 @@ function rechazarSustitucionPartida(idPartida) {
 
       return elegirReservaSustitutaPartidaTransaccion(transaction, p, reservas, uidSale).then(function(nuevoReservaUid) {
         const datosUpdate = {
-          estado: "confirmada"
+          estado: p.estado === "confirmada" ? "confirmada" : "abierta"
         };
 
         if (nuevoReservaUid) {
@@ -1834,8 +1830,10 @@ function rechazarSustitucionPartida(idPartida) {
             return uidReserva !== nuevoReservaUid;
           });
           Object.assign(datosUpdate, datosSustitucionReservaPendientePartida(uidSale, nuevoReservaUid));
-        } else {
+        } else if (p.estado === "confirmada") {
           Object.assign(datosUpdate, datosSustitucionPendientePartida(uidSale));
+        } else {
+          Object.assign(datosUpdate, datosSustitucionResueltaPartida());
         }
 
         datosUpdate.jugadores = arrayUnicoPartida(jugadores).slice(0, 4);
@@ -1890,7 +1888,7 @@ function rechazarSustitucionPartida(idPartida) {
       avisos.push(notificarPartida(actualizada.uidNuevaReserva, {
         tipo: "reserva_pendiente_aceptar",
         titulo: "Confirma tu plaza",
-        mensaje: "Has sido propuesto para cubrir una baja en una partida confirmada. Confirma si puedes jugar.",
+        mensaje: "Has sido propuesto para cubrir una baja en una partida. Confirma si puedes jugar.",
         partidaId: idPartida,
         accion: "abrir_partida",
         dedupeKey: "reserva_pendiente_aceptar_" + idPartida + "_" + actualizada.uidNuevaReserva,
