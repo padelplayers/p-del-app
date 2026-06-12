@@ -1869,7 +1869,7 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
 
 .clasificacionCard {
   display:grid;
- grid-template-columns:70px 90px 260px 250px 220px;
+ grid-template-columns:90px 90px 260px 250px 220px;
   align-items:center;
   justify-content:center;
   column-gap:12px;
@@ -1878,6 +1878,9 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   border-radius:14px;
   background:#fff;
   box-shadow:0 3px 10px rgba(0,0,0,0.08);
+max-width:920px;
+margin:0 auto;
+
 }
 
 .clasificacionPos {
