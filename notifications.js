@@ -290,7 +290,11 @@ function abrirAccionNotificacion(id, n) {
 
   if (n && n.partidaId && typeof mostrar === "function") {
     mostrar("partidas");
-    if (n.accion === "validar_resultado") {
+    if (
+      n.accion === "introducir_resultado" ||
+      n.accion === "valorar_jugadores" ||
+      n.accion === "validar_resultado"
+    ) {
       if (typeof cambiarModoPartidas === "function") {
         cambiarModoPartidas("pendientes");
       } else {

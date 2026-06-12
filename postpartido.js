@@ -336,6 +336,110 @@ function notificarPostPartido(uids, datos) {
   });
 }
 
+function generarAvisoPostPartidoPartida(idPartida) {
+  const ref = db.collection("partidas").doc(idPartida);
+
+  return db.runTransaction(function(transaction) {
+    return transaction.get(ref).then(function(doc) {
+      if (!doc.exists) return null;
+
+      const p = doc.data() || {};
+      if (!esPartidaPendientePostPartido(p)) return null;
+
+      if (esPartidaRankingPostPartido(p)) {
+        if (p.resultado || p.avisoIntroducirResultadoGeneradoAt) return null;
+
+        const destinatariosResultado = obtenerJugadoresPermitidosResultadoRanking(p);
+        if (destinatariosResultado.length === 0) return null;
+
+        transaction.update(ref, {
+          avisoIntroducirResultadoGeneradoAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        return {
+          tipo: "introducir_resultado",
+          destinatarios: destinatariosResultado
+        };
+      }
+
+      if (esPartidaAmistosaPostPartido(p)) {
+        if (p.avisoValorarJugadoresGeneradoAt) return null;
+
+        const participantesConfigurados = obtenerParticipantesAmistosaPostPartido(p);
+        const participantes = participantesConfigurados.length > 0
+          ? participantesConfigurados
+          : arrayUnicoPostPartido(p.jugadores);
+        const valoraciones = p.valoraciones || {};
+        const destinatariosValoracion = participantes.filter(function(uid) {
+          return !valoraciones[uid];
+        });
+        if (destinatariosValoracion.length === 0) return null;
+
+        transaction.update(ref, {
+          avisoValorarJugadoresGeneradoAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        return {
+          tipo: "valorar_jugadores",
+          destinatarios: destinatariosValoracion
+        };
+      }
+
+      return null;
+    });
+  }).then(function(aviso) {
+    if (!aviso) return false;
+
+    if (aviso.tipo === "introducir_resultado") {
+      return notificarPostPartido(aviso.destinatarios, {
+        tipo: "introducir_resultado",
+        titulo: "Introduce el resultado",
+        mensaje: "Han pasado 80 minutos desde el inicio de la partida. Ya puedes introducir el resultado.",
+        partidaId: idPartida,
+        accion: "introducir_resultado",
+        dedupeKey: "introducir_resultado_" + idPartida
+      }).then(function() { return true; });
+    }
+
+    return notificarPostPartido(aviso.destinatarios, {
+      tipo: "valorar_jugadores",
+      titulo: "Valora a los jugadores",
+      mensaje: "Han pasado 80 minutos desde el inicio de la partida amistosa. Ya puedes valorar a los jugadores.",
+      partidaId: idPartida,
+      accion: "valorar_jugadores",
+      dedupeKey: "valorar_jugadores_" + idPartida
+    }).then(function() { return true; });
+  });
+}
+
+function revisarAvisosPostPartido() {
+  if (!firebase.auth().currentUser) return Promise.resolve();
+
+  return db.collection("partidas").where("estado", "==", "confirmada").get()
+    .then(function(snapshot) {
+      const tareas = [];
+      snapshot.forEach(function(doc) {
+        if (esPartidaPendientePostPartido(doc.data() || {})) {
+          tareas.push(generarAvisoPostPartidoPartida(doc.id));
+        }
+      });
+      return Promise.all(tareas);
+    })
+    .catch(function(error) {
+      console.warn("No se pudieron revisar los avisos postpartido:", error.message);
+    });
+}
+
+function asegurarRevisionAvisosPostPartido() {
+  if (window.revisionAvisosPostPartidoInterval) return;
+  revisarAvisosPostPartido();
+  window.revisionAvisosPostPartidoInterval = setInterval(function() {
+    revisarAvisosPostPartido();
+  }, 60 * 1000);
+}
+
+window.generarAvisoPostPartidoPartida = generarAvisoPostPartidoPartida;
+window.revisarAvisosPostPartido = revisarAvisosPostPartido;
+window.asegurarRevisionAvisosPostPartido = asegurarRevisionAvisosPostPartido;
+
 function resolverAvisoPostPartido(uid, dedupeKey) {
   if (typeof window.resolverNotificacionPorDedupe !== "function") return Promise.resolve(false);
   return window.resolverNotificacionPorDedupe(uid, dedupeKey).catch(function(error) {

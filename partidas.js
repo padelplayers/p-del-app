@@ -1246,6 +1246,9 @@ function cargarPartidas() {
   if (!window.modoPartidas) window.modoPartidas = "proximas";
 
   asegurarRevisionCancelacionClubPartidas();
+  if (typeof window.asegurarRevisionAvisosPostPartido === "function") {
+    window.asegurarRevisionAvisosPostPartido();
+  }
   actualizarBotonesPartidas();
   cargarFiltroPistas();
 
