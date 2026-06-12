@@ -1878,7 +1878,8 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   border-radius:14px;
   background:#fff;
   box-shadow:0 3px 10px rgba(0,0,0,0.08);
-max-width:980px;
+width:fit-content;
+max-width:none;
 margin:0 auto;
 
 }
