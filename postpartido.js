@@ -759,27 +759,14 @@ function obtenerIdsSelectsResultado() {
 
 function actualizarOpcionesSelectsResultado() {
   const ids = obtenerIdsSelectsResultado();
-  const valores = ids.map(function(id) {
-    const select = document.getElementById(id);
-    return select ? select.value : "";
-  });
 
-  ids.forEach(function(id, index) {
+  ids.forEach(function(id) {
     const select = document.getElementById(id);
     if (!select) return;
 
     Array.prototype.slice.call(select.options).forEach(function(option) {
-      if (!option.value) {
-        option.disabled = false;
-        option.hidden = false;
-        return;
-      }
-
-      const usadoEnOtroSelect = valores.some(function(valor, valorIndex) {
-        return valorIndex !== index && valor === option.value;
-      });
-      option.disabled = usadoEnOtroSelect;
-      option.hidden = usadoEnOtroSelect;
+      option.disabled = false;
+      option.hidden = false;
     });
   });
 }
@@ -805,6 +792,20 @@ function fijarEquiposFormularioResultado(resultado, bloqueado) {
 function equiposCorregidosFormularioResultado() {
   const modal = document.getElementById("modalResultadoPostPartido");
   return !!(modal && modal.dataset.equiposCorregidos === "true");
+}
+
+function equiposHanCambiadoResultado(resultadoAnterior, equiposNuevos) {
+  function firmaEquipos(resultado) {
+    const parejas = [
+      Array.isArray(resultado && resultado.equipo1) ? resultado.equipo1.slice().sort() : [],
+      Array.isArray(resultado && resultado.equipo2) ? resultado.equipo2.slice().sort() : []
+    ];
+    return parejas.map(function(pareja) {
+      return pareja.join("|");
+    }).sort().join("::");
+  }
+
+  return firmaEquipos(resultadoAnterior) !== firmaEquipos(equiposNuevos);
 }
 
 function cargarDatosJugadoresPostPartido(jugadores) {
@@ -942,10 +943,10 @@ function guardarResultadoPropuesto(id) {
 
     const resultadoAnterior = p.resultado || null;
     const vieneDeDisputa = resultadoAnterior && resultadoAnterior.estado === "disputa";
-    const corrigeEquipos = vieneDeDisputa && equiposCorregidosFormularioResultado();
+    const editaEquipos = vieneDeDisputa && equiposCorregidosFormularioResultado();
     let equipos = null;
 
-    if (vieneDeDisputa && !corrigeEquipos) {
+    if (vieneDeDisputa && !editaEquipos) {
       equipos = {
         equipo1: Array.isArray(resultadoAnterior.equipo1) ? resultadoAnterior.equipo1.slice() : [],
         equipo2: Array.isArray(resultadoAnterior.equipo2) ? resultadoAnterior.equipo2.slice() : []
@@ -962,6 +963,8 @@ function guardarResultadoPropuesto(id) {
         return;
       }
     }
+    const equiposModificados = vieneDeDisputa &&
+      equiposHanCambiadoResultado(resultadoAnterior, equipos);
 
     const resultadoVersion = Date.now();
     const resultadoNuevo = {
@@ -973,7 +976,7 @@ function guardarResultadoPropuesto(id) {
       propuestoPor: user.uid,
       propuestoAt: firebase.firestore.FieldValue.serverTimestamp(),
       resultadoVersion: resultadoVersion,
-      equiposCorregidos: corrigeEquipos === true,
+      equiposCorregidos: equiposModificados,
       validaciones: [user.uid],
       rechazos: []
     };
@@ -986,8 +989,8 @@ function guardarResultadoPropuesto(id) {
       ? "Se ha propuesto un nuevo resultado. Debes validarlo o rechazarlo. Si no respondes podrán aplicarse penalizaciones."
       : "Se ha introducido un resultado. Debes validarlo o rechazarlo. La validación del resultado es obligatoria. La falta de respuesta puede conllevar penalizaciones.";
 
-    if (vieneDeDisputa && corrigeEquipos) {
-      mensajeAviso = "Se ha propuesto un nuevo resultado corrigiendo los equipos. Debes validarlo o rechazarlo. Si no respondes podrán aplicarse penalizaciones.";
+    if (equiposModificados) {
+      mensajeAviso = "Se ha propuesto un nuevo resultado y se han modificado los equipos. Revísalo y valida o rechaza la propuesta.";
     }
 
     return ref.update({
@@ -1011,7 +1014,7 @@ function guardarResultadoPropuesto(id) {
           data: {
             resultadoVersion: resultadoVersion,
             propuestoPor: user.uid,
-            equiposCorregidos: corrigeEquipos === true
+            equiposCorregidos: equiposModificados
           }
         });
       });
@@ -1123,6 +1126,7 @@ function construirFormularioResultado(id, jugadoresDatos, p) {
   const guardar = crearBotonPrimarioPostPartido("Guardar resultado", function() {
     guardarResultadoPropuesto(id);
   });
+  guardar.style.background = "#2E7D32";
 
   acciones.appendChild(cancelar);
 
@@ -1137,6 +1141,8 @@ function construirFormularioResultado(id, jugadoresDatos, p) {
       corregirEquipos.disabled = true;
       actualizarOpcionesSelectsResultado();
     });
+    corregirEquipos.style.background = "#1565C0";
+    corregirEquipos.style.color = "#fff";
     acciones.appendChild(corregirEquipos);
   }
 
@@ -1196,7 +1202,7 @@ function crearFormularioResultado(id) {
       return;
     }
 
-    return cargarDatosJugadoresPostPartido(jugadoresPermitidos).then(function(jugadoresDatos) {
+    return cargarDatosJugadoresPostPartido(jugadores).then(function(jugadoresDatos) {
       construirFormularioResultado(id, jugadoresDatos, p);
     });
   }).catch(function(error) {
