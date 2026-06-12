@@ -392,7 +392,7 @@ function generarAvisoPostPartidoPartida(idPartida) {
       return notificarPostPartido(aviso.destinatarios, {
         tipo: "introducir_resultado",
         titulo: "Introduce el resultado",
-        mensaje: "Han pasado 80 minutos desde el inicio de la partida. Ya puedes introducir el resultado.",
+        mensaje: "Si ya has terminado la partida, introduce el resultado para que el resto de jugadores pueda validarlo.",
         partidaId: idPartida,
         accion: "introducir_resultado",
         dedupeKey: "introducir_resultado_" + idPartida
@@ -1815,7 +1815,7 @@ window.confirmarResultadoPartida = function(id) {
       return notificarPostPartido(resultado.jugadores, {
         tipo: "resultado_validado",
         titulo: "Resultado validado",
-        mensaje: "El resultado ha sido validado. Ya puedes completar las valoraciones de los jugadores.",
+        mensaje: "Valora a los jugadores que participaron en la partida.",
         partidaId: id,
         accion: "valorar_jugadores",
         dedupeKey: "resultado_validado_" + id,
