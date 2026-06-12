@@ -635,7 +635,7 @@ function crearCardClasificacion(jugador, posicion) {
     crearDatoIconoClasificacion(
       "imagenes app/clasificacion/fiabilidad.png",
       "Fiabilidad",
-      "-",
+      jugador.fiabilidad + "%",
       "fiabilidad"
     )
   );
@@ -644,7 +644,7 @@ function crearCardClasificacion(jugador, posicion) {
     crearDatoIconoClasificacion(
       "imagenes app/clasificacion/abandono.png",
       "Abandonos",
-      "-",
+      String(jugador.abandonos),
       "abandonos"
     )
   );
@@ -653,7 +653,7 @@ function crearCardClasificacion(jugador, posicion) {
     crearDatoIconoClasificacion(
       "imagenes app/clasificacion/penalizacion.png",
       "Penalizaciones activas",
-      "-",
+      String(jugador.penalizacionesActivas),
       "penalizaciones"
     )
   );
@@ -683,6 +683,9 @@ function cargarClasificacionComunitaria() {
         const puntos = Number(c.puntos || 0);
         const partidos = Number(c.partidos || 0);
         const valoracionesRecibidas = Number(c.valoracionesRecibidas || 0);
+        const abandonos = Number(c.abandonos || 0);
+        const penalizacionesActivas = Number(c.penalizacionesActivas || 0);
+        const fiabilidad = Math.max(0, 100 - (abandonos * 15));
         const nombre = data.nombre || "Jugador";
 
         jugadores.push({
@@ -692,6 +695,9 @@ function cargarClasificacionComunitaria() {
           foto: obtenerFotoClasificacion(data),
           puntos: puntos,
           partidos: partidos,
+          abandonos: abandonos,
+          penalizacionesActivas: penalizacionesActivas,
+          fiabilidad: fiabilidad,
           mediaPuntualidad: formatearMediaClasificacion(c.puntualidadTotal, valoracionesRecibidas),
           mediaActitud: formatearMediaClasificacion(c.actitudTotal, valoracionesRecibidas),
           mediaCompromiso: formatearMediaClasificacion(c.compromisoTotal, valoracionesRecibidas)
