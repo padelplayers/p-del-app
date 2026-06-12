@@ -2013,7 +2013,7 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
 
 .clasificacionPuesto,
 .clasificacionFoto {
-  transform:translateX(42px);
+  transform:translateX(56px);
 }
 
 @media (max-width:768px) {
