@@ -2063,11 +2063,12 @@ margin:0 auto;
   }
 
   .clasificacionInfo {
-    grid-column:2;
-    grid-row:1;
-    width:auto;
-    justify-self:start;
-  }
+  grid-column:2;
+  grid-row:1;
+  width:auto;
+  justify-self:start;
+  margin-left:-18px;
+}
 
   .clasificacionStats {
     grid-column:1 / -1;
