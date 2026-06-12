@@ -29,6 +29,25 @@ function tieneSustitucionPendientePartida(p) {
   );
 }
 
+function tieneSolicitudSustitucionPartida(p) {
+  return !!p && p.solicitudSustitucionEstado === "solicitud_sustitucion_pendiente";
+}
+
+function partidaConfirmadaConPlazaLibre(p) {
+  return !!p &&
+    (p.estado === "confirmada" || p.estado === "pendiente_cancelacion_club") &&
+    arrayUnicoPartida(p.jugadores).length < 4;
+}
+
+function partidaNecesitaCancelacionClub(p) {
+  return !!p &&
+    (p.estado === "confirmada" || p.estado === "pendiente_cancelacion_club") &&
+    (
+      arrayUnicoPartida(p.jugadores).length < 4 ||
+      p.sustitucionTipo === "reserva_subida_pendiente_aceptar"
+    );
+}
+
 function puedeConfirmarPartida(p, uid, ahora) {
   const fechaPartida = obtenerFechaHoraPartida(p);
 
@@ -127,16 +146,123 @@ function datosSustitucionResueltaPartida() {
   };
 }
 
-function datosSustitucionPendientePartida(uid) {
+function datosSolicitudSustitucionResueltaPartida() {
   return {
-    sustitucionPendiente: true,
-    sustitucionPendienteDesde: firebase.firestore.FieldValue.delete(),
-    sustitucionPendienteUid: firebase.firestore.FieldValue.delete(),
-    sustitucionTipo: "sin_reserva_compatible",
-    sustitucionSaleUid: uid,
-    sustitucionEntraUid: firebase.firestore.FieldValue.delete(),
-    sustitucionPendienteAt: firebase.firestore.FieldValue.serverTimestamp()
+    solicitudSustitucionEstado: firebase.firestore.FieldValue.delete(),
+    solicitudSustitucionUid: firebase.firestore.FieldValue.delete(),
+    solicitudSustitucionAt: firebase.firestore.FieldValue.delete(),
+    solicitudSustitucionReservasCompatibles: firebase.firestore.FieldValue.delete()
   };
+}
+
+function datosPartidaCompletaPartida() {
+  return {
+    partidaIncompleta: false,
+    faltaJugadores: 0,
+    incompletaDesde: firebase.firestore.FieldValue.delete(),
+    abandonoResponsableIncompletaUid: firebase.firestore.FieldValue.delete(),
+    estadoAntesCancelacionClub: firebase.firestore.FieldValue.delete(),
+    cancelacionClubPendienteDesde: firebase.firestore.FieldValue.delete(),
+    cancelacionClubUltimoRecordatorioAt: firebase.firestore.FieldValue.delete()
+  };
+}
+
+function datosPartidaIncompletaPartida(uidResponsable) {
+  return {
+    partidaIncompleta: true,
+    faltaJugadores: 1,
+    incompletaDesde: firebase.firestore.FieldValue.serverTimestamp(),
+    abandonoResponsableIncompletaUid: uidResponsable || firebase.firestore.FieldValue.delete()
+  };
+}
+
+function crearPenalizacionPartida(partidaId, uid, tipo, motivo) {
+  const creadaAt = firebase.firestore.Timestamp.now();
+  return {
+    id: tipo + "_" + partidaId + "_" + uid,
+    tipo: tipo,
+    motivo: motivo,
+    puntos: 0,
+    createdAt: creadaAt,
+    caducaAt: firebase.firestore.Timestamp.fromMillis(
+      creadaAt.toMillis() + 180 * 24 * 60 * 60 * 1000
+    ),
+    activa: true,
+    partidaId: partidaId
+  };
+}
+
+function cerrarDialogoSalidaPartida(dialogo, accion) {
+  if (!dialogo) return;
+  const resolver = dialogo._resolverSalidaPartida;
+  dialogo.remove();
+  if (typeof resolver === "function") resolver(accion);
+}
+
+function mostrarDialogoSalidaConfirmadaPartida() {
+  return new Promise(function(resolve) {
+    const anterior = document.getElementById("dialogoSalidaConfirmadaPartida");
+    if (anterior) cerrarDialogoSalidaPartida(anterior, "cancelar");
+
+    const overlay = document.createElement("div");
+    overlay.id = "dialogoSalidaConfirmadaPartida";
+    overlay.className = "partidaDialogoOverlay";
+    overlay._resolverSalidaPartida = resolve;
+
+    const dialogo = document.createElement("div");
+    dialogo.className = "partidaDialogo";
+    dialogo.setAttribute("role", "dialog");
+    dialogo.setAttribute("aria-modal", "true");
+    dialogo.setAttribute("aria-labelledby", "dialogoSalidaConfirmadaTitulo");
+
+    const titulo = textoNodo("Esta partida ya está confirmada.", "h3");
+    titulo.id = "dialogoSalidaConfirmadaTitulo";
+
+    const parrafos = [
+      "Si no puedes asistir, puedes solicitar un sustituto. Si existen reservas, puedes utilizar el chat de la partida para hablar con ellas e intentar que alguna ocupe tu plaza.",
+      "Si una reserva o cualquier jugador ocupa tu plaza antes de que falten 5 horas para el inicio de la partida, no recibirás penalización.",
+      "Si abandonas sin sustituto confirmado, se registrará una penalización.",
+      "Además, si la partida queda incompleta por tu abandono y debe cancelarse al llegar al límite de 5 horas antes del inicio, se aplicará una penalización adicional."
+    ];
+    const contenido = document.createElement("div");
+    contenido.className = "partidaDialogoTexto";
+    parrafos.forEach(function(texto) {
+      contenido.appendChild(textoNodo(texto, "p"));
+    });
+
+    const acciones = document.createElement("div");
+    acciones.className = "partidaDialogoAcciones";
+
+    const cancelar = document.createElement("button");
+    cancelar.type = "button";
+    cancelar.textContent = "Cancelar";
+    cancelar.onclick = function() { cerrarDialogoSalidaPartida(overlay, "cancelar"); };
+
+    const solicitar = document.createElement("button");
+    solicitar.type = "button";
+    solicitar.className = "partidaDialogoSolicitar";
+    solicitar.textContent = "Solicitar sustituto";
+    solicitar.onclick = function() { cerrarDialogoSalidaPartida(overlay, "solicitar"); };
+
+    const abandonar = document.createElement("button");
+    abandonar.type = "button";
+    abandonar.className = "partidaDialogoPenalizacion";
+    abandonar.textContent = "Salir con penalización";
+    abandonar.onclick = function() { cerrarDialogoSalidaPartida(overlay, "penalizacion"); };
+
+    acciones.appendChild(cancelar);
+    acciones.appendChild(solicitar);
+    acciones.appendChild(abandonar);
+    dialogo.appendChild(titulo);
+    dialogo.appendChild(contenido);
+    dialogo.appendChild(acciones);
+    overlay.appendChild(dialogo);
+    overlay.onclick = function(event) {
+      if (event.target === overlay) cerrarDialogoSalidaPartida(overlay, "cancelar");
+    };
+    document.body.appendChild(overlay);
+    cancelar.focus();
+  });
 }
 
 function datosSustitucionReservaPendientePartida(uidSale, uidEntra) {
@@ -526,6 +652,9 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   } else if (p.estado === "confirmada") {
     textoEstadoPartida = reservasCompletas ? "CERRADA" : "CONFIRMADA";
     claseEstadoPartida = reservasCompletas ? "partidaCabeceraCerrada" : "partidaCabeceraConfirmada";
+  } else if (p.estado === "pendiente_cancelacion_club") {
+    textoEstadoPartida = "PENDIENTE DE CANCELACIÓN";
+    claseEstadoPartida = "partidaCabeceraPendienteCancelacion";
   } else if (p.estado === "cerrada") {
     textoEstadoPartida = "CERRADA";
     claseEstadoPartida = "partidaCabeceraCerrada";
@@ -595,6 +724,22 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
     sustitucionBadge.style.cssText = "background:#FFC107; color:#000; border-color:#FFC107; font-weight:bold;";
     cabecera.appendChild(sustitucionBadge);
   }
+  if (tieneSolicitudSustitucionPartida(p)) {
+    const solicitudBadge = textoNodo("Pendiente de sustituto", "span");
+    solicitudBadge.className = "partidaEstadoBadge partidaEstadoSustitucionSolicitada";
+    cabecera.appendChild(solicitudBadge);
+
+    const solicitudDetalle = textoNodo(
+      "El jugador que solicita sustituto sigue ocupando su plaza y debe asistir mientras nadie la acepte."
+    );
+    solicitudDetalle.className = "partidaAvisoSustitucion";
+    cabecera.appendChild(solicitudDetalle);
+  }
+  if (partidaConfirmadaConPlazaLibre(p)) {
+    const incompleta = textoNodo("Falta 1 jugador para completar la partida.");
+    incompleta.className = "partidaAvisoIncompleta";
+    cabecera.appendChild(incompleta);
+  }
   if (p.cambioCreadorPendiente === true) {
     const cambioCreadorBadge = textoNodo("Cambio de creador pendiente", "span");
     cambioCreadorBadge.className = "partidaEstadoBadge";
@@ -615,6 +760,11 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
     p.sustitucionTipo === "reserva_subida_pendiente_aceptar" &&
     uidActual &&
     p.sustitucionEntraUid === uidActual;
+  const puedeAceptarSolicitudSustitucion =
+    tieneSolicitudSustitucionPartida(p) &&
+    uidActual &&
+    arrayUnicoPartida(p.solicitudSustitucionReservasCompatibles).includes(uidActual) &&
+    arrayUnicoPartida(p.reservas).includes(uidActual);
 
   if (esCreador && tieneSustitucionPendientePartida(p)) {
     const avisoSustitucionCreador = document.createElement("div");
@@ -710,6 +860,20 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
     sustitucionAcciones.appendChild(aceptar);
     sustitucionAcciones.appendChild(rechazar);
     cabecera.appendChild(sustitucionAcciones);
+  }
+
+  if (puedeAceptarSolicitudSustitucion) {
+    const aceptarSolicitudWrap = document.createElement("div");
+    aceptarSolicitudWrap.className = "partidaAcciones";
+
+    const aceptarSolicitud = document.createElement("button");
+    aceptarSolicitud.type = "button";
+    aceptarSolicitud.textContent = "Aceptar ocupar la plaza";
+    aceptarSolicitud.style.cssText = "background:#1565C0; color:#fff;";
+    aceptarSolicitud.onclick = function() { aceptarSustitucionPartida(id); };
+
+    aceptarSolicitudWrap.appendChild(aceptarSolicitud);
+    cabecera.appendChild(aceptarSolicitudWrap);
   }
 
   if (typeof window.crearAccionesPostPartido === "function") {
@@ -906,9 +1070,182 @@ function partidaConfirmadaIncompleta(p) {
   return !(partidaTieneResultadoValidado(p) && valoracionesCompletas);
 }
 
+function procesarLimiteCancelacionClubPartida(partidaId) {
+  const ref = db.collection("partidas").doc(partidaId);
+
+  return db.runTransaction(function(transaction) {
+    return transaction.get(ref).then(function(doc) {
+      if (!doc.exists) return false;
+
+      const p = doc.data() || {};
+      const fechaPartida = obtenerFechaHoraPartida(p);
+      const uidReservaSinConfirmar = p.sustitucionTipo === "reserva_subida_pendiente_aceptar"
+        ? p.sustitucionEntraUid
+        : null;
+      const jugadores = arrayUnicoPartida(p.jugadores).filter(function(uidJugador) {
+        return uidJugador !== uidReservaSinConfirmar;
+      });
+      const reservas = arrayUnicoPartida(p.reservas);
+      if (uidReservaSinConfirmar && !reservas.includes(uidReservaSinConfirmar)) {
+        reservas.unshift(uidReservaSinConfirmar);
+      }
+      if (
+        !partidaNecesitaCancelacionClub(p) ||
+        !fechaPartida ||
+        new Date() < new Date(fechaPartida.getTime() - 5 * 60 * 60 * 1000)
+      ) {
+        return false;
+      }
+
+      const abandonos = Array.isArray(p.abandonosConPenalizacion)
+        ? p.abandonosConPenalizacion
+        : [];
+      const uidResponsable =
+        p.abandonoResponsableIncompletaUid ||
+        p.sustitucionSaleUid ||
+        (abandonos.length > 0 && abandonos[abandonos.length - 1]
+          ? abandonos[abandonos.length - 1].uid
+          : null);
+      const responsableTieneAbandono = abandonos.some(function(abandono) {
+        return abandono && abandono.uid === uidResponsable;
+      });
+      const agravadasAplicadas = arrayUnicoPartida(p.penalizacionAgravadaAplicadaUids);
+      const aplicaAgravada =
+        uidResponsable &&
+        responsableTieneAbandono &&
+        !agravadasAplicadas.includes(uidResponsable);
+      const penalizacionAgravada = aplicaAgravada
+        ? crearPenalizacionPartida(
+            partidaId,
+            uidResponsable,
+            "cancelacion_por_falta_sustituto",
+            "La partida tuvo que cancelarse por falta de sustituto al llegar al límite de 5 horas"
+          )
+        : null;
+
+      if (penalizacionAgravada) {
+        transaction.update(db.collection("usuarios").doc(uidResponsable), {
+          "clasificacion.penalizacionesActivas": firebase.firestore.FieldValue.increment(1),
+          penalizaciones: firebase.firestore.FieldValue.arrayUnion(penalizacionAgravada)
+        });
+      }
+      transaction.delete(ref);
+
+      return {
+        partida: p,
+        creadaPor: p.creadaPor || p.creador || null,
+        participantes: arrayUnicoPartida(
+          jugadores
+            .concat(reservas)
+            .concat(p.creadaPor || p.creador || [])
+            .concat(abandonos.map(function(abandono) {
+              return abandono && abandono.uid;
+            }))
+        ),
+        uidResponsable: penalizacionAgravada ? uidResponsable : null,
+        penalizacionAgravada: penalizacionAgravada
+      };
+    });
+  }).then(function(actualizada) {
+    if (!actualizada) return false;
+
+    const avisos = [];
+    if (actualizada.creadaPor) {
+      avisos.push(notificarPartida(actualizada.creadaPor, {
+        tipo: "partida_cancelada_automatica_5h_creador",
+        titulo: "Partida cancelada automáticamente",
+        mensaje: "La partida seguía incompleta al llegar al límite de 5 horas y se ha eliminado de la app. Debes cancelar la reserva real con el club.",
+        partidaId: partidaId,
+        dedupeKey: "partida_cancelada_automatica_5h_creador_" + partidaId,
+        prioridad: "alta",
+        emailCritico: true,
+        data: { motivo: "incompleta_sin_sustituto" }
+      }));
+    }
+    const participantes = actualizada.participantes.filter(function(uid) {
+      return uid !== actualizada.creadaPor;
+    });
+    if (participantes.length > 0) {
+      avisos.push(notificarPartida(participantes, {
+        tipo: "partida_cancelada_automatica_5h",
+        titulo: "Partida cancelada",
+        mensaje: "La partida seguía incompleta al llegar al límite de 5 horas y se ha cancelado automáticamente.",
+        partidaId: partidaId,
+        dedupeKey: "partida_cancelada_automatica_5h_" + partidaId,
+        prioridad: "alta",
+        emailCritico: true,
+        data: { motivo: "incompleta_sin_sustituto" }
+      }));
+    }
+    if (actualizada.penalizacionAgravada) {
+      avisos.push(notificarPartida(actualizada.uidResponsable, {
+        tipo: "penalizacion_agravada_cancelacion",
+        titulo: "Penalización adicional",
+        mensaje: "La partida tuvo que cancelarse por falta de sustituto. Se ha registrado una penalización adicional.",
+        partidaId: partidaId,
+        dedupeKey: "penalizacion_agravada_cancelacion_" + partidaId + "_" + actualizada.uidResponsable,
+        prioridad: "alta",
+        emailCritico: true,
+        data: {
+          penalizacionId: actualizada.penalizacionAgravada.id,
+          motivo: actualizada.penalizacionAgravada.motivo
+        }
+      }));
+    }
+
+    return Promise.all(avisos.map(function(aviso) {
+      return aviso.catch(function(error) {
+        console.warn("No se pudo enviar un aviso de cancelación automática:", error.message);
+      });
+    })).then(function() {
+      if (typeof window.eliminarChatTotal !== "function") return true;
+      return window.eliminarChatTotal(partidaId).then(function(chatEliminado) {
+        if (chatEliminado === false) {
+          console.warn("[PARTIDAS] La partida se eliminó, pero no se pudo limpiar su chat.");
+        }
+        return true;
+      }).catch(function(error) {
+        console.warn("[PARTIDAS] La partida se eliminó, pero falló la limpieza de su chat:", error.message);
+        return true;
+      });
+    });
+  });
+}
+
+function revisarLimitesCancelacionClubPartidas() {
+  if (!firebase.auth().currentUser) return Promise.resolve();
+
+  return db.collection("partidas").get().then(function(snapshot) {
+    const tareas = [];
+    snapshot.forEach(function(doc) {
+      const p = doc.data() || {};
+      const fechaPartida = obtenerFechaHoraPartida(p);
+      if (
+        partidaNecesitaCancelacionClub(p) &&
+        fechaPartida &&
+        new Date() >= new Date(fechaPartida.getTime() - 5 * 60 * 60 * 1000)
+      ) {
+        tareas.push(procesarLimiteCancelacionClubPartida(doc.id));
+      }
+    });
+    return Promise.all(tareas);
+  }).catch(function(error) {
+    console.warn("No se pudieron revisar las cancelaciones pendientes:", error.message);
+  });
+}
+
+function asegurarRevisionCancelacionClubPartidas() {
+  if (window.revisionCancelacionClubPartidasInterval) return;
+  revisarLimitesCancelacionClubPartidas();
+  window.revisionCancelacionClubPartidasInterval = setInterval(function() {
+    revisarLimitesCancelacionClubPartidas();
+  }, 60 * 1000);
+}
+
 function cargarPartidas() {
   if (!window.modoPartidas) window.modoPartidas = "proximas";
 
+  asegurarRevisionCancelacionClubPartidas();
   actualizarBotonesPartidas();
   cargarFiltroPistas();
 
@@ -1018,6 +1355,14 @@ function cargarPartidas() {
       }
 
       if (p.estado === "confirmada" && fechaPartida) {
+        const limiteSustitucion = new Date(fechaPartida.getTime() - 5 * 60 * 60 * 1000);
+        if (partidaNecesitaCancelacionClub(p) && ahora >= limiteSustitucion) {
+          procesarLimiteCancelacionClubPartida(doc.id).then(function(actualizada) {
+            if (actualizada) cargarPartidas();
+          });
+          return;
+        }
+
         const limiteConfirmada = new Date(fechaPartida);
         limiteConfirmada.setDate(limiteConfirmada.getDate() + 3);
 
@@ -1056,7 +1401,11 @@ function cargarPartidas() {
       p.reservas = p.reservas || [];
 
       let fondo = "#ffffff";
-      if (p.estado === "confirmada" || p.estado === "cerrada") fondo = "#e3f2fd";
+      if (
+        p.estado === "confirmada" ||
+        p.estado === "cerrada" ||
+        p.estado === "pendiente_cancelacion_club"
+      ) fondo = "#e3f2fd";
 
       const nivelTexto =
         (p.nivel && p.nivel.desde && p.nivel.hasta)
@@ -1088,10 +1437,15 @@ function cargarPartidas() {
         console.log("[cargarPartidas] PENDIENTE", doc.id);
         pendientes.push(item);
       } else if (
+        p.estado === "pendiente_cancelacion_club" ||
         fechaPartida >= ahoraGlobal ||
         (p.estado === "confirmada" && limiteResultado > ahoraGlobal)
       ) {
-        if (p.estado === "abierta" || p.estado === "confirmada") {
+        if (
+          p.estado === "abierta" ||
+          p.estado === "confirmada" ||
+          p.estado === "pendiente_cancelacion_club"
+        ) {
           console.log("[cargarPartidas] PROXIMA", doc.id);
           proximas.push(item);
         }
@@ -1282,6 +1636,24 @@ function elegirReservaSustitutaPartidaTransaccion(transaction, p, reservas, uidS
   });
 }
 
+function obtenerReservasCompatiblesPartidaTransaccion(transaction, p, reservas, uidSale) {
+  const candidatas = arrayUnicoPartida(reservas);
+  if (candidatas.length === 0) return Promise.resolve([]);
+  if (p.genero !== "mixto") return Promise.resolve(candidatas);
+
+  return obtenerSexoUsuarioPartidaTransaccion(transaction, uidSale).then(function(sexoSale) {
+    if (sexoSale !== "masculino" && sexoSale !== "femenino") return [];
+
+    return Promise.all(candidatas.map(function(uidReserva) {
+      return obtenerSexoUsuarioPartidaTransaccion(transaction, uidReserva).then(function(sexoReserva) {
+        return sexoReserva === sexoSale ? uidReserva : null;
+      });
+    })).then(function(resultados) {
+      return resultados.filter(function(uidReserva) { return !!uidReserva; });
+    });
+  });
+}
+
 function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
   return db.collection("usuarios").doc(user.uid).get().then(function(docUser) {
     if (!docUser.exists) return false;
@@ -1296,6 +1668,10 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
 
         const p = doc.data() || {};
         const generoPartida = p.genero;
+
+        if (p.estado === "pendiente_cancelacion_club") {
+          throw new Error("Esta partida está pendiente de cancelación con el club y ya no admite nuevos jugadores.");
+        }
 
         if (
           (generoPartida === "masculino" && sexoUsuario !== "masculino") ||
@@ -1345,6 +1721,9 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
           if (!entraComoReserva && jugadores.length === 4 && p.sustitucionPendiente === true) {
             Object.assign(datosUpdate, datosSustitucionResueltaPartida());
           }
+          if (!entraComoReserva && jugadores.length === 4 && partidaConfirmadaConPlazaLibre(p)) {
+            Object.assign(datosUpdate, datosPartidaCompletaPartida());
+          }
 
           transaction.update(ref, datosUpdate);
           return {
@@ -1356,7 +1735,12 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
             creadaPor: p.creadaPor || null,
             creador: p.creador || null,
             fecha: p.fecha || null,
-            hora: p.hora || null
+            hora: p.hora || null,
+            partidaConfirmadaCompletada:
+              !entraComoReserva &&
+              jugadoresAntes < 4 &&
+              jugadores.length === 4 &&
+              p.estado === "confirmada"
           };
         };
 
@@ -1425,6 +1809,18 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
           });
         }
       }
+      if (actualizada.partidaConfirmadaCompletada) {
+        avisos.push(notificarPartida(actualizada.jugadores.concat(actualizada.reservas || []), {
+          tipo: "partida_completa_confirmada",
+          titulo: "Partida completa",
+          mensaje: "Partida completa.",
+          partidaId: partidaId,
+          accion: "abrir_partida",
+          dedupeKey: "partida_completa_confirmada_" + partidaId,
+          prioridad: "alta",
+          data: { jugadores: actualizada.jugadores }
+        }));
+      }
 
       Promise.all(avisos).then(function() {
         cargarPartidas();
@@ -1432,6 +1828,156 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
     }
   }).catch(function(error) {
     alert(error && error.message ? error.message : "No se pudo unir a la partida");
+  });
+}
+
+function resolverAvisosSolicitudSustitucionPartida(partidaId, datos) {
+  if (typeof window.resolverNotificacionPorDedupe !== "function" || !datos) {
+    return Promise.resolve(false);
+  }
+
+  const uidSolicita = datos.uidSolicita;
+  const creador = datos.creadaPor;
+  const reservas = arrayUnicoPartida(datos.reservasCompatibles);
+  const participantes = arrayUnicoPartida(datos.participantes).filter(function(uid) {
+    return uid !== uidSolicita && uid !== creador && !reservas.includes(uid);
+  });
+  const tareas = [];
+
+  reservas.forEach(function(uidReserva) {
+    tareas.push(window.resolverNotificacionPorDedupe(
+      uidReserva,
+      "solicitud_sustitucion_reserva_" + partidaId + "_" + uidSolicita
+    ));
+  });
+  if (creador) {
+    tareas.push(window.resolverNotificacionPorDedupe(
+      creador,
+      "solicitud_sustitucion_creador_" + partidaId + "_" + uidSolicita
+    ));
+  }
+  participantes.forEach(function(uidParticipante) {
+    tareas.push(window.resolverNotificacionPorDedupe(
+      uidParticipante,
+      "solicitud_sustitucion_participante_" + partidaId + "_" + uidSolicita
+    ));
+  });
+
+  return Promise.all(tareas).catch(function(error) {
+    console.warn("No se pudieron resolver los avisos de solicitud de sustitución:", error.message);
+    return false;
+  });
+}
+
+function solicitarSustitutoPartida(partidaId) {
+  const user = firebase.auth().currentUser;
+  if (!user) return Promise.resolve();
+
+  const ref = db.collection("partidas").doc(partidaId);
+  return db.runTransaction(function(transaction) {
+    return transaction.get(ref).then(function(doc) {
+      if (!doc.exists) throw new Error("La partida ya no existe");
+
+      const p = doc.data() || {};
+      const jugadores = arrayUnicoPartida(p.jugadores);
+      const reservas = arrayUnicoPartida(p.reservas).filter(function(uidReserva) {
+        return !jugadores.includes(uidReserva);
+      });
+
+      if (p.estado !== "confirmada") {
+        throw new Error("Solo se puede solicitar sustituto en una partida confirmada.");
+      }
+      if (p.creadaPor === user.uid) {
+        throw new Error("El creador no puede solicitar sustituto porque es responsable de la reserva del club.");
+      }
+      if (!jugadores.includes(user.uid)) {
+        throw new Error("Solo un jugador titular puede solicitar sustituto.");
+      }
+      if (tieneSustitucionPendientePartida(p)) {
+        throw new Error("Ya hay otra sustitución pendiente en esta partida.");
+      }
+      if (tieneSolicitudSustitucionPartida(p)) {
+        if (p.solicitudSustitucionUid === user.uid) {
+          throw new Error("Ya has solicitado un sustituto. Sigues ocupando tu plaza hasta que alguien acepte.");
+        }
+        throw new Error("Ya hay una solicitud de sustituto pendiente en esta partida.");
+      }
+      if (p.resultado || (p.valoraciones && Object.keys(p.valoraciones).length > 0)) {
+        throw new Error("No se puede solicitar sustituto con el resultado o las valoraciones iniciadas.");
+      }
+
+      return obtenerReservasCompatiblesPartidaTransaccion(transaction, p, reservas, user.uid)
+        .then(function(reservasCompatibles) {
+          transaction.update(ref, {
+            solicitudSustitucionEstado: "solicitud_sustitucion_pendiente",
+            solicitudSustitucionUid: user.uid,
+            solicitudSustitucionAt: firebase.firestore.FieldValue.serverTimestamp(),
+            solicitudSustitucionReservasCompatibles: reservasCompatibles
+          });
+
+          return {
+            uidSolicita: user.uid,
+            creadaPor: p.creadaPor || p.creador || null,
+            jugadores: jugadores,
+            reservas: reservas,
+            reservasCompatibles: reservasCompatibles,
+            fecha: p.fecha || null,
+            hora: p.hora || null
+          };
+        });
+    });
+  }).then(function(actualizada) {
+    const participantes = arrayUnicoPartida(actualizada.jugadores.concat(actualizada.reservas));
+    const otrosParticipantes = participantes.filter(function(uidParticipante) {
+      return uidParticipante !== actualizada.uidSolicita &&
+        uidParticipante !== actualizada.creadaPor &&
+        !actualizada.reservasCompatibles.includes(uidParticipante);
+    });
+    const avisos = [];
+
+    if (actualizada.reservasCompatibles.length > 0) {
+      avisos.push(notificarPartida(actualizada.reservasCompatibles, {
+        tipo: "solicitud_sustitucion_reserva",
+        titulo: "Solicitud de sustituto",
+        mensaje: "Un jugador solicita sustituto en una partida confirmada. Puedes aceptar ocupar su plaza.",
+        partidaId: partidaId,
+        accion: "abrir_partida",
+        dedupeKey: "solicitud_sustitucion_reserva_" + partidaId + "_" + actualizada.uidSolicita,
+        prioridad: "alta",
+        emailCritico: true,
+        data: { uidSolicita: actualizada.uidSolicita }
+      }));
+    }
+    if (actualizada.creadaPor) {
+      avisos.push(notificarPartida(actualizada.creadaPor, {
+        tipo: "solicitud_sustitucion_creador",
+        titulo: "Solicitud de sustituto",
+        mensaje: "Un jugador ha solicitado sustituto. La partida sigue confirmada y necesita que alguien ocupe esa plaza antes del límite.",
+        partidaId: partidaId,
+        accion: "abrir_partida",
+        dedupeKey: "solicitud_sustitucion_creador_" + partidaId + "_" + actualizada.uidSolicita,
+        prioridad: "alta",
+        emailCritico: true,
+        data: { uidSolicita: actualizada.uidSolicita }
+      }));
+    }
+    if (otrosParticipantes.length > 0) {
+      avisos.push(notificarPartida(otrosParticipantes, {
+        tipo: "solicitud_sustitucion_participante",
+        titulo: "Solicitud de sustituto",
+        mensaje: "Un jugador solicita sustituto. Sigue formando parte de la partida hasta que alguien acepte ocupar su plaza.",
+        partidaId: partidaId,
+        accion: "abrir_partida",
+        dedupeKey: "solicitud_sustitucion_participante_" + partidaId + "_" + actualizada.uidSolicita,
+        data: { uidSolicita: actualizada.uidSolicita }
+      }));
+    }
+
+    return Promise.all(avisos).then(function() {
+      cargarPartidas();
+    });
+  }).catch(function(error) {
+    alert(error && error.message ? error.message : "No se pudo solicitar sustituto");
   });
 }
 
@@ -1473,23 +2019,16 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
       pInicial.creadaPor !== uid &&
       arrayUnicoPartida(pInicial.jugadores).includes(uid)
     ) {
-      const mensajeAbandono = "Salir de una partida confirmada registrará un abandono y una penalización activa durante 180 días. ¿Quieres continuar?";
-      const confirmaAbandono = silencioso ? true : confirm(mensajeAbandono);
-      if (!confirmaAbandono) return;
+      if (!silencioso && opciones.abandonoConfirmado !== true) {
+        throw new Error("Debes elegir Solicitar sustituto o Salir con penalización.");
+      }
 
-      const creadaAt = firebase.firestore.Timestamp.now();
-      penalizacionAbandono = {
-        id: "abandono_confirmada_" + partidaId + "_" + uid,
-        tipo: "abandono_confirmada",
-        motivo: "Abandono de una partida confirmada",
-        puntos: 0,
-        createdAt: creadaAt,
-        caducaAt: firebase.firestore.Timestamp.fromMillis(
-          creadaAt.toMillis() + 180 * 24 * 60 * 60 * 1000
-        ),
-        activa: true,
-        partidaId: partidaId
-      };
+      penalizacionAbandono = crearPenalizacionPartida(
+        partidaId,
+        uid,
+        "abandono_confirmada",
+        "Abandono de una partida confirmada"
+      );
     }
 
     if (pInicial.creadaPor === uid && pInicial.estado === "abierta") {
@@ -1594,7 +2133,7 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
             !!penalizacionAbandono;
 
           return elegirReservaSustitutaPartidaTransaccion(transaction, p, reservas, uid).then(function(uidReservaSustituta) {
-            const datosUpdate = {};
+            const datosUpdate = Object.assign({}, datosSolicitudSustitucionResueltaPartida());
             jugadores = jugadores.filter(function(j) { return j !== uid; });
 
             if (uidReservaSustituta) {
@@ -1602,7 +2141,7 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
               reservas = reservas.filter(function(r) { return r !== uidReservaSustituta; });
               Object.assign(datosUpdate, datosSustitucionReservaPendientePartida(uid, uidReservaSustituta));
             } else if (p.estado === "confirmada") {
-              Object.assign(datosUpdate, datosSustitucionPendientePartida(uid));
+              Object.assign(datosUpdate, datosSustitucionResueltaPartida(), datosPartidaIncompletaPartida(uid));
             } else {
               Object.assign(datosUpdate, datosSustitucionResueltaPartida());
             }
@@ -1611,6 +2150,16 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
             datosUpdate.reservas = arrayUnicoPartida(reservas).filter(function(uidReserva) {
               return !datosUpdate.jugadores.includes(uidReserva);
             }).slice(0, 2);
+            if (uidReservaSustituta) {
+              Object.assign(datosUpdate, datosPartidaCompletaPartida());
+            }
+            if (aplicaPenalizacionAbandono) {
+              datosUpdate.abandonosConPenalizacion = firebase.firestore.FieldValue.arrayUnion({
+                uid: uid,
+                penalizacionId: penalizacionAbandono.id,
+                createdAt: penalizacionAbandono.createdAt
+              });
+            }
 
             transaction.update(ref, datosUpdate);
             if (aplicaPenalizacionAbandono) {
@@ -1628,6 +2177,9 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
               uidSale: uid,
               jugadores: datosUpdate.jugadores,
               reservas: datosUpdate.reservas,
+              reservasSolicitudAnterior: arrayUnicoPartida(p.solicitudSustitucionReservasCompatibles),
+              solicitudAnteriorUid: p.solicitudSustitucionUid || null,
+              participantesSolicitudAnterior: arrayUnicoPartida(p.jugadores).concat(p.reservas || []),
               creadaPor: p.creadaPor || p.creador || null,
               fecha: p.fecha || null,
               hora: p.hora || null,
@@ -1650,6 +2202,14 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
       if (!actualizada) return;
 
       let aviso = Promise.resolve();
+      const resolverSolicitudAnterior = actualizada.solicitudAnteriorUid
+        ? resolverAvisosSolicitudSustitucionPartida(partidaId, {
+            uidSolicita: actualizada.solicitudAnteriorUid,
+            creadaPor: actualizada.creadaPor,
+            reservasCompatibles: actualizada.reservasSolicitudAnterior,
+            participantes: actualizada.participantesSolicitudAnterior
+          })
+        : Promise.resolve(false);
       if (actualizada.tipoAviso === "reserva_pendiente_aceptar") {
         aviso = Promise.all([
           notificarPartida(actualizada.uidReservaSustituta, {
@@ -1682,7 +2242,7 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
         aviso = notificarPartida(actualizada.jugadores.concat(actualizada.creadaPor || []), {
           tipo: "sin_reserva_compatible",
           titulo: "Falta cubrir una plaza",
-          mensaje: "No hay reservas compatibles para completar la partida.",
+          mensaje: "Falta 1 jugador para completar la partida.",
           partidaId: partidaId,
           accion: "abrir_partida",
           dedupeKey: "sin_reserva_compatible_" + partidaId + "_" + actualizada.uidSale,
@@ -1692,7 +2252,9 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
         });
       }
 
-      return aviso.then(function() {
+      return resolverSolicitudAnterior.then(function() {
+        return aviso;
+      }).then(function() {
         if (!actualizada.penalizacionAbandono) return null;
 
         return notificarPartida(actualizada.uidSale, {
@@ -1818,6 +2380,52 @@ function aceptarSustitucionPartida(idPartida) {
       if (!doc.exists) return false;
 
       const p = doc.data() || {};
+      if (p.estado === "pendiente_cancelacion_club") {
+        throw new Error("La partida ya está pendiente de cancelación con el club.");
+      }
+      if (tieneSolicitudSustitucionPartida(p)) {
+        const uidSale = p.solicitudSustitucionUid;
+        const compatibles = arrayUnicoPartida(p.solicitudSustitucionReservasCompatibles);
+        const jugadoresSolicitud = arrayUnicoPartida(p.jugadores);
+        const reservasSolicitud = arrayUnicoPartida(p.reservas).filter(function(uidReserva) {
+          return !jugadoresSolicitud.includes(uidReserva);
+        });
+
+        if (p.estado !== "confirmada") {
+          throw new Error("Esta solicitud de sustituto ya no está disponible.");
+        }
+        if (!compatibles.includes(user.uid) || !reservasSolicitud.includes(user.uid)) {
+          throw new Error("No figuras como reserva compatible para esta sustitución.");
+        }
+        const indiceSale = jugadoresSolicitud.indexOf(uidSale);
+        if (indiceSale < 0) {
+          throw new Error("El jugador que solicitó sustituto ya no ocupa la plaza.");
+        }
+
+        jugadoresSolicitud.splice(indiceSale, 1, user.uid);
+        const reservasActualizadas = reservasSolicitud.filter(function(uidReserva) {
+          return uidReserva !== user.uid;
+        });
+        transaction.update(ref, Object.assign({
+          estado: "confirmada",
+          jugadores: jugadoresSolicitud.slice(0, 4),
+          reservas: reservasActualizadas.slice(0, 2)
+        }, datosSolicitudSustitucionResueltaPartida(), datosSustitucionResueltaPartida(), datosPartidaCompletaPartida()));
+
+        return {
+          modo: "solicitud",
+          uidReserva: user.uid,
+          uidSale: uidSale,
+          jugadores: jugadoresSolicitud.slice(0, 4),
+          reservas: reservasActualizadas.slice(0, 2),
+          reservasCompatibles: compatibles,
+          participantesAnteriores: arrayUnicoPartida(p.jugadores).concat(p.reservas || []),
+          creadaPor: p.creadaPor || p.creador || null,
+          fecha: p.fecha || null,
+          hora: p.hora || null
+        };
+      }
+
       if (p.sustitucionTipo !== "reserva_subida_pendiente_aceptar") {
         throw new Error("No hay sustitución pendiente de aceptar.");
       }
@@ -1827,6 +2435,9 @@ function aceptarSustitucionPartida(idPartida) {
       }
 
       const jugadores = arrayUnicoPartida(p.jugadores);
+      if (p.estado !== "confirmada" && p.estado !== "abierta") {
+        throw new Error("Esta sustitución ya no está disponible.");
+      }
       if (!jugadores.includes(user.uid)) {
         throw new Error("El reserva propuesto no figura como jugador de la partida.");
       }
@@ -1840,6 +2451,7 @@ function aceptarSustitucionPartida(idPartida) {
       }, datosSustitucionResueltaPartida()));
 
       return {
+        modo: "abandono",
         uidReserva: user.uid,
         jugadores: jugadores.slice(0, 4),
         creadaPor: p.creadaPor || p.creador || null,
@@ -1849,6 +2461,38 @@ function aceptarSustitucionPartida(idPartida) {
     });
   }).then(function(actualizada) {
     if (!actualizada) return;
+
+    if (actualizada.modo === "solicitud") {
+      const destinatariosSolicitud = arrayUnicoPartida(
+        actualizada.jugadores
+          .concat(actualizada.reservas)
+          .concat(actualizada.uidSale || [])
+          .concat(actualizada.creadaPor || [])
+      );
+      return resolverAvisosSolicitudSustitucionPartida(idPartida, {
+        uidSolicita: actualizada.uidSale,
+        creadaPor: actualizada.creadaPor,
+        reservasCompatibles: actualizada.reservasCompatibles,
+        participantes: actualizada.participantesAnteriores
+      }).then(function() {
+        return notificarPartida(destinatariosSolicitud, {
+          tipo: "sustitucion_confirmada",
+          titulo: "Sustitución confirmada",
+          mensaje: "Sustitución confirmada.",
+          partidaId: idPartida,
+          accion: "abrir_partida",
+          dedupeKey: "sustitucion_confirmada_" + idPartida + "_" + actualizada.uidSale,
+          prioridad: "alta",
+          emailCritico: true,
+          data: {
+            uidSale: actualizada.uidSale,
+            uidEntra: actualizada.uidReserva
+          }
+        });
+      }).then(function() {
+        cargarPartidas();
+      });
+    }
 
     const destinatarios = arrayUnicoPartida(actualizada.jugadores.concat(actualizada.creadaPor || [])).filter(function(uid) {
       return uid !== actualizada.uidReserva;
@@ -1929,7 +2573,7 @@ function rechazarSustitucionPartida(idPartida) {
           });
           Object.assign(datosUpdate, datosSustitucionReservaPendientePartida(uidSale, nuevoReservaUid));
         } else if (p.estado === "confirmada") {
-          Object.assign(datosUpdate, datosSustitucionPendientePartida(uidSale));
+          Object.assign(datosUpdate, datosSustitucionResueltaPartida(), datosPartidaIncompletaPartida(uidSale));
         } else {
           Object.assign(datosUpdate, datosSustitucionResueltaPartida());
         }
@@ -2018,7 +2662,7 @@ function rechazarSustitucionPartida(idPartida) {
       avisos.push(notificarPartida(destinatariosSinReserva, {
         tipo: "sin_reserva_compatible",
         titulo: "Falta cubrir una plaza",
-        mensaje: "No hay reservas compatibles para completar la partida.",
+        mensaje: "Falta 1 jugador para completar la partida.",
         partidaId: idPartida,
         accion: "abrir_partida",
         dedupeKey: "sin_reserva_compatible_" + idPartida + "_" + actualizada.uidSale,
@@ -2206,9 +2850,37 @@ function elegirReservaSustitutaPartida(p, reservas, uidSale) {
   });
 }
 
-function salirDePartida(partidaId) {
-  const uid = firebase.auth().currentUser.uid;
+async function salirDePartida(partidaId) {
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+
+  const uid = user.uid;
   const ref = db.collection("partidas").doc(partidaId);
+
+  try {
+    const doc = await ref.get();
+    if (!doc.exists) return;
+    const p = doc.data() || {};
+    const esTitularNoCreador =
+      p.estado === "confirmada" &&
+      p.creadaPor !== uid &&
+      arrayUnicoPartida(p.jugadores).includes(uid);
+
+    if (esTitularNoCreador) {
+      const accion = await mostrarDialogoSalidaConfirmadaPartida();
+      if (accion === "solicitar") return solicitarSustitutoPartida(partidaId);
+      if (accion === "penalizacion") {
+        return ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, {
+          abandonoConfirmado: true
+        });
+      }
+      return;
+    }
+  } catch (error) {
+    alert(error && error.message ? error.message : "No se pudo comprobar la partida");
+    return;
+  }
+
   return ejecutarSalirDePartidaTransaccional(partidaId, ref, uid);
 }
 
