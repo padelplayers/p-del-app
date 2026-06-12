@@ -216,10 +216,31 @@ function mostrarPopupNotificacion(id, n) {
   }, 5200);
 }
 
+function mostrarResumenNotificacionesPendientes(cantidad) {
+  const contenedor = document.getElementById("notificacionesPopup");
+  if (!contenedor || cantidad < 1) return;
+
+  const popup = document.createElement("div");
+  popup.className = "notificacionPopup";
+
+  const mensaje = document.createElement("div");
+  mensaje.textContent = "Tienes " + cantidad + (cantidad === 1
+    ? " aviso sin leer."
+    : " avisos sin leer.");
+
+  popup.appendChild(mensaje);
+  contenedor.appendChild(popup);
+
+  setTimeout(function() {
+    popup.remove();
+  }, 5200);
+}
+
 function escucharNotificaciones(uid) {
   detenerNotificacionesInternas();
   window.notificacionesState.uid = uid;
   window.notificacionesState.idsVistos = new Set();
+  let cargaInicial = true;
 
   limpiarNotificacionesAntiguas(uid).catch(function(error) {
     console.warn("No se pudieron limpiar notificaciones:", error.message);
@@ -241,6 +262,17 @@ function escucharNotificaciones(uid) {
 
       window.notificacionesState.items = items;
       renderizarCampanaNotificaciones(items);
+
+      if (cargaInicial) {
+        snapshot.forEach(function(doc) {
+          window.notificacionesState.idsVistos.add(doc.id);
+        });
+        mostrarResumenNotificacionesPendientes(items.filter(function(item) {
+          return item.data.leida !== true;
+        }).length);
+        cargaInicial = false;
+        return;
+      }
 
       snapshot.docChanges().forEach(function(change) {
         if (change.type !== "added") return;
