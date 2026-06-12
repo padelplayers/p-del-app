@@ -2011,6 +2011,11 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
   text-align:right;
 }
 
+.clasificacionPuesto,
+.clasificacionFoto {
+  transform:translateX(18px);
+}
+
 @media (max-width:768px) {
   .clasificacionCard {
     grid-template-columns:auto auto minmax(0, 1fr);
