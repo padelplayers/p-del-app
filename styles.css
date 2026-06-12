@@ -2040,13 +2040,49 @@ margin:0 auto;
 
 @media (max-width:768px) {
   .clasificacionCard {
-    grid-template-columns:auto auto minmax(0, 1fr);
+    display:grid;
+    grid-template-columns:80px 1fr 90px;
+    gap:12px;
+    width:auto;
+    max-width:none;
+    padding:14px 10px;
+  }
+
+  .clasificacionPuesto {
+    grid-column:1;
+    grid-row:1;
+    transform:none;
+  }
+
+  .clasificacionFoto {
+    grid-column:3;
+    grid-row:1;
+    width:82px;
+    height:82px;
+    transform:none;
+  }
+
+  .clasificacionInfo {
+    grid-column:2;
+    grid-row:1;
+    width:auto;
+    justify-self:start;
   }
 
   .clasificacionStats {
     grid-column:1 / -1;
-    padding-left:44px;
+    grid-row:2;
+    border-left:none;
+    padding-left:0;
   }
+
+  .clasificacionDatos {
+    grid-column:1 / -1;
+    grid-row:3;
+    border-left:none;
+    padding-left:0;
+  }
+}
 
   #chat .chatTabs,
   #chat.chatFullscreen .chatTabs {
@@ -2138,7 +2174,7 @@ margin:0 auto;
     display:block !important;
     margin:0 auto !important;
   }
-}
+
 
 .partidaCabeceraAbierta,
 .partidaCabeceraConfirmada,
