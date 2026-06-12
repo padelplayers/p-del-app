@@ -121,12 +121,37 @@ async function limpiarNotificacionesAntiguas(uid) {
   if (contador > 0) await batch.commit();
 }
 
+function obtenerNotificacionesNoLeidas(notificaciones) {
+  return (notificaciones || []).filter(function(item) {
+    return item.data.leida !== true;
+  });
+}
+
+function obtenerTextoVisibleNotificacion(n) {
+  if (
+    n &&
+    n.tipo === "nuevo_resultado_propuesto" &&
+    n.data &&
+    n.data.equiposCorregidos === true
+  ) {
+    return {
+      titulo: "Nuevo resultado y equipos propuestos",
+      mensaje: "Se ha propuesto un nuevo resultado y también se han modificado los equipos. Revisa marcador y parejas antes de validar o rechazar."
+    };
+  }
+
+  return {
+    titulo: (n && n.titulo) || "Aviso",
+    mensaje: (n && n.mensaje) || ""
+  };
+}
+
 function renderizarCampanaNotificaciones(notificaciones) {
   const contador = document.getElementById("notificacionesContador");
   const lista = document.getElementById("notificacionesLista");
   if (!contador || !lista) return;
 
-  const noLeidas = notificaciones.filter(function(n) { return n.data.leida !== true; });
+  const noLeidas = obtenerNotificacionesNoLeidas(notificaciones);
   contador.textContent = String(noLeidas.length);
   contador.style.display = noLeidas.length > 0 ? "inline-flex" : "none";
 
@@ -138,16 +163,17 @@ function renderizarCampanaNotificaciones(notificaciones) {
   const fragment = document.createDocumentFragment();
   noLeidas.forEach(function(item) {
     const n = item.data;
+    const textoVisible = obtenerTextoVisibleNotificacion(n);
     const fila = document.createElement("div");
     fila.className = "notificacionItem" + (n.leida ? " leida" : "");
 
     const titulo = document.createElement("div");
     titulo.className = "notificacionTitulo";
-    titulo.textContent = n.titulo || "Aviso";
+    titulo.textContent = textoVisible.titulo;
 
     const mensaje = document.createElement("div");
     mensaje.className = "notificacionMensaje";
-    mensaje.textContent = n.mensaje || "";
+    mensaje.textContent = textoVisible.mensaje;
 
     const fecha = document.createElement("div");
     fecha.className = "notificacionFecha";
@@ -194,16 +220,17 @@ function crearTextoNotificacion(texto) {
 function mostrarPopupNotificacion(id, n) {
   const contenedor = document.getElementById("notificacionesPopup");
   if (!contenedor || !n || n.leida === true || n.popupMostrado === true) return;
+  const textoVisible = obtenerTextoVisibleNotificacion(n);
 
   const popup = document.createElement("div");
   popup.className = "notificacionPopup";
 
   const titulo = document.createElement("div");
   titulo.className = "notificacionPopupTitulo";
-  titulo.textContent = n.titulo || "Aviso";
+  titulo.textContent = textoVisible.titulo;
 
   const mensaje = document.createElement("div");
-  mensaje.textContent = n.mensaje || "";
+  mensaje.textContent = textoVisible.mensaje;
 
   popup.appendChild(titulo);
   popup.appendChild(mensaje);
@@ -244,11 +271,12 @@ function escucharNotificaciones(uid) {
 
   limpiarNotificacionesAntiguas(uid).catch(function(error) {
     console.warn("No se pudieron limpiar notificaciones:", error.message);
-  });
+  }).then(function() {
+    if (window.notificacionesState.uid !== uid) return;
 
-  window.notificacionesState.unsubscribe = db.collection("notificaciones")
-    .where("uid", "==", uid)
-    .onSnapshot(function(snapshot) {
+    window.notificacionesState.unsubscribe = db.collection("notificaciones")
+      .where("uid", "==", uid)
+      .onSnapshot(function(snapshot) {
       const items = [];
       snapshot.forEach(function(doc) {
         items.push({ id: doc.id, data: doc.data() || {} });
@@ -267,9 +295,9 @@ function escucharNotificaciones(uid) {
         snapshot.forEach(function(doc) {
           window.notificacionesState.idsVistos.add(doc.id);
         });
-        mostrarResumenNotificacionesPendientes(items.filter(function(item) {
-          return item.data.leida !== true;
-        }).length);
+        mostrarResumenNotificacionesPendientes(
+          obtenerNotificacionesNoLeidas(items).length
+        );
         cargaInicial = false;
         return;
       }
@@ -281,7 +309,8 @@ function escucharNotificaciones(uid) {
         window.notificacionesState.idsVistos.add(id);
         mostrarPopupNotificacion(id, change.doc.data() || {});
       });
-    });
+      });
+  });
 }
 
 function detenerNotificacionesInternas() {

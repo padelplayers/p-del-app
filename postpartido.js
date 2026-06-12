@@ -1030,7 +1030,7 @@ function guardarResultadoPropuesto(id) {
       : "Se ha introducido un resultado. Debes validarlo o rechazarlo. La validación del resultado es obligatoria. La falta de respuesta puede conllevar penalizaciones.";
 
     if (equiposModificados) {
-      mensajeAviso = "Se ha propuesto un nuevo resultado y se han modificado los equipos. Revísalo y valida o rechaza la propuesta.";
+      mensajeAviso = "Se ha propuesto un nuevo resultado y también se han modificado los equipos. Revisa marcador y parejas antes de validar o rechazar.";
     }
 
     return ref.update({
@@ -1046,7 +1046,9 @@ function guardarResultadoPropuesto(id) {
       return resolverDisputa.then(function() {
         return notificarPostPartido(destinatarios, {
           tipo: tipoAviso,
-          titulo: vieneDeDisputa ? "Nuevo resultado propuesto" : "Resultado pendiente",
+          titulo: equiposModificados
+            ? "Nuevo resultado y equipos propuestos"
+            : (vieneDeDisputa ? "Nuevo resultado propuesto" : "Resultado pendiente"),
           mensaje: mensajeAviso,
           partidaId: id,
           accion: "validar_resultado",
