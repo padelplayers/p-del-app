@@ -22,6 +22,13 @@ function obtenerFechaHoraPartida(p) {
   );
 }
 
+function tieneSustitucionPendientePartida(p) {
+  return !!p && (
+    p.sustitucionPendiente === true ||
+    p.sustitucionTipo === "reserva_subida_pendiente_aceptar"
+  );
+}
+
 function puedeConfirmarPartida(p, uid, ahora) {
   const fechaPartida = obtenerFechaHoraPartida(p);
 
@@ -30,6 +37,7 @@ function puedeConfirmarPartida(p, uid, ahora) {
     p &&
     p.creadaPor === uid &&
     p.cambioCreadorPendiente !== true &&
+    !tieneSustitucionPendientePartida(p) &&
     p.estado === "abierta" &&
     (p.jugadores || []).length === 4 &&
     fechaPartida &&
@@ -381,61 +389,64 @@ function confirmarPartida(partidaId) {
 
   const ref = db.collection("partidas").doc(partidaId);
 
-  ref.get().then(function(doc) {
-    if (!doc.exists) {
-      alert("La partida ya no existe");
-      return;
-    }
+  db.runTransaction(function(transaction) {
+    return transaction.get(ref).then(function(doc) {
+      if (!doc.exists) throw new Error("La partida ya no existe");
 
-    const p = doc.data() || {};
+      const p = doc.data() || {};
 
-    if (p.cambioCreadorPendiente === true) {
-      alert("La partida necesita un nuevo creador antes de poder confirmarse.");
-      return;
-    }
+      if (p.cambioCreadorPendiente === true) {
+        throw new Error("La partida necesita un nuevo creador antes de poder confirmarse.");
+      }
 
-    if (p.creadaPor !== user.uid) {
-      alert("Solo el creador puede confirmar la partida");
-      return;
-    }
+      if (tieneSustitucionPendientePartida(p)) {
+        throw new Error("No puedes confirmar la partida hasta que la reserva acepte su plaza.");
+      }
 
-    if (p.estado !== "abierta") {
-      alert("Esta partida no se puede confirmar");
-      return;
-    }
+      if (p.creadaPor !== user.uid) {
+        throw new Error("Solo el creador puede confirmar la partida");
+      }
 
-    if ((p.jugadores || []).length !== 4) {
-      alert("La partida necesita 4 jugadores titulares");
-      return;
-    }
+      if (p.estado !== "abierta") {
+        throw new Error("Esta partida no se puede confirmar");
+      }
 
-    const fechaPartida = obtenerFechaHoraPartida(p);
-    if (!fechaPartida || fechaPartida < new Date()) {
-      alert("No se puede confirmar una partida cuya fecha u hora ya paso");
-      return;
-    }
+      if ((p.jugadores || []).length !== 4) {
+        throw new Error("La partida necesita 4 jugadores titulares");
+      }
 
-    ref.update({
-      estado: "confirmada",
-      confirmadaAt: new Date(),
-      confirmadaPor: user.uid
-    }).then(function() {
-      const destinatarios = arrayUnicoPartida((p.jugadores || []).concat(p.reservas || [])).filter(function(uid) {
-        return uid !== user.uid;
+      const fechaPartida = obtenerFechaHoraPartida(p);
+      if (!fechaPartida || fechaPartida < new Date()) {
+        throw new Error("No se puede confirmar una partida cuya fecha u hora ya paso");
+      }
+
+      transaction.update(ref, {
+        estado: "confirmada",
+        confirmadaAt: firebase.firestore.FieldValue.serverTimestamp(),
+        confirmadaPor: user.uid
       });
 
-      return notificarPartida(destinatarios, {
-        tipo: "partida_confirmada",
-        titulo: "Partida confirmada",
-        mensaje: "La partida del " + textoFechaAvisoPartida(p) + " ha sido confirmada.",
-        partidaId: partidaId,
-        accion: "abrir_partida",
-        dedupeKey: "partida_confirmada_" + partidaId,
-        data: { estado: "confirmada" }
-      });
-    }).then(function() {
-      cargarPartidas();
+      return p;
     });
+  }).then(function(p) {
+    const destinatarios = arrayUnicoPartida((p.jugadores || []).concat(p.reservas || [])).filter(function(uid) {
+      return uid !== user.uid;
+    });
+
+    return notificarPartida(destinatarios, {
+      tipo: "partida_confirmada",
+      titulo: "Partida confirmada",
+      mensaje: "La partida del " + textoFechaAvisoPartida(p) + " ha sido confirmada.",
+      partidaId: partidaId,
+      accion: "abrir_partida",
+      dedupeKey: "partida_confirmada_" + partidaId,
+      data: { estado: "confirmada" }
+    });
+  }).then(function() {
+    cargarPartidas();
+  }).catch(function(error) {
+    alert(error && error.message ? error.message : "No se pudo confirmar la partida");
+    cargarPartidas();
   });
 }
 
@@ -575,7 +586,7 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
     estadoBadge.className = "partidaEstadoBadge";
     cabecera.appendChild(estadoBadge);
   }
-  if (p.sustitucionPendiente === true) {
+  if (tieneSustitucionPendientePartida(p)) {
     const sustitucionBadge = textoNodo("Sustitución pendiente", "span");
     sustitucionBadge.textContent = p.sustitucionTipo === "reserva_subida_pendiente_aceptar"
       ? "Sustitución pendiente de aceptar"
@@ -604,6 +615,16 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
     p.sustitucionTipo === "reserva_subida_pendiente_aceptar" &&
     uidActual &&
     p.sustitucionEntraUid === uidActual;
+
+  if (esCreador && tieneSustitucionPendientePartida(p)) {
+    const avisoSustitucionCreador = document.createElement("div");
+    avisoSustitucionCreador.className = "partidaAcciones";
+    avisoSustitucionCreador.style.cssText = "padding:8px; border-radius:6px; background:#FFF3CD; color:#664D03; font-weight:bold; text-align:left;";
+    avisoSustitucionCreador.textContent = p.sustitucionTipo === "reserva_subida_pendiente_aceptar"
+      ? "Hay una reserva pendiente de aceptar su plaza. No puedes confirmar la partida hasta que responda."
+      : "Hay una sustituciÃ³n pendiente. No puedes confirmar la partida hasta que se resuelva.";
+    cabecera.appendChild(avisoSustitucionCreador);
+  }
 
   if (cambioCreadorPendiente) {
     const cambioCreadorBox = document.createElement("div");
@@ -639,7 +660,9 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
     if (esCreador && p.estado === "abierta" && !cambioCreadorPendiente) {
       const confirmar = document.createElement("button");
       confirmar.type = "button";
-      confirmar.textContent = confirmarActivo ? "Confirmar partida" : "Faltan jugadores";
+      confirmar.textContent = confirmarActivo
+        ? "Confirmar partida"
+        : (tieneSustitucionPendientePartida(p) ? "Pendiente de aceptaciÃ³n" : "Faltan jugadores");
       confirmar.disabled = !confirmarActivo;
       confirmar.style.cssText = confirmarActivo
         ? "background:#FFC107; color:#0D47A1;"
@@ -1591,17 +1614,33 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
 
       let aviso = Promise.resolve();
       if (actualizada.tipoAviso === "reserva_pendiente_aceptar") {
-        aviso = notificarPartida(actualizada.uidReservaSustituta, {
-          tipo: "reserva_pendiente_aceptar",
-          titulo: "Confirma tu plaza",
-          mensaje: "Has sido propuesto para cubrir una baja en una partida. Confirma si puedes jugar.",
-          partidaId: partidaId,
-          accion: "abrir_partida",
-          dedupeKey: "reserva_pendiente_aceptar_" + partidaId + "_" + actualizada.uidReservaSustituta,
-          prioridad: "alta",
-          emailCritico: true,
-          data: { sale: actualizada.uidSale }
-        });
+        aviso = Promise.all([
+          notificarPartida(actualizada.uidReservaSustituta, {
+            tipo: "reserva_pendiente_aceptar",
+            titulo: "Confirma tu plaza",
+            mensaje: "Has sido propuesto para cubrir una baja en una partida. Confirma si puedes jugar.",
+            partidaId: partidaId,
+            accion: "abrir_partida",
+            dedupeKey: "reserva_pendiente_aceptar_" + partidaId + "_" + actualizada.uidReservaSustituta,
+            prioridad: "alta",
+            emailCritico: true,
+            data: { sale: actualizada.uidSale }
+          }),
+          notificarPartida(actualizada.creadaPor, {
+            tipo: "reserva_pendiente_creador",
+            titulo: "Jugador pendiente de aceptar",
+            mensaje: "Una reserva ha subido a titular y debe aceptar su plaza antes de que puedas confirmar la partida.",
+            partidaId: partidaId,
+            accion: "abrir_partida",
+            dedupeKey: "reserva_pendiente_creador_" + partidaId + "_" + actualizada.uidReservaSustituta,
+            prioridad: "alta",
+            emailCritico: true,
+            data: {
+              uidReserva: actualizada.uidReservaSustituta,
+              sale: actualizada.uidSale
+            }
+          })
+        ]);
       } else if (actualizada.tipoAviso === "sin_reserva_compatible") {
         aviso = notificarPartida(actualizada.jugadores.concat(actualizada.creadaPor || []), {
           tipo: "sin_reserva_compatible",
@@ -1759,10 +1798,13 @@ function aceptarSustitucionPartida(idPartida) {
       return uid !== actualizada.uidReserva;
     });
     const dedupePendiente = "reserva_pendiente_aceptar_" + idPartida + "_" + actualizada.uidReserva;
+    const dedupeCreador = "reserva_pendiente_creador_" + idPartida + "_" + actualizada.uidReserva;
     const resolverPendiente = typeof window.resolverNotificacionPorDedupe === "function"
-      ? window.resolverNotificacionPorDedupe(actualizada.uidReserva, dedupePendiente)
-        .catch(function(error) {
-          console.warn("No se pudo resolver el aviso pendiente de reserva:", error.message);
+      ? Promise.all([
+          window.resolverNotificacionPorDedupe(actualizada.uidReserva, dedupePendiente),
+          window.resolverNotificacionPorDedupe(actualizada.creadaPor, dedupeCreador)
+        ]).catch(function(error) {
+          console.warn("No se pudieron resolver los avisos pendientes de reserva:", error.message);
           return false;
         })
       : Promise.resolve(false);
@@ -1860,10 +1902,13 @@ function rechazarSustitucionPartida(idPartida) {
       return uid !== actualizada.uidReservaRechaza;
     });
     const dedupePendiente = "reserva_pendiente_aceptar_" + idPartida + "_" + actualizada.uidReservaRechaza;
+    const dedupeCreador = "reserva_pendiente_creador_" + idPartida + "_" + actualizada.uidReservaRechaza;
     const resolverPendiente = typeof window.resolverNotificacionPorDedupe === "function"
-      ? window.resolverNotificacionPorDedupe(actualizada.uidReservaRechaza, dedupePendiente)
-        .catch(function(error) {
-          console.warn("No se pudo resolver el aviso pendiente de reserva:", error.message);
+      ? Promise.all([
+          window.resolverNotificacionPorDedupe(actualizada.uidReservaRechaza, dedupePendiente),
+          window.resolverNotificacionPorDedupe(actualizada.creadaPor, dedupeCreador)
+        ]).catch(function(error) {
+          console.warn("No se pudieron resolver los avisos pendientes de reserva:", error.message);
           return false;
         })
       : Promise.resolve(false);
@@ -1895,6 +1940,20 @@ function rechazarSustitucionPartida(idPartida) {
         prioridad: "alta",
         emailCritico: true,
         data: { sale: actualizada.uidSale }
+      }));
+      avisos.push(notificarPartida(actualizada.creadaPor, {
+        tipo: "reserva_pendiente_creador",
+        titulo: "Jugador pendiente de aceptar",
+        mensaje: "Otra reserva ha subido a titular y debe aceptar su plaza antes de que puedas confirmar la partida.",
+        partidaId: idPartida,
+        accion: "abrir_partida",
+        dedupeKey: "reserva_pendiente_creador_" + idPartida + "_" + actualizada.uidNuevaReserva,
+        prioridad: "alta",
+        emailCritico: true,
+        data: {
+          uidReserva: actualizada.uidNuevaReserva,
+          sale: actualizada.uidSale
+        }
       }));
     } else {
       const destinatariosSinReserva = destinatariosRechazo.filter(function(uid) {
