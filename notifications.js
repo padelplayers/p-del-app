@@ -268,15 +268,14 @@ function escucharNotificaciones(uid) {
   window.notificacionesState.uid = uid;
   window.notificacionesState.idsVistos = new Set();
   let cargaInicial = true;
+  let resolverCargaInicial;
+  const cargaInicialLista = new Promise(function(resolve) {
+    resolverCargaInicial = resolve;
+  });
 
-  limpiarNotificacionesAntiguas(uid).catch(function(error) {
-    console.warn("No se pudieron limpiar notificaciones:", error.message);
-  }).then(function() {
-    if (window.notificacionesState.uid !== uid) return;
-
-    window.notificacionesState.unsubscribe = db.collection("notificaciones")
-      .where("uid", "==", uid)
-      .onSnapshot(function(snapshot) {
+  window.notificacionesState.unsubscribe = db.collection("notificaciones")
+    .where("uid", "==", uid)
+    .onSnapshot(function(snapshot) {
       const items = [];
       snapshot.forEach(function(doc) {
         items.push({ id: doc.id, data: doc.data() || {} });
@@ -295,10 +294,8 @@ function escucharNotificaciones(uid) {
         snapshot.forEach(function(doc) {
           window.notificacionesState.idsVistos.add(doc.id);
         });
-        mostrarResumenNotificacionesPendientes(
-          obtenerNotificacionesNoLeidas(items).length
-        );
         cargaInicial = false;
+        resolverCargaInicial();
         return;
       }
 
@@ -309,7 +306,24 @@ function escucharNotificaciones(uid) {
         window.notificacionesState.idsVistos.add(id);
         mostrarPopupNotificacion(id, change.doc.data() || {});
       });
-      });
+    }, function(error) {
+      console.warn("No se pudieron escuchar las notificaciones:", error.message);
+      if (cargaInicial) {
+        cargaInicial = false;
+        resolverCargaInicial();
+      }
+    });
+
+  Promise.all([
+    limpiarNotificacionesAntiguas(uid).catch(function(error) {
+      console.warn("No se pudieron limpiar notificaciones:", error.message);
+    }),
+    cargaInicialLista
+  ]).then(function() {
+    if (window.notificacionesState.uid !== uid) return;
+    mostrarResumenNotificacionesPendientes(
+      obtenerNotificacionesNoLeidas(window.notificacionesState.items).length
+    );
   });
 }
 

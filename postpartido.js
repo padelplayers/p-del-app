@@ -830,7 +830,8 @@ function fijarEquiposFormularioResultado(resultado, bloqueado) {
 }
 
 function equiposCorregidosFormularioResultado() {
-  const modal = document.getElementById("modalResultadoPostPartido");
+  const overlay = document.getElementById("modalResultadoPostPartido");
+  const modal = overlay ? overlay.querySelector(".postPartidoModal") : null;
   return !!(modal && modal.dataset.equiposCorregidos === "true");
 }
 
