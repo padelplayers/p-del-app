@@ -771,6 +771,46 @@ function actualizarOpcionesSelectsResultado() {
   });
 }
 
+function prepararCambioSelectResultado(select) {
+  if (!select || select.disabled) return;
+
+  actualizarOpcionesSelectsResultado();
+  const optionVacia = Array.prototype.slice.call(select.options).find(function(option) {
+    return !option.value;
+  });
+  const optionActual = Array.prototype.slice.call(select.options).find(function(option) {
+    return option.value && option.value === select.value;
+  });
+  if (optionActual) {
+    if (optionVacia) optionVacia.hidden = true;
+    optionActual.disabled = true;
+    optionActual.hidden = true;
+  }
+}
+
+function manejarCambioSelectResultado(select) {
+  if (!select) return;
+
+  actualizarOpcionesSelectsResultado();
+  const valorSeleccionado = select.value;
+  if (!valorSeleccionado) return;
+
+  const otroSelect = obtenerIdsSelectsResultado().map(function(id) {
+    return document.getElementById(id);
+  }).find(function(candidato) {
+    return candidato &&
+      candidato !== select &&
+      candidato.value === valorSeleccionado;
+  });
+
+  if (otroSelect) {
+    otroSelect.value = "";
+    alert("Ese jugador ya estaba seleccionado en otra posición. Esa posición ha quedado vacía para que elijas otro jugador.");
+  }
+
+  prepararCambioSelectResultado(select);
+}
+
 function fijarEquiposFormularioResultado(resultado, bloqueado) {
   if (!resultado) return;
 
@@ -957,7 +997,7 @@ function guardarResultadoPropuesto(id) {
         return;
       }
     } else {
-      equipos = leerYValidarEquiposResultado(jugadoresPermitidos);
+      equipos = leerYValidarEquiposResultado(jugadores);
       if (equipos.error) {
         alert(equipos.error);
         return;
@@ -1048,7 +1088,16 @@ function crearFilaSetResultado(numero, opcional) {
 function crearSelectJugadorResultado(id, jugadoresDatos) {
   const select = document.createElement("select");
   select.id = id;
-  select.onchange = actualizarOpcionesSelectsResultado;
+  select.onfocus = function() {
+    prepararCambioSelectResultado(select);
+  };
+  select.onmousedown = function() {
+    prepararCambioSelectResultado(select);
+  };
+  select.onblur = actualizarOpcionesSelectsResultado;
+  select.onchange = function() {
+    manejarCambioSelectResultado(select);
+  };
 
   const vacia = document.createElement("option");
   vacia.value = "";
