@@ -1441,6 +1441,7 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
   const refrescar = opciones.refrescar !== false;
   const silencioso = opciones.silencioso === true;
   const propagarError = opciones.propagarError === true;
+  let penalizacionAbandono = null;
 
   return ref.get().then(function(docInicial) {
     if (!docInicial.exists) return;
@@ -1465,6 +1466,30 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
       if (!silencioso) alert(mensaje);
       if (propagarError) throw new Error(mensaje);
       return;
+    }
+
+    if (
+      pInicial.estado === "confirmada" &&
+      pInicial.creadaPor !== uid &&
+      arrayUnicoPartida(pInicial.jugadores).includes(uid)
+    ) {
+      const mensajeAbandono = "Salir de una partida confirmada registrará un abandono y una penalización activa durante 180 días. ¿Quieres continuar?";
+      const confirmaAbandono = silencioso ? true : confirm(mensajeAbandono);
+      if (!confirmaAbandono) return;
+
+      const creadaAt = firebase.firestore.Timestamp.now();
+      penalizacionAbandono = {
+        id: "abandono_confirmada_" + partidaId + "_" + uid,
+        tipo: "abandono_confirmada",
+        motivo: "Abandono de una partida confirmada",
+        puntos: 0,
+        createdAt: creadaAt,
+        caducaAt: firebase.firestore.Timestamp.fromMillis(
+          creadaAt.toMillis() + 180 * 24 * 60 * 60 * 1000
+        ),
+        activa: true,
+        partidaId: partidaId
+      };
     }
 
     if (pInicial.creadaPor === uid && pInicial.estado === "abierta") {
@@ -1563,6 +1588,10 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
 
         if (jugadores.includes(uid)) {
           const indiceSale = jugadores.indexOf(uid);
+          const aplicaPenalizacionAbandono =
+            p.estado === "confirmada" &&
+            p.creadaPor !== uid &&
+            !!penalizacionAbandono;
 
           return elegirReservaSustitutaPartidaTransaccion(transaction, p, reservas, uid).then(function(uidReservaSustituta) {
             const datosUpdate = {};
@@ -1584,6 +1613,13 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
             }).slice(0, 2);
 
             transaction.update(ref, datosUpdate);
+            if (aplicaPenalizacionAbandono) {
+              transaction.update(db.collection("usuarios").doc(uid), {
+                "clasificacion.abandonos": firebase.firestore.FieldValue.increment(1),
+                "clasificacion.penalizacionesActivas": firebase.firestore.FieldValue.increment(1),
+                penalizaciones: firebase.firestore.FieldValue.arrayUnion(penalizacionAbandono)
+              });
+            }
             return {
               tipoAviso: uidReservaSustituta
                 ? "reserva_pendiente_aceptar"
@@ -1594,7 +1630,8 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
               reservas: datosUpdate.reservas,
               creadaPor: p.creadaPor || p.creador || null,
               fecha: p.fecha || null,
-              hora: p.hora || null
+              hora: p.hora || null,
+              penalizacionAbandono: aplicaPenalizacionAbandono ? penalizacionAbandono : null
             };
           });
         }
@@ -1656,6 +1693,25 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
       }
 
       return aviso.then(function() {
+        if (!actualizada.penalizacionAbandono) return null;
+
+        return notificarPartida(actualizada.uidSale, {
+          tipo: "penalizacion_abandono_confirmada",
+          titulo: "Penalización por abandono",
+          mensaje: "Has abandonado una partida confirmada. Se ha registrado una penalización activa durante 180 días.",
+          partidaId: partidaId,
+          accion: "abrir_partida",
+          dedupeKey: "penalizacion_abandono_confirmada_" + partidaId + "_" + actualizada.uidSale,
+          prioridad: "alta",
+          emailCritico: true,
+          data: {
+            penalizacionId: actualizada.penalizacionAbandono.id,
+            tipo: actualizada.penalizacionAbandono.tipo,
+            puntos: actualizada.penalizacionAbandono.puntos,
+            caducaAt: actualizada.penalizacionAbandono.caducaAt
+          }
+        });
+      }).then(function() {
         if (refrescar) cargarPartidas();
       });
     });
