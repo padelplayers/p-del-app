@@ -662,7 +662,7 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
       confirmar.type = "button";
       confirmar.textContent = confirmarActivo
         ? "Confirmar partida"
-        : (tieneSustitucionPendientePartida(p) ? "Pendiente de aceptaciÃ³n" : "Faltan jugadores");
+        : (tieneSustitucionPendientePartida(p) ? "Pendiente de aceptación" : "Faltan jugadores");
       confirmar.disabled = !confirmarActivo;
       confirmar.style.cssText = confirmarActivo
         ? "background:#FFC107; color:#0D47A1;"
@@ -1627,9 +1627,9 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
             data: { sale: actualizada.uidSale }
           }),
           notificarPartida(actualizada.creadaPor, {
-            tipo: "reserva_pendiente_creador",
+            tipo: "reserva_pendiente_aceptar",
             titulo: "Jugador pendiente de aceptar",
-            mensaje: "Una reserva ha subido a titular y debe aceptar su plaza antes de que puedas confirmar la partida.",
+            mensaje: "Una reserva ha sido propuesta para cubrir una baja. No podrás confirmar la partida hasta que responda.",
             partidaId: partidaId,
             accion: "abrir_partida",
             dedupeKey: "reserva_pendiente_creador_" + partidaId + "_" + actualizada.uidReservaSustituta,
@@ -1942,9 +1942,9 @@ function rechazarSustitucionPartida(idPartida) {
         data: { sale: actualizada.uidSale }
       }));
       avisos.push(notificarPartida(actualizada.creadaPor, {
-        tipo: "reserva_pendiente_creador",
+        tipo: "reserva_pendiente_aceptar",
         titulo: "Jugador pendiente de aceptar",
-        mensaje: "Otra reserva ha subido a titular y debe aceptar su plaza antes de que puedas confirmar la partida.",
+        mensaje: "Una reserva ha sido propuesta para cubrir una baja. No podrás confirmar la partida hasta que responda.",
         partidaId: idPartida,
         accion: "abrir_partida",
         dedupeKey: "reserva_pendiente_creador_" + idPartida + "_" + actualizada.uidNuevaReserva,
