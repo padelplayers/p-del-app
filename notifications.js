@@ -77,6 +77,13 @@ function crearNotificacionesParaUids(uids, datos) {
   }));
 }
 
+function esNotificacionPenalizacionPerfil(n) {
+  return !!n && (
+    n.tipo === "penalizacion_abandono_confirmada" ||
+    n.tipo === "penalizacion_agravada_cancelacion"
+  );
+}
+
 function resolverNotificacionPorDedupe(uid, dedupeKey) {
   if (!uid || !dedupeKey) return Promise.resolve(false);
 
@@ -149,10 +156,12 @@ function renderizarCampanaNotificaciones(notificaciones) {
     const acciones = document.createElement("div");
     acciones.className = "notificacionAcciones";
 
-    if (n.partidaId) {
+    if (n.partidaId || esNotificacionPenalizacionPerfil(n)) {
       const abrir = document.createElement("button");
       abrir.type = "button";
-      abrir.textContent = "Abrir partida";
+      abrir.textContent = esNotificacionPenalizacionPerfil(n)
+        ? "Ver perfil"
+        : "Abrir partida";
       abrir.onclick = function() { abrirAccionNotificacion(item.id, n); };
       acciones.appendChild(abrir);
     }
@@ -273,6 +282,12 @@ function marcarNotificacionLeida(id) {
 function abrirAccionNotificacion(id, n) {
   marcarNotificacionLeida(id).catch(function() {});
   cerrarPanelNotificaciones();
+  if (esNotificacionPenalizacionPerfil(n)) {
+    const uidPerfil = n.uid || (auth.currentUser && auth.currentUser.uid);
+    if (uidPerfil && typeof verPerfil === "function") verPerfil(uidPerfil);
+    return;
+  }
+
   if (n && n.partidaId && typeof mostrar === "function") {
     mostrar("partidas");
     if (n.accion === "validar_resultado") {
