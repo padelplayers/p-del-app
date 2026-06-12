@@ -1961,11 +1961,13 @@ body.chatAbierto #chat.chatFullscreen .chatSidebar #chatRecientes {
 .clasificacionDatos {
   display:flex;
   flex-direction:column;
+  align-items:flex-start;
   gap:8px;
   color:#333;
   font-size:14px;
   border-left:1px solid #d6d6d6;
   padding-left:22px;
+  text-align:left;
 }
 
 
