@@ -544,6 +544,25 @@ function crearFilaValoracionClasificacion(nombre, valor) {
   return fila;
 }
 
+function crearDatoIconoClasificacion(src, texto, valor, className) {
+  const fila = document.createElement("div");
+  fila.className = "clasificacionDatoIconoFila " + className;
+
+  const icono = document.createElement("img");
+  icono.className = "clasificacionDatoIcono";
+  icono.src = src;
+  icono.alt = texto;
+
+  const contenido = document.createElement("span");
+  contenido.className = "clasificacionDatoTexto";
+  contenido.textContent = texto + ": " + valor;
+
+  fila.appendChild(icono);
+  fila.appendChild(contenido);
+
+  return fila;
+}
+
 function crearCardClasificacion(jugador, posicion) {
   const card = document.createElement("div");
   card.className = "clasificacionCard";
@@ -613,15 +632,30 @@ function crearCardClasificacion(jugador, posicion) {
   datos.className = "clasificacionDatos";
 
   datos.appendChild(
-    crearTextoClasificacion("Fiabilidad: -", "clasificacionDato fiabilidad")
+    crearDatoIconoClasificacion(
+      "imagenes app/clasificacion/fiabilidad.png",
+      "Fiabilidad",
+      "-",
+      "fiabilidad"
+    )
   );
 
   datos.appendChild(
-    crearTextoClasificacion("Abandonos: -", "clasificacionDato abandonos")
+    crearDatoIconoClasificacion(
+      "imagenes app/clasificacion/abandono.png",
+      "Abandonos",
+      "-",
+      "abandonos"
+    )
   );
 
   datos.appendChild(
-    crearTextoClasificacion("Penalizaciones activas: -", "clasificacionDato penalizaciones")
+    crearDatoIconoClasificacion(
+      "imagenes app/clasificacion/penalizacion.png",
+      "Penalizaciones activas",
+      "-",
+      "penalizaciones"
+    )
   );
 
   card.appendChild(puesto);
