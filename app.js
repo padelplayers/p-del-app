@@ -34,6 +34,7 @@ let unsubscribePistas = null;
 let presenciaInterval = null;
 let presenciaUidActual = null;
 let presenciaEventosRegistrados = false;
+let revisionCancelaciones5hSesionUid = null;
 
 const PRESENCIA_HEARTBEAT_MS = 30000;
 
@@ -387,6 +388,14 @@ auth.onAuthStateChanged(async user => {
         window.escucharNotificaciones(user.uid);
       }
 
+      if (
+        revisionCancelaciones5hSesionUid !== user.uid &&
+        typeof window.revisarLimitesCancelacionClubPartidas === "function"
+      ) {
+        revisionCancelaciones5hSesionUid = user.uid;
+        window.revisarLimitesCancelacionClubPartidas();
+      }
+
       if (typeof window.mostrarAvisoPwaSiProcede === "function") {
         window.mostrarAvisoPwaSiProcede();
       }
@@ -403,6 +412,7 @@ auth.onAuthStateChanged(async user => {
   }
 
   esAdmin = false;
+  revisionCancelaciones5hSesionUid = null;
   detenerPresenciaAvanzada(null, false);
   if (typeof window.limpiarTodoChat === "function") {
     window.limpiarTodoChat();

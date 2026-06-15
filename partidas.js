@@ -48,6 +48,41 @@ function partidaNecesitaCancelacionClub(p) {
     );
 }
 
+function partidaConfirmadaAlcanzoVentana5h(p, ahora) {
+  const fechaPartida = obtenerFechaHoraPartida(p);
+  return !!(
+    p &&
+    (p.estado === "confirmada" || p.estado === "pendiente_cancelacion_club") &&
+    fechaPartida &&
+    (ahora || new Date()) >= new Date(fechaPartida.getTime() - 5 * 60 * 60 * 1000)
+  );
+}
+
+function partidaAlcanzoLimiteCancelacionClub(p, ahora) {
+  return partidaNecesitaCancelacionClub(p) &&
+    partidaConfirmadaAlcanzoVentana5h(p, ahora);
+}
+
+function crearErrorLimiteCancelacionClubPartida() {
+  const error = new Error("La partida ha alcanzado el límite de 5 horas y debe cancelarse automáticamente.");
+  error.codigo = "PARTIDA_LIMITE_CANCELACION_5H";
+  return error;
+}
+
+function esErrorLimiteCancelacionClubPartida(error) {
+  return !!error && error.codigo === "PARTIDA_LIMITE_CANCELACION_5H";
+}
+
+function forzarCancelacionClubTrasAccionBloqueada(partidaId) {
+  return procesarLimiteCancelacionClubPartida(partidaId).catch(function(error) {
+    console.warn("No se pudo completar la cancelación automática tras bloquear la acción:", error.message);
+    return false;
+  }).then(function(resultado) {
+    if (typeof cargarPartidas === "function") cargarPartidas();
+    return resultado;
+  });
+}
+
 function puedeConfirmarPartida(p, uid, ahora) {
   const fechaPartida = obtenerFechaHoraPartida(p);
 
@@ -1103,7 +1138,6 @@ function procesarLimiteCancelacionClubPartida(partidaId) {
       if (!doc.exists) return false;
 
       const p = doc.data() || {};
-      const fechaPartida = obtenerFechaHoraPartida(p);
       const uidReservaSinConfirmar = p.sustitucionTipo === "reserva_subida_pendiente_aceptar"
         ? p.sustitucionEntraUid
         : null;
@@ -1114,11 +1148,7 @@ function procesarLimiteCancelacionClubPartida(partidaId) {
       if (uidReservaSinConfirmar && !reservas.includes(uidReservaSinConfirmar)) {
         reservas.unshift(uidReservaSinConfirmar);
       }
-      if (
-        !partidaNecesitaCancelacionClub(p) ||
-        !fechaPartida ||
-        new Date() < new Date(fechaPartida.getTime() - 5 * 60 * 60 * 1000)
-      ) {
+      if (!partidaAlcanzoLimiteCancelacionClub(p)) {
         return false;
       }
 
@@ -1266,12 +1296,7 @@ function revisarLimitesCancelacionClubPartidas() {
     const tareas = [];
     snapshot.forEach(function(doc) {
       const p = doc.data() || {};
-      const fechaPartida = obtenerFechaHoraPartida(p);
-      if (
-        partidaNecesitaCancelacionClub(p) &&
-        fechaPartida &&
-        new Date() >= new Date(fechaPartida.getTime() - 5 * 60 * 60 * 1000)
-      ) {
+      if (partidaAlcanzoLimiteCancelacionClub(p)) {
         tareas.push(procesarLimiteCancelacionClubPartida(doc.id));
       }
     });
@@ -1280,6 +1305,8 @@ function revisarLimitesCancelacionClubPartidas() {
     console.warn("No se pudieron revisar las cancelaciones pendientes:", error.message);
   });
 }
+
+window.revisarLimitesCancelacionClubPartidas = revisarLimitesCancelacionClubPartidas;
 
 function revisarCancelacionesAntesDePostPartido() {
   return revisarLimitesCancelacionClubPartidas().then(function() {
@@ -1411,8 +1438,7 @@ function cargarPartidas() {
       }
 
       if (p.estado === "confirmada" && fechaPartida) {
-        const limiteSustitucion = new Date(fechaPartida.getTime() - 5 * 60 * 60 * 1000);
-        if (partidaNecesitaCancelacionClub(p) && ahora >= limiteSustitucion) {
+        if (partidaAlcanzoLimiteCancelacionClub(p, ahora)) {
           procesarLimiteCancelacionClubPartida(doc.id).then(function(actualizada) {
             if (actualizada) cargarPartidas();
           });
@@ -1725,6 +1751,10 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
         const p = doc.data() || {};
         const generoPartida = p.genero;
 
+        if (partidaAlcanzoLimiteCancelacionClub(p)) {
+          throw crearErrorLimiteCancelacionClubPartida();
+        }
+
         if (p.estado === "pendiente_cancelacion_club") {
           throw new Error("Esta partida está pendiente de cancelación con el club y ya no admite nuevos jugadores.");
         }
@@ -1754,6 +1784,10 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
         if (jugadores.includes(user.uid) || reservas.includes(user.uid)) return false;
 
         const completarEntrada = function() {
+          if (partidaAlcanzoLimiteCancelacionClub(p)) {
+            throw crearErrorLimiteCancelacionClubPartida();
+          }
+
           const jugadoresAntes = jugadores.length;
           if (!esReserva) {
             if (jugadores.length < 4) jugadores.push(user.uid);
@@ -1883,6 +1917,11 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
       });
     }
   }).catch(function(error) {
+    if (esErrorLimiteCancelacionClubPartida(error)) {
+      return forzarCancelacionClubTrasAccionBloqueada(partidaId).then(function() {
+        alert(error.message);
+      });
+    }
     alert(error && error.message ? error.message : "No se pudo unir a la partida");
   });
 }
@@ -1935,6 +1974,10 @@ function solicitarSustitutoPartida(partidaId) {
       if (!doc.exists) throw new Error("La partida ya no existe");
 
       const p = doc.data() || {};
+      if (partidaAlcanzoLimiteCancelacionClub(p)) {
+        throw crearErrorLimiteCancelacionClubPartida();
+      }
+
       const jugadores = arrayUnicoPartida(p.jugadores);
       const reservas = arrayUnicoPartida(p.reservas).filter(function(uidReserva) {
         return !jugadores.includes(uidReserva);
@@ -2033,6 +2076,11 @@ function solicitarSustitutoPartida(partidaId) {
       cargarPartidas();
     });
   }).catch(function(error) {
+    if (esErrorLimiteCancelacionClubPartida(error)) {
+      return forzarCancelacionClubTrasAccionBloqueada(partidaId).then(function() {
+        alert(error.message);
+      });
+    }
     alert(error && error.message ? error.message : "No se pudo solicitar sustituto");
   });
 }
@@ -2049,6 +2097,10 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
     if (!docInicial.exists) return;
 
     const pInicial = docInicial.data() || {};
+    if (partidaAlcanzoLimiteCancelacionClub(pInicial)) {
+      throw crearErrorLimiteCancelacionClubPartida();
+    }
+
     if (pInicial.cambioCreadorPendiente === true) {
       const mensaje = "La partida necesita un nuevo creador antes de permitir salidas.";
       if (!silencioso) alert(mensaje);
@@ -2154,6 +2206,10 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
         if (!doc.exists) return false;
 
         const p = doc.data() || {};
+        if (partidaAlcanzoLimiteCancelacionClub(p)) {
+          throw crearErrorLimiteCancelacionClubPartida();
+        }
+
         let jugadores = arrayUnicoPartida(p.jugadores);
         let reservas = arrayUnicoPartida(p.reservas).filter(function(uidReserva) {
           return !jugadores.includes(uidReserva);
@@ -2189,6 +2245,10 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
             !!penalizacionAbandono;
 
           return elegirReservaSustitutaPartidaTransaccion(transaction, p, reservas, uid).then(function(uidReservaSustituta) {
+            if (partidaAlcanzoLimiteCancelacionClub(p)) {
+              throw crearErrorLimiteCancelacionClubPartida();
+            }
+
             const datosUpdate = Object.assign({}, datosSolicitudSustitucionResueltaPartida());
             jugadores = jugadores.filter(function(j) { return j !== uid; });
 
@@ -2239,7 +2299,8 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
               creadaPor: p.creadaPor || p.creador || null,
               fecha: p.fecha || null,
               hora: p.hora || null,
-              penalizacionAbandono: aplicaPenalizacionAbandono ? penalizacionAbandono : null
+              penalizacionAbandono: aplicaPenalizacionAbandono ? penalizacionAbandono : null,
+              cancelarAutomaticamente5h: partidaConfirmadaAlcanzoVentana5h(p)
             };
           });
         }
@@ -2330,10 +2391,21 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
           }
         });
       }).then(function() {
+        if (actualizada.cancelarAutomaticamente5h) {
+          return procesarLimiteCancelacionClubPartida(partidaId).then(function() {
+            if (refrescar) cargarPartidas();
+          });
+        }
         if (refrescar) cargarPartidas();
       });
     });
   }).catch(function(error) {
+    if (esErrorLimiteCancelacionClubPartida(error)) {
+      return forzarCancelacionClubTrasAccionBloqueada(partidaId).then(function() {
+        if (!silencioso) alert(error.message);
+        if (propagarError) throw error;
+      });
+    }
     if (!silencioso) alert(error && error.message ? error.message : "No se pudo salir de la partida");
     if (propagarError) throw error;
   });
@@ -2436,6 +2508,10 @@ function aceptarSustitucionPartida(idPartida) {
       if (!doc.exists) return false;
 
       const p = doc.data() || {};
+      if (partidaAlcanzoLimiteCancelacionClub(p)) {
+        throw crearErrorLimiteCancelacionClubPartida();
+      }
+
       if (p.estado === "pendiente_cancelacion_club") {
         throw new Error("La partida ya está pendiente de cancelación con el club.");
       }
@@ -2456,6 +2532,10 @@ function aceptarSustitucionPartida(idPartida) {
         const indiceSale = jugadoresSolicitud.indexOf(uidSale);
         if (indiceSale < 0) {
           throw new Error("El jugador que solicitó sustituto ya no ocupa la plaza.");
+        }
+
+        if (partidaAlcanzoLimiteCancelacionClub(p)) {
+          throw crearErrorLimiteCancelacionClubPartida();
         }
 
         jugadoresSolicitud.splice(indiceSale, 1, user.uid);
@@ -2496,6 +2576,10 @@ function aceptarSustitucionPartida(idPartida) {
       }
       if (!jugadores.includes(user.uid)) {
         throw new Error("El reserva propuesto no figura como jugador de la partida.");
+      }
+
+      if (partidaAlcanzoLimiteCancelacionClub(p)) {
+        throw crearErrorLimiteCancelacionClubPartida();
       }
 
       transaction.update(ref, Object.assign({
@@ -2581,6 +2665,11 @@ function aceptarSustitucionPartida(idPartida) {
       cargarPartidas();
     });
   }).catch(function(error) {
+    if (esErrorLimiteCancelacionClubPartida(error)) {
+      return forzarCancelacionClubTrasAccionBloqueada(idPartida).then(function() {
+        alert(error.message);
+      });
+    }
     alert(error && error.message ? error.message : "No se pudo aceptar la sustitución");
   });
 }
@@ -2596,6 +2685,10 @@ function rechazarSustitucionPartida(idPartida) {
       if (!doc.exists) return false;
 
       const p = doc.data() || {};
+      if (partidaAlcanzoLimiteCancelacionClub(p)) {
+        throw crearErrorLimiteCancelacionClubPartida();
+      }
+
       if (p.sustitucionTipo !== "reserva_subida_pendiente_aceptar") {
         throw new Error("No hay sustitución pendiente de aceptar.");
       }
@@ -2617,6 +2710,10 @@ function rechazarSustitucionPartida(idPartida) {
       const jugadoresTrasRechazo = jugadores.slice();
 
       return elegirReservaSustitutaPartidaTransaccion(transaction, p, reservas, uidSale).then(function(nuevoReservaUid) {
+        if (partidaAlcanzoLimiteCancelacionClub(p)) {
+          throw crearErrorLimiteCancelacionClubPartida();
+        }
+
         const datosUpdate = {
           estado: p.estado === "confirmada" ? "confirmada" : "abierta"
         };
@@ -2737,6 +2834,11 @@ function rechazarSustitucionPartida(idPartida) {
       cargarPartidas();
     });
   }).catch(function(error) {
+    if (esErrorLimiteCancelacionClubPartida(error)) {
+      return forzarCancelacionClubTrasAccionBloqueada(idPartida).then(function() {
+        alert(error.message);
+      });
+    }
     alert(error && error.message ? error.message : "No se pudo rechazar la sustitución");
   });
 }
