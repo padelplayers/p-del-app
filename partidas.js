@@ -219,10 +219,8 @@ function mostrarDialogoSalidaConfirmadaPartida() {
     titulo.id = "dialogoSalidaConfirmadaTitulo";
 
     const parrafos = [
-      "Si no puedes asistir, puedes solicitar un sustituto. Si existen reservas, puedes utilizar el chat de la partida para hablar con ellas e intentar que alguna ocupe tu plaza.",
-      "Si una reserva o cualquier jugador ocupa tu plaza antes de que falten 5 horas para el inicio de la partida, no recibirás penalización.",
-      "Si abandonas sin sustituto confirmado, se registrará una penalización.",
-      "Además, si la partida queda incompleta por tu abandono y debe cancelarse al llegar al límite de 5 horas antes del inicio, se aplicará una penalización adicional."
+      "Solicitar sustituto: sigues dentro de la partida y no recibes una penalización inmediata. Se avisará a las reservas compatibles. Si una reserva acepta, ocupará tu plaza y saldrás sin penalización. Si nadie acepta, sigues siendo jugador titular y debes asistir a la partida.",
+      "Salir con penalización: abandonas la partida inmediatamente y se aplica una penalización por abandono. Si la partida queda incompleta y se cancela automáticamente por falta de jugador, se podrá aplicar una penalización adicional."
     ];
     const contenido = document.createElement("div");
     contenido.className = "partidaDialogoTexto";
