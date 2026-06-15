@@ -1232,11 +1232,17 @@ function revisarLimitesCancelacionClubPartidas() {
   });
 }
 
+function revisarCancelacionesAntesDePostPartido() {
+  return revisarLimitesCancelacionClubPartidas().then(function() {
+    if (typeof window.revisarAvisosPostPartido !== "function") return null;
+    return window.revisarAvisosPostPartido();
+  });
+}
+
 function asegurarRevisionCancelacionClubPartidas() {
   if (window.revisionCancelacionClubPartidasInterval) return;
-  revisarLimitesCancelacionClubPartidas();
   window.revisionCancelacionClubPartidasInterval = setInterval(function() {
-    revisarLimitesCancelacionClubPartidas();
+    revisarCancelacionesAntesDePostPartido();
   }, 60 * 1000);
 }
 
@@ -1244,9 +1250,6 @@ function cargarPartidas() {
   if (!window.modoPartidas) window.modoPartidas = "proximas";
 
   asegurarRevisionCancelacionClubPartidas();
-  if (typeof window.asegurarRevisionAvisosPostPartido === "function") {
-    window.asegurarRevisionAvisosPostPartido();
-  }
   actualizarBotonesPartidas();
   cargarFiltroPistas();
 
@@ -1255,7 +1258,10 @@ function cargarPartidas() {
 
   contenedor.replaceChildren(textoNodo("Cargando..."));
 
-  db.collection("partidas").get()
+  revisarCancelacionesAntesDePostPartido()
+  .then(function() {
+    return db.collection("partidas").get();
+  })
   .then(function(snapshot) {
     if (snapshot.empty) {
       contenedor.replaceChildren(textoNodo("No hay partidas"));
