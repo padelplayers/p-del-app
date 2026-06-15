@@ -12,14 +12,24 @@ html{
 }
 
 .header{
-  background:linear-gradient(90deg,#1565C0 0%,#1565C0 45%,#FFC107 55%,#FFC107 100%);
-  padding:18px 10px;
+  background:#ffffff;
+  padding:8px 12px;
   color:white;
+  line-height:0;
+}
+
+.bannerHeader{
+  display:block;
 }
 
 .logo{
-  width:200px;
-  margin-bottom:5px;
+  display:block;
+  width:auto;
+  max-width:100%;
+  height:auto;
+  max-height:150px;
+  margin:0 auto;
+  object-fit:contain;
 }
 
 .title{
@@ -553,6 +563,16 @@ body.chatAbierto{
   body{
     --chat-header-height:46px;
     --chat-mobile-sidebar-width:62px;
+  }
+
+  .header{
+    padding:6px 8px;
+  }
+
+  .logo{
+    width:auto;
+    max-width:100%;
+    max-height:72px;
   }
 
   button:not(.chatVolver):not(.chatComposer button):not(.partidaChatBtn):not(.chatTab):not(.chatRecentItem):not(.notificacionesBtn) {
