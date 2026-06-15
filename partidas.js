@@ -1,5 +1,75 @@
 window.modoPartidas = window.modoPartidas || "proximas";
 
+const DESCUENTO_FIABILIDAD_PENALIZACION = {
+  abandono_confirmada: 10,
+  cancelacion_por_falta_sustituto: 10
+};
+
+function fechaPenalizacionToMillis(valor) {
+  if (!valor) return null;
+  if (typeof valor.toMillis === "function") return valor.toMillis();
+  if (typeof valor.toDate === "function") return valor.toDate().getTime();
+  if (valor instanceof Date) return valor.getTime();
+
+  const fecha = new Date(valor);
+  const millis = fecha.getTime();
+  return isNaN(millis) ? null : millis;
+}
+
+function obtenerPenalizacionesActivasVigentes(penalizaciones, ahora) {
+  const lista = Array.isArray(penalizaciones) ? penalizaciones : [];
+  const ahoraMillis = fechaPenalizacionToMillis(ahora || new Date());
+
+  return lista.filter(function(penalizacion) {
+    if (!penalizacion || penalizacion.activa === false) return false;
+
+    const caducaAtMillis = fechaPenalizacionToMillis(penalizacion.caducaAt);
+    return !caducaAtMillis || caducaAtMillis > ahoraMillis;
+  });
+}
+
+function obtenerDescuentoFiabilidadPenalizacion(penalizacion) {
+  if (!penalizacion) return 0;
+  const tipo = String(penalizacion.tipo || "").trim();
+  return DESCUENTO_FIABILIDAD_PENALIZACION[tipo] || 0;
+}
+
+function calcularFiabilidadDesdePenalizaciones(penalizaciones, ahora) {
+  const activas = obtenerPenalizacionesActivasVigentes(penalizaciones, ahora);
+  const descuento = activas.reduce(function(total, penalizacion) {
+    return total + obtenerDescuentoFiabilidadPenalizacion(penalizacion);
+  }, 0);
+
+  return Math.max(0, Math.min(100, 100 - descuento));
+}
+
+function resumenPenalizacionesFiabilidad(penalizaciones, ahora) {
+  const activas = obtenerPenalizacionesActivasVigentes(penalizaciones, ahora);
+  return {
+    penalizacionesActivas: activas.length,
+    fiabilidad: calcularFiabilidadDesdePenalizaciones(penalizaciones, ahora),
+    penalizacionesActivasLista: activas
+  };
+}
+
+function datosClasificacionPenalizaciones(dataUsuario, penalizacionesExtra) {
+  const existentes = Array.isArray(dataUsuario && dataUsuario.penalizaciones)
+    ? dataUsuario.penalizaciones
+    : [];
+  const nuevas = Array.isArray(penalizacionesExtra)
+    ? penalizacionesExtra.filter(function(penalizacion) { return !!penalizacion; })
+    : [];
+  const resumen = resumenPenalizacionesFiabilidad(existentes.concat(nuevas));
+
+  return {
+    resumen: resumen,
+    update: {
+      "clasificacion.penalizacionesActivas": resumen.penalizacionesActivas,
+      "clasificacion.fiabilidad": resumen.fiabilidad
+    }
+  };
+}
+
 function textoNodo(texto, tag) {
   const el = document.createElement(tag || "div");
   el.textContent = texto;
@@ -245,6 +315,7 @@ function crearPenalizacionPartida(partidaId, uid, tipo, motivo) {
     tipo: tipo,
     motivo: motivo,
     puntos: 0,
+    impactoFiabilidad: -obtenerDescuentoFiabilidadPenalizacion({ tipo: tipo }),
     createdAt: creadaAt,
     caducaAt: firebase.firestore.Timestamp.fromMillis(
       creadaAt.toMillis() + 180 * 24 * 60 * 60 * 1000
@@ -1178,28 +1249,39 @@ function procesarLimiteCancelacionClubPartida(partidaId) {
           )
         : null;
 
-      if (penalizacionAgravada) {
-        transaction.update(db.collection("usuarios").doc(uidResponsable), {
-          "clasificacion.penalizacionesActivas": firebase.firestore.FieldValue.increment(1),
-          penalizaciones: firebase.firestore.FieldValue.arrayUnion(penalizacionAgravada)
-        });
+      function finalizarCancelacionPendiente() {
+        transaction.delete(ref);
+        return {
+          partida: p,
+          creadaPor: p.creadaPor || p.creador || null,
+          participantes: arrayUnicoPartida(
+            jugadores
+              .concat(reservas)
+              .concat(p.creadaPor || p.creador || [])
+              .concat(abandonos.map(function(abandono) {
+                return abandono && abandono.uid;
+              }))
+          ),
+          uidResponsable: penalizacionAgravada ? uidResponsable : null,
+          penalizacionAgravada: penalizacionAgravada
+        };
       }
-      transaction.delete(ref);
 
-      return {
-        partida: p,
-        creadaPor: p.creadaPor || p.creador || null,
-        participantes: arrayUnicoPartida(
-          jugadores
-            .concat(reservas)
-            .concat(p.creadaPor || p.creador || [])
-            .concat(abandonos.map(function(abandono) {
-              return abandono && abandono.uid;
-            }))
-        ),
-        uidResponsable: penalizacionAgravada ? uidResponsable : null,
-        penalizacionAgravada: penalizacionAgravada
-      };
+      if (!penalizacionAgravada) {
+        return finalizarCancelacionPendiente();
+      }
+
+      const usuarioResponsableRef = db.collection("usuarios").doc(uidResponsable);
+      return transaction.get(usuarioResponsableRef).then(function(docUsuario) {
+        const datosUsuario = docUsuario.exists ? (docUsuario.data() || {}) : {};
+        const datosClasificacion = datosClasificacionPenalizaciones(datosUsuario, [penalizacionAgravada]);
+
+        transaction.update(usuarioResponsableRef, Object.assign({}, datosClasificacion.update, {
+          penalizaciones: firebase.firestore.FieldValue.arrayUnion(penalizacionAgravada)
+        }));
+
+        return finalizarCancelacionPendiente();
+      });
     });
   }).then(function(actualizada) {
     if (!actualizada) return false;
@@ -2277,31 +2359,43 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
               });
             }
 
-            transaction.update(ref, datosUpdate);
-            if (aplicaPenalizacionAbandono) {
-              transaction.update(db.collection("usuarios").doc(uid), {
-                "clasificacion.abandonos": firebase.firestore.FieldValue.increment(1),
-                "clasificacion.penalizacionesActivas": firebase.firestore.FieldValue.increment(1),
-                penalizaciones: firebase.firestore.FieldValue.arrayUnion(penalizacionAbandono)
-              });
+            function finalizarSalidaPartida(docUsuario) {
+              transaction.update(ref, datosUpdate);
+
+              if (aplicaPenalizacionAbandono) {
+                const datosUsuario = docUsuario && docUsuario.exists ? (docUsuario.data() || {}) : {};
+                const datosClasificacion = datosClasificacionPenalizaciones(datosUsuario, [penalizacionAbandono]);
+
+                transaction.update(db.collection("usuarios").doc(uid), Object.assign({}, datosClasificacion.update, {
+                  "clasificacion.abandonos": firebase.firestore.FieldValue.increment(1),
+                  penalizaciones: firebase.firestore.FieldValue.arrayUnion(penalizacionAbandono)
+                }));
+              }
+
+              return {
+                tipoAviso: uidReservaSustituta
+                  ? "reserva_pendiente_aceptar"
+                  : (!uidReservaSustituta && p.estado === "confirmada" ? "sin_reserva_compatible" : null),
+                uidReservaSustituta: uidReservaSustituta || null,
+                uidSale: uid,
+                jugadores: datosUpdate.jugadores,
+                reservas: datosUpdate.reservas,
+                reservasSolicitudAnterior: arrayUnicoPartida(p.solicitudSustitucionReservasCompatibles),
+                solicitudAnteriorUid: p.solicitudSustitucionUid || null,
+                participantesSolicitudAnterior: arrayUnicoPartida(p.jugadores).concat(p.reservas || []),
+                creadaPor: p.creadaPor || p.creador || null,
+                fecha: p.fecha || null,
+                hora: p.hora || null,
+                penalizacionAbandono: aplicaPenalizacionAbandono ? penalizacionAbandono : null,
+                cancelarAutomaticamente5h: partidaConfirmadaAlcanzoVentana5h(p)
+              };
             }
-            return {
-              tipoAviso: uidReservaSustituta
-                ? "reserva_pendiente_aceptar"
-                : (!uidReservaSustituta && p.estado === "confirmada" ? "sin_reserva_compatible" : null),
-              uidReservaSustituta: uidReservaSustituta || null,
-              uidSale: uid,
-              jugadores: datosUpdate.jugadores,
-              reservas: datosUpdate.reservas,
-              reservasSolicitudAnterior: arrayUnicoPartida(p.solicitudSustitucionReservasCompatibles),
-              solicitudAnteriorUid: p.solicitudSustitucionUid || null,
-              participantesSolicitudAnterior: arrayUnicoPartida(p.jugadores).concat(p.reservas || []),
-              creadaPor: p.creadaPor || p.creador || null,
-              fecha: p.fecha || null,
-              hora: p.hora || null,
-              penalizacionAbandono: aplicaPenalizacionAbandono ? penalizacionAbandono : null,
-              cancelarAutomaticamente5h: partidaConfirmadaAlcanzoVentana5h(p)
-            };
+
+            if (!aplicaPenalizacionAbandono) {
+              return finalizarSalidaPartida(null);
+            }
+
+            return transaction.get(db.collection("usuarios").doc(uid)).then(finalizarSalidaPartida);
           });
         }
 

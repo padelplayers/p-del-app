@@ -686,6 +686,7 @@ function cargarClasificacionComunitaria() {
   db.collection("usuarios").get()
     .then(function(snapshot) {
       const jugadores = [];
+      const recalculosPendientes = [];
 
       snapshot.forEach(function(doc) {
         const data = doc.data() || {};
@@ -694,9 +695,22 @@ function cargarClasificacionComunitaria() {
         const partidos = Number(c.partidos || 0);
         const valoracionesRecibidas = Number(c.valoracionesRecibidas || 0);
         const abandonos = Number(c.abandonos || 0);
-        const penalizacionesActivas = Number(c.penalizacionesActivas || 0);
-        const fiabilidad = Math.max(0, 100 - (abandonos * 15));
+        const resumenPenalizaciones = resumenPenalizacionesFiabilidad(data.penalizaciones || []);
+        const penalizacionesActivas = resumenPenalizaciones.penalizacionesActivas;
+        const fiabilidad = resumenPenalizaciones.fiabilidad;
         const nombre = data.nombre || "Jugador";
+
+        if (
+          Number(c.penalizacionesActivas || 0) !== penalizacionesActivas ||
+          Number(c.fiabilidad || 100) !== fiabilidad
+        ) {
+          recalculosPendientes.push(doc.ref.update({
+            "clasificacion.penalizacionesActivas": penalizacionesActivas,
+            "clasificacion.fiabilidad": fiabilidad
+          }).catch(function(error) {
+            console.warn("No se pudo recalcular la fiabilidad de " + doc.id + ":", error.message);
+          }));
+        }
 
         jugadores.push({
           uid: doc.id,
@@ -713,6 +727,12 @@ function cargarClasificacionComunitaria() {
           mediaCompromiso: formatearMediaClasificacion(c.compromisoTotal, valoracionesRecibidas)
         });
       });
+
+      if (recalculosPendientes.length > 0) {
+        Promise.all(recalculosPendientes).catch(function(error) {
+          console.warn("No se pudieron guardar todos los recalculos de fiabilidad:", error.message);
+        });
+      }
 
       jugadores.sort(function(a, b) {
         if (b.puntos !== a.puntos) return b.puntos - a.puntos;
