@@ -60,6 +60,54 @@ function renderizarEvolucionNivelPerfil(data) {
   }
 }
 
+function obtenerFotoVisualPerfil(data, usarFallbackSexo) {
+  data = data || {};
+  if (usarFallbackSexo) {
+    return data.fotoPerfil && data.fotoPerfil.startsWith("http")
+      ? data.fotoPerfil
+      : (data.sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg");
+  }
+
+  return data.fotoPerfil || "imagen/hombre.jpeg";
+}
+
+function renderizarDatosVisualesPerfil(data, opciones) {
+  data = data || {};
+  opciones = opciones || {};
+
+  const nombrePerfil = document.getElementById("nombrePerfil");
+  if (nombrePerfil) nombrePerfil.innerText = data.nombre || "";
+
+  renderizarEvolucionNivelPerfil(data);
+
+  const fotoPerfil = document.getElementById("fotoPerfil");
+  if (fotoPerfil) fotoPerfil.src = obtenerFotoVisualPerfil(data, opciones.usarFallbackSexo === true);
+
+  const manoPerfil = document.getElementById("manoPerfil");
+  if (manoPerfil) manoPerfil.innerText = data.mano || "-";
+
+  const posicionPerfil = document.getElementById("posicionPerfil");
+  if (posicionPerfil) posicionPerfil.innerText = data.posicion || "-";
+
+  if (opciones.actualizarStats !== false) {
+    const clasificacion = data.clasificacion || {};
+    const partidasCount = document.getElementById("partidasCount");
+    if (partidasCount) partidasCount.innerText = obtenerTotalPerfil(clasificacion.partidos);
+
+    const seguidores = document.getElementById("seguidores");
+    if (seguidores) seguidores.innerText = obtenerTotalPerfil(data.seguidores);
+
+    const seguidos = document.getElementById("seguidos");
+    if (seguidos) seguidos.innerText = obtenerTotalPerfil(data.siguiendo);
+  }
+
+  const manoSelect = document.getElementById("manoEditar");
+  const posicionSelect = document.getElementById("posicionEditar");
+
+  if (manoSelect && data.mano) manoSelect.value = data.mano;
+  if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
+}
+
 function configurarBotonChatPrivadoPerfil(uid) {
   const user = auth.currentUser;
   const botones = document.querySelector("#perfil .perfil-botones");
@@ -416,34 +464,8 @@ if (!doc.exists) {
 const data = doc.data();
 console.log("DATA:", data);
 
-    const manoSelect = document.getElementById("manoEditar");
-const posicionSelect = document.getElementById("posicionEditar");
-
-if (manoSelect && data.mano) manoSelect.value = data.mano;
-if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
-
-  
-
-
-    document.getElementById("nombrePerfil").innerText = data.nombre || "";
-    renderizarEvolucionNivelPerfil(data);
-    document.getElementById("manoPerfil").innerText = data.mano || "-";
-    document.getElementById("posicionPerfil").innerText = data.posicion || "-";
+    renderizarDatosVisualesPerfil(data, { usarFallbackSexo: true });
     console.log("FOTO PERFIL:", data.fotoPerfil);
-    document.getElementById("fotoPerfil").src =
-  data.fotoPerfil && data.fotoPerfil.startsWith("http")
-    ? data.fotoPerfil
-    : (data.sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg");
-
-    document.getElementById("seguidores").innerText =
-      obtenerTotalPerfil(data.seguidores);
-
-    document.getElementById("seguidos").innerText =
-      obtenerTotalPerfil(data.siguiendo);
-
-    const clasificacion = data.clasificacion || {};
-    const partidasCount = document.getElementById("partidasCount");
-    if (partidasCount) partidasCount.innerText = obtenerTotalPerfil(clasificacion.partidos);
 
   });
 
@@ -652,32 +674,9 @@ function cargarPerfil(uid){
 
       const data = doc.data();
 
-      document.getElementById("nombrePerfil").innerText = data.nombre || "";
-      renderizarEvolucionNivelPerfil(data);
-      document.getElementById("fotoPerfil").src = data.fotoPerfil || "imagen/hombre.jpeg";
-
-      document.getElementById("manoPerfil").innerText = data.mano || "-";
-      document.getElementById("posicionPerfil").innerText = data.posicion || "-";
-
-      if (document.getElementById("perfil").style.display === "block") {
-
-  const clasificacion = data.clasificacion || {};
-  const elPartidos = document.getElementById("partidasCount");
-  if (elPartidos) elPartidos.innerText = obtenerTotalPerfil(clasificacion.partidos);
-
-  const elSeguidores = document.getElementById("seguidores");
-  if (elSeguidores) elSeguidores.innerText = obtenerTotalPerfil(data.seguidores);
-
-  const elSeguidos = document.getElementById("seguidos");
-  if (elSeguidos) elSeguidos.innerText = obtenerTotalPerfil(data.siguiendo);
-
-}
-
-      const manoSelect = document.getElementById("manoEditar");
-      const posicionSelect = document.getElementById("posicionEditar");
-
-      if (manoSelect && data.mano) manoSelect.value = data.mano;
-      if (posicionSelect && data.posicion) posicionSelect.value = data.posicion;
+      renderizarDatosVisualesPerfil(data, {
+        actualizarStats: document.getElementById("perfil").style.display === "block"
+      });
 
     });
 }
