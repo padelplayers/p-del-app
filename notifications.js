@@ -146,6 +146,44 @@ function obtenerTextoVisibleNotificacion(n) {
   };
 }
 
+function obtenerContactoReservaNotificacion(n) {
+  if (
+    !n ||
+    n.tipo !== "partida_cancelada_automatica_5h_creador" ||
+    !n.data ||
+    !n.data.contactoReserva
+  ) {
+    return null;
+  }
+
+  const contacto = n.data.contactoReserva;
+  const valor = String(contacto.valor || "").trim();
+  if (contacto.tipo === "web" && /^https?:\/\//i.test(valor)) {
+    return { tipo: "web", valor: valor };
+  }
+  if (contacto.tipo === "telefono" && valor.replace(/\D/g, "").length >= 6) {
+    return { tipo: "telefono", valor: valor };
+  }
+  return null;
+}
+
+function obtenerAccionVisibleNotificacion(n) {
+  if (esNotificacionPenalizacionPerfil(n)) {
+    return { texto: "Ver perfil" };
+  }
+
+  const contactoReserva = obtenerContactoReservaNotificacion(n);
+  if (contactoReserva) {
+    return {
+      texto: contactoReserva.tipo === "web" ? "Cancelar reserva" : "Contactar pista"
+    };
+  }
+
+  if (n && n.tipo === "partida_cancelada_automatica_5h_creador") return null;
+  if (n && n.partidaId) return { texto: "Abrir partida" };
+  return null;
+}
+
 function renderizarCampanaNotificaciones(notificaciones) {
   const contador = document.getElementById("notificacionesContador");
   const lista = document.getElementById("notificacionesLista");
@@ -182,12 +220,11 @@ function renderizarCampanaNotificaciones(notificaciones) {
     const acciones = document.createElement("div");
     acciones.className = "notificacionAcciones";
 
-    if (n.partidaId || esNotificacionPenalizacionPerfil(n)) {
+    const accionVisible = obtenerAccionVisibleNotificacion(n);
+    if (accionVisible) {
       const abrir = document.createElement("button");
       abrir.type = "button";
-      abrir.textContent = esNotificacionPenalizacionPerfil(n)
-        ? "Ver perfil"
-        : "Abrir partida";
+      abrir.textContent = accionVisible.texto;
       abrir.onclick = function() { abrirAccionNotificacion(item.id, n); };
       acciones.appendChild(abrir);
     }
@@ -357,6 +394,17 @@ function marcarNotificacionLeida(id) {
 function abrirAccionNotificacion(id, n) {
   marcarNotificacionLeida(id).catch(function() {});
   cerrarPanelNotificaciones();
+
+  const contactoReserva = obtenerContactoReservaNotificacion(n);
+  if (contactoReserva) {
+    if (contactoReserva.tipo === "web") {
+      window.open(contactoReserva.valor, "_blank", "noopener");
+    } else {
+      window.location.href = "tel:" + contactoReserva.valor.replace(/[^\d+]/g, "");
+    }
+    return;
+  }
+
   if (esNotificacionPenalizacionPerfil(n)) {
     const uidPerfil = n.uid || (auth.currentUser && auth.currentUser.uid);
     if (uidPerfil && typeof verPerfil === "function") verPerfil(uidPerfil);

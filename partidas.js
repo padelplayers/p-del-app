@@ -95,6 +95,33 @@ function textoFechaAvisoPartida(p) {
   return ((p.fecha || "") + " " + (p.hora || "")).trim();
 }
 
+function normalizarContactoReservaPartida(valor) {
+  const contacto = String(valor || "").trim();
+  if (!contacto) return null;
+
+  if (/^https?:\/\//i.test(contacto)) {
+    return { tipo: "web", valor: contacto };
+  }
+
+  if (contacto.replace(/\D/g, "").length >= 6) {
+    return { tipo: "telefono", valor: contacto };
+  }
+
+  return null;
+}
+
+function obtenerContactoReservaPartida(pistaId) {
+  if (!pistaId) return Promise.resolve(null);
+
+  return db.collection("pistas").doc(pistaId).get().then(function(docPista) {
+    if (!docPista.exists) return null;
+    return normalizarContactoReservaPartida((docPista.data() || {}).reserva);
+  }).catch(function(error) {
+    console.warn("No se pudo obtener el contacto de reserva de la pista:", error.message);
+    return null;
+  });
+}
+
 function actualizarBotonesPartidas() {
   const btnProx = document.getElementById("btnProximas");
   const btnPend = document.getElementById("btnPendientes");
@@ -1147,17 +1174,29 @@ function procesarLimiteCancelacionClubPartida(partidaId) {
   }).then(function(actualizada) {
     if (!actualizada) return false;
 
+    const pistaId = actualizada.partida && actualizada.partida.pistaId;
+    return obtenerContactoReservaPartida(pistaId).then(function(contactoReserva) {
+      actualizada.contactoReserva = contactoReserva;
+      return actualizada;
+    });
+  }).then(function(actualizada) {
+    if (!actualizada) return false;
+
     const avisos = [];
     if (actualizada.creadaPor) {
       avisos.push(notificarPartida(actualizada.creadaPor, {
         tipo: "partida_cancelada_automatica_5h_creador",
         titulo: "Partida cancelada automáticamente",
-        mensaje: "La partida seguía incompleta al llegar al límite de 5 horas y se ha eliminado de la app. Debes cancelar la reserva real con el club.",
+        mensaje: "La partida seguía incompleta al llegar al límite de 5 horas y ha sido eliminada de la app.\n\nDebes cancelar la reserva real con el club lo antes posible. Como la cancelación se ha producido a 5 horas del inicio, dispones aproximadamente de 1 hora para realizar la gestión antes de entrar en las últimas 4 horas previas a la partida, donde algunos clubes pueden aplicar condiciones especiales, restricciones o costes de cancelación.\n\nSi la pista fue reservada por teléfono o web, contacta con la instalación cuanto antes para evitar posibles pagos u obligaciones asociadas a la reserva.",
         partidaId: partidaId,
         dedupeKey: "partida_cancelada_automatica_5h_creador_" + partidaId,
         prioridad: "alta",
         emailCritico: true,
-        data: { motivo: "incompleta_sin_sustituto" }
+        accion: actualizada.contactoReserva ? "contactar_pista" : null,
+        data: {
+          motivo: "incompleta_sin_sustituto",
+          contactoReserva: actualizada.contactoReserva
+        }
       }));
     }
     const participantes = actualizada.participantes.filter(function(uid) {
