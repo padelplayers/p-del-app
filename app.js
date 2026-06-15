@@ -698,11 +698,14 @@ function cargarClasificacionComunitaria() {
         const resumenPenalizaciones = resumenPenalizacionesFiabilidad(data.penalizaciones || []);
         const penalizacionesActivas = resumenPenalizaciones.penalizacionesActivas;
         const fiabilidad = resumenPenalizaciones.fiabilidad;
+        const fiabilidadGuardada = c.fiabilidad === undefined || c.fiabilidad === null
+          ? 100
+          : Number(c.fiabilidad);
         const nombre = data.nombre || "Jugador";
 
         if (
           Number(c.penalizacionesActivas || 0) !== penalizacionesActivas ||
-          Number(c.fiabilidad || 100) !== fiabilidad
+          fiabilidadGuardada !== fiabilidad
         ) {
           recalculosPendientes.push(doc.ref.update({
             "clasificacion.penalizacionesActivas": penalizacionesActivas,

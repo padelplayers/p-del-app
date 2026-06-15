@@ -4,6 +4,7 @@ const DESCUENTO_FIABILIDAD_PENALIZACION = {
   abandono_confirmada: 10,
   cancelacion_por_falta_sustituto: 10
 };
+const DURACION_PENALIZACION_MS = 180 * 24 * 60 * 60 * 1000;
 
 function fechaPenalizacionToMillis(valor) {
   if (!valor) return null;
@@ -16,6 +17,18 @@ function fechaPenalizacionToMillis(valor) {
   return isNaN(millis) ? null : millis;
 }
 
+function obtenerCaducidadPenalizacionMillis(penalizacion) {
+  if (!penalizacion) return null;
+
+  const caducaAtMillis = fechaPenalizacionToMillis(penalizacion.caducaAt);
+  if (caducaAtMillis) return caducaAtMillis;
+
+  const createdAtMillis = fechaPenalizacionToMillis(penalizacion.createdAt);
+  if (!createdAtMillis) return null;
+
+  return createdAtMillis + DURACION_PENALIZACION_MS;
+}
+
 function obtenerPenalizacionesActivasVigentes(penalizaciones, ahora) {
   const lista = Array.isArray(penalizaciones) ? penalizaciones : [];
   const ahoraMillis = fechaPenalizacionToMillis(ahora || new Date());
@@ -23,8 +36,8 @@ function obtenerPenalizacionesActivasVigentes(penalizaciones, ahora) {
   return lista.filter(function(penalizacion) {
     if (!penalizacion || penalizacion.activa === false) return false;
 
-    const caducaAtMillis = fechaPenalizacionToMillis(penalizacion.caducaAt);
-    return !caducaAtMillis || caducaAtMillis > ahoraMillis;
+    const caducidadMillis = obtenerCaducidadPenalizacionMillis(penalizacion);
+    return !!caducidadMillis && caducidadMillis > ahoraMillis;
   });
 }
 
@@ -318,7 +331,7 @@ function crearPenalizacionPartida(partidaId, uid, tipo, motivo) {
     impactoFiabilidad: -obtenerDescuentoFiabilidadPenalizacion({ tipo: tipo }),
     createdAt: creadaAt,
     caducaAt: firebase.firestore.Timestamp.fromMillis(
-      creadaAt.toMillis() + 180 * 24 * 60 * 60 * 1000
+      creadaAt.toMillis() + DURACION_PENALIZACION_MS
     ),
     activa: true,
     partidaId: partidaId
