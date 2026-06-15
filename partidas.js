@@ -1181,6 +1181,16 @@ function procesarLimiteCancelacionClubPartida(partidaId) {
     });
   }).then(function(actualizada) {
     if (!actualizada) return false;
+    if (typeof window.resolverNotificacionesPorPartidaId !== "function") return actualizada;
+
+    return window.resolverNotificacionesPorPartidaId(partidaId).catch(function(error) {
+      console.warn("No se pudieron resolver los avisos anteriores de la partida cancelada:", error.message);
+      return 0;
+    }).then(function() {
+      return actualizada;
+    });
+  }).then(function(actualizada) {
+    if (!actualizada) return false;
 
     const avisos = [];
     if (actualizada.creadaPor) {
