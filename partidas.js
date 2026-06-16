@@ -682,6 +682,11 @@ async function eliminarPartidaConChat(partidaId) {
   }
 
   await db.collection("partidas").doc(partidaId).delete();
+  if (typeof window.resolverNotificacionesTemporalesPorPartidaId === "function") {
+    await window.resolverNotificacionesTemporalesPorPartidaId(partidaId).catch(function(error) {
+      console.warn("No se pudieron resolver los avisos temporales de la partida eliminada:", error.message);
+    });
+  }
   return true;
 }
 
@@ -3210,7 +3215,13 @@ window.guardarPartidaFinalizada = function(p, idPartida) {
     return partidaRef.set({
       guardadaEnHistorial: true,
       guardadaEnHistorialAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
+    }, { merge: true }).then(function() {
+      if (typeof window.resolverNotificacionesTemporalesPorPartidaId !== "function") return null;
+      return window.resolverNotificacionesTemporalesPorPartidaId(idPartida).catch(function(error) {
+        console.warn("No se pudieron resolver los avisos temporales de la partida finalizada:", error.message);
+        return null;
+      });
+    });
   };
 
   return historialRef.get().then(function(doc) {

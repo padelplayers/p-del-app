@@ -84,6 +84,21 @@ function esNotificacionPenalizacionPerfil(n) {
   );
 }
 
+function esNotificacionFinalCancelacionPartida(n) {
+  return !!n && (
+    n.tipo === "partida_cancelada" ||
+    n.tipo === "partida_cancelada_automatica_5h" ||
+    n.tipo === "partida_cancelada_automatica_5h_creador"
+  );
+}
+
+function esNotificacionConAccionPartidaActiva(n) {
+  if (!n || !n.partidaId) return false;
+  if (esNotificacionPenalizacionPerfil(n)) return false;
+  if (esNotificacionFinalCancelacionPartida(n)) return false;
+  return !!n.accion || n.accion === undefined;
+}
+
 function resolverNotificacionPorDedupe(uid, dedupeKey) {
   if (!uid || !dedupeKey) return Promise.resolve(false);
 
@@ -96,8 +111,10 @@ function resolverNotificacionPorDedupe(uid, dedupeKey) {
   });
 }
 
-function resolverNotificacionesPorPartidaId(partidaId) {
+function resolverNotificacionesTemporalesPorPartidaId(partidaId, opciones) {
   if (!partidaId) return Promise.resolve(0);
+  opciones = opciones || {};
+  const marcarLeida = opciones.marcarLeida !== false;
 
   return db.collection("notificaciones").where("partidaId", "==", partidaId).get()
     .then(function(snapshot) {
@@ -106,21 +123,32 @@ function resolverNotificacionesPorPartidaId(partidaId) {
 
       snapshot.forEach(function(doc) {
         const notificacion = doc.data() || {};
-        if (esNotificacionPenalizacionPerfil(notificacion)) return;
+        if (!esNotificacionConAccionPartidaActiva(notificacion)) return;
 
-        batch.set(doc.ref, {
+        const update = {
           resuelta: true,
           resueltaAt: firebase.firestore.FieldValue.serverTimestamp(),
-          leida: true,
-          leidaAt: firebase.firestore.FieldValue.serverTimestamp(),
           accion: null
-        }, { merge: true });
+        };
+
+        if (marcarLeida) {
+          update.leida = true;
+          update.leidaAt = firebase.firestore.FieldValue.serverTimestamp();
+        }
+
+        batch.set(doc.ref, update, { merge: true });
         contador++;
       });
 
       if (contador === 0) return 0;
       return batch.commit().then(function() { return contador; });
     });
+}
+
+function resolverNotificacionesPorPartidaId(partidaId) {
+  return resolverNotificacionesTemporalesPorPartidaId(partidaId, {
+    marcarLeida: true
+  });
 }
 
 async function limpiarNotificacionesAntiguas(uid) {
@@ -209,13 +237,14 @@ function obtenerAccionVisibleNotificacion(n) {
   if (
     n &&
     (
+      n.tipo === "partida_cancelada" ||
       n.tipo === "partida_cancelada_automatica_5h_creador" ||
       n.tipo === "partida_cancelada_automatica_5h"
     )
   ) {
     return null;
   }
-  if (n && n.partidaId) return { texto: "Abrir partida" };
+  if (n && n.partidaId && n.resuelta !== true && n.accion) return { texto: "Abrir partida" };
   return null;
 }
 
@@ -487,6 +516,7 @@ function initNotificacionesUI() {
 window.crearNotificacionInterna = crearNotificacionInterna;
 window.crearNotificacionesParaUids = crearNotificacionesParaUids;
 window.resolverNotificacionPorDedupe = resolverNotificacionPorDedupe;
+window.resolverNotificacionesTemporalesPorPartidaId = resolverNotificacionesTemporalesPorPartidaId;
 window.resolverNotificacionesPorPartidaId = resolverNotificacionesPorPartidaId;
 window.limpiarNotificacionesAntiguas = limpiarNotificacionesAntiguas;
 window.escucharNotificaciones = escucharNotificaciones;
