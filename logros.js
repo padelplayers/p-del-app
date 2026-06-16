@@ -21,11 +21,11 @@
       iconoColor: TROFEOS_BASE + "competicion-color.png",
       iconoGris: TROFEOS_BASE + "competicion-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Primera Victoria", objetivo: "1 victoria" },
-        { estrellas: 2, nombre: "Competidor", objetivo: "10 victorias" },
-        { estrellas: 3, nombre: "Especialista", objetivo: "25 victorias" },
-        { estrellas: 4, nombre: "Referente Competitivo", objetivo: "50 victorias" },
-        { estrellas: 5, nombre: "Leyenda Competitiva", objetivo: "100 victorias" }
+        { estrellas: 1, nombre: "Primera Victoria", objetivo: "1 victoria ranking" },
+        { estrellas: 2, nombre: "Competidor", objetivo: "10 victorias ranking" },
+        { estrellas: 3, nombre: "Especialista", objetivo: "25 victorias ranking" },
+        { estrellas: 4, nombre: "Referente Competitivo", objetivo: "50 victorias ranking" },
+        { estrellas: 5, nombre: "Leyenda Competitiva", objetivo: "100 victorias ranking" }
       ]
     },
     {
@@ -34,11 +34,11 @@
       iconoColor: TROFEOS_BASE + "comunidad-color.png",
       iconoGris: TROFEOS_BASE + "comunidad-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Buen Compa\u00f1ero", objetivo: "5 valoraciones" },
-        { estrellas: 2, nombre: "Jugador Respetado", objetivo: "25 valoraciones" },
-        { estrellas: 3, nombre: "Referente Local", objetivo: "50 valoraciones" },
-        { estrellas: 4, nombre: "Embajador de la Comunidad", objetivo: "100 valoraciones" },
-        { estrellas: 5, nombre: "Leyenda de la Comunidad", objetivo: "250 valoraciones" }
+        { estrellas: 1, nombre: "Buen Compa\u00f1ero", objetivo: "5 valoraciones y media minima 3.5" },
+        { estrellas: 2, nombre: "Jugador Respetado", objetivo: "10 valoraciones y media minima 4.0" },
+        { estrellas: 3, nombre: "Referente Local", objetivo: "25 valoraciones y media minima 4.3" },
+        { estrellas: 4, nombre: "Embajador de la Comunidad", objetivo: "50 valoraciones y media minima 4.6" },
+        { estrellas: 5, nombre: "Leyenda de la Comunidad", objetivo: "100 valoraciones y media minima 4.8" }
       ]
     },
     {
@@ -47,7 +47,7 @@
       iconoColor: TROFEOS_BASE + "compromiso-color.png",
       iconoGris: TROFEOS_BASE + "compromiso-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Comprometido", objetivo: "5 partidas sin abandono" },
+        { estrellas: 1, nombre: "Comprometido", objetivo: "10 partidas sin abandono" },
         { estrellas: 2, nombre: "Jugador Fiable", objetivo: "25 partidas sin abandono" },
         { estrellas: 3, nombre: "Siempre Presente", objetivo: "50 partidas sin abandono" },
         { estrellas: 4, nombre: "Ejemplo de Compromiso", objetivo: "100 partidas sin abandono" },
@@ -60,11 +60,11 @@
       iconoColor: TROFEOS_BASE + "explorador-color.png",
       iconoGris: TROFEOS_BASE + "explorador-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Explorador", objetivo: "2 pistas distintas" },
-        { estrellas: 2, nombre: "Ruta Local", objetivo: "5 pistas distintas" },
-        { estrellas: 3, nombre: "Conquistador del Morvedre", objetivo: "10 pistas distintas" },
-        { estrellas: 4, nombre: "Maestro Explorador", objetivo: "20 pistas distintas" },
-        { estrellas: 5, nombre: "Leyenda Exploradora", objetivo: "40 pistas distintas" }
+        { estrellas: 1, nombre: "Explorador", objetivo: "2 pistas diferentes" },
+        { estrellas: 2, nombre: "Ruta Local", objetivo: "4 pistas diferentes" },
+        { estrellas: 3, nombre: "Conquistador del Morvedre", objetivo: "6 pistas diferentes" },
+        { estrellas: 4, nombre: "Maestro Explorador", objetivo: "8 pistas diferentes" },
+        { estrellas: 5, nombre: "Leyenda Exploradora", objetivo: "10 pistas diferentes" }
       ]
     },
     {
@@ -73,11 +73,11 @@
       iconoColor: TROFEOS_BASE + "organizador-color.png",
       iconoGris: TROFEOS_BASE + "organizador-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Primera Partida", objetivo: "1 partida organizada" },
-        { estrellas: 2, nombre: "Organizador Local", objetivo: "5 partidas organizadas" },
-        { estrellas: 3, nombre: "Organizador Habitual", objetivo: "25 partidas organizadas" },
-        { estrellas: 4, nombre: "Organizador Experto", objetivo: "50 partidas organizadas" },
-        { estrellas: 5, nombre: "Gran Organizador", objetivo: "100 partidas organizadas" }
+        { estrellas: 1, nombre: "Primera Partida", objetivo: "1 partida creada" },
+        { estrellas: 2, nombre: "Organizador Local", objetivo: "3 partidas creadas" },
+        { estrellas: 3, nombre: "Organizador Habitual", objetivo: "5 partidas creadas" },
+        { estrellas: 4, nombre: "Organizador Experto", objetivo: "25 partidas creadas" },
+        { estrellas: 5, nombre: "Gran Organizador", objetivo: "100 partidas creadas" }
       ]
     },
     {
@@ -87,8 +87,8 @@
       iconoGris: TROFEOS_BASE + "creador_de_pista-gris.png",
       logros: [
         { estrellas: 1, nombre: "Primera Pista", objetivo: "1 pista creada" },
-        { estrellas: 2, nombre: "Creador Local", objetivo: "5 pistas creadas" },
-        { estrellas: 3, nombre: "Maestro de Pistas", objetivo: "15 pistas creadas" }
+        { estrellas: 2, nombre: "Creador Local", objetivo: "3 pistas creadas" },
+        { estrellas: 3, nombre: "Maestro de Pistas", objetivo: "5 pistas creadas" }
       ]
     }
   ];
