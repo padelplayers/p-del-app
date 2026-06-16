@@ -8,11 +8,11 @@
       iconoColor: TROFEOS_BASE + "participacion-color.png",
       iconoGris: TROFEOS_BASE + "participacion-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Primer Partido", objetivo: "Objetivo pendiente" },
-        { estrellas: 2, nombre: "Jugador Activo", objetivo: "Objetivo pendiente" },
-        { estrellas: 3, nombre: "Jugador Habitual", objetivo: "Objetivo pendiente" },
-        { estrellas: 4, nombre: "Veterano de la Pista", objetivo: "Objetivo pendiente" },
-        { estrellas: 5, nombre: "Leyenda del P\u00e1del", objetivo: "Objetivo pendiente" }
+        { estrellas: 1, nombre: "Primer Partido", objetivo: "1 partida" },
+        { estrellas: 2, nombre: "Jugador Activo", objetivo: "10 partidas" },
+        { estrellas: 3, nombre: "Jugador Habitual", objetivo: "50 partidas" },
+        { estrellas: 4, nombre: "Veterano de la Pista", objetivo: "100 partidas" },
+        { estrellas: 5, nombre: "Leyenda del P\u00e1del", objetivo: "250 partidas" }
       ]
     },
     {
@@ -21,11 +21,11 @@
       iconoColor: TROFEOS_BASE + "competicion-color.png",
       iconoGris: TROFEOS_BASE + "competicion-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Primera Victoria", objetivo: "Objetivo pendiente" },
-        { estrellas: 2, nombre: "Competidor", objetivo: "Objetivo pendiente" },
-        { estrellas: 3, nombre: "Especialista", objetivo: "Objetivo pendiente" },
-        { estrellas: 4, nombre: "Referente Competitivo", objetivo: "Objetivo pendiente" },
-        { estrellas: 5, nombre: "Leyenda Competitiva", objetivo: "Objetivo pendiente" }
+        { estrellas: 1, nombre: "Primera Victoria", objetivo: "1 victoria" },
+        { estrellas: 2, nombre: "Competidor", objetivo: "10 victorias" },
+        { estrellas: 3, nombre: "Especialista", objetivo: "25 victorias" },
+        { estrellas: 4, nombre: "Referente Competitivo", objetivo: "50 victorias" },
+        { estrellas: 5, nombre: "Leyenda Competitiva", objetivo: "100 victorias" }
       ]
     },
     {
@@ -34,11 +34,11 @@
       iconoColor: TROFEOS_BASE + "comunidad-color.png",
       iconoGris: TROFEOS_BASE + "comunidad-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Buen Compa\u00f1ero", objetivo: "Objetivo pendiente" },
-        { estrellas: 2, nombre: "Jugador Respetado", objetivo: "Objetivo pendiente" },
-        { estrellas: 3, nombre: "Referente Local", objetivo: "Objetivo pendiente" },
-        { estrellas: 4, nombre: "Embajador de la Comunidad", objetivo: "Objetivo pendiente" },
-        { estrellas: 5, nombre: "Leyenda de la Comunidad", objetivo: "Objetivo pendiente" }
+        { estrellas: 1, nombre: "Buen Compa\u00f1ero", objetivo: "5 valoraciones" },
+        { estrellas: 2, nombre: "Jugador Respetado", objetivo: "25 valoraciones" },
+        { estrellas: 3, nombre: "Referente Local", objetivo: "50 valoraciones" },
+        { estrellas: 4, nombre: "Embajador de la Comunidad", objetivo: "100 valoraciones" },
+        { estrellas: 5, nombre: "Leyenda de la Comunidad", objetivo: "250 valoraciones" }
       ]
     },
     {
@@ -47,11 +47,11 @@
       iconoColor: TROFEOS_BASE + "compromiso-color.png",
       iconoGris: TROFEOS_BASE + "compromiso-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Comprometido", objetivo: "Objetivo pendiente" },
-        { estrellas: 2, nombre: "Jugador Fiable", objetivo: "Objetivo pendiente" },
-        { estrellas: 3, nombre: "Siempre Presente", objetivo: "Objetivo pendiente" },
-        { estrellas: 4, nombre: "Ejemplo de Compromiso", objetivo: "Objetivo pendiente" },
-        { estrellas: 5, nombre: "Compromiso Total", objetivo: "Objetivo pendiente" }
+        { estrellas: 1, nombre: "Comprometido", objetivo: "5 partidas sin abandono" },
+        { estrellas: 2, nombre: "Jugador Fiable", objetivo: "25 partidas sin abandono" },
+        { estrellas: 3, nombre: "Siempre Presente", objetivo: "50 partidas sin abandono" },
+        { estrellas: 4, nombre: "Ejemplo de Compromiso", objetivo: "100 partidas sin abandono" },
+        { estrellas: 5, nombre: "Compromiso Total", objetivo: "250 partidas sin abandono" }
       ]
     },
     {
@@ -60,11 +60,11 @@
       iconoColor: TROFEOS_BASE + "explorador-color.png",
       iconoGris: TROFEOS_BASE + "explorador-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Explorador", objetivo: "Objetivo pendiente" },
-        { estrellas: 2, nombre: "Ruta Local", objetivo: "Objetivo pendiente" },
-        { estrellas: 3, nombre: "Conquistador del Morvedre", objetivo: "Objetivo pendiente" },
-        { estrellas: 4, nombre: "Maestro Explorador", objetivo: "Objetivo pendiente" },
-        { estrellas: 5, nombre: "Leyenda Exploradora", objetivo: "Objetivo pendiente" }
+        { estrellas: 1, nombre: "Explorador", objetivo: "2 pistas distintas" },
+        { estrellas: 2, nombre: "Ruta Local", objetivo: "5 pistas distintas" },
+        { estrellas: 3, nombre: "Conquistador del Morvedre", objetivo: "10 pistas distintas" },
+        { estrellas: 4, nombre: "Maestro Explorador", objetivo: "20 pistas distintas" },
+        { estrellas: 5, nombre: "Leyenda Exploradora", objetivo: "40 pistas distintas" }
       ]
     },
     {
@@ -73,11 +73,11 @@
       iconoColor: TROFEOS_BASE + "organizador-color.png",
       iconoGris: TROFEOS_BASE + "organizador-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Primera Partida", objetivo: "Objetivo pendiente" },
-        { estrellas: 2, nombre: "Organizador Local", objetivo: "Objetivo pendiente" },
-        { estrellas: 3, nombre: "Organizador Habitual", objetivo: "Objetivo pendiente" },
-        { estrellas: 4, nombre: "Organizador Experto", objetivo: "Objetivo pendiente" },
-        { estrellas: 5, nombre: "Gran Organizador", objetivo: "Objetivo pendiente" }
+        { estrellas: 1, nombre: "Primera Partida", objetivo: "1 partida organizada" },
+        { estrellas: 2, nombre: "Organizador Local", objetivo: "5 partidas organizadas" },
+        { estrellas: 3, nombre: "Organizador Habitual", objetivo: "25 partidas organizadas" },
+        { estrellas: 4, nombre: "Organizador Experto", objetivo: "50 partidas organizadas" },
+        { estrellas: 5, nombre: "Gran Organizador", objetivo: "100 partidas organizadas" }
       ]
     },
     {
@@ -86,9 +86,9 @@
       iconoColor: TROFEOS_BASE + "creador_de_pista-color.png",
       iconoGris: TROFEOS_BASE + "creador_de_pista-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Primera Pista", objetivo: "Objetivo pendiente" },
-        { estrellas: 2, nombre: "Creador Local", objetivo: "Objetivo pendiente" },
-        { estrellas: 3, nombre: "Maestro de Pistas", objetivo: "Objetivo pendiente" }
+        { estrellas: 1, nombre: "Primera Pista", objetivo: "1 pista creada" },
+        { estrellas: 2, nombre: "Creador Local", objetivo: "5 pistas creadas" },
+        { estrellas: 3, nombre: "Maestro de Pistas", objetivo: "15 pistas creadas" }
       ]
     }
   ];
@@ -120,8 +120,7 @@
     contenido.className = "perfilLogroContenido";
     contenido.appendChild(crearTextoLogro("div", "\u2605".repeat(logro.estrellas), "perfilLogroEstrellas"));
     contenido.appendChild(crearTextoLogro("strong", logro.nombre, "perfilLogroNombre"));
-    contenido.appendChild(crearTextoLogro("span", "Progreso: 0 / objetivo", "perfilLogroProgreso"));
-    contenido.appendChild(crearTextoLogro("span", "Objetivo: " + logro.objetivo, "perfilLogroObjetivo"));
+    contenido.appendChild(crearTextoLogro("span", "Progreso: 0 / " + logro.objetivo, "perfilLogroProgreso"));
 
     card.appendChild(icono);
     card.appendChild(contenido);
