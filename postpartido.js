@@ -364,6 +364,24 @@ function crearContextoStatsAmistosaPostPartido(p, jugadores, docsUsuarios, docPi
   };
 }
 
+function partidaRankingPermiteStatsHabituales(p) {
+  return !!(
+    p &&
+    (p.estado === "confirmada" || p.estado === "finalizada") &&
+    esPartidaRankingPostPartido(p) &&
+    obtenerParticipantesRankingPostPartido(p).length === 4
+  );
+}
+
+function partidaAmistosaPermiteStatsHabituales(p) {
+  return !!(
+    p &&
+    p.estado === "finalizada" &&
+    esPartidaAmistosaPostPartido(p) &&
+    obtenerParticipantesAmistosaPostPartido(p).length >= 4
+  );
+}
+
 function aplicarClasificacionComunitariaAmistosa(idPartida) {
   const partidaRef = db.collection("partidas").doc(idPartida);
 
@@ -372,45 +390,62 @@ function aplicarClasificacionComunitariaAmistosa(idPartida) {
       if (!doc.exists) return null;
 
       const p = doc.data() || {};
-      if (p.clasificacionComunitariaAplicada === true) return null;
       if (!esPartidaAmistosaPostPartido(p)) return null;
-      if (p.estado !== "finalizada") return null;
-      if (!amistosaTieneValoracionesCompletasBase(p)) return null;
+      const debeAplicarClasificacion = p.clasificacionComunitariaAplicada !== true;
+      const debeAplicarStats = p.statsHabitualesAplicadas !== true;
+      if (!debeAplicarClasificacion && !debeAplicarStats) return null;
+      if (debeAplicarStats && !partidaAmistosaPermiteStatsHabituales(p)) return null;
 
-      const incrementos = calcularClasificacionComunitariaAmistosa(p);
-      if (!incrementos) return null;
+      const incrementos = debeAplicarClasificacion ? calcularClasificacionComunitariaAmistosa(p) : null;
+      if (debeAplicarClasificacion && !incrementos) return null;
 
       const jugadores = obtenerParticipantesAmistosaPostPartido(p).filter(function(uid) {
-        return !!incrementos[uid];
+        return !incrementos || !!incrementos[uid];
       });
+      if (jugadores.length === 0) return null;
+      const pistaRef = p.pistaId ? db.collection("pistas").doc(p.pistaId) : null;
       const usuarioRefs = jugadores.map(function(uid) {
         return db.collection("usuarios").doc(uid);
       });
-      const pistaRef = p.pistaId ? db.collection("pistas").doc(p.pistaId) : null;
-      const lecturas = usuarioRefs.map(function(usuarioRef) {
-        return transaction.get(usuarioRef);
-      });
+      const necesitaLecturasUsuarios = debeAplicarStats || debeAplicarClasificacion;
+      const lecturas = necesitaLecturasUsuarios
+        ? usuarioRefs.map(function(usuarioRef) { return transaction.get(usuarioRef); })
+        : [];
 
-      if (pistaRef) lecturas.push(transaction.get(pistaRef));
+      if (debeAplicarStats && pistaRef) lecturas.push(transaction.get(pistaRef));
 
       return Promise.all(lecturas).then(function(docs) {
         const docsUsuarios = docs.slice(0, usuarioRefs.length);
-        const docPista = pistaRef ? docs[docs.length - 1] : null;
-        const contextoStats = crearContextoStatsAmistosaPostPartido(p, jugadores, docsUsuarios, docPista);
+        const docPista = debeAplicarStats && pistaRef ? docs[docs.length - 1] : null;
+        const contextoStats = debeAplicarStats
+          ? crearContextoStatsAmistosaPostPartido(p, jugadores, docsUsuarios, docPista)
+          : null;
 
         jugadores.forEach(function(uid, index) {
-          const datos = incrementos[uid];
           const usuarioRef = usuarioRefs[index];
-          const updateBase = crearUpdateLogrosPartidaPostPartido(datos, p);
-          const updateStats = crearUpdateStatsHabitualesPostPartido(uid, contextoStats, docsUsuarios[index]);
+          const updateBase = debeAplicarClasificacion
+            ? crearUpdateLogrosPartidaPostPartido(incrementos[uid], p)
+            : {};
+          const updateStats = debeAplicarStats
+            ? crearUpdateStatsHabitualesPostPartido(uid, contextoStats, docsUsuarios[index])
+            : {};
 
-          transaction.update(usuarioRef, Object.assign({}, updateBase, updateStats));
+          const updateUsuario = Object.assign({}, updateBase, updateStats);
+          if (Object.keys(updateUsuario).length > 0) {
+            transaction.update(usuarioRef, updateUsuario);
+          }
         });
 
-        transaction.update(partidaRef, {
-          clasificacionComunitariaAplicada: true,
-          clasificacionComunitariaAplicadaAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        const updatePartida = {};
+        if (debeAplicarClasificacion) {
+          updatePartida.clasificacionComunitariaAplicada = true;
+          updatePartida.clasificacionComunitariaAplicadaAt = firebase.firestore.FieldValue.serverTimestamp();
+        }
+        if (debeAplicarStats && partidaAmistosaPermiteStatsHabituales(p)) {
+          updatePartida.statsHabitualesAplicadas = true;
+          updatePartida.statsHabitualesAplicadasAt = firebase.firestore.FieldValue.serverTimestamp();
+        }
+        if (Object.keys(updatePartida).length > 0) transaction.update(partidaRef, updatePartida);
 
         return true;
       });
@@ -472,15 +507,20 @@ function aplicarClasificacionComunitariaRanking(idPartida) {
       if (!doc.exists) return null;
 
       const p = doc.data() || {};
-      if (p.clasificacionComunitariaAplicada === true) return null;
-      if (!partidaRankingListaParaCierre(p)) return null;
+      if (!esPartidaRankingPostPartido(p)) return null;
+      const debeAplicarClasificacion = p.clasificacionComunitariaAplicada !== true;
+      const debeAplicarStats = p.statsHabitualesAplicadas !== true;
+      if (!debeAplicarClasificacion && !debeAplicarStats) return null;
+      if (debeAplicarClasificacion && !partidaRankingListaParaCierre(p)) return null;
+      if (debeAplicarStats && !partidaRankingPermiteStatsHabituales(p)) return null;
 
-      const incrementos = calcularClasificacionComunitariaRanking(p);
-      if (!incrementos) return null;
+      const incrementos = debeAplicarClasificacion ? calcularClasificacionComunitariaRanking(p) : null;
+      if (debeAplicarClasificacion && !incrementos) return null;
 
       const jugadores = obtenerParticipantesRankingPostPartido(p).filter(function(uid) {
-        return !!incrementos[uid];
+        return !incrementos || !!incrementos[uid];
       });
+      if (jugadores.length === 0) return null;
       const usuarioRefs = jugadores.map(function(uid) {
         return db.collection("usuarios").doc(uid);
       });
@@ -489,26 +529,40 @@ function aplicarClasificacionComunitariaRanking(idPartida) {
         return transaction.get(usuarioRef);
       });
 
-      if (pistaRef) lecturas.push(transaction.get(pistaRef));
+      if (debeAplicarStats && pistaRef) lecturas.push(transaction.get(pistaRef));
 
       return Promise.all(lecturas).then(function(docs) {
         const docsUsuarios = docs.slice(0, usuarioRefs.length);
-        const docPista = pistaRef ? docs[docs.length - 1] : null;
-        const contextoStats = crearContextoStatsRankingPostPartido(p, docsUsuarios, docPista);
+        const docPista = debeAplicarStats && pistaRef ? docs[docs.length - 1] : null;
+        const contextoStats = debeAplicarStats
+          ? crearContextoStatsRankingPostPartido(p, docsUsuarios, docPista)
+          : null;
 
         jugadores.forEach(function(uid, index) {
-          const datos = incrementos[uid];
           const usuarioRef = usuarioRefs[index];
-          const updateBase = crearUpdateLogrosPartidaPostPartido(datos, p);
-          const updateStats = crearUpdateStatsHabitualesPostPartido(uid, contextoStats, docsUsuarios[index]);
+          const updateBase = debeAplicarClasificacion
+            ? crearUpdateLogrosPartidaPostPartido(incrementos[uid], p)
+            : {};
+          const updateStats = debeAplicarStats
+            ? crearUpdateStatsHabitualesPostPartido(uid, contextoStats, docsUsuarios[index])
+            : {};
 
-          transaction.update(usuarioRef, Object.assign({}, updateBase, updateStats));
+          const updateUsuario = Object.assign({}, updateBase, updateStats);
+          if (Object.keys(updateUsuario).length > 0) {
+            transaction.update(usuarioRef, updateUsuario);
+          }
         });
 
-        transaction.update(partidaRef, {
-          clasificacionComunitariaAplicada: true,
-          clasificacionComunitariaAplicadaAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        const updatePartida = {};
+        if (debeAplicarClasificacion) {
+          updatePartida.clasificacionComunitariaAplicada = true;
+          updatePartida.clasificacionComunitariaAplicadaAt = firebase.firestore.FieldValue.serverTimestamp();
+        }
+        if (debeAplicarStats) {
+          updatePartida.statsHabitualesAplicadas = true;
+          updatePartida.statsHabitualesAplicadasAt = firebase.firestore.FieldValue.serverTimestamp();
+        }
+        if (Object.keys(updatePartida).length > 0) transaction.update(partidaRef, updatePartida);
 
         return true;
       });
