@@ -604,6 +604,13 @@ function crearPartida() {
       creadaAt: new Date()
     })
     .then(() => {
+      return db.collection("usuarios").doc(user.uid).set({
+        clasificacion: {
+          partidasCreadas: firebase.firestore.FieldValue.increment(1)
+        }
+      }, { merge: true });
+    })
+    .then(() => {
       document.getElementById("pistaSeleccionada").innerText = "Ninguna pista";
       document.getElementById("pistaSeleccionada").dataset.id = "";
       mostrar("partidas");

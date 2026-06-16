@@ -122,12 +122,20 @@ window.aplicarRankingCompetitivo = async function(idPartida) {
       const nuevoNivel = normalizarNivelCompetitivo(niveles[uid] + cambio);
       const nivelInicial = nivelesIniciales[uid];
 
-      transaction.set(usuarioRefs[index], {
+      const datosUsuarioRanking = {
         nivel: formatearNivelCompetitivo(nuevoNivel),
         nivelInicial: formatearNivelCompetitivo(nivelInicial),
         nivelDelta: (nuevoNivel - nivelInicial).toFixed(2),
         rankingPartidos: firebase.firestore.FieldValue.increment(1)
-      }, { merge: true });
+      };
+
+      if (gana) {
+        datosUsuarioRanking.clasificacion = {
+          victoriasRanking: firebase.firestore.FieldValue.increment(1)
+        };
+      }
+
+      transaction.set(usuarioRefs[index], datosUsuarioRanking, { merge: true });
     });
 
     transaction.update(partidaRef, {

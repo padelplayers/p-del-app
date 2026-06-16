@@ -22,6 +22,14 @@ function esPartidaPendientePostPartido(p) {
   return p.estado === "confirmada" && limiteResultado <= new Date();
 }
 
+const PLAZO_POSTPARTIDO_MS = 3 * 24 * 60 * 60 * 1000;
+
+function partidaSuperaPlazoPostPartido(p, ahora) {
+  const fechaPartida = obtenerFechaHoraPostPartido(p);
+  if (!fechaPartida) return false;
+  return p && p.estado === "confirmada" && (ahora || new Date()) >= new Date(fechaPartida.getTime() + PLAZO_POSTPARTIDO_MS);
+}
+
 function obtenerTipoPostPartido(p) {
   return String((p && p.tipo) || "ranking").toLowerCase().trim();
 }
@@ -80,6 +88,28 @@ function obtenerParticipantesValoracionPostPartido(p) {
   if (esPartidaAmistosaPostPartido(p)) return obtenerParticipantesAmistosaPostPartido(p);
   if (esPartidaRankingPostPartido(p)) return obtenerParticipantesRankingPostPartido(p);
   return arrayUnicoPostPartido(p && p.jugadores);
+}
+
+function obtenerParticipantesIncumplimientoPostPartido(p) {
+  if (esPartidaRankingPostPartido(p)) {
+    const participantesResultado = obtenerParticipantesRankingPostPartido(p);
+    if (participantesResultado.length > 0) return participantesResultado;
+    return obtenerJugadoresPermitidosResultadoRanking(p);
+  }
+
+  const participantesValoracion = obtenerParticipantesValoracionPostPartido(p);
+  if (participantesValoracion.length > 0) return participantesValoracion;
+  return arrayUnicoPostPartido(p && p.jugadores);
+}
+
+function obtenerUidsSinValorarPostPartido(p, participantes) {
+  const valoraciones = p && p.valoraciones && typeof p.valoraciones === "object"
+    ? p.valoraciones
+    : {};
+
+  return arrayUnicoPostPartido(participantes).filter(function(uid) {
+    return !valoraciones[uid];
+  });
 }
 
 function valoracionesCompletasParaParticipantesPostPartido(p, participantes) {
@@ -191,6 +221,24 @@ function calcularClasificacionComunitariaAmistosa(p) {
   return incrementos;
 }
 
+function crearUpdateLogrosPartidaPostPartido(datos, p) {
+  const update = {
+    "clasificacion.puntos": firebase.firestore.FieldValue.increment(datos.puntos),
+    "clasificacion.partidos": firebase.firestore.FieldValue.increment(datos.partidos),
+    "clasificacion.puntualidadTotal": firebase.firestore.FieldValue.increment(datos.puntualidadTotal),
+    "clasificacion.actitudTotal": firebase.firestore.FieldValue.increment(datos.actitudTotal),
+    "clasificacion.compromisoTotal": firebase.firestore.FieldValue.increment(datos.compromisoTotal),
+    "clasificacion.valoracionesRecibidas": firebase.firestore.FieldValue.increment(datos.valoracionesRecibidas),
+    "clasificacion.compromisoLogro": firebase.firestore.FieldValue.increment(datos.partidos)
+  };
+
+  if (p && p.pistaId) {
+    update["clasificacion.pistasJugadasIds"] = firebase.firestore.FieldValue.arrayUnion(p.pistaId);
+  }
+
+  return update;
+}
+
 function aplicarClasificacionComunitariaAmistosa(idPartida) {
   const partidaRef = db.collection("partidas").doc(idPartida);
 
@@ -211,14 +259,7 @@ function aplicarClasificacionComunitariaAmistosa(idPartida) {
         const datos = incrementos[uid];
         const usuarioRef = db.collection("usuarios").doc(uid);
 
-        transaction.update(usuarioRef, {
-          "clasificacion.puntos": firebase.firestore.FieldValue.increment(datos.puntos),
-          "clasificacion.partidos": firebase.firestore.FieldValue.increment(datos.partidos),
-          "clasificacion.puntualidadTotal": firebase.firestore.FieldValue.increment(datos.puntualidadTotal),
-          "clasificacion.actitudTotal": firebase.firestore.FieldValue.increment(datos.actitudTotal),
-          "clasificacion.compromisoTotal": firebase.firestore.FieldValue.increment(datos.compromisoTotal),
-          "clasificacion.valoracionesRecibidas": firebase.firestore.FieldValue.increment(datos.valoracionesRecibidas)
-        });
+        transaction.update(usuarioRef, crearUpdateLogrosPartidaPostPartido(datos, p));
       });
 
       transaction.update(partidaRef, {
@@ -295,14 +336,7 @@ function aplicarClasificacionComunitariaRanking(idPartida) {
         const datos = incrementos[uid];
         const usuarioRef = db.collection("usuarios").doc(uid);
 
-        transaction.update(usuarioRef, {
-          "clasificacion.puntos": firebase.firestore.FieldValue.increment(datos.puntos),
-          "clasificacion.partidos": firebase.firestore.FieldValue.increment(datos.partidos),
-          "clasificacion.puntualidadTotal": firebase.firestore.FieldValue.increment(datos.puntualidadTotal),
-          "clasificacion.actitudTotal": firebase.firestore.FieldValue.increment(datos.actitudTotal),
-          "clasificacion.compromisoTotal": firebase.firestore.FieldValue.increment(datos.compromisoTotal),
-          "clasificacion.valoracionesRecibidas": firebase.firestore.FieldValue.increment(datos.valoracionesRecibidas)
-        });
+        transaction.update(usuarioRef, crearUpdateLogrosPartidaPostPartido(datos, p));
       });
 
       transaction.update(partidaRef, {
@@ -410,6 +444,52 @@ function generarAvisoPostPartidoPartida(idPartida) {
   });
 }
 
+function aplicarIncumplimientosPostPartidoPartida(idPartida) {
+  const ref = db.collection("partidas").doc(idPartida);
+
+  return db.runTransaction(async function(transaction) {
+    const doc = await transaction.get(ref);
+    if (!doc.exists) return null;
+
+    const p = doc.data() || {};
+    if (p.incumplimientosPostPartidoAplicados === true) return null;
+    if (!partidaSuperaPlazoPostPartido(p)) return null;
+
+    const participantes = obtenerParticipantesIncumplimientoPostPartido(p);
+    const incumplidores = obtenerUidsSinValorarPostPartido(p, participantes);
+    const usuarioRefs = incumplidores.map(function(uid) {
+      return db.collection("usuarios").doc(uid);
+    });
+    const usuarioDocs = await Promise.all(usuarioRefs.map(function(usuarioRef) {
+      return transaction.get(usuarioRef);
+    }));
+
+    usuarioDocs.forEach(function(docUsuario, index) {
+      if (!docUsuario.exists) return;
+
+      const datosUsuario = docUsuario.data() || {};
+      const clasificacion = datosUsuario.clasificacion || {};
+      const compromisoActual = Number(clasificacion.compromisoLogro || 0);
+      const compromisoNuevo = isNaN(compromisoActual)
+        ? 0
+        : Math.max(0, compromisoActual - 1);
+
+      transaction.update(usuarioRefs[index], {
+        "clasificacion.compromisoLogro": compromisoNuevo,
+        "clasificacion.puntos": firebase.firestore.FieldValue.increment(-3)
+      });
+    });
+
+    transaction.update(ref, {
+      incumplimientosPostPartidoAplicados: true,
+      incumplimientosPostPartidoAplicadosAt: firebase.firestore.FieldValue.serverTimestamp(),
+      incumplimientosPostPartidoUids: incumplidores
+    });
+
+    return incumplidores;
+  });
+}
+
 function revisarAvisosPostPartido() {
   if (!firebase.auth().currentUser) return Promise.resolve();
 
@@ -417,8 +497,12 @@ function revisarAvisosPostPartido() {
     .then(function(snapshot) {
       const tareas = [];
       snapshot.forEach(function(doc) {
-        if (esPartidaPendientePostPartido(doc.data() || {})) {
+        const p = doc.data() || {};
+        if (esPartidaPendientePostPartido(p)) {
           tareas.push(generarAvisoPostPartidoPartida(doc.id));
+        }
+        if (partidaSuperaPlazoPostPartido(p)) {
+          tareas.push(aplicarIncumplimientosPostPartidoPartida(doc.id));
         }
       });
       return Promise.all(tareas);

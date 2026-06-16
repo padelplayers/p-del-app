@@ -21,15 +21,16 @@
       iconoColor: TROFEOS_BASE + "competicion-color.png",
       iconoGris: TROFEOS_BASE + "competicion-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Primera Victoria", objetivo: "1 victoria ranking" },
-        { estrellas: 2, nombre: "Competidor", objetivo: "10 victorias ranking" },
-        { estrellas: 3, nombre: "Especialista", objetivo: "25 victorias ranking" },
-        { estrellas: 4, nombre: "Referente Competitivo", objetivo: "50 victorias ranking" },
-        { estrellas: 5, nombre: "Leyenda Competitiva", objetivo: "100 victorias ranking" }
+        { estrellas: 1, nombre: "Primera Victoria", objetivo: "1 victoria ranking", valorObjetivo: 1, tipo: "victorias_ranking" },
+        { estrellas: 2, nombre: "Competidor", objetivo: "10 victorias ranking", valorObjetivo: 10, tipo: "victorias_ranking" },
+        { estrellas: 3, nombre: "Especialista", objetivo: "25 victorias ranking", valorObjetivo: 25, tipo: "victorias_ranking" },
+        { estrellas: 4, nombre: "Referente Competitivo", objetivo: "50 victorias ranking", valorObjetivo: 50, tipo: "victorias_ranking" },
+        { estrellas: 5, nombre: "Leyenda Competitiva", objetivo: "100 victorias ranking", valorObjetivo: 100, tipo: "victorias_ranking" }
       ]
     },
     {
       id: "comunidad",
+      dinamica: true,
       nombre: "Comunidad",
       iconoColor: TROFEOS_BASE + "comunidad-color.png",
       iconoGris: TROFEOS_BASE + "comunidad-gris.png",
@@ -43,6 +44,7 @@
     },
     {
       id: "compromiso",
+      dinamica: true,
       nombre: "Compromiso",
       iconoColor: TROFEOS_BASE + "compromiso-color.png",
       iconoGris: TROFEOS_BASE + "compromiso-gris.png",
@@ -60,11 +62,11 @@
       iconoColor: TROFEOS_BASE + "explorador-color.png",
       iconoGris: TROFEOS_BASE + "explorador-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Explorador", objetivo: "2 pistas diferentes" },
-        { estrellas: 2, nombre: "Ruta Local", objetivo: "4 pistas diferentes" },
-        { estrellas: 3, nombre: "Conquistador del Morvedre", objetivo: "6 pistas diferentes" },
-        { estrellas: 4, nombre: "Maestro Explorador", objetivo: "8 pistas diferentes" },
-        { estrellas: 5, nombre: "Leyenda Exploradora", objetivo: "10 pistas diferentes" }
+        { estrellas: 1, nombre: "Explorador", objetivo: "2 pistas diferentes", valorObjetivo: 2, tipo: "pistas_diferentes" },
+        { estrellas: 2, nombre: "Ruta Local", objetivo: "4 pistas diferentes", valorObjetivo: 4, tipo: "pistas_diferentes" },
+        { estrellas: 3, nombre: "Conquistador del Morvedre", objetivo: "6 pistas diferentes", valorObjetivo: 6, tipo: "pistas_diferentes" },
+        { estrellas: 4, nombre: "Maestro Explorador", objetivo: "8 pistas diferentes", valorObjetivo: 8, tipo: "pistas_diferentes" },
+        { estrellas: 5, nombre: "Leyenda Exploradora", objetivo: "10 pistas diferentes", valorObjetivo: 10, tipo: "pistas_diferentes" }
       ]
     },
     {
@@ -73,11 +75,11 @@
       iconoColor: TROFEOS_BASE + "organizador-color.png",
       iconoGris: TROFEOS_BASE + "organizador-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Primera Partida", objetivo: "1 partida creada" },
-        { estrellas: 2, nombre: "Organizador Local", objetivo: "3 partidas creadas" },
-        { estrellas: 3, nombre: "Organizador Habitual", objetivo: "5 partidas creadas" },
-        { estrellas: 4, nombre: "Organizador Experto", objetivo: "25 partidas creadas" },
-        { estrellas: 5, nombre: "Gran Organizador", objetivo: "100 partidas creadas" }
+        { estrellas: 1, nombre: "Primera Partida", objetivo: "1 partida creada", valorObjetivo: 1, tipo: "partidas_creadas" },
+        { estrellas: 2, nombre: "Organizador Local", objetivo: "3 partidas creadas", valorObjetivo: 3, tipo: "partidas_creadas" },
+        { estrellas: 3, nombre: "Organizador Habitual", objetivo: "5 partidas creadas", valorObjetivo: 5, tipo: "partidas_creadas" },
+        { estrellas: 4, nombre: "Organizador Experto", objetivo: "25 partidas creadas", valorObjetivo: 25, tipo: "partidas_creadas" },
+        { estrellas: 5, nombre: "Gran Organizador", objetivo: "100 partidas creadas", valorObjetivo: 100, tipo: "partidas_creadas" }
       ]
     },
     {
@@ -86,9 +88,9 @@
       iconoColor: TROFEOS_BASE + "creador_de_pista-color.png",
       iconoGris: TROFEOS_BASE + "creador_de_pista-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Primera Pista", objetivo: "1 pista creada" },
-        { estrellas: 2, nombre: "Creador Local", objetivo: "3 pistas creadas" },
-        { estrellas: 3, nombre: "Maestro de Pistas", objetivo: "5 pistas creadas" }
+        { estrellas: 1, nombre: "Primera Pista", objetivo: "1 pista creada", valorObjetivo: 1, tipo: "pistas_creadas" },
+        { estrellas: 2, nombre: "Creador Local", objetivo: "3 pistas creadas", valorObjetivo: 3, tipo: "pistas_creadas" },
+        { estrellas: 3, nombre: "Maestro de Pistas", objetivo: "5 pistas creadas", valorObjetivo: 5, tipo: "pistas_creadas" }
       ]
     }
   ];
@@ -123,12 +125,22 @@
     return (puntualidad + actitud + compromiso) / 3;
   }
 
+  function crearEstadoNumerico(progreso, logro, desbloqueadoManual) {
+    return {
+      progreso: progreso,
+      textoProgreso: "Progreso: " + progreso + " | Objetivo: " + logro.objetivo,
+      desbloqueado: desbloqueadoManual || progreso >= logro.valorObjetivo
+    };
+  }
+
   function obtenerPartidasSinAbandono(data, clasificacion) {
     const candidatos = [
-      data && data.partidasSinAbandono,
-      data && data.partidasCompletadasSinAbandono,
+      clasificacion && clasificacion.compromisoLogro,
       clasificacion && clasificacion.partidasSinAbandono,
-      clasificacion && clasificacion.partidasCompletadasSinAbandono
+      clasificacion && clasificacion.partidasCompletadasSinAbandono,
+      data && data.compromisoLogro,
+      data && data.partidasSinAbandono,
+      data && data.partidasCompletadasSinAbandono
     ];
 
     for (let i = 0; i < candidatos.length; i++) {
@@ -137,19 +149,44 @@
       }
     }
 
-    return null;
+    return 0;
+  }
+
+  function obtenerPistasDiferentes(clasificacion) {
+    const ids = clasificacion && clasificacion.pistasJugadasIds;
+    if (!Array.isArray(ids)) return 0;
+    return ids.filter(function(id, index) {
+      return !!id && ids.indexOf(id) === index;
+    }).length;
   }
 
   function calcularEstadoLogro(data, categoria, logro, desbloqueadoManual) {
     const clasificacion = (data && data.clasificacion) || {};
+    const desbloqueadoPermanente = categoria && categoria.dinamica === true ? false : desbloqueadoManual;
 
     if (logro.tipo === "partidos") {
       const progreso = obtenerNumeroLogro(clasificacion.partidos, 0);
-      return {
-        progreso: progreso,
-        textoProgreso: "Progreso: " + progreso + " / " + logro.objetivo,
-        desbloqueado: desbloqueadoManual || progreso >= logro.valorObjetivo
-      };
+      return crearEstadoNumerico(progreso, logro, desbloqueadoPermanente);
+    }
+
+    if (logro.tipo === "victorias_ranking") {
+      const progreso = obtenerNumeroLogro(clasificacion.victoriasRanking, 0);
+      return crearEstadoNumerico(progreso, logro, desbloqueadoPermanente);
+    }
+
+    if (logro.tipo === "pistas_diferentes") {
+      const progreso = obtenerPistasDiferentes(clasificacion);
+      return crearEstadoNumerico(progreso, logro, desbloqueadoPermanente);
+    }
+
+    if (logro.tipo === "partidas_creadas") {
+      const progreso = obtenerNumeroLogro(clasificacion.partidasCreadas, 0);
+      return crearEstadoNumerico(progreso, logro, desbloqueadoPermanente);
+    }
+
+    if (logro.tipo === "pistas_creadas") {
+      const progreso = obtenerNumeroLogro(clasificacion.pistasCreadas, 0);
+      return crearEstadoNumerico(progreso, logro, desbloqueadoPermanente);
     }
 
     if (logro.tipo === "comunidad") {
@@ -157,32 +194,20 @@
       const media = obtenerMediaComunidad(clasificacion);
       return {
         progreso: valoraciones,
-        textoProgreso: "Progreso: " + valoraciones + " / " + logro.objetivo,
-        desbloqueado: desbloqueadoManual || (valoraciones >= logro.valorObjetivo && media >= logro.mediaMinima)
+        textoProgreso: "Progreso: " + valoraciones + " valoraciones, media " + media.toFixed(1) + " | Objetivo: " + logro.objetivo,
+        desbloqueado: valoraciones >= logro.valorObjetivo && media >= logro.mediaMinima
       };
     }
 
     if (logro.tipo === "sin_abandono") {
       const progreso = obtenerPartidasSinAbandono(data || {}, clasificacion);
-      if (progreso === null) {
-        return {
-          progreso: null,
-          textoProgreso: "Progreso: Sin datos todavia / " + logro.objetivo,
-          desbloqueado: desbloqueadoManual
-        };
-      }
-
-      return {
-        progreso: progreso,
-        textoProgreso: "Progreso: " + progreso + " / " + logro.objetivo,
-        desbloqueado: desbloqueadoManual || progreso >= logro.valorObjetivo
-      };
+      return crearEstadoNumerico(progreso, logro, false);
     }
 
     return {
-      progreso: null,
-      textoProgreso: "Progreso: Sin datos todavia / " + logro.objetivo,
-      desbloqueado: desbloqueadoManual
+      progreso: 0,
+      textoProgreso: "Progreso: 0 | Objetivo: " + logro.objetivo,
+      desbloqueado: desbloqueadoPermanente
     };
   }
 

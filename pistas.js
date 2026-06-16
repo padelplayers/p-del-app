@@ -1,6 +1,33 @@
 const btnNuevaPista = document.getElementById("btnNuevaPista");
 const btnGuardarPista = document.getElementById("guardarPista");
 
+function incrementarPistasCreadasLogro(uid) {
+  if (!uid) return Promise.resolve(false);
+
+  return db.collection("usuarios").doc(uid).set({
+    clasificacion: {
+      pistasCreadas: firebase.firestore.FieldValue.increment(1)
+    }
+  }, { merge: true });
+}
+
+window.recalcularPistasCreadasUsuarioActual = async function() {
+  const user = auth.currentUser;
+  if (!user) return 0;
+
+  const snapshot = await db.collection("pistas")
+    .where("creadaPor", "==", user.uid)
+    .get();
+
+  await db.collection("usuarios").doc(user.uid).set({
+    clasificacion: {
+      pistasCreadas: snapshot.size
+    }
+  }, { merge: true });
+
+  return snapshot.size;
+};
+
 function resetScrollPistas() {
   window.scrollTo(0, 0);
   document.documentElement.scrollTop = 0;
@@ -156,6 +183,7 @@ if (btnGuardarPista) {
           ...datos,
           verificada: esAdmin === true
         });
+        await incrementarPistasCreadasLogro(auth.currentUser.uid);
       }
 
       cargarPistas();
