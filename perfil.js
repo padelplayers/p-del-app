@@ -358,6 +358,9 @@ function renderizarDatosVisualesPerfil(data, opciones) {
 
     renderizarValoracionesPerfil(clasificacion);
     renderizarFiabilidadPenalizacionesPerfil(data);
+    if (typeof window.renderizarLogrosPerfil === "function") {
+      window.renderizarLogrosPerfil(data);
+    }
 
     const seguidores = document.getElementById("seguidores");
     if (seguidores) seguidores.innerText = obtenerTotalPerfil(data.seguidores);

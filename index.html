@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Padel Morvedre">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="logo.png">
-<link rel="stylesheet" href="styles.css?v=27">
+<link rel="stylesheet" href="styles.css?v=28">
 </head>
 
 <body>
@@ -177,15 +177,7 @@
 
     <section class="perfilSection perfilLogros">
       <h3>Logros</h3>
-      <div class="perfilLogrosGrid" id="logrosPerfil">
-        <div class="perfilLogroItem"><img src="imagenes%20app/trofeos/participacion-gris.png" alt=""><span>Participacion</span><small>Sin datos todavia</small></div>
-        <div class="perfilLogroItem"><img src="imagenes%20app/trofeos/competicion-gris.png" alt=""><span>Competicion</span><small>Sin datos todavia</small></div>
-        <div class="perfilLogroItem"><img src="imagenes%20app/trofeos/comunidad-gris.png" alt=""><span>Comunidad</span><small>Sin datos todavia</small></div>
-        <div class="perfilLogroItem"><img src="imagenes%20app/trofeos/compromiso-gris.png" alt=""><span>Compromiso</span><small>Sin datos todavia</small></div>
-        <div class="perfilLogroItem"><img src="imagenes%20app/trofeos/explorador-gris.png" alt=""><span>Exploracion</span><small>Sin datos todavia</small></div>
-        <div class="perfilLogroItem"><img src="imagenes%20app/trofeos/organizador-gris.png" alt=""><span>Organizador</span><small>Sin datos todavia</small></div>
-        <div class="perfilLogroItem"><img src="imagenes%20app/trofeos/creador_de_pista-gris.png" alt=""><span>Creador de pistas</span><small>Sin datos todavia</small></div>
-      </div>
+      <div class="perfilLogrosListado" id="logrosPerfil"></div>
     </section>
 
     <section class="perfilSection perfilHistorial">
@@ -1197,7 +1189,8 @@ auth.useDeviceLanguage();
 const db = firebase.firestore();
 </script>
 
-<script src="perfil.js?v=8"></script>
+<script src="logros.js?v=1"></script>
+<script src="perfil.js?v=9"></script>
 <script src="jugadores.js"></script>
 <script src="pistas.js?v=10"></script>
 <script src="partidas.js?v=14"></script>

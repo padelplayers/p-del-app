@@ -1377,40 +1377,82 @@ button[onclick*="mostrar('menu')"]{
   font-weight:600;
 }
 
-.perfilLogrosGrid{
+.perfilLogrosListado{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.perfilLogroCategoria{
+  border:1px solid #e5eaf2;
+  border-radius:8px;
+  padding:14px;
+  background:#fff;
+}
+
+.perfilLogroCategoriaTitulo{
+  margin:0 0 12px;
+  color:#1565C0;
+  font-size:17px;
+}
+
+.perfilLogrosNiveles{
   display:grid;
-  grid-template-columns:repeat(4, minmax(0, 1fr));
+  grid-template-columns:repeat(2, minmax(0, 1fr));
   gap:10px;
 }
 
-.perfilLogroItem{
+.perfilLogroNivel{
   display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
+  align-items:flex-start;
+  gap:10px;
   min-width:0;
   padding:10px;
   border-radius:8px;
   background:#f7f9fc;
   color:#333;
-  text-align:center;
+  text-align:left;
 }
 
-.perfilLogroItem img{
-  width:44px;
-  height:44px;
+.perfilLogroNivel img{
+  width:42px;
+  height:42px;
   object-fit:contain;
+  flex:0 0 auto;
 }
 
-.perfilLogroItem span{
-  color:#1565C0;
+.perfilLogroContenido{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  min-width:0;
+}
+
+.perfilLogroEstrellas{
+  color:#FFC107;
   font-size:13px;
-  font-weight:bold;
+  line-height:1;
 }
 
-.perfilLogroItem small{
+.perfilLogroNombre{
+  color:#333;
+  font-size:14px;
+}
+
+.perfilLogroProgreso,
+.perfilLogroObjetivo{
   color:#666;
-  font-size:11px;
+  font-size:12px;
+  line-height:1.25;
+}
+
+.perfilLogroNivel.bloqueado .perfilLogroEstrellas{
+  color:#cfcfcf;
+}
+
+.perfilLogroNivel.desbloqueado{
+  background:#fff9e6;
+  border:1px solid #ffe08a;
 }
 
 #perfil{
@@ -1481,7 +1523,7 @@ button[onclick*="mostrar('menu')"]{
 
   .perfilDatosGrid,
   .perfilFiabilidadResumen,
-  .perfilLogrosGrid{
+  .perfilLogrosNiveles{
     grid-template-columns:1fr;
   }
 
