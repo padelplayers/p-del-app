@@ -1223,7 +1223,7 @@ button[onclick*="mostrar('menu')"]{
 }
 
 .perfilValoracionNombre{
-  color:#1565C0;
+  color:#333;
   font-weight:bold;
 }
 
