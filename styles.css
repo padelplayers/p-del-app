@@ -1281,10 +1281,100 @@ button[onclick*="mostrar('menu')"]{
   color:#333;
 }
 
+.perfilFiabilidadDato{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  padding:10px;
+  border-radius:8px;
+  background:#f7f9fc;
+  color:#333;
+  font-size:15px;
+}
+
+.perfilFiabilidadDato img{
+  width:26px;
+  height:26px;
+  object-fit:contain;
+  flex:0 0 auto;
+}
+
+.perfilFiabilidadDato div{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+}
+
+.perfilFiabilidadDato span{
+  color:#333;
+  font-weight:bold;
+}
+
+.perfilFiabilidadDato strong{
+  color:#333;
+  font-weight:bold;
+}
+
 .perfilSubbloque{
   margin-top:12px;
   padding-top:12px;
   border-top:1px solid #eef2f7;
+}
+
+.perfilPenalizacionesLista{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.perfilPenalizacionCard{
+  border:1px solid #e5eaf2;
+  border-radius:8px;
+  padding:12px;
+  background:#fff;
+  color:#333;
+}
+
+.perfilPenalizacionCard.activa{
+  border-left:4px solid #c62828;
+}
+
+.perfilPenalizacionCard.historica{
+  border-left:4px solid #9e9e9e;
+}
+
+.perfilPenalizacionCard h5{
+  margin:0 0 10px;
+  color:#333;
+  font-size:15px;
+}
+
+.perfilPenalizacionLinea{
+  display:grid;
+  grid-template-columns:minmax(130px, 0.8fr) minmax(0, 1.2fr);
+  gap:10px;
+  padding:6px 0;
+  border-top:1px solid #eef2f7;
+  font-size:15px;
+}
+
+.perfilPenalizacionLinea:first-of-type{
+  border-top:none;
+}
+
+.perfilPenalizacionLinea span,
+.perfilPenalizacionLinea strong{
+  color:#333;
+}
+
+.perfilPenalizacionLinea span{
+  font-weight:bold;
+}
+
+.perfilPenalizacionLinea strong{
+  font-weight:600;
 }
 
 .perfilLogrosGrid{
@@ -1398,6 +1488,11 @@ button[onclick*="mostrar('menu')"]{
   .perfilValoracionFila{
     grid-template-columns:1fr;
     text-align:left;
+  }
+
+  .perfilPenalizacionLinea{
+    grid-template-columns:1fr;
+    gap:3px;
   }
 
   .nivelEvolucionPerfil > div{

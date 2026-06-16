@@ -103,6 +103,188 @@ function renderizarValoracionesPerfil(clasificacion) {
   );
 }
 
+function normalizarPorcentajePerfil(valor, fallback) {
+  const numero = Number(valor);
+  if (isNaN(numero)) return fallback;
+  return Math.max(0, Math.min(100, Math.round(numero)));
+}
+
+function obtenerEstadoFiabilidadPerfil(fiabilidad) {
+  if (fiabilidad >= 80) return "Buena";
+  if (fiabilidad >= 61) return "En observacion";
+  if (fiabilidad >= 41) return "Limitada";
+  return "Restringida";
+}
+
+function fechaPerfilToDate(valor) {
+  if (!valor) return null;
+  if (typeof valor.toDate === "function") return valor.toDate();
+  if (valor instanceof Date) return valor;
+
+  const fecha = new Date(valor);
+  return isNaN(fecha.getTime()) ? null : fecha;
+}
+
+function formatearFechaPerfil(valor) {
+  const fecha = fechaPerfilToDate(valor);
+  if (!fecha) return "Sin datos";
+
+  return fecha.toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+}
+
+function obtenerDiasRestantesPerfil(valor) {
+  const fecha = fechaPerfilToDate(valor);
+  if (!fecha) return 0;
+
+  const msDia = 24 * 60 * 60 * 1000;
+  const diferencia = fecha.getTime() - Date.now();
+  return Math.max(0, Math.ceil(diferencia / msDia));
+}
+
+function penalizacionActivaPerfil(penalizacion) {
+  if (!penalizacion || penalizacion.activa === false) return false;
+
+  const caducaAt = fechaPerfilToDate(penalizacion.caducaAt);
+  if (!caducaAt) return false;
+
+  return caducaAt.getTime() > Date.now();
+}
+
+function obtenerImpactoFiabilidadPerfil(penalizacion) {
+  if (!penalizacion) return "Sin datos";
+
+  const impacto = Number(penalizacion.impactoFiabilidad);
+  if (!isNaN(impacto)) return impacto + "% fiabilidad";
+
+  const puntos = Number(penalizacion.puntos);
+  if (!isNaN(puntos) && puntos !== 0) return puntos + " puntos";
+
+  return "Sin datos";
+}
+
+function crearTextoPerfil(tag, texto, className) {
+  const el = document.createElement(tag || "div");
+  if (className) el.className = className;
+  el.textContent = texto;
+  return el;
+}
+
+function crearDatoIconoPerfil(src, etiqueta, valor, valorId) {
+  const item = document.createElement("div");
+  item.className = "perfilFiabilidadDato";
+
+  const icono = document.createElement("img");
+  icono.src = src;
+  icono.alt = etiqueta;
+
+  const texto = document.createElement("div");
+  texto.appendChild(crearTextoPerfil("span", etiqueta));
+  const valorEl = crearTextoPerfil("strong", valor);
+  if (valorId) valorEl.id = valorId;
+  texto.appendChild(valorEl);
+
+  item.appendChild(icono);
+  item.appendChild(texto);
+  return item;
+}
+
+function crearLineaPenalizacionPerfil(etiqueta, valor) {
+  const fila = document.createElement("div");
+  fila.className = "perfilPenalizacionLinea";
+  fila.appendChild(crearTextoPerfil("span", etiqueta));
+  fila.appendChild(crearTextoPerfil("strong", valor || "Sin datos"));
+  return fila;
+}
+
+function crearTarjetaPenalizacionPerfil(penalizacion, activa) {
+  const card = document.createElement("div");
+  card.className = activa ? "perfilPenalizacionCard activa" : "perfilPenalizacionCard historica";
+
+  card.appendChild(crearTextoPerfil("h5", activa ? "Penalizacion activa" : "Penalizacion historica"));
+  card.appendChild(crearLineaPenalizacionPerfil("Tipo", penalizacion.tipo || "Sin datos"));
+  card.appendChild(crearLineaPenalizacionPerfil("Motivo", penalizacion.motivo || "Sin datos"));
+  card.appendChild(crearLineaPenalizacionPerfil("Impacto", obtenerImpactoFiabilidadPerfil(penalizacion)));
+  card.appendChild(crearLineaPenalizacionPerfil("Fecha de aplicacion", formatearFechaPerfil(penalizacion.createdAt)));
+  card.appendChild(crearLineaPenalizacionPerfil("Fecha de caducidad", formatearFechaPerfil(penalizacion.caducaAt)));
+
+  if (activa) {
+    card.appendChild(crearLineaPenalizacionPerfil("Dias restantes", obtenerDiasRestantesPerfil(penalizacion.caducaAt) + " dias"));
+    card.appendChild(crearLineaPenalizacionPerfil("Estado", "Activa"));
+  } else {
+    card.appendChild(crearLineaPenalizacionPerfil("Estado", "Caducada"));
+  }
+
+  return card;
+}
+
+function renderizarListaPenalizacionesPerfil(id, lista, mensajeVacio, activa) {
+  const contenedor = document.getElementById(id);
+  if (!contenedor) return;
+
+  contenedor.classList.remove("perfilMensajeVacio");
+  contenedor.classList.add("perfilPenalizacionesLista");
+  contenedor.replaceChildren();
+
+  if (!lista.length) {
+    contenedor.classList.add("perfilMensajeVacio");
+    contenedor.classList.remove("perfilPenalizacionesLista");
+    contenedor.textContent = mensajeVacio;
+    return;
+  }
+
+  lista.forEach(function(penalizacion) {
+    contenedor.appendChild(crearTarjetaPenalizacionPerfil(penalizacion, activa));
+  });
+}
+
+function renderizarFiabilidadPenalizacionesPerfil(data) {
+  data = data || {};
+  const clasificacion = data.clasificacion || {};
+  const fiabilidad = normalizarPorcentajePerfil(clasificacion.fiabilidad, 100);
+  const penalizacionesActivasTotal = obtenerTotalPerfil(clasificacion.penalizacionesActivas);
+  const abandonos = obtenerTotalPerfil(clasificacion.abandonos);
+  const estado = obtenerEstadoFiabilidadPerfil(fiabilidad);
+  const penalizaciones = Array.isArray(data.penalizaciones) ? data.penalizaciones : [];
+  const activas = penalizaciones.filter(penalizacionActivaPerfil);
+  const historicas = penalizaciones.filter(function(penalizacion) {
+    return !penalizacionActivaPerfil(penalizacion);
+  });
+
+  const fiabilidadResumenPerfil = document.getElementById("fiabilidadResumenPerfil");
+  if (fiabilidadResumenPerfil) fiabilidadResumenPerfil.textContent = fiabilidad + "%";
+
+  const penalizacionesActivasResumenPerfil = document.getElementById("penalizacionesActivasResumenPerfil");
+  if (penalizacionesActivasResumenPerfil) penalizacionesActivasResumenPerfil.textContent = penalizacionesActivasTotal;
+
+  const resumen = document.querySelector("#perfil .perfilFiabilidadResumen");
+  if (resumen) {
+    resumen.replaceChildren(
+      crearDatoIconoPerfil("imagenes app/clasificacion/fiabilidad.png", "Fiabilidad actual", fiabilidad + "%", "fiabilidadActualPerfil"),
+      crearDatoIconoPerfil("imagenes app/clasificacion/fiabilidad.png", "Estado", estado, "estadoFiabilidadPerfil"),
+      crearDatoIconoPerfil("imagenes app/clasificacion/abandono.png", "Abandonos", String(abandonos)),
+      crearDatoIconoPerfil("imagenes app/clasificacion/penalizacion.png", "Penalizaciones activas", String(penalizacionesActivasTotal))
+    );
+  }
+
+  renderizarListaPenalizacionesPerfil(
+    "penalizacionesActivasPerfil",
+    activas,
+    "Sin penalizaciones activas",
+    true
+  );
+
+  renderizarListaPenalizacionesPerfil(
+    "penalizacionesHistoricasPerfil",
+    historicas,
+    "Sin penalizaciones historicas",
+    false
+  );
+}
+
 function renderizarEvolucionNivelPerfil(data) {
   let nivelActualNum = normalizarNumeroNivelPerfil(data && data.nivel, null);
   const nivelInicialNum = normalizarNumeroNivelPerfil(data && data.nivelInicial, nivelActualNum);
@@ -175,6 +357,7 @@ function renderizarDatosVisualesPerfil(data, opciones) {
     if (partidasCount) partidasCount.innerText = obtenerTotalPerfil(clasificacion.partidos);
 
     renderizarValoracionesPerfil(clasificacion);
+    renderizarFiabilidadPenalizacionesPerfil(data);
 
     const seguidores = document.getElementById("seguidores");
     if (seguidores) seguidores.innerText = obtenerTotalPerfil(data.seguidores);
