@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Padel Morvedre">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="logo.png">
-<link rel="stylesheet" href="styles.css?v=21">
+<link rel="stylesheet" href="styles.css?v=22">
 </head>
 
 <body>
@@ -48,62 +48,153 @@
   <div class="perfil-header">
 
     <div class="perfil-top">
-      <img id="fotoPerfil" class="foto-perfil" src="">
+      <img id="fotoPerfil" class="foto-perfil" src="" alt="Foto de perfil">
 
       <div class="perfil-info">
-        <div style="display:flex; flex-direction:column; gap:5px;">
+        <div class="perfilIdentidad">
 
-          <div style="display:flex; gap:10px; align-items:center;">
+          <div class="perfilNombreFila">
             <div id="nombrePerfil" class="nombre"></div>
-            <div>· Mano: <span id="manoPerfil"></span></div>
           </div>
 
-          <div style="display:flex; gap:10px; align-items:center;">
-            <div id="nivelPerfil" class="puntos"></div>
-            <div>· Posición: <span id="posicionPerfil"></span></div>
+          <div class="perfilDatosBase">
+            <div>Mano: <span id="manoPerfil">-</span></div>
+            <div>Posicion: <span id="posicionPerfil">-</span></div>
           </div>
+
+          <div id="nivelPerfil" class="puntos perfilNivelResumen"></div>
 
           <div class="perfilNivelEvolucion nivelEvolucionPerfil">
-            <div>Nivel inicial: <span id="nivelInicialPerfil">0.00</span></div>
             <div>Nivel actual: <span id="nivelActualPerfil">0.00</span></div>
-            <div id="nivelDeltaPerfil" class="nivelDeltaIgual">0.00</div>
+            <div>Nivel inicial: <span id="nivelInicialPerfil">0.00</span></div>
+            <div>Progreso: <span id="nivelDeltaPerfil" class="nivelDeltaIgual">0.00</span></div>
           </div>
 
         </div>
       </div>
     </div>
 
-    <button onclick="mostrar('menu')">Volver</button>
+    <div class="perfil-stats">
 
-   <div class="perfil-stats">
+      <div class="stat">
+        <div id="partidasCount">0</div>
+        <span>Partidas jugadas</span>
+      </div>
 
-  <div class="stat">
-    <div id="partidasCount">0</div>
-    <span>Partidas</span>
-  </div>
+      <div class="stat">
+        <div id="reputacionPerfil">0</div>
+        <span>Reputacion</span>
+      </div>
 
-  <div class="stat">
-    <div id="seguidores">0</div>
-    <span>Seguidores</span>
-  </div>
+      <div class="stat">
+        <div id="fiabilidadResumenPerfil">100%</div>
+        <span>Fiabilidad</span>
+      </div>
 
-  <div class="stat">
-    <div id="seguidos">0</div>
-    <span>Seguidos</span>
-  </div>
+      <div class="stat">
+        <div id="penalizacionesActivasResumenPerfil">0</div>
+        <span>Penalizaciones activas</span>
+      </div>
 
-</div>
+      <div class="stat">
+        <div id="seguidores">0</div>
+        <span>Seguidores</span>
+      </div>
+
+      <div class="stat">
+        <div id="seguidos">0</div>
+        <span>Seguidos</span>
+      </div>
+
+    </div>
 
     <div class="perfil-botones">
       <button id="btnEditar" onclick="editarPerfil()">Editar perfil</button>
       <button id="btnSeguir" class="btnYellow" style="display:none;">Seguir</button>
+      <button id="btnChatPrivadoPerfil" class="btnBlue" type="button" style="display:none;">Chat privado</button>
       <button id="btnEliminar" class="rojo" onclick="eliminarPerfil()">Eliminar perfil</button>
     </div>
 
   </div>
 
-</div>
+  <div class="perfilSecciones">
 
+    <section class="perfilSection perfilValoraciones">
+      <h3>Valoraciones</h3>
+      <div class="perfilValoracionFila" id="valoracionPuntualidadPerfil">
+        <span>Puntualidad</span>
+        <span class="perfilEstrellasPendiente">*****</span>
+        <strong>-</strong>
+      </div>
+      <div class="perfilValoracionFila" id="valoracionActitudPerfil">
+        <span>Actitud</span>
+        <span class="perfilEstrellasPendiente">*****</span>
+        <strong>-</strong>
+      </div>
+      <div class="perfilValoracionFila" id="valoracionCompromisoPerfil">
+        <span>Compromiso</span>
+        <span class="perfilEstrellasPendiente">*****</span>
+        <strong>-</strong>
+      </div>
+    </section>
+
+    <section class="perfilSection perfilStatsAvanzadas">
+      <h3>Estadisticas avanzadas</h3>
+      <div class="perfilDatosGrid" id="statsAvanzadasPerfil">
+        <div><span>Companero mas habitual</span><strong>Sin datos todavia</strong></div>
+        <div><span>Rival mas habitual</span><strong>Sin datos todavia</strong></div>
+        <div><span>Pista mas jugada</span><strong>Sin datos todavia</strong></div>
+        <div><span>Partidas ranking</span><strong>Sin datos todavia</strong></div>
+        <div><span>Partidas amistosas</span><strong>Sin datos todavia</strong></div>
+        <div><span>Victorias ranking</span><strong>Sin datos todavia</strong></div>
+        <div><span>Derrotas ranking</span><strong>Sin datos todavia</strong></div>
+        <div><span>% de victoria</span><strong>Sin datos todavia</strong></div>
+        <div><span>Partidas organizadas</span><strong>Sin datos todavia</strong></div>
+        <div><span>Pistas creadas</span><strong>Sin datos todavia</strong></div>
+        <div><span>Abandonos</span><strong>Sin datos todavia</strong></div>
+        <div><span>Partidas completadas sin abandono</span><strong>Sin datos todavia</strong></div>
+      </div>
+    </section>
+
+    <section class="perfilSection perfilFiabilidad">
+      <h3>Fiabilidad y penalizaciones</h3>
+      <div class="perfilFiabilidadResumen">
+        <div>Fiabilidad actual: <strong id="fiabilidadActualPerfil">100%</strong></div>
+        <div>Estado: <strong id="estadoFiabilidadPerfil">Buena</strong></div>
+      </div>
+      <div class="perfilSubbloque">
+        <h4>Penalizaciones activas</h4>
+        <div id="penalizacionesActivasPerfil" class="perfilMensajeVacio">Sin penalizaciones activas</div>
+      </div>
+      <div class="perfilSubbloque">
+        <h4>Penalizaciones historicas</h4>
+        <div id="penalizacionesHistoricasPerfil" class="perfilMensajeVacio">Sin datos todavia</div>
+      </div>
+    </section>
+
+    <section class="perfilSection perfilLogros">
+      <h3>Logros</h3>
+      <div class="perfilLogrosGrid" id="logrosPerfil">
+        <div class="perfilLogroItem"><img src="imagenes%20app/trofeos/participacion-gris.png" alt=""><span>Participacion</span><small>Sin datos todavia</small></div>
+        <div class="perfilLogroItem"><img src="imagenes%20app/trofeos/competicion-gris.png" alt=""><span>Competicion</span><small>Sin datos todavia</small></div>
+        <div class="perfilLogroItem"><img src="imagenes%20app/trofeos/comunidad-gris.png" alt=""><span>Comunidad</span><small>Sin datos todavia</small></div>
+        <div class="perfilLogroItem"><img src="imagenes%20app/trofeos/compromiso-gris.png" alt=""><span>Compromiso</span><small>Sin datos todavia</small></div>
+        <div class="perfilLogroItem"><img src="imagenes%20app/trofeos/explorador-gris.png" alt=""><span>Exploracion</span><small>Sin datos todavia</small></div>
+        <div class="perfilLogroItem"><img src="imagenes%20app/trofeos/organizador-gris.png" alt=""><span>Organizador</span><small>Sin datos todavia</small></div>
+        <div class="perfilLogroItem"><img src="imagenes%20app/trofeos/creador_de_pista-gris.png" alt=""><span>Creador de pistas</span><small>Sin datos todavia</small></div>
+      </div>
+    </section>
+
+    <section class="perfilSection perfilHistorial">
+      <h3>Historial</h3>
+      <div id="historialPerfil" class="perfilMensajeVacio">Sin datos todavia</div>
+    </section>
+
+  </div>
+
+  <button onclick="mostrar('menu')">Volver</button>
+
+</div>
 <!-- LOGIN -->
 
 <div id="login" class="container">
