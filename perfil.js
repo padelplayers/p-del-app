@@ -147,6 +147,33 @@ function obtenerTextoCampoPerfil(data, rutas) {
   return "Sin datos todavia";
 }
 
+function obtenerEntradaMasHabitualPerfil(mapa) {
+  if (!mapa || typeof mapa !== "object") return null;
+
+  return Object.keys(mapa).reduce(function(mejor, id) {
+    const entrada = mapa[id];
+    if (!entrada || typeof entrada !== "object") return mejor;
+
+    const veces = obtenerNumeroPerfil(entrada.veces, 0);
+    if (!mejor || veces > mejor.veces) {
+      return Object.assign({}, entrada, {
+        id: id,
+        veces: veces
+      });
+    }
+
+    return mejor;
+  }, null);
+}
+
+function formatearEntradaHabitualPerfil(entrada, singular, plural, campoNombre, fallbackIdCampo) {
+  if (!entrada || !entrada.veces) return "Sin datos todavia";
+
+  const nombre = entrada[campoNombre || "nombre"] || entrada[fallbackIdCampo || "uid"] || entrada.id || "Sin datos";
+  const etiqueta = entrada.veces === 1 ? singular : plural;
+  return nombre + " (" + entrada.veces + " " + etiqueta + ")";
+}
+
 function renderizarStatsAvanzadasPerfil(data) {
   const contenedor = document.getElementById("statsAvanzadasPerfil");
   if (!contenedor) return;
@@ -166,20 +193,14 @@ function renderizarStatsAvanzadasPerfil(data) {
   const compromisoLogro = clasificacion.compromisoLogro !== undefined && clasificacion.compromisoLogro !== null
     ? clasificacion.compromisoLogro
     : clasificacion.partidasCompletadasSinAbandono;
+  const companeroHabitual = obtenerEntradaMasHabitualPerfil(clasificacion.companerosMap);
+  const rivalHabitual = obtenerEntradaMasHabitualPerfil(clasificacion.rivalesMap);
+  const pistaHabitual = obtenerEntradaMasHabitualPerfil(clasificacion.pistasJugadasMap);
 
   contenedor.replaceChildren(
-    crearDatoStatsAvanzadasPerfil("Companero mas habitual", obtenerTextoCampoPerfil(data, [
-      "clasificacion.companeroMasHabitualNombre",
-      "clasificacion.companeroMasHabitual"
-    ])),
-    crearDatoStatsAvanzadasPerfil("Rival mas habitual", obtenerTextoCampoPerfil(data, [
-      "clasificacion.rivalMasHabitualNombre",
-      "clasificacion.rivalMasHabitual"
-    ])),
-    crearDatoStatsAvanzadasPerfil("Pista mas jugada", obtenerTextoCampoPerfil(data, [
-      "clasificacion.pistaMasJugadaNombre",
-      "clasificacion.pistaMasJugada"
-    ])),
+    crearDatoStatsAvanzadasPerfil("Companero mas habitual", formatearEntradaHabitualPerfil(companeroHabitual, "partida", "partidas", "nombre", "uid")),
+    crearDatoStatsAvanzadasPerfil("Rival mas habitual", formatearEntradaHabitualPerfil(rivalHabitual, "partido", "partidos", "nombre", "uid")),
+    crearDatoStatsAvanzadasPerfil("Pista mas jugada", formatearEntradaHabitualPerfil(pistaHabitual, "partida", "partidas", "nombre", "pistaId")),
     crearDatoStatsAvanzadasPerfil("Partidas ranking", String(rankingPartidos)),
     crearDatoStatsAvanzadasPerfil("Partidas amistosas", String(partidasAmistosas)),
     crearDatoStatsAvanzadasPerfil("Victorias ranking", String(victoriasRanking)),
