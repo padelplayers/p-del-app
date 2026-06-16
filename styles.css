@@ -953,6 +953,18 @@ body.chatAbierto{
   color:#666;
 }
 
+#nivelDeltaPerfil.nivelDeltaSube{
+  color:#2e7d32;
+}
+
+#nivelDeltaPerfil.nivelDeltaBaja{
+  color:#c62828;
+}
+
+#nivelDeltaPerfil.nivelDeltaIgual{
+  color:#666;
+}
+
 .postPartidoReservasParticipantes{
   display:flex;
   flex-direction:column;
