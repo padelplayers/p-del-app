@@ -23,6 +23,86 @@ function formatearNivelPerfil(valor) {
   return numero.toFixed(2);
 }
 
+function calcularMediaValoracionPerfil(clasificacion, campoTotal) {
+  const valoracionesRecibidas = Number((clasificacion && clasificacion.valoracionesRecibidas) || 0);
+  if (!valoracionesRecibidas || valoracionesRecibidas <= 0) return 0;
+
+  const total = Number((clasificacion && clasificacion[campoTotal]) || 0);
+  if (isNaN(total)) return 0;
+
+  return total / valoracionesRecibidas;
+}
+
+function crearEstrellasValoracionPerfil(media) {
+  const contenedor = document.createElement("span");
+  contenedor.className = "clasificacionEstrellas perfilEstrellasValoracion";
+
+  const numero = Number(media);
+  const valor = isNaN(numero) ? 0 : numero;
+
+  for (let i = 1; i <= 5; i++) {
+    const estrella = document.createElement("span");
+    estrella.className = "clasificacionEstrella";
+    estrella.textContent = "★";
+
+    if (valor >= i) {
+      estrella.classList.add("llena");
+    } else if (valor >= i - 0.5) {
+      estrella.classList.add("media");
+    } else {
+      estrella.classList.add("vacia");
+    }
+
+    contenedor.appendChild(estrella);
+  }
+
+  return contenedor;
+}
+
+function renderizarFilaValoracionPerfil(id, nombre, media) {
+  const fila = document.getElementById(id);
+  if (!fila) return;
+
+  const valor = Number(media) || 0;
+  fila.replaceChildren();
+
+  const etiqueta = document.createElement("span");
+  etiqueta.className = "perfilValoracionNombre";
+  etiqueta.textContent = nombre;
+
+  const estrellas = crearEstrellasValoracionPerfil(valor);
+
+  const numero = document.createElement("strong");
+  numero.className = "perfilValoracionNumero";
+  numero.textContent = valor.toFixed(1);
+
+  fila.appendChild(etiqueta);
+  fila.appendChild(estrellas);
+  fila.appendChild(numero);
+}
+
+function renderizarValoracionesPerfil(clasificacion) {
+  clasificacion = clasificacion || {};
+
+  renderizarFilaValoracionPerfil(
+    "valoracionPuntualidadPerfil",
+    "Puntualidad",
+    calcularMediaValoracionPerfil(clasificacion, "puntualidadTotal")
+  );
+
+  renderizarFilaValoracionPerfil(
+    "valoracionActitudPerfil",
+    "Actitud",
+    calcularMediaValoracionPerfil(clasificacion, "actitudTotal")
+  );
+
+  renderizarFilaValoracionPerfil(
+    "valoracionCompromisoPerfil",
+    "Compromiso",
+    calcularMediaValoracionPerfil(clasificacion, "compromisoTotal")
+  );
+}
+
 function renderizarEvolucionNivelPerfil(data) {
   let nivelActualNum = normalizarNumeroNivelPerfil(data && data.nivel, null);
   const nivelInicialNum = normalizarNumeroNivelPerfil(data && data.nivelInicial, nivelActualNum);
@@ -93,6 +173,8 @@ function renderizarDatosVisualesPerfil(data, opciones) {
     const clasificacion = data.clasificacion || {};
     const partidasCount = document.getElementById("partidasCount");
     if (partidasCount) partidasCount.innerText = obtenerTotalPerfil(clasificacion.partidos);
+
+    renderizarValoracionesPerfil(clasificacion);
 
     const seguidores = document.getElementById("seguidores");
     if (seguidores) seguidores.innerText = obtenerTotalPerfil(data.seguidores);
