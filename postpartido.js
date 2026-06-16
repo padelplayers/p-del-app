@@ -510,15 +510,16 @@ function aplicarClasificacionComunitariaRanking(idPartida) {
       if (!esPartidaRankingPostPartido(p)) return null;
       const debeAplicarClasificacion = p.clasificacionComunitariaAplicada !== true;
       const debeAplicarStats = p.statsHabitualesAplicadas !== true;
-      if (!debeAplicarClasificacion && !debeAplicarStats) return null;
-      if (debeAplicarClasificacion && !partidaRankingListaParaCierre(p)) return null;
-      if (debeAplicarStats && !partidaRankingPermiteStatsHabituales(p)) return null;
+      const puedeAplicarClasificacion = debeAplicarClasificacion && partidaRankingListaParaCierre(p);
+      const puedeAplicarStats = debeAplicarStats && partidaRankingPermiteStatsHabituales(p);
+      if (!puedeAplicarClasificacion && !puedeAplicarStats) return null;
 
-      const incrementos = debeAplicarClasificacion ? calcularClasificacionComunitariaRanking(p) : null;
-      if (debeAplicarClasificacion && !incrementos) return null;
+      const incrementos = puedeAplicarClasificacion ? calcularClasificacionComunitariaRanking(p) : null;
+      const aplicarClasificacion = !!incrementos;
+      if (!aplicarClasificacion && !puedeAplicarStats) return null;
 
       const jugadores = obtenerParticipantesRankingPostPartido(p).filter(function(uid) {
-        return !incrementos || !!incrementos[uid];
+        return puedeAplicarStats || !!incrementos[uid];
       });
       if (jugadores.length === 0) return null;
       const usuarioRefs = jugadores.map(function(uid) {
@@ -529,21 +530,21 @@ function aplicarClasificacionComunitariaRanking(idPartida) {
         return transaction.get(usuarioRef);
       });
 
-      if (debeAplicarStats && pistaRef) lecturas.push(transaction.get(pistaRef));
+      if (puedeAplicarStats && pistaRef) lecturas.push(transaction.get(pistaRef));
 
       return Promise.all(lecturas).then(function(docs) {
         const docsUsuarios = docs.slice(0, usuarioRefs.length);
-        const docPista = debeAplicarStats && pistaRef ? docs[docs.length - 1] : null;
-        const contextoStats = debeAplicarStats
+        const docPista = puedeAplicarStats && pistaRef ? docs[docs.length - 1] : null;
+        const contextoStats = puedeAplicarStats
           ? crearContextoStatsRankingPostPartido(p, docsUsuarios, docPista)
           : null;
 
         jugadores.forEach(function(uid, index) {
           const usuarioRef = usuarioRefs[index];
-          const updateBase = debeAplicarClasificacion
+          const updateBase = aplicarClasificacion && incrementos[uid]
             ? crearUpdateLogrosPartidaPostPartido(incrementos[uid], p)
             : {};
-          const updateStats = debeAplicarStats
+          const updateStats = puedeAplicarStats
             ? crearUpdateStatsHabitualesPostPartido(uid, contextoStats, docsUsuarios[index])
             : {};
 
@@ -554,11 +555,11 @@ function aplicarClasificacionComunitariaRanking(idPartida) {
         });
 
         const updatePartida = {};
-        if (debeAplicarClasificacion) {
+        if (aplicarClasificacion) {
           updatePartida.clasificacionComunitariaAplicada = true;
           updatePartida.clasificacionComunitariaAplicadaAt = firebase.firestore.FieldValue.serverTimestamp();
         }
-        if (debeAplicarStats) {
+        if (puedeAplicarStats) {
           updatePartida.statsHabitualesAplicadas = true;
           updatePartida.statsHabitualesAplicadasAt = firebase.firestore.FieldValue.serverTimestamp();
         }
