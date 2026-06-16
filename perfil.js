@@ -109,13 +109,6 @@ function normalizarPorcentajePerfil(valor, fallback) {
   return Math.max(0, Math.min(100, Math.round(numero)));
 }
 
-function obtenerEstadoFiabilidadPerfil(fiabilidad) {
-  if (fiabilidad >= 80) return "Buena";
-  if (fiabilidad >= 61) return "En observacion";
-  if (fiabilidad >= 41) return "Limitada";
-  return "Restringida";
-}
-
 function fechaPerfilToDate(valor) {
   if (!valor) return null;
   if (typeof valor.toDate === "function") return valor.toDate();
@@ -160,10 +153,19 @@ function obtenerImpactoFiabilidadPerfil(penalizacion) {
   const impacto = Number(penalizacion.impactoFiabilidad);
   if (!isNaN(impacto)) return impacto + "% fiabilidad";
 
+  const impactosPorTipo = {
+    abandono_confirmada: -10,
+    cancelacion_por_falta_sustituto: -10
+  };
+  const tipo = String(penalizacion.tipo || "").trim();
+  if (Object.prototype.hasOwnProperty.call(impactosPorTipo, tipo)) {
+    return impactosPorTipo[tipo] + "% fiabilidad";
+  }
+
   const puntos = Number(penalizacion.puntos);
   if (!isNaN(puntos) && puntos !== 0) return puntos + " puntos";
 
-  return "Sin datos";
+  return "No especificado";
 }
 
 function crearTextoPerfil(tag, texto, className) {
@@ -247,7 +249,6 @@ function renderizarFiabilidadPenalizacionesPerfil(data) {
   const fiabilidad = normalizarPorcentajePerfil(clasificacion.fiabilidad, 100);
   const penalizacionesActivasTotal = obtenerTotalPerfil(clasificacion.penalizacionesActivas);
   const abandonos = obtenerTotalPerfil(clasificacion.abandonos);
-  const estado = obtenerEstadoFiabilidadPerfil(fiabilidad);
   const penalizaciones = Array.isArray(data.penalizaciones) ? data.penalizaciones : [];
   const activas = penalizaciones.filter(penalizacionActivaPerfil);
   const historicas = penalizaciones.filter(function(penalizacion) {
@@ -264,7 +265,6 @@ function renderizarFiabilidadPenalizacionesPerfil(data) {
   if (resumen) {
     resumen.replaceChildren(
       crearDatoIconoPerfil("imagenes app/clasificacion/fiabilidad.png", "Fiabilidad actual", fiabilidad + "%", "fiabilidadActualPerfil"),
-      crearDatoIconoPerfil("imagenes app/clasificacion/fiabilidad.png", "Estado", estado, "estadoFiabilidadPerfil"),
       crearDatoIconoPerfil("imagenes app/clasificacion/abandono.png", "Abandonos", String(abandonos)),
       crearDatoIconoPerfil("imagenes app/clasificacion/penalizacion.png", "Penalizaciones activas", String(penalizacionesActivasTotal))
     );
