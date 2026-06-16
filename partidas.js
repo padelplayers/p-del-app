@@ -619,6 +619,34 @@ function crearPartida() {
   });
 }
 
+window.recalcularPartidasCreadasUsuarioActual = async function() {
+  const user = firebase.auth().currentUser;
+  if (!user) return 0;
+
+  const consultas = await Promise.all([
+    db.collection("partidas").where("creadaPor", "==", user.uid).get(),
+    db.collection("partidas").where("creador", "==", user.uid).get(),
+    db.collection("historial_partidas").where("creadaPor", "==", user.uid).get(),
+    db.collection("historial_partidas").where("creador", "==", user.uid).get()
+  ]);
+
+  const partidasCreadas = {};
+  consultas.forEach(function(snapshot) {
+    snapshot.forEach(function(doc) {
+      partidasCreadas[doc.id] = true;
+    });
+  });
+
+  const total = Object.keys(partidasCreadas).length;
+  await db.collection("usuarios").doc(user.uid).set({
+    clasificacion: {
+      partidasCreadas: total
+    }
+  }, { merge: true });
+
+  return total;
+};
+
 window.seleccionarPistaPartida = function(id, nombre) {
   const div = document.getElementById("pistaSeleccionada");
   if (div) {

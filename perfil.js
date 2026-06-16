@@ -7,6 +7,11 @@ function obtenerTotalPerfil(valor) {
   return 0;
 }
 
+function obtenerNumeroPerfil(valor, fallback) {
+  const numero = Number(valor);
+  return isNaN(numero) ? (fallback || 0) : numero;
+}
+
 function existeValorNivelPerfil(valor) {
   return valor !== undefined && valor !== null && valor !== "";
 }
@@ -100,6 +105,90 @@ function renderizarValoracionesPerfil(clasificacion) {
     "valoracionCompromisoPerfil",
     "Compromiso",
     calcularMediaValoracionPerfil(clasificacion, "compromisoTotal")
+  );
+}
+
+function renderizarReputacionResumenPerfil(clasificacion) {
+  const reputacion = document.getElementById("reputacionPerfil");
+  if (reputacion) reputacion.innerText = obtenerNumeroPerfil(clasificacion && clasificacion.puntos, 0);
+
+  const etiqueta = reputacion && reputacion.parentElement
+    ? reputacion.parentElement.querySelector("span")
+    : null;
+
+  if (etiqueta) {
+    etiqueta.replaceChildren(
+      document.createTextNode("Puntos"),
+      document.createElement("br"),
+      document.createTextNode("reputaci\u00f3n")
+    );
+  }
+}
+
+function crearDatoStatsAvanzadasPerfil(etiqueta, valor) {
+  const item = document.createElement("div");
+  item.appendChild(crearTextoPerfil("span", etiqueta));
+  item.appendChild(crearTextoPerfil("strong", valor));
+  return item;
+}
+
+function obtenerTextoCampoPerfil(data, rutas) {
+  for (let i = 0; i < rutas.length; i++) {
+    let actual = data;
+    const partes = rutas[i].split(".");
+
+    for (let j = 0; j < partes.length; j++) {
+      actual = actual && actual[partes[j]];
+    }
+
+    if (actual !== undefined && actual !== null && actual !== "") return String(actual);
+  }
+
+  return "Sin datos todavia";
+}
+
+function renderizarStatsAvanzadasPerfil(data) {
+  const contenedor = document.getElementById("statsAvanzadasPerfil");
+  if (!contenedor) return;
+
+  data = data || {};
+  const clasificacion = data.clasificacion || {};
+  const partidosTotales = obtenerNumeroPerfil(clasificacion.partidos, 0);
+  const rankingPartidos = obtenerNumeroPerfil(data.rankingPartidos || clasificacion.rankingPartidos, 0);
+  const victoriasRanking = obtenerNumeroPerfil(clasificacion.victoriasRanking, 0);
+  const derrotasRanking = rankingPartidos > 0 ? Math.max(0, rankingPartidos - victoriasRanking) : 0;
+  const porcentajeVictoria = rankingPartidos > 0
+    ? Math.round((victoriasRanking / rankingPartidos) * 100) + "%"
+    : "Sin datos todavia";
+  const partidasAmistosas = partidosTotales > 0
+    ? Math.max(0, partidosTotales - rankingPartidos)
+    : 0;
+  const compromisoLogro = clasificacion.compromisoLogro !== undefined && clasificacion.compromisoLogro !== null
+    ? clasificacion.compromisoLogro
+    : clasificacion.partidasCompletadasSinAbandono;
+
+  contenedor.replaceChildren(
+    crearDatoStatsAvanzadasPerfil("Companero mas habitual", obtenerTextoCampoPerfil(data, [
+      "clasificacion.companeroMasHabitualNombre",
+      "clasificacion.companeroMasHabitual"
+    ])),
+    crearDatoStatsAvanzadasPerfil("Rival mas habitual", obtenerTextoCampoPerfil(data, [
+      "clasificacion.rivalMasHabitualNombre",
+      "clasificacion.rivalMasHabitual"
+    ])),
+    crearDatoStatsAvanzadasPerfil("Pista mas jugada", obtenerTextoCampoPerfil(data, [
+      "clasificacion.pistaMasJugadaNombre",
+      "clasificacion.pistaMasJugada"
+    ])),
+    crearDatoStatsAvanzadasPerfil("Partidas ranking", String(rankingPartidos)),
+    crearDatoStatsAvanzadasPerfil("Partidas amistosas", String(partidasAmistosas)),
+    crearDatoStatsAvanzadasPerfil("Victorias ranking", String(victoriasRanking)),
+    crearDatoStatsAvanzadasPerfil("Derrotas ranking", String(derrotasRanking)),
+    crearDatoStatsAvanzadasPerfil("% de victoria", porcentajeVictoria),
+    crearDatoStatsAvanzadasPerfil("Partidas organizadas", String(obtenerNumeroPerfil(clasificacion.partidasCreadas, 0))),
+    crearDatoStatsAvanzadasPerfil("Pistas creadas", String(obtenerNumeroPerfil(clasificacion.pistasCreadas, 0))),
+    crearDatoStatsAvanzadasPerfil("Abandonos", String(obtenerNumeroPerfil(clasificacion.abandonos, 0))),
+    crearDatoStatsAvanzadasPerfil("Partidas completadas sin abandono", String(obtenerNumeroPerfil(compromisoLogro, 0)))
   );
 }
 
@@ -356,6 +445,8 @@ function renderizarDatosVisualesPerfil(data, opciones) {
     const partidasCount = document.getElementById("partidasCount");
     if (partidasCount) partidasCount.innerText = obtenerTotalPerfil(clasificacion.partidos);
 
+    renderizarReputacionResumenPerfil(clasificacion);
+    renderizarStatsAvanzadasPerfil(data);
     renderizarValoracionesPerfil(clasificacion);
     renderizarFiabilidadPenalizacionesPerfil(data);
     if (typeof window.renderizarLogrosPerfil === "function") {
