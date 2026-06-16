@@ -1195,7 +1195,7 @@ button[onclick*="mostrar('menu')"]{
 .perfilSection h4{
   margin:0 0 8px;
   color:#1565C0;
-  font-size:15px;
+  font-size:18px;
 }
 
 .perfilValoracionFila{
@@ -1241,23 +1241,23 @@ button[onclick*="mostrar('menu')"]{
 .perfilDatosGrid > div{
   display:flex;
   flex-direction:column;
-  gap:4px;
+  gap:6px;
   min-width:0;
-  padding:10px;
+  padding:12px;
   border-radius:8px;
   background:#f7f9fc;
 }
 
 .perfilDatosGrid span{
-  color:#555;
-  font-size:12px;
+  color:#333;
+  font-size:15px;
   font-weight:bold;
 }
 
 .perfilDatosGrid strong,
 .perfilMensajeVacio{
-  color:#666;
-  font-size:13px;
+  color:#333;
+  font-size:15px;
   font-weight:600;
 }
 
@@ -1273,10 +1273,12 @@ button[onclick*="mostrar('menu')"]{
   border-radius:8px;
   background:#f7f9fc;
   color:#333;
+  font-size:15px;
+  font-weight:bold;
 }
 
 .perfilFiabilidadResumen strong{
-  color:#1565C0;
+  color:#333;
 }
 
 .perfilSubbloque{
