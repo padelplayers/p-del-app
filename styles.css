@@ -570,8 +570,9 @@ body.chatAbierto{
   }
 
   .logo{
+    display:block;
     width:100%;
-    max-width:360px;
+    max-width:none;
     max-height:none;
   }
 
