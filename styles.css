@@ -922,6 +922,8 @@ body.chatAbierto{
   flex-direction:column;
   justify-content:center;
   text-align:left;
+  flex:1;
+  min-width:0;
 }
 
 .perfilNivelEvolucion{
@@ -1145,6 +1147,7 @@ button[onclick*="mostrar('menu')"]{
   display:flex;
   flex-direction:column;
   gap:8px;
+  width:100%;
 }
 
 .perfilNombreFila{
@@ -1163,6 +1166,34 @@ button[onclick*="mostrar('menu')"]{
 }
 
 .perfilDatosBase span{
+  color:#1565C0;
+  font-weight:bold;
+}
+
+.perfilCabeceraResumen{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  width:100%;
+}
+
+.perfilCabeceraPrincipal{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-width:0;
+}
+
+.perfilRankingCabecera{
+  color:#333;
+  font-size:14px;
+  line-height:1.35;
+  text-align:left;
+  white-space:nowrap;
+}
+
+.perfilRankingCabecera span{
   color:#1565C0;
   font-weight:bold;
 }
@@ -1511,6 +1542,21 @@ button[onclick*="mostrar('menu')"]{
   .nivelEvolucionPerfil{
     justify-content:center;
     align-items:center;
+  }
+
+  .perfilCabeceraResumen{
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+
+  .perfilCabeceraPrincipal{
+    align-items:center;
+  }
+
+  .perfilRankingCabecera{
+    text-align:center;
+    white-space:normal;
   }
 
   #perfil .perfil-stats{

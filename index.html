@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Padel Morvedre">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="logo.png">
-<link rel="stylesheet" href="styles.css?v=28">
+<link rel="stylesheet" href="styles.css?v=29">
 </head>
 
 <body>
@@ -61,17 +61,27 @@
             <div id="nombrePerfil" class="nombre"></div>
           </div>
 
-          <div class="perfilDatosBase">
-            <div>Mano: <span id="manoPerfil">-</span></div>
-            <div>Posicion: <span id="posicionPerfil">-</span></div>
-          </div>
+          <div class="perfilCabeceraResumen">
+            <div class="perfilCabeceraPrincipal">
+              <div class="perfilDatosBase">
+                <div>Mano: <span id="manoPerfil">-</span></div>
+                <div>Posicion: <span id="posicionPerfil">-</span></div>
+              </div>
 
-          <div id="nivelPerfil" class="puntos perfilNivelResumen"></div>
+              <div id="nivelPerfil" class="puntos perfilNivelResumen"></div>
 
-          <div class="perfilNivelEvolucion nivelEvolucionPerfil">
-            <div>Nivel actual: <span id="nivelActualPerfil">0.00</span></div>
-            <div>Nivel inicial: <span id="nivelInicialPerfil">0.00</span></div>
-            <div>Progreso: <span id="nivelDeltaPerfil" class="nivelDeltaIgual">0.00</span></div>
+              <div class="perfilNivelEvolucion nivelEvolucionPerfil">
+                <div>Nivel actual: <span id="nivelActualPerfil">0.00</span></div>
+                <div>Nivel inicial: <span id="nivelInicialPerfil">0.00</span></div>
+                <div>Progreso: <span id="nivelDeltaPerfil" class="nivelDeltaIgual">0.00</span></div>
+              </div>
+            </div>
+
+            <div class="perfilRankingCabecera">
+              <div>Partidas ranking: <span id="rankingPartidasCabecera">0</span></div>
+              <div>Ganadas: <span id="rankingGanadasCabecera">0</span></div>
+              <div>Perdidas: <span id="rankingPerdidasCabecera">0</span></div>
+            </div>
           </div>
 
         </div>
@@ -1185,7 +1195,7 @@ const db = firebase.firestore();
 </script>
 
 <script src="logros.js?v=5"></script>
-<script src="perfil.js?v=10"></script>
+<script src="perfil.js?v=11"></script>
 <script src="jugadores.js"></script>
 <script src="pistas.js?v=11"></script>
 <script src="partidas.js?v=16"></script>

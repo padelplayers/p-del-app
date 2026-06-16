@@ -192,6 +192,38 @@ function renderizarStatsAvanzadasPerfil(data) {
   );
 }
 
+function obtenerStatsRankingPerfil(data) {
+  data = data || {};
+  const clasificacion = data.clasificacion || {};
+  const partidasRanking = obtenerNumeroPerfil(
+    clasificacion.partidasRanking !== undefined && clasificacion.partidasRanking !== null
+      ? clasificacion.partidasRanking
+      : (data.rankingPartidos || clasificacion.rankingPartidos),
+    0
+  );
+  const victoriasRanking = obtenerNumeroPerfil(clasificacion.victoriasRanking, 0);
+  const derrotasRanking = clasificacion.derrotasRanking !== undefined && clasificacion.derrotasRanking !== null
+    ? obtenerNumeroPerfil(clasificacion.derrotasRanking, 0)
+    : Math.max(0, partidasRanking - victoriasRanking);
+
+  return {
+    partidasRanking: partidasRanking,
+    victoriasRanking: victoriasRanking,
+    derrotasRanking: derrotasRanking
+  };
+}
+
+function renderizarRankingCabeceraPerfil(data) {
+  const stats = obtenerStatsRankingPerfil(data);
+  const partidas = document.getElementById("rankingPartidasCabecera");
+  const ganadas = document.getElementById("rankingGanadasCabecera");
+  const perdidas = document.getElementById("rankingPerdidasCabecera");
+
+  if (partidas) partidas.innerText = stats.partidasRanking;
+  if (ganadas) ganadas.innerText = stats.victoriasRanking;
+  if (perdidas) perdidas.innerText = stats.derrotasRanking;
+}
+
 function normalizarPorcentajePerfil(valor, fallback) {
   const numero = Number(valor);
   if (isNaN(numero)) return fallback;
@@ -439,6 +471,8 @@ function renderizarDatosVisualesPerfil(data, opciones) {
 
   const posicionPerfil = document.getElementById("posicionPerfil");
   if (posicionPerfil) posicionPerfil.innerText = data.posicion || "-";
+
+  renderizarRankingCabeceraPerfil(data);
 
   if (opciones.actualizarStats !== false) {
     const clasificacion = data.clasificacion || {};
