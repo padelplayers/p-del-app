@@ -1173,8 +1173,8 @@ button[onclick*="mostrar('menu')"]{
 .perfilCabeceraResumen{
   display:flex;
   align-items:flex-start;
-  justify-content:space-between;
-  gap:18px;
+  justify-content:flex-start;
+  gap:clamp(42px, 8vw, 86px);
   width:100%;
 }
 
