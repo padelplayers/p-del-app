@@ -8,11 +8,11 @@
       iconoColor: TROFEOS_BASE + "participacion-color.png",
       iconoGris: TROFEOS_BASE + "participacion-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Primer Partido", objetivo: "1 partida" },
-        { estrellas: 2, nombre: "Jugador Activo", objetivo: "10 partidas" },
-        { estrellas: 3, nombre: "Jugador Habitual", objetivo: "50 partidas" },
-        { estrellas: 4, nombre: "Veterano de la Pista", objetivo: "100 partidas" },
-        { estrellas: 5, nombre: "Leyenda del P\u00e1del", objetivo: "250 partidas" }
+        { estrellas: 1, nombre: "Primer Partido", objetivo: "1 partida", valorObjetivo: 1, tipo: "partidos" },
+        { estrellas: 2, nombre: "Jugador Activo", objetivo: "10 partidas", valorObjetivo: 10, tipo: "partidos" },
+        { estrellas: 3, nombre: "Jugador Habitual", objetivo: "50 partidas", valorObjetivo: 50, tipo: "partidos" },
+        { estrellas: 4, nombre: "Veterano de la Pista", objetivo: "100 partidas", valorObjetivo: 100, tipo: "partidos" },
+        { estrellas: 5, nombre: "Leyenda del P\u00e1del", objetivo: "250 partidas", valorObjetivo: 250, tipo: "partidos" }
       ]
     },
     {
@@ -34,11 +34,11 @@
       iconoColor: TROFEOS_BASE + "comunidad-color.png",
       iconoGris: TROFEOS_BASE + "comunidad-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Buen Compa\u00f1ero", objetivo: "5 valoraciones y media minima 3.5" },
-        { estrellas: 2, nombre: "Jugador Respetado", objetivo: "10 valoraciones y media minima 4.0" },
-        { estrellas: 3, nombre: "Referente Local", objetivo: "25 valoraciones y media minima 4.3" },
-        { estrellas: 4, nombre: "Embajador de la Comunidad", objetivo: "50 valoraciones y media minima 4.6" },
-        { estrellas: 5, nombre: "Leyenda de la Comunidad", objetivo: "100 valoraciones y media minima 4.8" }
+        { estrellas: 1, nombre: "Buen Compa\u00f1ero", objetivo: "5 valoraciones y media minima 3.5", valorObjetivo: 5, mediaMinima: 3.5, tipo: "comunidad" },
+        { estrellas: 2, nombre: "Jugador Respetado", objetivo: "10 valoraciones y media minima 4.0", valorObjetivo: 10, mediaMinima: 4.0, tipo: "comunidad" },
+        { estrellas: 3, nombre: "Referente Local", objetivo: "25 valoraciones y media minima 4.3", valorObjetivo: 25, mediaMinima: 4.3, tipo: "comunidad" },
+        { estrellas: 4, nombre: "Embajador de la Comunidad", objetivo: "50 valoraciones y media minima 4.6", valorObjetivo: 50, mediaMinima: 4.6, tipo: "comunidad" },
+        { estrellas: 5, nombre: "Leyenda de la Comunidad", objetivo: "100 valoraciones y media minima 4.8", valorObjetivo: 100, mediaMinima: 4.8, tipo: "comunidad" }
       ]
     },
     {
@@ -47,11 +47,11 @@
       iconoColor: TROFEOS_BASE + "compromiso-color.png",
       iconoGris: TROFEOS_BASE + "compromiso-gris.png",
       logros: [
-        { estrellas: 1, nombre: "Comprometido", objetivo: "10 partidas sin abandono" },
-        { estrellas: 2, nombre: "Jugador Fiable", objetivo: "25 partidas sin abandono" },
-        { estrellas: 3, nombre: "Siempre Presente", objetivo: "50 partidas sin abandono" },
-        { estrellas: 4, nombre: "Ejemplo de Compromiso", objetivo: "100 partidas sin abandono" },
-        { estrellas: 5, nombre: "Compromiso Total", objetivo: "250 partidas sin abandono" }
+        { estrellas: 1, nombre: "Comprometido", objetivo: "10 partidas sin abandono", valorObjetivo: 10, tipo: "sin_abandono" },
+        { estrellas: 2, nombre: "Jugador Fiable", objetivo: "25 partidas sin abandono", valorObjetivo: 25, tipo: "sin_abandono" },
+        { estrellas: 3, nombre: "Siempre Presente", objetivo: "50 partidas sin abandono", valorObjetivo: 50, tipo: "sin_abandono" },
+        { estrellas: 4, nombre: "Ejemplo de Compromiso", objetivo: "100 partidas sin abandono", valorObjetivo: 100, tipo: "sin_abandono" },
+        { estrellas: 5, nombre: "Compromiso Total", objetivo: "250 partidas sin abandono", valorObjetivo: 250, tipo: "sin_abandono" }
       ]
     },
     {
@@ -108,7 +108,86 @@
       : {};
   }
 
-  function crearCardLogro(categoria, logro, desbloqueado) {
+  function obtenerNumeroLogro(valor, fallback) {
+    const numero = Number(valor);
+    return isNaN(numero) ? fallback : numero;
+  }
+
+  function obtenerMediaComunidad(clasificacion) {
+    const valoraciones = obtenerNumeroLogro(clasificacion.valoracionesRecibidas, 0);
+    if (!valoraciones || valoraciones <= 0) return 0;
+
+    const puntualidad = obtenerNumeroLogro(clasificacion.puntualidadTotal, 0) / valoraciones;
+    const actitud = obtenerNumeroLogro(clasificacion.actitudTotal, 0) / valoraciones;
+    const compromiso = obtenerNumeroLogro(clasificacion.compromisoTotal, 0) / valoraciones;
+    return (puntualidad + actitud + compromiso) / 3;
+  }
+
+  function obtenerPartidasSinAbandono(data, clasificacion) {
+    const candidatos = [
+      data && data.partidasSinAbandono,
+      data && data.partidasCompletadasSinAbandono,
+      clasificacion && clasificacion.partidasSinAbandono,
+      clasificacion && clasificacion.partidasCompletadasSinAbandono
+    ];
+
+    for (let i = 0; i < candidatos.length; i++) {
+      if (candidatos[i] !== undefined && candidatos[i] !== null && candidatos[i] !== "") {
+        return obtenerNumeroLogro(candidatos[i], 0);
+      }
+    }
+
+    return null;
+  }
+
+  function calcularEstadoLogro(data, categoria, logro, desbloqueadoManual) {
+    const clasificacion = (data && data.clasificacion) || {};
+
+    if (logro.tipo === "partidos") {
+      const progreso = obtenerNumeroLogro(clasificacion.partidos, 0);
+      return {
+        progreso: progreso,
+        textoProgreso: "Progreso: " + progreso + " / " + logro.objetivo,
+        desbloqueado: desbloqueadoManual || progreso >= logro.valorObjetivo
+      };
+    }
+
+    if (logro.tipo === "comunidad") {
+      const valoraciones = obtenerNumeroLogro(clasificacion.valoracionesRecibidas, 0);
+      const media = obtenerMediaComunidad(clasificacion);
+      return {
+        progreso: valoraciones,
+        textoProgreso: "Progreso: " + valoraciones + " / " + logro.objetivo,
+        desbloqueado: desbloqueadoManual || (valoraciones >= logro.valorObjetivo && media >= logro.mediaMinima)
+      };
+    }
+
+    if (logro.tipo === "sin_abandono") {
+      const progreso = obtenerPartidasSinAbandono(data || {}, clasificacion);
+      if (progreso === null) {
+        return {
+          progreso: null,
+          textoProgreso: "Progreso: Sin datos todavia / " + logro.objetivo,
+          desbloqueado: desbloqueadoManual
+        };
+      }
+
+      return {
+        progreso: progreso,
+        textoProgreso: "Progreso: " + progreso + " / " + logro.objetivo,
+        desbloqueado: desbloqueadoManual || progreso >= logro.valorObjetivo
+      };
+    }
+
+    return {
+      progreso: null,
+      textoProgreso: "Progreso: Sin datos todavia / " + logro.objetivo,
+      desbloqueado: desbloqueadoManual
+    };
+  }
+
+  function crearCardLogro(categoria, logro, estado) {
+    const desbloqueado = estado.desbloqueado === true;
     const card = document.createElement("div");
     card.className = desbloqueado ? "perfilLogroNivel desbloqueado" : "perfilLogroNivel bloqueado";
 
@@ -120,14 +199,14 @@
     contenido.className = "perfilLogroContenido";
     contenido.appendChild(crearTextoLogro("div", "\u2605".repeat(logro.estrellas), "perfilLogroEstrellas"));
     contenido.appendChild(crearTextoLogro("strong", logro.nombre, "perfilLogroNombre"));
-    contenido.appendChild(crearTextoLogro("span", "Progreso: 0 / " + logro.objetivo, "perfilLogroProgreso"));
+    contenido.appendChild(crearTextoLogro("span", estado.textoProgreso, "perfilLogroProgreso"));
 
     card.appendChild(icono);
     card.appendChild(contenido);
     return card;
   }
 
-  function crearCategoriaLogros(categoria, desbloqueados) {
+  function crearCategoriaLogros(categoria, desbloqueados, data) {
     const bloque = document.createElement("section");
     bloque.className = "perfilLogroCategoria";
 
@@ -138,7 +217,8 @@
 
     categoria.logros.forEach(function(logro, index) {
       const logroId = categoria.id + "_" + (index + 1);
-      lista.appendChild(crearCardLogro(categoria, logro, desbloqueados[logroId] === true));
+      const estado = calcularEstadoLogro(data || {}, categoria, logro, desbloqueados[logroId] === true);
+      lista.appendChild(crearCardLogro(categoria, logro, estado));
     });
 
     bloque.appendChild(lista);
@@ -154,7 +234,7 @@
     contenedor.classList.add("perfilLogrosListado");
 
     CATEGORIAS_LOGROS.forEach(function(categoria) {
-      contenedor.appendChild(crearCategoriaLogros(categoria, desbloqueados));
+      contenedor.appendChild(crearCategoriaLogros(categoria, desbloqueados, data || {}));
     });
   };
 
