@@ -199,7 +199,7 @@ let pass = passInput.value;
 const checkEdad = document.getElementById("checkEdad");
 
 if (!checkEdad || !checkEdad.checked) {
-  alert("Debes ser mayor de 14 años");
+  alert("Debes ser mayor de 16 años");
   return;
 }
 
