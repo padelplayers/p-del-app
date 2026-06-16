@@ -2366,6 +2366,7 @@ margin:0 auto;
 }
 
 .saludoNotificaciones {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2380,14 +2381,19 @@ margin:0 auto;
 .saludoNotificaciones h3 {
   margin: 0;
   min-width: 0;
+  width: 100%;
   flex: 1 1 auto;
   flex-grow: 0;
-  text-align: left;
+  text-align: center;
   line-height: 1.2;
 }
 
 .notificacionesBtn {
-  position: relative;
+  position: absolute;
+  left: calc(50% + 62px);
+  top: 50%;
+  right: auto;
+  transform: translateY(-50%);
   z-index: 1;
   flex: 0 0 auto;
   width: 36px !important;
@@ -2439,6 +2445,7 @@ margin:0 auto;
   }
 
   .notificacionesBtn {
+    left: calc(50% + 56px);
     width: 34px !important;
     height: 34px !important;
     min-width: 34px !important;
