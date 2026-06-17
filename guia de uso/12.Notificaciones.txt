@@ -1,0 +1,101 @@
+NOTIFICACIONES
+
+1. ¿Qué son las notificaciones?
+
+Las notificaciones permiten informar a los usuarios sobre eventos importantes relacionados con partidas, resultados, valoraciones, sustituciones, incidencias y funcionamiento general de la aplicación.
+
+Su objetivo es que ningún jugador pierda información relevante sobre las actividades en las que participa.
+
+2. Notificaciones de partidas
+
+La aplicación podrá generar notificaciones cuando:
+
+- Se complete una partida.
+- Una partida sea confirmada.
+- Una partida sea cancelada.
+- Falte un jugador para completar una partida.
+- Exista una plaza libre en una partida confirmada.
+- Sea necesario encontrar un sustituto.
+- Sea necesario encontrar un nuevo creador.
+
+3. Sustituciones y reservas
+
+La aplicación enviará notificaciones cuando:
+
+- Una reserva sea propuesta para ocupar una plaza.
+- Una reserva acepte una plaza.
+- Una reserva rechace una plaza.
+- No exista ninguna reserva compatible.
+- Una sustitución quede pendiente de aceptación.
+
+4. Cambio de creador
+
+Cuando una partida necesite un nuevo creador:
+
+- Los jugadores compatibles recibirán una notificación.
+- El primer jugador que acepte se convertirá en el nuevo creador.
+- La aplicación avisará al resto de participantes cuando el nuevo creador quede asignado.
+
+5. Resultado y validación
+
+En partidas ranking podrán enviarse notificaciones cuando:
+
+- Se introduzca un resultado.
+- Sea necesaria una validación.
+- Se rechace un resultado.
+- Se proponga un resultado alternativo.
+- Exista una disputa pendiente.
+
+6. Valoraciones
+
+La aplicación podrá generar avisos cuando:
+
+- Sea necesario valorar a otros jugadores.
+- Existan valoraciones pendientes.
+- Se acerque el final del plazo de postpartido.
+
+7. No presentado
+
+La aplicación enviará notificaciones cuando:
+
+- Se registre una incidencia de no presentado.
+- Se aplique una penalización por no presentado.
+- Se informe a los demás participantes de la incidencia.
+
+8. Penalizaciones y restricciones
+
+La aplicación notificará:
+
+- Penalizaciones aplicadas.
+- Restricciones activas.
+- Inicio de una restricción.
+- Fin de una restricción.
+- Cambios importantes en la fiabilidad.
+
+9. Recordatorios automáticos
+
+Para evitar olvidos, determinadas acciones podrán generar recordatorios automáticos.
+
+Entre ellas:
+
+- Confirmar una partida completa.
+- Aceptar ser nuevo creador.
+- Aceptar una sustitución.
+- Introducir o validar resultados.
+- Completar valoraciones.
+
+10. Lectura de notificaciones
+
+Las notificaciones pueden marcarse como leídas.
+
+Algunas desaparecerán automáticamente cuando dejen de ser válidas.
+
+Otras permanecerán visibles como información histórica o registro de acciones importantes.
+
+11. Importante
+
+Ignorar una notificación no evita las consecuencias asociadas a la acción pendiente.
+
+Es responsabilidad de cada usuario revisar periódicamente sus notificaciones.
+
+Las notificaciones forman parte del funcionamiento oficial de la aplicación y sirven como mecanismo principal de información sobre partidas, incidencias, resultados, valoraciones y penalizaciones.

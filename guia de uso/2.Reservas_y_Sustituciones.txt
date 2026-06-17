@@ -1,0 +1,120 @@
+RESERVAS Y SUSTITUCIONES
+
+1. Partidas abiertas
+
+Cuando un jugador titular abandona una partida abierta, su plaza queda libre.
+
+Si existe una reserva compatible, esta será propuesta automáticamente para ocupar la plaza y deberá aceptar o rechazar la propuesta.
+
+Mientras exista una reserva pendiente de aceptar, el creador no podrá confirmar la partida.
+
+Si no existe ninguna reserva compatible, la plaza quedará libre y podrá ser ocupada por cualquier usuario compatible mediante el botón "+".
+
+El abandono de una partida abierta no conlleva penalización.
+
+2. Abandono del creador
+
+Si el creador abandona una partida abierta y es el único jugador inscrito, la partida será eliminada.
+
+Si existen otros jugadores inscritos:
+
+- Si faltan menos de 5 horas para el inicio, la partida será cancelada automáticamente.
+- Si faltan más de 5 horas para el inicio, se iniciará el proceso de cambio de creador.
+- Los jugadores titulares recibirán una notificación para aceptar la creación de la partida.
+- El primer titular que acepte pasará a ser el nuevo creador.
+
+Las reservas no podrán convertirse en creador de la partida.
+
+Si nadie acepta la creación y la partida llega al límite de 5 horas sin creador válido, la partida será cancelada automáticamente.
+
+3. Partidas confirmadas
+
+Una vez confirmada una partida, el creador no podrá abandonarla.
+
+Los jugadores titulares dispondrán de dos opciones:
+
+- Solicitar sustituto.
+- Salir con penalización.
+
+4. Solicitar sustituto
+
+Al solicitar sustituto:
+
+- El jugador continúa formando parte de la partida.
+- No recibe penalización inmediata.
+- Se avisará a las reservas compatibles.
+- La primera reserva compatible que acepte ocupará su plaza.
+- Si una reserva acepta, el jugador saldrá de la partida sin penalización.
+- Si ninguna reserva acepta, el jugador seguirá siendo titular y deberá asistir a la partida.
+
+Mientras exista una solicitud de sustituto pendiente, el jugador sigue siendo responsable de asistir al partido.
+
+5. Salir con penalización
+
+Al elegir esta opción:
+
+- El jugador abandona inmediatamente la partida.
+- Se aplica una penalización por abandono.
+- Si existe una reserva compatible, se propondrá automáticamente para ocupar la plaza.
+- Si no existe reserva compatible, la partida quedará incompleta.
+
+Si la partida termina cancelándose por falta de jugadores como consecuencia de este abandono, podrá aplicarse una penalización adicional.
+
+Las penalizaciones por abandono y cancelación derivada del abandono son acumulables.
+
+6. Reservas compatibles
+
+En partidas no mixtas, cualquier reserva inscrita se considera compatible.
+
+En partidas mixtas, únicamente serán compatibles las reservas del mismo sexo que el jugador titular que abandona la plaza.
+
+7. Aceptación o rechazo de una reserva
+
+Cuando una reserva recibe una propuesta para ocupar una plaza podrá aceptarla o rechazarla.
+
+Si la acepta:
+
+- Pasará a ocupar la plaza de titular.
+- La partida volverá a quedar completa.
+
+Si la rechaza:
+
+- Se propondrá la plaza a la siguiente reserva compatible disponible.
+- Si no existen más reservas compatibles, la plaza permanecerá libre.
+
+8. Partidas incompletas
+
+Si una partida confirmada queda con menos de cuatro titulares y no existe ninguna reserva compatible:
+
+- La partida quedará marcada como incompleta.
+- Los participantes serán avisados de que falta un jugador.
+- La plaza aparecerá libre para que pueda ser ocupada por otro usuario compatible.
+
+La aplicación podrá generar avisos para ayudar a encontrar jugadores antes del límite de cancelación.
+
+9. Límite de 5 horas
+
+Si una partida confirmada permanece incompleta cuando faltan 5 horas para su inicio:
+
+- La partida será cancelada automáticamente.
+- Los participantes serán avisados.
+- El creador deberá cancelar la reserva realizada con el club.
+- El responsable del abandono podrá recibir una penalización adicional.
+- La penalización adicional se acumulará a la penalización inicial por abandono.
+
+10. Sustituciones en partidas mixtas
+
+Las sustituciones respetarán siempre el sexo del jugador que abandona la plaza.
+
+Si abandona un hombre, solo podrá ocupar la plaza una reserva masculina.
+
+Si abandona una mujer, solo podrá ocupar la plaza una reserva femenina.
+
+11. Reserva subida a titular
+
+Cuando una reserva sea seleccionada para ocupar una plaza:
+
+- Deberá aceptar o rechazar la propuesta.
+- Mientras no responda, la plaza permanecerá bloqueada.
+- El creador no podrá confirmar la partida si existe una reserva pendiente de aceptar.
+- Si la reserva no responde dentro del plazo establecido por la aplicación, podrá considerarse rechazo automático y ofrecerse la plaza a otra reserva compatible.

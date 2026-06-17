@@ -1,0 +1,230 @@
+CÓMO FUNCIONAN LAS PARTIDAS
+
+1.  Crear una partida
+
+El creador selecciona la fecha, la hora, el tipo de partida, el género,
+el nivel y la pista donde desea jugar.
+
+Antes de crear una partida, el creador debe comprobar por su cuenta que
+existe disponibilidad real en el club o instalación elegida.
+
+La aplicación no reserva pistas automáticamente.
+
+La creación de una partida supone una propuesta de juego abierta a otros
+usuarios de la comunidad.
+
+2.  Jugadores y reservas
+
+Los jugadores pueden apuntarse a una partida hasta completar las plazas
+de jugadores titulares disponibles.
+
+Cuando se completan las plazas titulares:
+
+-   La partida queda completa.
+-   La pista todavía no está reservada.
+-   La partida todavía no está confirmada.
+
+Además, podrán apuntarse jugadores de reserva cuando existan plazas
+disponibles para ello.
+
+Las reservas podrán ser utilizadas para cubrir bajas o sustituciones
+cuando sea necesario.
+
+En partidas mixtas siempre se respetará la compatibilidad de género de
+los participantes y de las reservas.
+
+3.  Confirmar la partida
+
+Una vez completada la partida, el creador debe realizar la reserva
+directamente con el club o instalación correspondiente.
+
+Tras realizar la reserva, deberá pulsar el botón Confirmar partida.
+
+Cuando una partida es confirmada:
+
+-   La fecha queda bloqueada.
+-   La hora queda bloqueada.
+-   La pista queda bloqueada.
+
+A partir de ese momento la partida pasa al estado Confirmada.
+
+La aplicación no realiza la reserva ni el pago de la pista. Estas
+gestiones corresponden exclusivamente a los participantes.
+
+4.  Abandonos y sustituciones
+
+Si un jugador abandona una partida confirmada:
+
+-   El sistema intentará cubrir su plaza con un jugador de reserva
+    compatible.
+-   La reserva deberá aceptar la plaza ofrecida.
+-   Mientras exista una sustitución pendiente, determinadas acciones
+    posteriores de la partida permanecerán bloqueadas.
+
+Si no existe una reserva disponible, la partida podrá quedar incompleta
+hasta que se encuentre un sustituto.
+
+En partidas mixtas siempre se respetará la compatibilidad de género.
+
+Si una partida confirmada queda incompleta por la baja de uno o varios
+jugadores, el sistema intentará encontrar sustitutos compatibles.
+
+Si la partida continúa incompleta al llegar a las 5 horas previas a su
+inicio, la aplicación cancelará automáticamente la partida y avisará a
+los participantes.
+
+En ese caso, el creador deberá cancelar también la reserva realizada
+previamente con el club o instalación correspondiente.
+
+El jugador responsable de haber provocado la cancelación de la partida
+podrá recibir una penalización adicional.
+
+Los jugadores que abandonen una partida confirmada podrán recibir
+penalizaciones de fiabilidad.
+
+Las penalizaciones por abandono y las derivadas de una cancelación
+provocada por dicho abandono son acumulables.
+
+Las restricciones derivadas de la fiabilidad se aplicarán
+automáticamente según el nivel de fiabilidad alcanzado.
+
+5.  Partidas amistosas
+
+Las partidas amistosas están pensadas para jugar, conocer nuevos
+compañeros y disfrutar del pádel sin afectar al nivel competitivo.
+
+-   No modifican el nivel competitivo.
+-   No tienen resultado oficial.
+-   Sí generan valoraciones entre jugadores.
+-   Sí afectan a la reputación de la comunidad.
+
+Al finalizar la partida, todos los participantes reales deberán valorar
+al resto de participantes reales.
+
+En caso de existir reservas que hayan participado en la partida,
+únicamente se valorará a quienes hayan jugado efectivamente.
+
+Las partidas amistosas no requieren introducir ni validar resultado.
+
+6.  Partidas ranking
+
+Las partidas ranking sí afectan al nivel competitivo de los jugadores.
+
+Al finalizar una partida ranking:
+
+-   Un jugador introduce el resultado.
+-   Los demás jugadores lo validan o lo rechazan.
+-   Si existe desacuerdo, la partida entra en disputa hasta que se
+    alcance una resolución.
+
+Una vez validado el resultado, los jugadores deberán completar las
+valoraciones correspondientes.
+
+El proceso postpartido deberá completarse dentro del plazo establecido
+por la aplicación.
+
+El incumplimiento de las obligaciones de resultado, validación o
+valoración podrá generar penalizaciones automáticas.
+
+7.  Incidencia por no presentado
+
+La incidencia de no presentado solo puede aplicarse a jugadores
+titulares.
+
+Los jugadores de reserva no generan incidencias de no presentado.
+
+Si un titular no se presenta a la partida, los participantes podrán
+registrar una incidencia de no presentado.
+
+Se deberá indicar si la partida no pudo jugarse o si se jugó igualmente.
+
+Si la partida no pudo jugarse:
+
+-   No habrá resultado.
+-   No habrá valoraciones.
+-   No se aplicarán cambios de nivel.
+-   La partida quedará cerrada por incidencia.
+
+Si la partida se jugó igualmente:
+
+-   La partida pasará automáticamente a considerarse amistosa.
+-   No habrá resultado ranking.
+-   No se aplicarán cambios de nivel.
+-   Sí podrán realizarse valoraciones entre los participantes reales.
+
+El jugador no presentado quedará excluido de valoraciones, estadísticas,
+reputación, logros y participación efectiva en dicha partida.
+
+La incidencia podrá generar penalizaciones automáticas y restricciones
+temporales de uso.
+
+Penalización por no presentado:
+
+-   -30% de fiabilidad.
+-   -8 puntos de reputación.
+-   -5 puntos de compromiso.
+-   3 días sin poder apuntarse a partidas.
+
+Estas restricciones son acumulables con las derivadas de la fiabilidad.
+
+8.  Valoraciones
+
+Tras finalizar una partida, los jugadores valorarán a los demás
+participantes en:
+
+-   Puntualidad.
+-   Actitud.
+-   Compromiso.
+
+Estas valoraciones afectan a la reputación y clasificación de la
+comunidad.
+
+Las valoraciones deben reflejar el comportamiento real de los
+participantes durante la actividad.
+
+9.  Penalizaciones
+
+Pueden aplicarse penalizaciones por:
+
+-   Abandonar partidas confirmadas.
+-   No presentarse a una partida.
+-   Provocar la cancelación de una partida confirmada.
+-   No introducir resultados cuando sea obligatorio.
+-   No validar resultados dentro del plazo establecido.
+-   No completar acciones obligatorias posteriores a la partida.
+-   Incumplir obligaciones postpartido.
+-   Conductas que perjudiquen a otros jugadores o al correcto
+    funcionamiento de la comunidad.
+
+Las penalizaciones afectan a la fiabilidad del jugador y podrán limitar
+determinadas funcionalidades de la aplicación.
+
+Algunas penalizaciones pueden generar restricciones temporales para
+crear partidas, unirse a partidas o utilizar determinadas funciones de
+la aplicación.
+
+10. Importante
+
+La aplicación facilita la organización de partidas entre jugadores.
+
+-   No reserva pistas.
+-   No realiza cobros.
+-   No realiza pagos.
+-   No interviene en acuerdos económicos entre usuarios o clubes.
+
+La aplicación genera avisos y notificaciones sobre los distintos estados
+de las partidas, resultados, valoraciones, sustituciones, incidencias y
+otras acciones importantes.
+
+Para consultar estos avisos es necesario acceder a la aplicación.
+
+Ignorar las notificaciones no exime del cumplimiento de las acciones
+obligatorias ni evita posibles penalizaciones asociadas a la partida.
+
+Los plazos automáticos, incidencias, validaciones y penalizaciones se
+gestionan mediante los registros de la aplicación, por lo que es
+responsabilidad de cada usuario revisar periódicamente sus avisos y
+notificaciones.
+
+La reserva y el pago de la pista son responsabilidad exclusiva de los
+jugadores participantes.

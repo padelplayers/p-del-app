@@ -1,0 +1,141 @@
+LOGROS
+
+Los logros son insignias que reconocen la participación, compromiso y colaboración de los jugadores dentro de la comunidad.
+
+Los logros premian acciones como jugar partidas, organizar encuentros, crear pistas, descubrir nuevas instalaciones y contribuir al buen funcionamiento de la comunidad.
+
+Cómo funcionan
+
+- Todos los logros estarán visibles desde el principio.
+- Los logros no conseguidos se mostrarán en gris.
+- Los logros desbloqueados se mostrarán en color.
+- Cada categoría dispone de distintos niveles de progresión.
+- Al seleccionar un logro se mostrará la información necesaria para conocer los requisitos de desbloqueo y el progreso realizado.
+- Los logros son permanentes una vez obtenidos.
+- Los logros no caducan.
+- Los logros no pueden perderse por recibir penalizaciones.
+
+Categorías de logros
+
+1. Participación
+
+Reconoce la actividad general dentro de la aplicación.
+
+Ejemplos:
+
+- Primera participación.
+- Jugador habitual.
+- Veterano.
+- Centenario.
+
+Se obtiene mediante el número total de partidas disputadas.
+
+2. Competición
+
+Reconoce el rendimiento en partidas ranking.
+
+Ejemplos:
+
+- Primera victoria.
+- Competidor.
+- Especialista ranking.
+- Maestro de la competición.
+
+Se obtiene mediante victorias y participación en partidas ranking.
+
+3. Comunidad
+
+Reconoce la valoración recibida por otros jugadores.
+
+Ejemplos:
+
+- Bien valorado.
+- Compañero ejemplar.
+- Referente de la comunidad.
+- Leyenda de la comunidad.
+
+Se obtiene mediante las valoraciones de puntualidad, actitud y compromiso.
+
+4. Compromiso
+
+Reconoce el cumplimiento de obligaciones y la constancia.
+
+Ejemplos:
+
+- Comprometido.
+- Siempre cumple.
+- Jugador fiable.
+- Referente de compromiso.
+
+Tiene en cuenta:
+
+- Participación constante.
+- Ausencia de incidencias.
+- Correcta finalización de acciones postpartido.
+
+5. Exploración
+
+Reconoce haber jugado en distintas pistas.
+
+Ejemplos:
+
+- Primera pista.
+- Explorador local.
+- Explorador avanzado.
+- Maestro explorador.
+
+Se obtiene mediante el número de pistas diferentes utilizadas.
+
+6. Organizador
+
+Reconoce la creación de partidas.
+
+Ejemplos:
+
+- Primera partida creada.
+- Organizador habitual.
+- Organizador experto.
+- Maestro organizador.
+
+Se obtiene mediante el número de partidas creadas.
+
+7. Creador de pistas
+
+Reconoce la aportación de nuevas pistas a la comunidad.
+
+Niveles definidos:
+
+- Primera pista creada.
+- Creador local.
+- Maestro de pistas.
+
+Se obtiene mediante la creación de pistas verificadas dentro de la aplicación.
+
+Progreso
+
+Todos los logros mostrarán:
+
+- Estado bloqueado o desbloqueado.
+- Descripción.
+- Progreso actual.
+- Objetivo necesario para el siguiente nivel.
+
+Visualización
+
+- Los logros bloqueados aparecerán en gris.
+- Los logros desbloqueados aparecerán con su diseño completo.
+- Cada categoría dispondrá de su propia insignia visual.
+- Las insignias utilizarán el estilo visual oficial de la aplicación.
+
+Importante
+
+Los logros son una forma de reconocer la participación y colaboración de los jugadores dentro de la comunidad.
+
+Los logros no modifican:
+
+- El nivel competitivo.
+- La reputación.
+- La clasificación.
+- La fiabilidad.
+
+Los logros son elementos de reconocimiento y progresión personal dentro de la aplicación.

@@ -1,0 +1,207 @@
+AVISO LEGAL, TÉRMINOS Y CONDICIONES DE USO Y POLÍTICA DE PRIVACIDAD
+PÁDEL PLAYERS MORVEDRE
+
+1. IDENTIFICACIÓN DEL RESPONSABLE
+
+Titular de la aplicación:
+Juan Vicente Casas Pérez
+
+Localidad:
+Canet de Berenguer (Valencia)
+
+Correo electrónico de contacto:
+padelplayersmorvedre@gmail.com
+
+2. OBJETO DE LA APLICACIÓN
+
+Pádel Players Morvedre es una plataforma destinada a facilitar la organización de partidas de pádel entre usuarios.
+
+La aplicación permite:
+
+- Crear partidas.
+- Unirse a partidas.
+- Gestionar reservas y sustituciones.
+- Valorar jugadores.
+- Utilizar sistemas de reputación y logros.
+- Compartir pistas.
+- Utilizar chats y notificaciones.
+
+La aplicación no realiza reservas de pistas ni gestiona pagos.
+
+3. ACEPTACIÓN DE LAS CONDICIONES
+
+El registro y utilización de la aplicación implica la aceptación de este documento.
+
+Los usuarios se comprometen a utilizar la aplicación de forma responsable y respetuosa con el resto de la comunidad.
+
+4. USO DE LA APLICACIÓN
+
+No está permitido:
+
+- Suplantar identidades.
+- Publicar información falsa.
+- Utilizar la aplicación con fines ilícitos.
+- Acosar o insultar a otros usuarios.
+- Manipular resultados o valoraciones.
+- Utilizar sistemas automáticos para alterar el funcionamiento de la plataforma.
+
+La administración podrá aplicar restricciones o penalizaciones cuando detecte incumplimientos.
+
+5. PARTIDAS
+
+La aplicación facilita la organización de partidas entre usuarios.
+
+La aplicación:
+
+- No reserva pistas.
+- No cobra importes.
+- No interviene en acuerdos económicos.
+- No garantiza la disponibilidad real de instalaciones.
+
+La reserva efectiva de la pista es responsabilidad del creador de la partida.
+
+6. CHAT Y COMUNICACIONES
+
+La aplicación dispone de:
+
+- Chat general.
+- Chats de partida.
+- Chats privados.
+
+También existen mensajes automáticos enviados por el usuario especial denominado "Sistema".
+
+Los mensajes del Sistema:
+
+- No representan usuarios reales.
+- No generan actividad ni reputación.
+- Se utilizan para informar sobre eventos relacionados con partidas.
+
+7. PENALIZACIONES Y RESTRICCIONES
+
+La aplicación puede aplicar penalizaciones derivadas de:
+
+- Abandonos.
+- No presentados.
+- Incumplimientos postpartido.
+- Conductas perjudiciales para la comunidad.
+
+Las penalizaciones pueden afectar a:
+
+- Fiabilidad.
+- Reputación.
+- Compromiso.
+- Acceso a determinadas funcionalidades.
+
+8. DATOS RECOPILADOS
+
+La aplicación puede almacenar:
+
+- Nombre de usuario.
+- Correo electrónico.
+- Foto de perfil.
+- Género.
+- Nivel deportivo.
+- Estadísticas.
+- Resultados.
+- Valoraciones.
+- Logros.
+- Reputación.
+- Fiabilidad.
+- Penalizaciones.
+- Notificaciones.
+- Mensajes de chat.
+- Información sobre pistas creadas.
+- Información necesaria para el funcionamiento de las partidas.
+
+9. ALMACENAMIENTO DE DATOS
+
+Los datos se almacenan utilizando servicios de Google Firebase.
+
+Entre ellos:
+
+- Firebase Authentication.
+- Cloud Firestore.
+- Firebase Storage.
+
+Estos servicios son utilizados exclusivamente para el funcionamiento de la aplicación.
+
+10. FINALIDAD DEL TRATAMIENTO
+
+Los datos se utilizan para:
+
+- Gestionar cuentas de usuario.
+- Organizar partidas.
+- Gestionar resultados y valoraciones.
+- Mostrar clasificaciones.
+- Gestionar logros.
+- Aplicar penalizaciones y restricciones.
+- Facilitar comunicaciones entre usuarios.
+- Mejorar el funcionamiento de la aplicación.
+
+11. CONSERVACIÓN DE LOS DATOS
+
+Los datos se conservarán mientras sean necesarios para el funcionamiento de la aplicación o hasta que el usuario solicite la eliminación de su cuenta.
+
+Algunos datos históricos podrán mantenerse de forma anonimizada para preservar la integridad de la plataforma.
+
+12. ELIMINACIÓN DE CUENTA
+
+Los usuarios podrán solicitar la eliminación de su cuenta mediante las herramientas disponibles en la aplicación.
+
+Antes de eliminar una cuenta:
+
+- No podrán existir partidas activas como creador.
+- Deberán cumplirse las condiciones necesarias para garantizar la integridad de los datos.
+
+Durante el proceso de eliminación:
+
+- Se elimina la cuenta de usuario.
+- Se elimina la foto de perfil.
+- Se eliminan las relaciones sociales.
+- Se eliminan los chats privados.
+- Se eliminan las notificaciones propias.
+- Se eliminan los datos personales asociados al perfil.
+
+13. ANONIMIZACIÓN DE INFORMACIÓN HISTÓRICA
+
+Para mantener la coherencia de estadísticas e historial:
+
+- Las partidas históricas no se eliminan.
+- Los resultados históricos no se eliminan.
+- Las pistas creadas pueden mantenerse.
+
+En estos casos la identidad del usuario eliminado será sustituida por identificadores anonimizados.
+
+14. DERECHOS DEL USUARIO
+
+Los usuarios podrán solicitar:
+
+- Acceso a sus datos.
+- Rectificación de datos incorrectos.
+- Supresión de datos.
+- Limitación del tratamiento.
+- Oposición al tratamiento cuando resulte aplicable.
+
+Las solicitudes podrán realizarse mediante el correo de contacto indicado en este documento.
+
+15. LIMITACIÓN DE RESPONSABILIDAD
+
+La aplicación se ofrece tal y como está disponible en cada momento.
+
+No se garantiza:
+
+- Disponibilidad permanente.
+- Ausencia total de errores.
+- Exactitud absoluta de la información aportada por terceros.
+
+Cada usuario es responsable de la información que publica y de las acciones que realiza dentro de la aplicación.
+
+16. MODIFICACIONES
+
+La administración podrá modificar estas condiciones cuando resulte necesario para adaptar la aplicación a nuevas funcionalidades, cambios normativos o mejoras del servicio.
+
+17. CONTACTO
+
+Para cualquier consulta relacionada con la aplicación o con el tratamiento de datos:
+
+padelplayersmorvedre@gmail.com

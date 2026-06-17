@@ -1,0 +1,107 @@
+REPUTACIÓN Y CLASIFICACIÓN
+
+1. ¿Qué es la reputación?
+
+La reputación mide el comportamiento, compromiso y participación de los jugadores dentro de la comunidad.
+
+La reputación no mide el nivel de juego.
+
+2. ¿Cómo se obtiene reputación?
+
+La reputación aumenta mediante:
+
+- La participación en partidas.
+- Las valoraciones positivas recibidas de otros jugadores.
+- El cumplimiento de los compromisos adquiridos dentro de la aplicación.
+
+Las valoraciones de la comunidad tienen en cuenta:
+
+- Puntualidad.
+- Actitud.
+- Compromiso.
+
+3. Clasificación de reputación
+
+La clasificación de reputación muestra a los jugadores mejor valorados de la comunidad.
+
+La posición depende de:
+
+- Reputación acumulada.
+- Participación.
+- Valoraciones recibidas.
+- Comportamiento dentro de la aplicación.
+
+La clasificación de reputación premia el comportamiento y la implicación dentro de la comunidad, independientemente del nivel deportivo.
+
+4. Diferencia entre reputación y nivel
+
+La reputación y el nivel competitivo son independientes.
+
+Un jugador puede:
+
+- Tener un nivel muy alto y una reputación baja.
+- Tener un nivel medio y una reputación excelente.
+
+La clasificación de reputación premia el comportamiento y la implicación dentro de la comunidad.
+
+El nivel competitivo premia únicamente los resultados deportivos obtenidos en partidas ranking.
+
+5. Valoraciones de la comunidad
+
+Las valoraciones realizadas por los jugadores afectan a la reputación comunitaria.
+
+Las categorías valoradas son:
+
+- Puntualidad.
+- Actitud.
+- Compromiso.
+
+Las valoraciones deben reflejar el comportamiento real de los participantes durante la actividad.
+
+6. Fiabilidad
+
+La fiabilidad refleja el grado de compromiso de un jugador con las partidas en las que participa.
+
+La fiabilidad inicial es del 100%.
+
+Factores que pueden afectar negativamente a la fiabilidad:
+
+- Abandonos.
+- Penalizaciones.
+- Incumplimientos.
+- Acciones obligatorias no completadas.
+- No presentarse a una partida.
+- Cancelaciones provocadas por abandonos.
+
+7. Restricciones por fiabilidad
+
+La aplicación podrá imponer restricciones automáticas cuando la fiabilidad descienda por debajo de determinados niveles.
+
+Estas restricciones podrán afectar a:
+
+- Creación de partidas.
+- Inscripción en partidas.
+- Determinadas funciones sociales de la aplicación.
+
+Las restricciones se aplicarán automáticamente mientras permanezcan activas.
+
+8. Penalizaciones que afectan a la reputación
+
+La reputación y la fiabilidad pueden verse afectadas por:
+
+- Abandonar partidas confirmadas.
+- No presentarse a una partida.
+- Provocar cancelaciones de partidas.
+- No validar resultados cuando sea obligatorio.
+- No realizar acciones postpartido obligatorias.
+- Incumplimientos reiterados de las normas de la comunidad.
+
+Las penalizaciones pueden afectar simultáneamente a reputación, compromiso y fiabilidad.
+
+9. Importante
+
+La reputación y la clasificación comunitaria están diseñadas para reconocer a los jugadores más fiables, comprometidos y mejor valorados de la comunidad.
+
+El nivel competitivo y la reputación son sistemas independientes y persiguen objetivos diferentes.
+
+(Consulta los apartados Penalizaciones y No Presentado para obtener más información sobre las consecuencias asociadas a determinados comportamientos.)

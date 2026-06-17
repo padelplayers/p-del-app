@@ -1,0 +1,146 @@
+CHAT
+
+1. Tipos de chat
+
+La aplicación dispone de:
+
+- Chat general.
+- Chat de partida.
+- Chat privado.
+
+2. Chat general
+
+El chat general sirve para la comunicación entre los usuarios de la comunidad.
+
+Puede utilizarse para:
+
+- Buscar jugadores.
+- Comentar disponibilidad.
+- Resolver dudas generales.
+- Hablar con otros jugadores.
+
+Además, la aplicación podrá publicar mensajes automáticos del Sistema relacionados con la organización de partidas.
+
+3. Chat de partida
+
+Cada partida dispone de su propio chat.
+
+Sirve para:
+
+- Coordinar detalles de la partida.
+- Hablar sobre la reserva de la pista.
+- Avisar de posibles retrasos.
+- Resolver dudas entre participantes.
+- Aclarar resultados o disputas.
+- Gestionar incidencias relacionadas con la partida.
+
+Solo podrán acceder al chat de una partida los jugadores relacionados con ella.
+
+4. Chat privado
+
+El chat privado permite mantener conversaciones directas entre dos usuarios.
+
+Puede abrirse desde:
+
+- El perfil de un jugador.
+- Las opciones disponibles dentro de la aplicación.
+
+5. Mensajes automáticos del Sistema
+
+La aplicación puede publicar mensajes automáticos generados por el Sistema para informar sobre eventos relevantes relacionados con partidas.
+
+Estos mensajes:
+
+- No son enviados por usuarios reales.
+- No representan opiniones ni comunicaciones personales.
+- No generan actividad de usuario.
+- No generan reputación.
+- No pueden recibir respuestas privadas.
+- No aparecen como usuarios conectados.
+
+Su finalidad es facilitar la organización de partidas y la búsqueda de jugadores.
+
+Los mensajes automáticos aparecerán enviados por:
+
+Sistema
+
+Y utilizarán una apariencia visual diferenciada mediante el color corporativo azul de la aplicación.
+
+6. Mensajes automáticos disponibles
+
+El Sistema podrá publicar mensajes relacionados con:
+
+- Nueva partida disponible.
+- Falta 1 jugador para completar una partida.
+- Falta 1 hombre para completar una partida mixta.
+- Falta 1 mujer para completar una partida mixta.
+- Plaza libre en una partida confirmada.
+- Sustitución urgente.
+- Reserva pendiente de aceptar.
+- Partida completa.
+- Partida confirmada.
+- Partida cancelada.
+- Se necesita nuevo creador.
+- Nuevo creador asignado.
+
+7. Notificaciones y avisos
+
+El chat puede ayudar a resolver situaciones como:
+
+- Sustituciones.
+- Dudas sobre resultados.
+- Cambios de última hora.
+- Organización de una partida.
+
+Pero las acciones oficiales siempre deberán realizarse mediante los botones y opciones correspondientes de la aplicación.
+
+Por ejemplo:
+
+- Hablar por chat no sustituye la aceptación de una plaza.
+- Hablar por chat no valida un resultado.
+- Hablar por chat no confirma una partida.
+
+Cuando exista actividad pendiente de revisar en un chat, la aplicación podrá destacar visualmente la pestaña correspondiente para llamar la atención del usuario.
+
+Las conversaciones con mensajes sin leer mostrarán indicadores visuales y avisos que facilitarán su localización dentro de la aplicación.
+
+8. Normas de uso
+
+No se permitirá:
+
+- Insultar.
+- Amenazar.
+- Molestar a otros usuarios.
+- Usar el chat para spam.
+- Publicar contenido ofensivo.
+- Suplantar a otros jugadores.
+- Usar el chat para acuerdos abusivos o perjudiciales.
+
+Se recomienda no compartir datos personales, bancarios o cualquier otra información sensible a través del chat de la aplicación.
+
+9. Limpieza de mensajes
+
+Para mantener la aplicación ligera y eficiente:
+
+- Los chats no tendrán historial infinito.
+- Los mensajes antiguos podrán eliminarse automáticamente.
+- El chat de una partida podrá eliminarse cuando la partida deje de existir.
+- Los mensajes automáticos del Sistema se eliminarán automáticamente cuando dejen de ser válidos.
+
+10. Funcionamiento de los mensajes del Sistema
+
+Los mensajes del Sistema:
+
+- Utilizarán dedupeKey para evitar duplicados.
+- Solo podrán existir una vez por evento.
+- No se repetirán continuamente en el chat general.
+- Serán breves y funcionales.
+- Podrán abrir directamente la partida relacionada cuando sea posible.
+
+11. Importante
+
+El chat es una herramienta de comunicación.
+
+Las decisiones oficiales de la partida deben realizarse mediante las acciones correspondientes de la aplicación.
+
+Los usuarios nuevos no heredarán mensajes pendientes ni avisos anteriores a su fecha de alta en la aplicación.

@@ -1,0 +1,117 @@
+PARTIDAS RANKING
+
+1. ¿Qué es una partida ranking?
+
+Las partidas ranking son las únicas que modifican el nivel competitivo de los jugadores.
+
+Están pensadas para los jugadores que desean competir y mejorar su nivel dentro de la aplicación.
+
+2. Participantes
+
+- Participan cuatro jugadores titulares.
+- También podrán participar reservas si sustituyen a un titular siguiendo las normas de sustitución de la aplicación.
+- Solo los jugadores que hayan participado realmente serán tenidos en cuenta para el resultado de la partida.
+- Los jugadores marcados como no presentados no serán considerados participantes efectivos.
+
+3. Equipos
+
+Las partidas ranking no tienen parejas fijas previamente asignadas.
+
+Al finalizar la partida se seleccionarán los integrantes del Equipo 1 y del Equipo 2 antes de introducir el resultado.
+
+Los equipos deben reflejar quién ha jugado realmente la partida.
+
+4. Introducción del resultado
+
+Cuando la partida haya finalizado:
+
+- Un jugador podrá introducir el resultado.
+- Deberá indicar los integrantes de ambos equipos.
+- Deberá indicar el marcador final.
+
+Antes de introducir el resultado, los participantes deberán indicar si todos los titulares se han presentado a la partida.
+
+5. Validación del resultado
+
+Una vez introducido:
+
+- Los demás participantes deberán validarlo o rechazarlo.
+- Si todos están de acuerdo, el resultado quedará validado.
+- El nivel competitivo se actualizará automáticamente.
+
+6. Disputas
+
+Si un jugador no está de acuerdo con el resultado:
+
+- Podrá rechazar el resultado.
+- Podrá proponer un nuevo resultado.
+- También podrá corregir los equipos si considera que son incorrectos.
+
+Los demás participantes deberán revisar la nueva propuesta.
+
+Si existe desacuerdo entre los participantes, podrán utilizar el chat de la partida para aclarar la situación y tratar de alcanzar un acuerdo sobre los equipos o el resultado correcto.
+
+Mientras exista una disputa pendiente, la partida permanecerá abierta hasta que se resuelva y pueda validarse un resultado definitivo.
+
+7. Incidencia por no presentado
+
+Si un jugador titular no se presenta a la partida, los participantes podrán registrar una incidencia de no presentado.
+
+Se deberá indicar una de las siguientes opciones:
+
+- La partida no pudo jugarse.
+- La partida se jugó igualmente.
+
+Si la partida no pudo jugarse:
+
+- No habrá resultado.
+- No habrá valoraciones.
+- No habrá cambios de nivel.
+- La partida quedará cerrada por incidencia.
+
+Si la partida se jugó igualmente:
+
+- La partida se convertirá automáticamente en amistosa.
+- No habrá resultado ranking.
+- No habrá cambios de nivel.
+- Sí podrán realizarse valoraciones entre los participantes reales.
+
+El jugador no presentado:
+
+- No valora.
+- No es valorado.
+- No recibe reputación.
+- No recibe estadísticas.
+- No recibe logros.
+- No cuenta como participante efectivo de la partida.
+
+8. Valoraciones
+
+Una vez validado el resultado:
+
+- Los participantes deberán valorar al resto de jugadores.
+- Se valorará:
+  - Puntualidad.
+  - Actitud.
+  - Compromiso.
+
+Solo deberán valorar y ser valorados los participantes reales de la partida.
+
+9. Nivel competitivo
+
+Las partidas ranking son las únicas que modifican el nivel competitivo.
+
+El nivel podrá subir o bajar en función de los resultados obtenidos.
+
+Las partidas amistosas no afectan al nivel competitivo.
+
+Las partidas con incidencia de no presentado que terminen convertidas en amistosas tampoco modificarán el nivel competitivo.
+
+10. Importante
+
+- Ignorar una solicitud de resultado o validación no evita las consecuencias asociadas a la partida.
+- La aplicación podrá aplicar penalizaciones a los jugadores que no completen las acciones obligatorias dentro del plazo establecido.
+- El proceso de resultado, validación y valoraciones debe completarse dentro de los plazos definidos por la aplicación.
+- Los incumplimientos podrán generar penalizaciones automáticas.
+
+(Consulta el apartado Penalizaciones para obtener más información sobre los distintos tipos de sanciones y sus consecuencias.)

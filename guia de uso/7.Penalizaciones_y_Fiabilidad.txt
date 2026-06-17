@@ -1,0 +1,167 @@
+SISTEMA DE PENALIZACIONES Y FIABILIDAD
+PÁDEL PLAYERS MORVEDRE
+
+ESTADO: DEFINICIÓN FUNCIONAL CERRADA
+
+1. FIABILIDAD
+
+- Inicial: 100%.
+- Abandono de partida confirmada: -10%.
+- Si provoca cancelación automática de la partida: -10% adicional.
+- No presentado: -30%.
+- Las penalizaciones permanecen activas durante 180 días.
+- Las penalizaciones caducadas dejan de contar.
+- La fiabilidad se recalcula utilizando únicamente penalizaciones activas.
+
+2. RESTRICCIONES POR FIABILIDAD
+
+70% o menos:
+
+- 7 días sin crear partidas.
+
+60% o menos:
+
+- 7 días sin crear partidas.
+- 7 días sin unirse a partidas.
+
+40% o menos:
+
+- 30 días sin crear partidas.
+- 30 días sin unirse a partidas.
+- 30 días sin chat general.
+- 30 días sin chat privado.
+
+Las restricciones por fiabilidad se aplican automáticamente mientras permanezcan activas.
+
+3. RESTRICCIÓN POR NO PRESENTADO
+
+Además de las restricciones derivadas de la fiabilidad:
+
+- Un no presentado genera 3 días sin poder apuntarse a partidas.
+
+Esta restricción:
+
+- Es independiente.
+- Se acumula con las restricciones por fiabilidad.
+- No sustituye otras restricciones.
+- No desaparece por existir una restricción más grave.
+
+4. CHAT DE PARTIDA
+
+- No se bloquea.
+- Puede seguir utilizándose para incidencias, resultados, sustituciones y valoraciones.
+
+Incluso cuando existan restricciones sobre el chat general o el chat privado.
+
+5. RESULTADOS RANKING
+
+- Basta con que un jugador introduzca resultado.
+- Los demás deben validar o rechazar.
+- Plazo total del flujo postpartido: 3 días.
+
+Si un jugador no valida dentro del plazo:
+
+- Si ganó: no recibe subida de nivel.
+- Si perdió: sí recibe bajada de nivel.
+
+Solo afecta al incumplidor.
+
+6. VALORACIONES
+
+- Plazo máximo: 3 días.
+
+Si no valora:
+
+- -1 compromiso.
+- -3 reputación.
+
+Genera:
+
+- Notificación.
+- Registro visible en perfil.
+
+Afecta a la reputación, pero no a la fiabilidad.
+
+7. NO INTRODUCIR RESULTADO
+
+- El plazo total sigue siendo 3 días.
+
+Si no se introduce resultado en una partida ranking:
+
+- Se aplica la penalización correspondiente al incumplimiento de resultado.
+- También se aplica la penalización por no valorar.
+
+Motivo:
+
+Sin resultado no puede completarse correctamente la fase de valoraciones.
+
+8. NO PRESENTADO
+
+Cuando un jugador titular no acude a una partida:
+
+- Se registra una incidencia de no presentado.
+- Se aplican las penalizaciones correspondientes.
+
+Penalización fija:
+
+- -30% de fiabilidad.
+- -8 puntos de reputación.
+- -5 puntos de compromiso.
+- 3 días sin poder apuntarse a partidas.
+
+La penalización es la misma tanto si la partida pudo jugarse como si no pudo jugarse.
+
+9. PERFIL
+
+Debe mostrar:
+
+- Fiabilidad actual.
+- Penalizaciones activas.
+- Historial de penalizaciones.
+- Restricciones activas.
+- Motivos.
+- Fechas.
+- Días restantes.
+
+10. NOTIFICACIONES
+
+Obligatorias para:
+
+- Abandono.
+- Cancelación provocada.
+- Restricciones.
+- No validar resultado.
+- No introducir resultado.
+- No valorar jugadores.
+- No presentado.
+
+11. PRINCIPIOS
+
+Nivel = rendimiento deportivo.
+
+Reputación = valoración social.
+
+Fiabilidad = cumplimiento de compromisos.
+
+12. IMPORTANTE
+
+Las penalizaciones pueden afectar simultáneamente a:
+
+- Fiabilidad.
+- Reputación.
+- Compromiso.
+- Acceso a determinadas funciones de la aplicación.
+
+Las restricciones se aplicarán automáticamente según las normas vigentes del sistema.
+
+13. ORDEN DE IMPLEMENTACIÓN
+
+Fase 1: caducidad real de penalizaciones.
+Fase 2: cálculo de fiabilidad.
+Fase 3: perfil.
+Fase 4: restricciones.
+Fase 5: resultado no validado.
+Fase 6: no introducir resultado.
+Fase 7: valoraciones.
+Fase 8: incidencias de no presentado.
+Fase 9: notificaciones y revisión final.

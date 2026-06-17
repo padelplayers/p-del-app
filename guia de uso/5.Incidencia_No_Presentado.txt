@@ -1,0 +1,119 @@
+INCIDENCIA DE NO PRESENTADO
+
+1. ¿Qué es una incidencia de no presentado?
+
+Una incidencia de no presentado se produce cuando un jugador titular inscrito en una partida no acude a jugar y tampoco ha abandonado previamente la partida mediante los mecanismos disponibles en la aplicación.
+
+Esta incidencia permite registrar correctamente lo ocurrido y aplicar las consecuencias correspondientes.
+
+2. ¿Quién puede generar una incidencia?
+
+Cualquier participante real de la partida podrá registrar la incidencia cuando corresponda.
+
+La incidencia se registra durante el proceso postpartido.
+
+3. Jugadores titulares y reservas
+
+La incidencia de no presentado solo puede aplicarse a jugadores titulares.
+
+Los jugadores de reserva no generan incidencias de no presentado.
+
+Si una reserva finalmente no participa, simplemente no será considerada participante real de la partida.
+
+4. Comprobación de asistencia
+
+Antes de introducir resultados o realizar valoraciones, la aplicación preguntará:
+
+¿Se ha presentado todo el mundo?
+
+Opciones:
+
+- Sí.
+- No.
+
+Si se responde Sí, la partida continuará con normalidad.
+
+Si se responde No, deberá seleccionarse el jugador titular que no se ha presentado.
+
+5. Qué ocurrió con la partida
+
+Después de seleccionar al jugador ausente, deberá indicarse una de las siguientes opciones:
+
+- La partida no pudo jugarse.
+- La partida se jugó igualmente.
+
+6. La partida no pudo jugarse
+
+Si la ausencia impidió disputar la partida:
+
+- No habrá resultado.
+- No habrá validación de resultado.
+- No habrá cambios de nivel.
+- No habrá valoraciones.
+- La partida quedará cerrada por incidencia.
+
+7. La partida se jugó igualmente
+
+Si los participantes pudieron jugar a pesar de la ausencia:
+
+- La partida se convertirá automáticamente en amistosa.
+- No habrá resultado ranking.
+- No habrá cambios de nivel competitivo.
+- Sí podrán realizarse valoraciones entre los participantes reales.
+
+Esto incluye casos en los que:
+
+- Los jugadores disputan la partida siendo únicamente tres personas.
+- Los participantes encuentran un sustituto externo que no está registrado en la aplicación.
+- Los participantes acuerdan una solución alternativa para poder jugar.
+
+8. Participantes reales
+
+Cuando exista una incidencia de no presentado:
+
+- El jugador ausente no será considerado participante real.
+- No podrá valorar.
+- No podrá ser valorado.
+- No recibirá reputación.
+- No recibirá estadísticas.
+- No recibirá logros.
+- No contará como participación válida.
+
+Las valoraciones solo podrán realizarse entre los participantes reales de la actividad.
+
+9. Penalización por no presentado
+
+La penalización es la misma independientemente de si la partida pudo jugarse o no.
+
+Se aplicará:
+
+- -30% de fiabilidad.
+- -8 puntos de reputación.
+- -5 puntos de compromiso.
+- 3 días sin poder apuntarse a nuevas partidas.
+
+10. Acumulación de restricciones
+
+La sanción de 3 días sin apuntarse a partidas es independiente de las restricciones derivadas de la fiabilidad.
+
+Si la pérdida de fiabilidad genera restricciones adicionales:
+
+- Las restricciones se acumulan.
+- No se sustituye una por otra.
+- No se conserva únicamente la más grave.
+- Todas las restricciones activas se aplicarán simultáneamente.
+
+11. Notificaciones
+
+La aplicación enviará notificaciones:
+
+- Al jugador no presentado.
+- A los demás participantes implicados.
+
+Estas notificaciones informarán de la incidencia registrada y de las consecuencias aplicadas.
+
+12. Importante
+
+Las incidencias de no presentado están destinadas a proteger a los jugadores que sí cumplen sus compromisos y a mantener la fiabilidad de la comunidad.
+
+Inscribirse en una partida implica el compromiso de asistir o utilizar los mecanismos de sustitución o abandono disponibles antes del inicio de la actividad.

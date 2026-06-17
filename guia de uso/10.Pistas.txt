@@ -1,0 +1,127 @@
+PISTAS
+
+1. ¿Qué es la sección Pistas?
+
+Antes de crear una partida es obligatorio seleccionar una pista registrada en la aplicación.
+
+La sección Pistas reúne instalaciones de pádel de Camp de Morvedre y localidades cercanas para facilitar la organización de partidas.
+
+Las pistas son un recurso compartido por toda la comunidad.
+
+2. Añadir una pista
+
+Los usuarios pueden colaborar añadiendo nuevas pistas a la aplicación.
+
+Las pistas deberán pertenecer a municipios de Camp de Morvedre o localidades próximas.
+
+Al crear una pista deberán completarse los campos obligatorios con información real y actualizada.
+
+La aplicación intenta evitar duplicados mediante comprobaciones de dirección y ubicación.
+
+El campo Nota es opcional y puede utilizarse para añadir información útil para otros jugadores.
+
+3. Información de las pistas
+
+Cada pista puede incluir:
+
+- Nombre.
+- Localidad.
+- Dirección.
+- Tipo de instalación.
+- Indoor.
+- Outdoor.
+- Precio por persona.
+- Sistema de reserva.
+- Forma de pago.
+- Nota informativa.
+- Ubicación en el mapa.
+
+4. Tipos de pista
+
+Las pistas pueden clasificarse como:
+
+- Club.
+- Polideportivo.
+- Privada / Comunidad.
+
+Esta clasificación ayuda a los usuarios a comprender las condiciones de acceso y reserva.
+
+5. Precios
+
+Las pistas pueden disponer de precios diferenciados para:
+
+- Mañana.
+- Tarde.
+- Fin de semana o festivos.
+
+La aplicación mostrará automáticamente el precio más adecuado según la fecha y hora de la partida.
+
+Los precios tienen carácter informativo y pueden variar con el tiempo.
+
+6. Reserva de la instalación
+
+La información de reserva deberá corresponder siempre a los canales oficiales de la instalación.
+
+Dependiendo del tipo de pista podrá mostrarse:
+
+- Página web oficial.
+- Teléfono de contacto.
+- Información específica de acceso o reserva.
+
+La aplicación no realiza reservas automáticamente.
+
+La reserva siempre deberá realizarla el creador de la partida utilizando los medios indicados por la instalación.
+
+7. Formas de pago
+
+Las pistas podrán indicar información orientativa sobre la forma habitual de pago.
+
+La aplicación no gestiona cobros ni pagos entre usuarios ni con las instalaciones.
+
+8. Pistas privadas o de comunidad
+
+Las pistas pertenecientes a comunidades privadas o urbanizaciones podrán añadirse a la aplicación.
+
+Las partidas creadas en este tipo de pistas solo podrán ser creadas por el usuario que registró la pista o por quien tenga autorización para gestionar el acceso a la instalación.
+
+En estas pistas podrá mostrarse el mensaje:
+
+"Solo puede reservar el creador de la pista".
+
+9. Verificación
+
+Las pistas pueden aparecer como:
+
+- Verificadas.
+- Pendientes de verificar.
+
+La verificación indica que la información ha sido revisada por la administración.
+
+Una pista no verificada no implica necesariamente que la información sea incorrecta.
+
+10. Ubicación
+
+Las pistas pueden incluir coordenadas geográficas para facilitar:
+
+- Su localización.
+- Cómo llegar.
+- La correcta identificación de la instalación.
+
+11. Colaboración de la comunidad
+
+Los usuarios pueden contribuir manteniendo actualizada la información de las pistas.
+
+Si una instalación modifica precios, teléfono, web o condiciones de acceso, la información podrá actualizarse para beneficiar al resto de jugadores.
+
+12. Importante
+
+La aplicación proporciona información sobre instalaciones deportivas, pero no garantiza la disponibilidad real de las pistas.
+
+Se recomienda comprobar siempre:
+
+- Horarios.
+- Precios.
+- Condiciones de reserva.
+- Normas de acceso.
+
+Directamente con la instalación correspondiente antes de realizar cualquier reserva.
