@@ -1,5 +1,6 @@
 window.pwaState = window.pwaState || {
-  deferredPrompt: null
+  deferredPrompt: null,
+  serviceWorkerActualizacion: null
 };
 
 const PWA_INSTALADA_KEY = "pwaInstalada";
@@ -26,6 +27,43 @@ function esDispositivoMovilPwa() {
 function cerrarAvisoPwa() {
   const aviso = document.getElementById("pwaAviso");
   if (aviso) aviso.style.display = "none";
+}
+
+function mostrarAvisoActualizacionPwa(worker) {
+  window.pwaState.serviceWorkerActualizacion = worker || window.pwaState.serviceWorkerActualizacion;
+
+  const aviso = document.getElementById("pwaActualizacionAviso");
+  if (aviso) aviso.style.display = "flex";
+}
+
+function actualizarPwa() {
+  const worker = window.pwaState.serviceWorkerActualizacion;
+
+  if (worker) {
+    worker.postMessage({ type: "SKIP_WAITING" });
+    return;
+  }
+
+  window.location.reload();
+}
+
+function registrarActualizacionesServiceWorker(registration) {
+  if (!registration) return;
+
+  if (registration.waiting && navigator.serviceWorker.controller) {
+    mostrarAvisoActualizacionPwa(registration.waiting);
+  }
+
+  registration.addEventListener("updatefound", function() {
+    const nuevoWorker = registration.installing;
+    if (!nuevoWorker) return;
+
+    nuevoWorker.addEventListener("statechange", function() {
+      if (nuevoWorker.state === "installed" && navigator.serviceWorker.controller) {
+        mostrarAvisoActualizacionPwa(nuevoWorker);
+      }
+    });
+  });
 }
 
 function actualizarBotonInstalarPwa() {
@@ -82,8 +120,20 @@ function initPwaBasica() {
   localStorage.removeItem(PWA_INSTALADA_KEY);
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js").catch(function(error) {
-      console.warn("No se pudo registrar service worker:", error.message);
+    navigator.serviceWorker.register("service-worker.js")
+      .then(function(registration) {
+        registrarActualizacionesServiceWorker(registration);
+        return registration.update();
+      })
+      .catch(function(error) {
+        console.warn("No se pudo registrar service worker:", error.message);
+      });
+
+    let recargaPorServiceWorker = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function() {
+      if (recargaPorServiceWorker) return;
+      recargaPorServiceWorker = true;
+      window.location.reload();
     });
   }
 
@@ -102,10 +152,12 @@ function initPwaBasica() {
 
   const instalar = document.getElementById("pwaInstalarBtn");
   const instalarMenu = document.getElementById("btnInstalarPwaMenu");
+  const actualizar = document.getElementById("pwaActualizarBtn");
   const ahoraNo = document.getElementById("pwaAhoraNoBtn");
 
   if (instalar) instalar.onclick = instalarPwa;
   if (instalarMenu) instalarMenu.onclick = instalarPwa;
+  if (actualizar) actualizar.onclick = actualizarPwa;
   if (ahoraNo) ahoraNo.onclick = cerrarAvisoPwa;
 
   actualizarBotonInstalarPwa();
@@ -115,5 +167,6 @@ window.initPwaBasica = initPwaBasica;
 window.mostrarAvisoPwaSiProcede = mostrarAvisoPwaSiProcede;
 window.instalarPwa = instalarPwa;
 window.actualizarBotonInstalarPwa = actualizarBotonInstalarPwa;
+window.actualizarPwa = actualizarPwa;
 
 document.addEventListener("DOMContentLoaded", initPwaBasica);

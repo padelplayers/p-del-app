@@ -3101,6 +3101,33 @@ margin:0 auto;
   flex: 1 1 140px;
 }
 
+.pwaActualizacionAviso {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1300;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 12px;
+  border-radius: 8px;
+  background: #172033;
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pwaActualizacionAviso button {
+  margin: 0;
+  padding: 10px 12px;
+  background: #FFC107;
+  color: #172033;
+  font-weight: bold;
+}
+
 #instrucciones {
   width: min(100%, 1100px);
   max-width: 1100px;

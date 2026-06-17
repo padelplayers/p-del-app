@@ -1,10 +1,10 @@
-const CACHE_NAME = "padel-players-morvedre-v41";
+const CACHE_NAME = "padel-players-morvedre-v42";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css?v=31",
   "./logros.js?v=5",
-  "./pwa.js?v=4",
+  "./pwa.js?v=5",
   "./logo.png"
 ];
 
@@ -36,4 +36,9 @@ self.addEventListener("fetch", function(event) {
       return caches.match(event.request);
     })
   );
+});
+
+self.addEventListener("message", function(event) {
+  if (!event.data || event.data.type !== "SKIP_WAITING") return;
+  self.skipWaiting();
 });
