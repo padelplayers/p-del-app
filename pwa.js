@@ -7,9 +7,12 @@ const PWA_INSTALADA_KEY = "pwaInstalada";
 function pwaEstaInstalada() {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
-    window.navigator.standalone === true ||
-    localStorage.getItem(PWA_INSTALADA_KEY) === "true"
+    window.navigator.standalone === true
   );
+}
+
+function instalacionPwaDisponible() {
+  return !pwaEstaInstalada() && !!window.pwaState.deferredPrompt;
 }
 
 function esDispositivoMovilPwa() {
@@ -25,23 +28,21 @@ function cerrarAvisoPwa() {
   if (aviso) aviso.style.display = "none";
 }
 
+function actualizarBotonInstalarPwa() {
+  const botonMenu = document.getElementById("btnInstalarPwaMenu");
+  if (!botonMenu) return;
+  botonMenu.style.display = instalacionPwaDisponible() ? "block" : "none";
+}
+
 function mostrarAvisoPwaSiProcede() {
   const aviso = document.getElementById("pwaAviso");
   if (!aviso || pwaEstaInstalada() || !esDispositivoMovilPwa()) return;
+
+  const esIos = /iPhone|iPad/i.test(navigator.userAgent || "");
+  if (!window.pwaState.deferredPrompt && !esIos) return;
+
   aviso.style.display = "flex";
-}
-
-function actualizarTextoAvisoPwa() {
-  const aviso = document.getElementById("pwaAviso");
-  if (!aviso) return;
-
-  const titulo = aviso.querySelector("h3");
-  const texto = aviso.querySelector("p");
-
-  if (titulo) titulo.textContent = "Instala Pádel Players Morvedre";
-  if (texto) {
-    texto.textContent = "Instala la app para disfrutar de una experiencia más completa. Accede más rápido a tus partidas, chats y clasificaciones, y recuerda entrar periódicamente para consultar el estado de tus partidas y avisos importantes.";
-  }
+  actualizarBotonInstalarPwa();
 }
 
 function actualizarTextoAvisoPwa() {
@@ -52,11 +53,33 @@ function actualizarTextoAvisoPwa() {
   const texto = aviso.querySelector("p");
 
   if (titulo) titulo.textContent = "Instala P\u00e1del Players Morvedre";
-  if (texto) texto.textContent = "Instala la app para disfrutar de una experiencia m\u00e1s completa. Accede m\u00e1s r\u00e1pido a tus partidas, chats y clasificaciones, y recuerda entrar peri\u00f3dicamente para consultar el estado de tus partidas y avisos importantes.";
+  if (texto) {
+    texto.textContent = "Instala la app para disfrutar de una experiencia m\u00e1s completa. Accede m\u00e1s r\u00e1pido a tus partidas, chats y clasificaciones, y recuerda entrar peri\u00f3dicamente para consultar el estado de tus partidas y avisos importantes.";
+  }
+}
+
+function instalarPwa() {
+  if (window.pwaState.deferredPrompt) {
+    const promptInstalacion = window.pwaState.deferredPrompt;
+    promptInstalacion.prompt();
+    promptInstalacion.userChoice.then(function(choice) {
+      if (choice && choice.outcome === "accepted") {
+        localStorage.setItem(PWA_INSTALADA_KEY, "true");
+      }
+    }).finally(function() {
+      window.pwaState.deferredPrompt = null;
+      cerrarAvisoPwa();
+      actualizarBotonInstalarPwa();
+    });
+    return;
+  }
+
+  alert("En tu navegador, usa el men\u00fa y elige A\u00f1adir a pantalla de inicio.");
 }
 
 function initPwaBasica() {
   actualizarTextoAvisoPwa();
+  localStorage.removeItem(PWA_INSTALADA_KEY);
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js").catch(function(error) {
@@ -67,39 +90,30 @@ function initPwaBasica() {
   window.addEventListener("beforeinstallprompt", function(event) {
     event.preventDefault();
     window.pwaState.deferredPrompt = event;
+    actualizarBotonInstalarPwa();
   });
 
   window.addEventListener("appinstalled", function() {
     localStorage.setItem(PWA_INSTALADA_KEY, "true");
     window.pwaState.deferredPrompt = null;
     cerrarAvisoPwa();
+    actualizarBotonInstalarPwa();
   });
 
   const instalar = document.getElementById("pwaInstalarBtn");
+  const instalarMenu = document.getElementById("btnInstalarPwaMenu");
   const ahoraNo = document.getElementById("pwaAhoraNoBtn");
 
-  if (instalar) {
-    instalar.onclick = function() {
-      if (window.pwaState.deferredPrompt) {
-        window.pwaState.deferredPrompt.prompt();
-        window.pwaState.deferredPrompt.userChoice.then(function(choice) {
-          if (choice && choice.outcome === "accepted") {
-            localStorage.setItem(PWA_INSTALADA_KEY, "true");
-          }
-        }).finally(function() {
-          window.pwaState.deferredPrompt = null;
-          cerrarAvisoPwa();
-        });
-      } else {
-        alert("En tu navegador, usa el menú y elige Añadir a pantalla de inicio.");
-      }
-    };
-  }
-
+  if (instalar) instalar.onclick = instalarPwa;
+  if (instalarMenu) instalarMenu.onclick = instalarPwa;
   if (ahoraNo) ahoraNo.onclick = cerrarAvisoPwa;
+
+  actualizarBotonInstalarPwa();
 }
 
 window.initPwaBasica = initPwaBasica;
 window.mostrarAvisoPwaSiProcede = mostrarAvisoPwaSiProcede;
+window.instalarPwa = instalarPwa;
+window.actualizarBotonInstalarPwa = actualizarBotonInstalarPwa;
 
 document.addEventListener("DOMContentLoaded", initPwaBasica);

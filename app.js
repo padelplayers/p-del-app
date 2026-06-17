@@ -80,7 +80,7 @@ auth.onAuthStateChanged(async user => {
       });
     }
 
-    mostrar("menu");
+    // El listener principal de autenticacion decide la pantalla inicial.
 
   } else {
     mostrar("login");
@@ -305,11 +305,35 @@ async function guardarPerfilRegistro(){
     titulo: "General"
   }, { merge: true });
 
-  mostrar("menu");
+  await mostrarPantallaInicialUsuario(auth.currentUser.uid, datosPerfil);
 }
 
 
 // ======================
+
+async function mostrarPantallaInicialUsuario(uid, data) {
+  if (!uid) {
+    mostrar("menu");
+    return;
+  }
+
+  if (data && data.guiaUsoVista === true) {
+    mostrar("menu");
+    return;
+  }
+
+  guiaUsoModoLegalRegistro = false;
+  guiaUsoBloquePendiente = null;
+  mostrar("instrucciones");
+
+  try {
+    await db.collection("usuarios").doc(uid).set({
+      guiaUsoVista: true
+    }, { merge: true });
+  } catch (error) {
+    console.warn("No se pudo marcar la guia de uso como vista:", error.message);
+  }
+}
 
 function login(){
 
@@ -406,7 +430,7 @@ auth.onAuthStateChanged(async user => {
         window.mostrarAvisoPwaSiProcede();
       }
 
-      mostrar("menu");
+      await mostrarPantallaInicialUsuario(user.uid, data);
 
     } else {
       esAdmin = false;
