@@ -917,11 +917,138 @@ if (seccion === "clasificacion") {
   cargarClasificacionComunitaria();
 }
 
+if (seccion === "instrucciones") {
+  cargarGuiaUso();
+}
+
   const btnNueva = document.getElementById("btnNuevaPista");
 
 if (btnNueva) {
   btnNueva.style.display = window.modoSeleccionPista ? "none" : "inline-block";
 }
+}
+
+const documentosGuiaUso = [
+  {
+    titulo: "Cómo funcionan las partidas",
+    archivo: "guia%20de%20uso/1.Partidas.txt"
+  },
+  {
+    titulo: "Reservas y sustituciones",
+    archivo: "guia%20de%20uso/2.Reservas_y_Sustituciones.txt"
+  },
+  {
+    titulo: "Partidas amistosas",
+    archivo: "guia%20de%20uso/3.Partidas_Amistosas.txt"
+  },
+  {
+    titulo: "Partidas ranking",
+    archivo: "guia%20de%20uso/4.Partidas_Ranking.txt"
+  },
+  {
+    titulo: "Incidencia de no presentado",
+    archivo: "guia%20de%20uso/5.Incidencia_No_Presentado.txt"
+  },
+  {
+    titulo: "Reputación y clasificación",
+    archivo: "guia%20de%20uso/6.Reputacion_y_Clasificacion.txt"
+  },
+  {
+    titulo: "Penalizaciones y fiabilidad",
+    archivo: "guia%20de%20uso/7.Penalizaciones_y_Fiabilidad.txt"
+  },
+  {
+    titulo: "Chat",
+    archivo: "guia%20de%20uso/8.Chat.txt"
+  },
+  {
+    titulo: "Logros",
+    archivo: "guia%20de%20uso/9.Logros.txt"
+  },
+  {
+    titulo: "Pistas",
+    archivo: "guia%20de%20uso/10.Pistas.txt"
+  },
+  {
+    titulo: "Contacto y sugerencias",
+    archivo: "guia%20de%20uso/11.Contacto_y_Sugerencias.txt"
+  },
+  {
+    titulo: "Notificaciones",
+    archivo: "guia%20de%20uso/12.Notificaciones.txt"
+  },
+  {
+    titulo: "Aviso Legal, Términos y Condiciones de Uso y Política de Privacidad",
+    archivo: "guia%20de%20uso/13.Aviso_Legal_Terminos_Condiciones_y_Privacidad.txt"
+  }
+];
+
+function cargarGuiaUso() {
+  const contenedor = document.getElementById("guiaUsoLista");
+  if (!contenedor) return;
+
+  contenedor.textContent = "Cargando Guía de Uso...";
+
+  Promise.all(documentosGuiaUso.map(function(documento) {
+    return fetch(documento.archivo, { cache: "no-cache" })
+      .then(function(respuesta) {
+        if (!respuesta.ok) {
+          throw new Error("No se pudo cargar " + documento.archivo);
+        }
+        return respuesta.text();
+      })
+      .then(function(texto) {
+        return {
+          titulo: documento.titulo,
+          texto: texto
+        };
+      });
+  }))
+    .then(function(documentos) {
+      const fragment = document.createDocumentFragment();
+
+      documentos.forEach(function(documento, indice) {
+        const abierto = indice === 0;
+        const bloque = document.createElement("section");
+        bloque.className = abierto ? "guiaUsoBloque abierto" : "guiaUsoBloque";
+
+        const boton = document.createElement("button");
+        boton.type = "button";
+        boton.className = "guiaUsoTitulo";
+        boton.setAttribute("aria-expanded", abierto ? "true" : "false");
+
+        const flecha = document.createElement("span");
+        flecha.className = "guiaUsoFlecha";
+        flecha.textContent = abierto ? "▼" : "▶";
+
+        const titulo = document.createElement("span");
+        titulo.textContent = documento.titulo;
+
+        const contenido = document.createElement("div");
+        contenido.className = "guiaUsoContenido";
+        contenido.textContent = documento.texto;
+
+        boton.append(flecha, titulo);
+        boton.addEventListener("click", function() {
+          alternarBloqueGuiaUso(bloque, boton, flecha);
+        });
+
+        bloque.append(boton, contenido);
+        fragment.appendChild(bloque);
+      });
+
+      contenedor.replaceChildren(fragment);
+    })
+    .catch(function(error) {
+      console.error("Error cargando Guía de Uso:", error);
+      contenedor.textContent = "No se pudo cargar la Guía de Uso.";
+    });
+}
+
+function alternarBloqueGuiaUso(bloque, boton, flecha) {
+  const abierto = bloque.classList.toggle("abierto");
+  boton.setAttribute("aria-expanded", abierto ? "true" : "false");
+  flecha.textContent = abierto ? "▼" : "▶";
 }
 
 function abrirTest(){

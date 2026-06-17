@@ -486,7 +486,7 @@ Juego en red
 
   <button id="btnMenuChat" class="menuButton" onclick="abrirChatGeneral()">Chat</button>
 
-  <button class="menuButton" onclick="mostrar('instrucciones')">Instrucciones</button>
+  <button class="menuButton" onclick="mostrar('instrucciones')">Guía de Uso</button>
 
   <button class="logout" onclick="logout()">Cerrar sesión</button>
 
@@ -965,20 +965,13 @@ Añadir pista
 
 <!-- INSTRUCCIONES -->
 <div id="instrucciones" class="container" style="display:none;">
-  <h2>Cómo funciona</h2>
+  <h2>Guía de Uso</h2>
 
   <div class="volverSticky">
     <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
   </div>
 
-  <div class="card">
-    <p><strong>Crear partida:</strong> Selecciona pista, fecha y únete.</p>
-    <p><strong>Completar partida:</strong> Con 4 jugadores pasa a completa.</p>
-    <p><strong>Reserva:</strong> Según pista (gratis o pago).</p>
-    <p><strong>Resultado:</strong> Un jugador lo introduce.</p>
-    <p><strong>Validación:</strong> Todos confirman.</p>
-    <p><strong>Cierre:</strong> Se actualiza ranking.</p>
-  </div>
+  <div id="guiaUsoLista" class="guiaUsoLista"></div>
 
 </div>
 

@@ -3054,3 +3054,66 @@ margin:0 auto;
 .pwaAvisoAcciones button {
   flex: 1 1 140px;
 }
+
+.guiaUsoLista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.guiaUsoBloque {
+  overflow: hidden;
+  border: 1px solid #dfe5ee;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.guiaUsoTitulo {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 0;
+  background: #f5f8fc;
+  color: #172033;
+  font-weight: bold;
+  text-align: left;
+  cursor: pointer;
+}
+
+.guiaUsoFlecha {
+  width: 18px;
+  flex: 0 0 18px;
+  color: #1565C0;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.guiaUsoContenido {
+  display: none;
+  padding: 14px;
+  color: #222;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.guiaUsoBloque.abierto .guiaUsoContenido {
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .guiaUsoTitulo {
+    padding: 11px 12px;
+    font-size: 15px;
+  }
+
+  .guiaUsoContenido {
+    padding: 12px;
+    font-size: 14px;
+  }
+}
