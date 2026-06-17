@@ -205,7 +205,7 @@ let pass = passInput.value;
 const checkEdad = document.getElementById("checkEdad");
 
 if (!checkEdad || !checkEdad.checked) {
-  alert("Debes ser mayor de 16 años");
+  alert("Debes confirmar que eres mayor de 16 años y que aceptas la Política de Privacidad y los Términos y Condiciones.");
   return;
 }
 
@@ -983,6 +983,8 @@ const documentosGuiaUso = [
   }
 ];
 
+let guiaUsoBloquePendiente = null;
+
 function cargarGuiaUso() {
   const contenedor = document.getElementById("guiaUsoLista");
   if (!contenedor) return;
@@ -1011,6 +1013,7 @@ function cargarGuiaUso() {
         const abierto = indice === 0;
         const bloque = document.createElement("section");
         bloque.className = abierto ? "guiaUsoBloque abierto" : "guiaUsoBloque";
+        bloque.dataset.guiaUsoIndice = String(indice);
 
         const boton = document.createElement("button");
         boton.type = "button";
@@ -1038,6 +1041,11 @@ function cargarGuiaUso() {
       });
 
       contenedor.replaceChildren(fragment);
+
+      if (guiaUsoBloquePendiente !== null) {
+        abrirBloqueGuiaUsoPorIndice(guiaUsoBloquePendiente);
+        guiaUsoBloquePendiente = null;
+      }
     })
     .catch(function(error) {
       console.error("Error cargando Guía de Uso:", error);
@@ -1049,6 +1057,47 @@ function alternarBloqueGuiaUso(bloque, boton, flecha) {
   const abierto = bloque.classList.toggle("abierto");
   boton.setAttribute("aria-expanded", abierto ? "true" : "false");
   flecha.textContent = abierto ? "▼" : "▶";
+}
+
+function abrirAvisoLegalGuiaUso(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  guiaUsoBloquePendiente = 12;
+  mostrar("instrucciones");
+}
+
+function abrirBloqueGuiaUsoPorIndice(indice) {
+  const bloques = document.querySelectorAll("#guiaUsoLista .guiaUsoBloque");
+  let bloqueDestino = null;
+
+  bloques.forEach(function(bloque) {
+    const esDestino = Number(bloque.dataset.guiaUsoIndice) === indice;
+    const boton = bloque.querySelector(".guiaUsoTitulo");
+    const flecha = bloque.querySelector(".guiaUsoFlecha");
+
+    bloque.classList.toggle("abierto", esDestino);
+
+    if (boton) {
+      boton.setAttribute("aria-expanded", esDestino ? "true" : "false");
+    }
+
+    if (flecha) {
+      flecha.textContent = esDestino ? "▼" : "▶";
+    }
+
+    if (esDestino) {
+      bloqueDestino = bloque;
+    }
+  });
+
+  if (bloqueDestino) {
+    setTimeout(function() {
+      bloqueDestino.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  }
 }
 
 function formatearContenidoGuiaUso(texto) {

@@ -2265,6 +2265,40 @@ button[onclick*="mostrar('menu')"]{
   text-align: left !important;
 }
 
+.registroLegal {
+  width: 92%;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 12px 4% 14px;
+  text-align: left;
+}
+
+.registroLegal input {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  cursor: pointer;
+}
+
+.registroLegalTexto {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #222;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.registroLegalTexto a {
+  color: #1565C0;
+  font-weight: bold;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* CHAT FULLSCREEN: estado directo aplicado por mostrar("chat") */
 body.chatAbierto{
   overflow:hidden !important;

@@ -210,11 +210,12 @@
   </span>
 </div>
 
-<div style="margin-top:10px;">
-  <label style="display:inline-flex; align-items:center; font-weight:bold; cursor:pointer;">
-    <input type="checkbox" id="checkEdad" style="margin:0; margin-right:6px;">
-    <span>Soy mayor de 16 años</span>
-  </label>
+<div class="registroLegal">
+  <input type="checkbox" id="checkEdad">
+  <span class="registroLegalTexto">
+    Confirmo que soy mayor de 16 años y he leído y acepto la
+    <a href="#" onclick="abrirAvisoLegalGuiaUso(event)">Política de Privacidad y los Términos y Condiciones</a>.
+  </span>
 </div>
 
 <button class="btnBlue" onclick="registro()">Registrarse</button>
