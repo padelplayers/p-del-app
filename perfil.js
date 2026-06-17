@@ -667,13 +667,53 @@ async function eliminarMensajesGeneralUsuarioPerfil(uid) {
   }
 }
 
+function obtenerOtroParticipanteChatPrivadoPerfil(chat, uid) {
+  if (!chat || !uid) return null;
+
+  const participantes = Array.isArray(chat.participantes) ? chat.participantes : [];
+  const otroDesdeLista = participantes.find(function(participanteUid) {
+    return participanteUid && participanteUid !== uid;
+  });
+  if (otroDesdeLista) return otroDesdeLista;
+
+  const participantesMap = chat.participantesMap && typeof chat.participantesMap === "object"
+    ? chat.participantesMap
+    : {};
+  return Object.keys(participantesMap).find(function(participanteUid) {
+    return participanteUid && participanteUid !== uid && participantesMap[participanteUid] === true;
+  }) || null;
+}
+
+async function notificarChatPrivadoEliminadoPerfil(chatId, otroUid) {
+  if (!chatId || !otroUid || typeof window.crearNotificacionesParaUids !== "function") return;
+
+  await window.crearNotificacionesParaUids(otroUid, {
+    origen: "perfil",
+    tipo: "chat_privado_eliminado_por_baja_usuario",
+    titulo: "Chat privado eliminado",
+    mensaje: "Un usuario ha eliminado su perfil. El chat privado que mantenias con el se ha eliminado.",
+    accion: null,
+    prioridad: "normal",
+    dedupeKey: "chat_privado_eliminado_por_baja_usuario_" + chatId,
+    data: {
+      motivo: "baja_usuario"
+    }
+  });
+}
+
 async function eliminarChatsPrivadosUsuarioPerfil(uid) {
   const snapshot = await db.collection("chatsPrivados")
     .where("participantesMap." + uid, "==", true)
     .get();
 
   for (let i = 0; i < snapshot.docs.length; i++) {
-    const privadoRef = snapshot.docs[i].ref;
+    const chatDoc = snapshot.docs[i];
+    const privadoRef = chatDoc.ref;
+    const chat = chatDoc.data() || {};
+    const otroUid = obtenerOtroParticipanteChatPrivadoPerfil(chat, uid);
+
+    await notificarChatPrivadoEliminadoPerfil(chatDoc.id, otroUid);
+
     const mensajesSnap = await privadoRef.collection("mensajes").get();
     await borrarSnapshotEnBatchesPerfil(mensajesSnap);
     await privadoRef.delete();
