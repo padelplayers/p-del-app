@@ -1363,7 +1363,12 @@ async function borrarStorageFolderUsuarioPerfil(ref, uid) {
 }
 
 async function eliminarStorageUsuario(uid, datosUsuario) {
-  if (!uid || !firebase.storage) return;
+  if (!uid) return;
+  if (!firebase.storage) {
+    const errorCritico = new Error("No esta disponible Firebase Storage. Se detiene el borrado del perfil.");
+    errorCritico.code = "perfil/storage-list-failed";
+    throw errorCritico;
+  }
 
   datosUsuario = datosUsuario || {};
   const storage = firebase.storage();
