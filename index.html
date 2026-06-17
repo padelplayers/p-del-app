@@ -468,11 +468,16 @@ Juego en red
 <div id="menu" class="container">
 
   <div class="saludoNotificaciones">
-    <h3 id="saludo"></h3>
-    <button id="notificacionesBtn" class="notificacionesBtn" type="button" aria-label="Notificaciones">
-      <span class="notificacionesIcono">&#128276;</span>
-      <span id="notificacionesContador" class="notificacionesContador" style="display:none;">0</span>
-    </button>
+    <div class="saludoZona saludoZonaIzquierda"></div>
+    <div class="saludoZona saludoZonaCentro">
+      <h3 id="saludo"></h3>
+    </div>
+    <div class="saludoZona saludoZonaDerecha">
+      <button id="notificacionesBtn" class="notificacionesBtn" type="button" aria-label="Notificaciones">
+        <span class="notificacionesIcono">&#128276;</span>
+        <span id="notificacionesContador" class="notificacionesContador" style="display:none;">0</span>
+      </button>
+    </div>
   </div>
 
   <button class="menuButton" onclick="mostrar('pistas')">Pistas</button>
