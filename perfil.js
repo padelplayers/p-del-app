@@ -289,8 +289,28 @@ function penalizacionActivaPerfil(penalizacion) {
   return caducaAt.getTime() > Date.now();
 }
 
+function restriccionFiabilidadActivaPerfil(restriccion) {
+  if (!restriccion || restriccion.activa !== true) return false;
+
+  const hasta = fechaPerfilToDate(restriccion.hasta);
+  if (!hasta) return false;
+  return hasta.getTime() > Date.now();
+}
+
+function crearPenalizacionDesdeRestriccionPerfil(restriccion) {
+  return {
+    tipo: "restriccion_fiabilidad",
+    motivo: restriccion.motivo || "Restriccion temporal por fiabilidad",
+    impactoFiabilidad: "Restriccion temporal",
+    createdAt: restriccion.desde || null,
+    caducaAt: restriccion.hasta || null,
+    activa: true
+  };
+}
+
 function obtenerImpactoFiabilidadPerfil(penalizacion) {
   if (!penalizacion) return "Sin datos";
+  if (penalizacion.tipo === "restriccion_fiabilidad") return "Restriccion temporal";
 
   const impacto = Number(penalizacion.impactoFiabilidad);
   if (!isNaN(impacto)) return impacto + "% fiabilidad";
@@ -392,7 +412,11 @@ function renderizarFiabilidadPenalizacionesPerfil(data) {
   const penalizacionesActivasTotal = obtenerTotalPerfil(clasificacion.penalizacionesActivas);
   const abandonos = obtenerTotalPerfil(clasificacion.abandonos);
   const penalizaciones = Array.isArray(data.penalizaciones) ? data.penalizaciones : [];
-  const activas = penalizaciones.filter(penalizacionActivaPerfil);
+  const restriccionFiabilidad = restriccionFiabilidadActivaPerfil(data.restriccionFiabilidad)
+    ? crearPenalizacionDesdeRestriccionPerfil(data.restriccionFiabilidad)
+    : null;
+  const activas = penalizaciones.filter(penalizacionActivaPerfil)
+    .concat(restriccionFiabilidad ? [restriccionFiabilidad] : []);
   const historicas = penalizaciones.filter(function(penalizacion) {
     return !penalizacionActivaPerfil(penalizacion);
   });

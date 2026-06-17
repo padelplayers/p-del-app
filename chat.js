@@ -728,6 +728,14 @@ async function prepararEnvioChat() {
   const chat = chatState.chats[chatId];
   if (!user || !chat) return;
 
+  if (
+    chat.tipo !== "partida" &&
+    typeof window.validarAccionPorFiabilidad === "function" &&
+    !(await window.validarAccionPorFiabilidad("chat"))
+  ) {
+    return;
+  }
+
   const mensajesRef = obtenerMensajesChatRef(chatId);
   if (mensajesRef) {
     try {

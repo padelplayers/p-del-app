@@ -74,6 +74,12 @@ auth.onAuthStateChanged(async user => {
 
     esAdmin = data && data.rol === "admin";
 
+    if (typeof window.asegurarRestriccionFiabilidadUsuario === "function") {
+      await window.asegurarRestriccionFiabilidadUsuario(user.uid, data || {}).catch(function(error) {
+        console.warn("No se pudo revisar la restriccion por fiabilidad:", error.message);
+      });
+    }
+
     mostrar("menu");
 
   } else {

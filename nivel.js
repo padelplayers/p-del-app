@@ -60,6 +60,26 @@ function resultadoRankingValido(resultado, jugadoresPermitidos) {
   });
 }
 
+function resultadoTieneParticipacionRegistrada(resultado) {
+  return !!(
+    resultado &&
+    (
+      resultado.propuestoPor ||
+      Array.isArray(resultado.validaciones)
+    )
+  );
+}
+
+function jugadorParticipoEnResultadoRanking(resultado, uid) {
+  if (!resultadoTieneParticipacionRegistrada(resultado)) return true;
+  if (resultado.propuestoPor === uid) return true;
+
+  const validaciones = Array.isArray(resultado.validaciones)
+    ? resultado.validaciones
+    : [];
+  return validaciones.includes(uid);
+}
+
 window.aplicarRankingCompetitivo = async function(idPartida) {
   const partidaRef = db.collection("partidas").doc(idPartida);
 
@@ -118,6 +138,9 @@ window.aplicarRankingCompetitivo = async function(idPartida) {
 
     jugadores.forEach(function(uid, index) {
       const gana = equipoGanador.includes(uid);
+      const participoResultado = jugadorParticipoEnResultadoRanking(resultado, uid);
+      if (gana && !participoResultado) return;
+
       const cambio = gana ? delta : -delta;
       const nuevoNivel = normalizarNivelCompetitivo(niveles[uid] + cambio);
       const nivelInicial = nivelesIniciales[uid];

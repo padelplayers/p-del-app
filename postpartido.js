@@ -695,10 +695,19 @@ function aplicarIncumplimientosPostPartidoPartida(idPartida) {
       const compromisoNuevo = isNaN(compromisoActual)
         ? 0
         : Math.max(0, compromisoActual - 1);
+      const incidenciaNoValorar = {
+        id: "no_valorar_" + idPartida + "_" + usuarioRefs[index].id,
+        tipo: "no_valorar",
+        partidaId: idPartida,
+        impactoCompromisoLogro: -1,
+        impactoPuntos: -3,
+        createdAt: firebase.firestore.Timestamp.now()
+      };
 
       transaction.update(usuarioRefs[index], {
         "clasificacion.compromisoLogro": compromisoNuevo,
-        "clasificacion.puntos": firebase.firestore.FieldValue.increment(-3)
+        "clasificacion.puntos": firebase.firestore.FieldValue.increment(-3),
+        incidenciasPostPartido: firebase.firestore.FieldValue.arrayUnion(incidenciaNoValorar)
       });
     });
 
@@ -709,6 +718,24 @@ function aplicarIncumplimientosPostPartidoPartida(idPartida) {
     });
 
     return incumplidores;
+  }).then(function(incumplidores) {
+    if (!Array.isArray(incumplidores) || incumplidores.length === 0) return incumplidores;
+
+    return notificarPostPartido(incumplidores, {
+      tipo: "incumplimiento_no_valorar",
+      titulo: "Valoracion no completada",
+      mensaje: "No completaste las valoraciones dentro del plazo. Se ha aplicado -1 a compromiso y -3 puntos de reputacion.",
+      partidaId: idPartida,
+      accion: null,
+      dedupeKey: "incumplimiento_no_valorar_" + idPartida,
+      prioridad: "alta",
+      data: {
+        impactoCompromisoLogro: -1,
+        impactoPuntos: -3
+      }
+    }).then(function() {
+      return incumplidores;
+    });
   });
 }
 

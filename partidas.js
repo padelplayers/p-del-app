@@ -83,6 +83,192 @@ function datosClasificacionPenalizaciones(dataUsuario, penalizacionesExtra) {
   };
 }
 
+const RESTRICCIONES_FIABILIDAD = [
+  {
+    nivel: "critica",
+    severidad: 3,
+    umbral: 40,
+    dias: 30,
+    bloqueaCrear: true,
+    bloqueaUnirse: true,
+    bloqueaChat: true,
+    titulo: "Restriccion por fiabilidad",
+    motivo: "Fiabilidad inferior al 40%. Durante 30 dias no puedes crear partidas, unirte a partidas ni usar chat general o privado."
+  },
+  {
+    nivel: "alta",
+    severidad: 2,
+    umbral: 60,
+    dias: 7,
+    bloqueaCrear: true,
+    bloqueaUnirse: true,
+    bloqueaChat: false,
+    titulo: "Restriccion por fiabilidad",
+    motivo: "Fiabilidad inferior al 60%. Durante 7 dias no puedes crear ni unirte a partidas."
+  },
+  {
+    nivel: "media",
+    severidad: 1,
+    umbral: 70,
+    dias: 7,
+    bloqueaCrear: true,
+    bloqueaUnirse: false,
+    bloqueaChat: false,
+    titulo: "Restriccion por fiabilidad",
+    motivo: "Fiabilidad inferior al 70%. Durante 7 dias no puedes crear partidas."
+  }
+];
+
+function obtenerReglaRestriccionFiabilidad(fiabilidad) {
+  const valor = Number(fiabilidad);
+  if (isNaN(valor)) return null;
+  return RESTRICCIONES_FIABILIDAD.find(function(regla) {
+    return valor < regla.umbral;
+  }) || null;
+}
+
+function obtenerRestriccionFiabilidadActiva(dataUsuario, ahora) {
+  const restriccion = dataUsuario && dataUsuario.restriccionFiabilidad;
+  if (!restriccion || restriccion.activa !== true) return null;
+
+  const hastaMillis = fechaPenalizacionToMillis(restriccion.hasta);
+  const ahoraMillis = fechaPenalizacionToMillis(ahora || new Date());
+  if (!hastaMillis || !ahoraMillis || hastaMillis <= ahoraMillis) return null;
+
+  return restriccion;
+}
+
+function crearRestriccionFiabilidad(regla, fiabilidad, ahora) {
+  const inicio = ahora || new Date();
+  const hasta = new Date(inicio.getTime() + regla.dias * 24 * 60 * 60 * 1000);
+
+  return {
+    id: "fiabilidad_" + regla.nivel + "_" + inicio.getTime(),
+    activa: true,
+    nivel: regla.nivel,
+    severidad: regla.severidad,
+    fiabilidad: Number(fiabilidad),
+    motivo: regla.motivo,
+    bloqueaCrear: regla.bloqueaCrear,
+    bloqueaUnirse: regla.bloqueaUnirse,
+    bloqueaChat: regla.bloqueaChat,
+    desde: inicio,
+    hasta: hasta,
+    dias: regla.dias,
+    notificadaFin: false
+  };
+}
+
+function textoRestriccionFiabilidad(restriccion) {
+  return restriccion && restriccion.motivo
+    ? restriccion.motivo
+    : "Tienes una restriccion temporal por fiabilidad.";
+}
+
+function notificarRestriccionFiabilidad(uid, tipo, restriccion) {
+  if (!uid || !restriccion || typeof window.crearNotificacionesParaUids !== "function") {
+    return Promise.resolve(null);
+  }
+
+  const inicio = tipo === "inicio";
+  return window.crearNotificacionesParaUids(uid, {
+    origen: "fiabilidad",
+    tipo: inicio ? "restriccion_fiabilidad_inicio" : "restriccion_fiabilidad_fin",
+    titulo: inicio ? "Restriccion por fiabilidad" : "Restriccion finalizada",
+    mensaje: inicio
+      ? textoRestriccionFiabilidad(restriccion)
+      : "Tu restriccion por fiabilidad ha finalizado.",
+    prioridad: "alta",
+    emailCritico: inicio,
+    dedupeKey: (inicio ? "restriccion_fiabilidad_inicio_" : "restriccion_fiabilidad_fin_") + restriccion.id,
+    data: {
+      restriccionId: restriccion.id,
+      nivel: restriccion.nivel,
+      hasta: restriccion.hasta || null
+    }
+  }).catch(function(error) {
+    console.warn("No se pudo crear aviso de restriccion por fiabilidad:", error.message);
+    return null;
+  });
+}
+
+async function asegurarRestriccionFiabilidadUsuario(uid, dataUsuario) {
+  if (!uid) return null;
+
+  const ref = db.collection("usuarios").doc(uid);
+  let datos = dataUsuario || {};
+  if (!dataUsuario) {
+    const doc = await ref.get();
+    if (!doc.exists) return null;
+    datos = doc.data() || {};
+  }
+
+  const ahora = new Date();
+  const clasificacion = datos.clasificacion || {};
+  const fiabilidad = clasificacion.fiabilidad === undefined || clasificacion.fiabilidad === null
+    ? 100
+    : Number(clasificacion.fiabilidad);
+  const regla = obtenerReglaRestriccionFiabilidad(fiabilidad);
+  const activa = obtenerRestriccionFiabilidadActiva(datos, ahora);
+  const restriccionGuardada = datos.restriccionFiabilidad || null;
+
+  if (restriccionGuardada && restriccionGuardada.activa === true && !activa) {
+    await ref.set({
+      restriccionFiabilidad: Object.assign({}, restriccionGuardada, {
+        activa: false,
+        finalizadaAt: firebase.firestore.FieldValue.serverTimestamp(),
+        notificadaFin: true
+      })
+    }, { merge: true });
+
+    if (restriccionGuardada.notificadaFin !== true) {
+      await notificarRestriccionFiabilidad(uid, "fin", restriccionGuardada);
+    }
+  }
+
+  if (!regla) return null;
+
+  if (activa && Number(activa.severidad || 0) >= regla.severidad) {
+    return activa;
+  }
+
+  const nueva = crearRestriccionFiabilidad(regla, fiabilidad, ahora);
+  await ref.set({
+    restriccionFiabilidad: nueva
+  }, { merge: true });
+  await notificarRestriccionFiabilidad(uid, "inicio", nueva);
+  return nueva;
+}
+
+function restriccionBloqueaAccion(restriccion, accion) {
+  if (!restriccion) return false;
+  if (accion === "crear") return restriccion.bloqueaCrear === true;
+  if (accion === "unirse") return restriccion.bloqueaUnirse === true;
+  if (accion === "chat") return restriccion.bloqueaChat === true;
+  return false;
+}
+
+async function validarAccionPorFiabilidad(accion, opciones) {
+  opciones = opciones || {};
+  const user = firebase.auth().currentUser;
+  if (!user) return true;
+
+  const doc = await db.collection("usuarios").doc(user.uid).get();
+  if (!doc.exists) return true;
+
+  const restriccion = await asegurarRestriccionFiabilidadUsuario(user.uid, doc.data() || {});
+  if (!restriccionBloqueaAccion(restriccion, accion)) return true;
+
+  if (opciones.silencioso !== true) {
+    alert(textoRestriccionFiabilidad(restriccion));
+  }
+  return false;
+}
+
+window.asegurarRestriccionFiabilidadUsuario = asegurarRestriccionFiabilidadUsuario;
+window.validarAccionPorFiabilidad = validarAccionPorFiabilidad;
+window.obtenerRestriccionFiabilidadActiva = obtenerRestriccionFiabilidadActiva;
+
 function textoNodo(texto, tag) {
   const el = document.createElement(tag || "div");
   el.textContent = texto;
@@ -498,7 +684,14 @@ function pintarJugador(uid, slotId) {
   });
 }
 
-function crearPartida() {
+async function crearPartida() {
+  if (
+    typeof window.validarAccionPorFiabilidad === "function" &&
+    !(await window.validarAccionPorFiabilidad("crear"))
+  ) {
+    return;
+  }
+
   const div = document.getElementById("pistaSeleccionada");
   const pistaId = div && div.dataset ? div.dataset.id : null;
   const fecha = document.getElementById("fechaPartida")?.value;
@@ -1872,10 +2065,17 @@ function obtenerReservasCompatiblesPartidaTransaccion(transaction, p, reservas, 
 }
 
 function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
-  return db.collection("usuarios").doc(user.uid).get().then(function(docUser) {
+  return db.collection("usuarios").doc(user.uid).get().then(async function(docUser) {
     if (!docUser.exists) return false;
 
     const datosUsuario = docUser.data() || {};
+    if (typeof window.asegurarRestriccionFiabilidadUsuario === "function") {
+      const restriccion = await window.asegurarRestriccionFiabilidadUsuario(user.uid, datosUsuario);
+      if (restriccionBloqueaAccion(restriccion, "unirse")) {
+        throw new Error(textoRestriccionFiabilidad(restriccion));
+      }
+    }
+
     const sexoUsuario = normalizarSexoPartida(datosUsuario.sexo);
     const nivelUsuario = parseFloat(datosUsuario.nivel);
 
