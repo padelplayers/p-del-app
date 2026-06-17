@@ -1026,7 +1026,7 @@ function cargarGuiaUso() {
 
         const contenido = document.createElement("div");
         contenido.className = "guiaUsoContenido";
-        contenido.textContent = documento.texto;
+        contenido.appendChild(formatearContenidoGuiaUso(documento.texto));
 
         boton.append(flecha, titulo);
         boton.addEventListener("click", function() {
@@ -1049,6 +1049,44 @@ function alternarBloqueGuiaUso(bloque, boton, flecha) {
   const abierto = bloque.classList.toggle("abierto");
   boton.setAttribute("aria-expanded", abierto ? "true" : "false");
   flecha.textContent = abierto ? "▼" : "▶";
+}
+
+function formatearContenidoGuiaUso(texto) {
+  const fragment = document.createDocumentFragment();
+  const lineas = texto.split(/\r?\n/);
+  let tituloPrincipalAplicado = false;
+
+  lineas.forEach(function(linea) {
+    const elemento = document.createElement("div");
+    const textoLinea = linea.trim();
+
+    if (!textoLinea) {
+      elemento.className = "guiaUsoLineaVacia";
+    } else if (!tituloPrincipalAplicado) {
+      elemento.className = "guiaUsoTituloPrincipal";
+      elemento.textContent = linea;
+      tituloPrincipalAplicado = true;
+    } else if (/^\d+\.\s+/.test(textoLinea)) {
+      elemento.className = "guiaUsoApartado";
+      elemento.textContent = linea;
+    } else if (esBloqueEspecialGuiaUso(textoLinea)) {
+      elemento.className = "guiaUsoBloqueEspecial";
+      elemento.textContent = linea;
+    } else {
+      elemento.className = "guiaUsoTexto";
+      elemento.textContent = linea;
+    }
+
+    fragment.appendChild(elemento);
+  });
+
+  return fragment;
+}
+
+function esBloqueEspecialGuiaUso(texto) {
+  if (texto.length > 60) return false;
+  if (/^\d+\./.test(texto)) return false;
+  return texto === texto.toUpperCase() && /[A-ZÁÉÍÓÚÜÑ]/.test(texto);
 }
 
 function abrirTest(){
