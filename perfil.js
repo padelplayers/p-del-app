@@ -713,11 +713,11 @@ async function eliminarChatsPrivadosUsuarioPerfil(uid) {
     const chat = chatDoc.data() || {};
     const otroUid = obtenerOtroParticipanteChatPrivadoPerfil(chat, uid);
 
-    await notificarChatPrivadoEliminadoPerfil(chatDoc.id, otroUid, uid);
-
     const mensajesSnap = await privadoRef.collection("mensajes").get();
     await borrarSnapshotEnBatchesPerfil(mensajesSnap);
     await privadoRef.delete();
+
+    await notificarChatPrivadoEliminadoPerfil(chatDoc.id, otroUid, uid);
   }
 }
 
@@ -1222,7 +1222,16 @@ async function obtenerNotificacionesAjenasCandidatasUsuarioEliminadoPerfil(uid) 
     "uidReservaSustituta",
     "uidReservaRechaza",
     "uidNuevaReserva",
-    "sale"
+    "sale",
+    "usuario.uid",
+    "perfil.uid",
+    "creador.uid",
+    "jugador.uid",
+    "reserva.uid",
+    "sustituto.uid",
+    "solicitante.uid",
+    "nuevoCreador.uid",
+    "creadorAnterior.uid"
   ];
   const camposDataArray = [
     "jugadores",
@@ -1319,20 +1328,26 @@ async function borrarStorageRefUsuarioPerfil(ref, uid) {
     return true;
   } catch (error) {
     if (error && error.code === "storage/object-not-found") return false;
-    console.warn("No se pudo borrar archivo personal de Storage:", error && error.message ? error.message : error);
-    return false;
+    throw error;
   }
 }
 
 async function borrarStorageFolderUsuarioPerfil(ref, uid) {
-  if (!ref || typeof ref.listAll !== "function") return;
+  if (!ref || typeof ref.listAll !== "function") {
+    const errorCritico = new Error("No esta disponible el listado de Storage personal del usuario. Se detiene el borrado del perfil.");
+    errorCritico.code = "perfil/storage-list-failed";
+    throw errorCritico;
+  }
 
   let resultado;
   try {
     resultado = await ref.listAll();
   } catch (error) {
-    console.warn("No se pudo listar Storage personal del usuario:", error && error.message ? error.message : error);
-    return;
+    if (error && error.code === "storage/object-not-found") return;
+    const errorCritico = new Error("No se pudo listar Storage personal del usuario. Se detiene el borrado del perfil.");
+    errorCritico.code = "perfil/storage-list-failed";
+    errorCritico.originalError = error;
+    throw errorCritico;
   }
 
   const items = Array.isArray(resultado.items) ? resultado.items : [];
@@ -1359,8 +1374,11 @@ async function eliminarStorageUsuario(uid, datosUsuario) {
       const refFoto = storage.refFromURL(fotoPerfil);
       await borrarStorageRefUsuarioPerfil(refFoto, uid);
     } catch (error) {
-      if (!error || error.code !== "storage/invalid-url") {
-        console.warn("No se pudo resolver foto personal de Storage:", error && error.message ? error.message : error);
+      if (!error || (error.code !== "storage/invalid-url" && error.code !== "storage/object-not-found")) {
+        const errorCritico = new Error("No se pudo borrar la foto personal de Storage. Se detiene el borrado del perfil.");
+        errorCritico.code = "perfil/storage-delete-failed";
+        errorCritico.originalError = error;
+        throw errorCritico;
       }
     }
   }
@@ -1457,8 +1475,6 @@ async function eliminarPerfil() {
 
     await resolverPartidasActivasAntesDeEliminarPerfil(uid);
 
-    await borrarSubcoleccionesUsuario(uid);
-
     // 2. limpiar referencias sociales
     await limpiarRelacionesSocialesUsuario(uid);
 
@@ -1471,6 +1487,8 @@ async function eliminarPerfil() {
     await limpiarNotificacionesUsuarioEliminado(uid, uidAnonimo, nombreUsuarioEliminado);
 
     await eliminarStorageUsuario(uid, datosPerfil);
+
+    await borrarSubcoleccionesUsuario(uid);
 
     await borrarUsuarioFirestoreYAuthPerfil(userRef, user);
 
@@ -1491,6 +1509,11 @@ async function eliminarPerfil() {
 
     if (error && error.code === "perfil/firestore-delete-failed") {
       alert("No se pudo borrar el perfil de la base de datos. No se ha borrado la cuenta de autenticacion.");
+      return;
+    }
+
+    if (error && (error.code === "perfil/storage-list-failed" || error.code === "perfil/storage-delete-failed")) {
+      alert("No se pudo limpiar completamente el Storage personal. No se ha borrado el perfil ni la cuenta de autenticacion.");
       return;
     }
 
