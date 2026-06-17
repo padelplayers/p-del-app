@@ -3089,14 +3089,24 @@ margin:0 auto;
   flex: 1 1 140px;
 }
 
+#instrucciones {
+  width: min(100%, 1100px);
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .guiaUsoLista {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 14px;
+  width: 100%;
+  align-items: stretch;
 }
 
 .guiaUsoBloque {
+  width: 100%;
   overflow: hidden;
   border: 1px solid #dfe5ee;
   border-radius: 8px;
@@ -3129,10 +3139,10 @@ margin:0 auto;
 
 .guiaUsoContenido {
   display: none;
-  padding: 18px;
+  padding: 22px 28px;
   color: #222;
   line-height: 1.65;
-  text-align: left;
+  text-align: left !important;
   overflow-wrap: anywhere;
 }
 
@@ -3170,7 +3180,7 @@ margin:0 auto;
   font-size: 15px;
   font-weight: 400;
   line-height: 1.65;
-  text-align: left;
+  text-align: left !important;
 }
 
 .guiaUsoLineaVacia {
@@ -3178,13 +3188,22 @@ margin:0 auto;
 }
 
 @media (max-width: 600px) {
+  #instrucciones {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
   .guiaUsoTitulo {
     padding: 11px 12px;
     font-size: 15px;
+    text-align: left;
   }
 
   .guiaUsoContenido {
     padding: 14px;
+    text-align: left !important;
   }
 
   .guiaUsoTituloPrincipal {
@@ -3199,5 +3218,6 @@ margin:0 auto;
 
   .guiaUsoTexto {
     font-size: 14px;
+    text-align: left !important;
   }
 }
