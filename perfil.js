@@ -684,7 +684,7 @@ function obtenerOtroParticipanteChatPrivadoPerfil(chat, uid) {
   }) || null;
 }
 
-async function notificarChatPrivadoEliminadoPerfil(chatId, otroUid) {
+async function notificarChatPrivadoEliminadoPerfil(chatId, otroUid, uidEliminado) {
   if (!chatId || !otroUid || typeof window.crearNotificacionesParaUids !== "function") return;
 
   await window.crearNotificacionesParaUids(otroUid, {
@@ -696,7 +696,8 @@ async function notificarChatPrivadoEliminadoPerfil(chatId, otroUid) {
     prioridad: "normal",
     dedupeKey: "chat_privado_eliminado_por_baja_usuario_" + chatId,
     data: {
-      motivo: "baja_usuario"
+      motivo: "baja_usuario",
+      usuarioUid: uidEliminado || null
     }
   });
 }
@@ -712,7 +713,7 @@ async function eliminarChatsPrivadosUsuarioPerfil(uid) {
     const chat = chatDoc.data() || {};
     const otroUid = obtenerOtroParticipanteChatPrivadoPerfil(chat, uid);
 
-    await notificarChatPrivadoEliminadoPerfil(chatDoc.id, otroUid);
+    await notificarChatPrivadoEliminadoPerfil(chatDoc.id, otroUid, uid);
 
     const mensajesSnap = await privadoRef.collection("mensajes").get();
     await borrarSnapshotEnBatchesPerfil(mensajesSnap);
@@ -883,6 +884,546 @@ async function anonimizarPistasCreadasUsuario(uid) {
   await Promise.all(commits);
 }
 
+function generarUidAnonimoUsuarioEliminado(uid) {
+  const texto = String(uid || "");
+  let hash = 2166136261;
+
+  for (let i = 0; i < texto.length; i++) {
+    hash ^= texto.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  const hashCorto = (hash >>> 0).toString(36).padStart(8, "0").slice(0, 8);
+  return "usuario_eliminado_" + hashCorto;
+}
+
+function esObjetoPlanoPerfil(valor) {
+  if (!valor || typeof valor !== "object" || Array.isArray(valor)) return false;
+
+  const proto = Object.getPrototypeOf(valor);
+  return proto === Object.prototype || proto === null;
+}
+
+function objetoTieneIdentidadUsuarioHistorialPerfil(obj, uid) {
+  const camposUid = [
+    "uid",
+    "idUsuario",
+    "idJugador",
+    "uidUsuario",
+    "usuarioUid",
+    "uidJugador",
+    "jugadorUid",
+    "userUid"
+  ];
+
+  return camposUid.some(function(campo) {
+    return obj[campo] === uid;
+  });
+}
+
+function objetoTieneCreadorUsuarioHistorialPerfil(obj, uid) {
+  const camposCreador = ["creadaPor", "creador", "creadorUid", "creadaPorUid"];
+
+  return camposCreador.some(function(campo) {
+    return obj[campo] === uid;
+  });
+}
+
+function anonimizarValorHistorialPerfil(valor, uid, uidAnonimo, contextoUsuario) {
+  const camposNombreUsuario = [
+    "nombre",
+    "displayName",
+    "nombreUsuario",
+    "usuarioNombre",
+    "nombreJugador",
+    "jugadorNombre"
+  ];
+  const camposNombreCreador = ["creadorNombre", "nombreCreador"];
+  const camposFotoUsuario = [
+    "foto",
+    "fotoPerfil",
+    "imagen",
+    "avatar",
+    "photoURL",
+    "fotoUrl",
+    "imagenUrl"
+  ];
+
+  if (valor === uid) {
+    return {
+      valor: uidAnonimo,
+      cambiado: true
+    };
+  }
+
+  if (Array.isArray(valor)) {
+    let cambiadoArray = false;
+    const arrayAnonimizado = valor.map(function(item) {
+      const resultado = anonimizarValorHistorialPerfil(item, uid, uidAnonimo, contextoUsuario);
+      if (resultado.cambiado) cambiadoArray = true;
+      return resultado.valor;
+    });
+
+    return {
+      valor: cambiadoArray ? arrayAnonimizado : valor,
+      cambiado: cambiadoArray
+    };
+  }
+
+  if (!esObjetoPlanoPerfil(valor)) {
+    return {
+      valor: valor,
+      cambiado: false
+    };
+  }
+
+  const identificaUsuario = objetoTieneIdentidadUsuarioHistorialPerfil(valor, uid);
+  const identificaCreador = objetoTieneCreadorUsuarioHistorialPerfil(valor, uid);
+  const contextoActual = contextoUsuario === true || identificaUsuario;
+  let cambiadoObjeto = false;
+  const objetoAnonimizado = {};
+
+  Object.keys(valor).forEach(function(clave) {
+    const claveAnonima = clave === uid ? uidAnonimo : clave;
+    const valorOriginal = valor[clave];
+    let valorNuevo = valorOriginal;
+    let cambiadoValor = false;
+    const contextoHijo = contextoActual || clave === uid;
+
+    if (contextoActual && camposNombreUsuario.includes(clave)) {
+      if (valorOriginal !== "Usuario eliminado") {
+        valorNuevo = "Usuario eliminado";
+        cambiadoValor = true;
+      }
+    } else if (identificaCreador && camposNombreCreador.includes(clave)) {
+      if (valorOriginal !== "Usuario eliminado") {
+        valorNuevo = "Usuario eliminado";
+        cambiadoValor = true;
+      }
+    } else if (contextoActual && camposFotoUsuario.includes(clave)) {
+      if (valorOriginal) {
+        valorNuevo = "";
+        cambiadoValor = true;
+      }
+    } else {
+      const resultado = anonimizarValorHistorialPerfil(valorOriginal, uid, uidAnonimo, contextoHijo);
+      valorNuevo = resultado.valor;
+      cambiadoValor = resultado.cambiado;
+    }
+
+    if (claveAnonima !== clave || cambiadoValor) cambiadoObjeto = true;
+    objetoAnonimizado[claveAnonima] = valorNuevo;
+  });
+
+  return {
+    valor: cambiadoObjeto ? objetoAnonimizado : valor,
+    cambiado: cambiadoObjeto
+  };
+}
+
+function crearUpdateAnonimizacionHistorialPerfil(data, uid, uidAnonimo) {
+  const resultado = anonimizarValorHistorialPerfil(data || {}, uid, uidAnonimo, false);
+  const dataAnonimizada = resultado.valor || {};
+  const update = {};
+
+  Object.keys(dataAnonimizada).forEach(function(campo) {
+    if ((data || {})[campo] !== dataAnonimizada[campo]) {
+      update[campo] = dataAnonimizada[campo];
+    }
+  });
+
+  return update;
+}
+
+async function obtenerHistorialCandidatoAnonimizacionPerfil(uid) {
+  const coleccion = db.collection("historial_partidas");
+  const consultas = [
+    coleccion.where("jugadores", "array-contains", uid).get(),
+    coleccion.where("reservas", "array-contains", uid).get(),
+    coleccion.where("participantesPostPartido", "array-contains", uid).get(),
+    coleccion.where("creadaPor", "==", uid).get(),
+    coleccion.where("creador", "==", uid).get(),
+    coleccion.where("creadorUid", "==", uid).get(),
+    coleccion.where("creadaPorUid", "==", uid).get(),
+    coleccion.where("resultado.equipo1", "array-contains", uid).get(),
+    coleccion.where("resultado.equipo2", "array-contains", uid).get(),
+    coleccion.where("resultado.propuestoPor", "==", uid).get(),
+    coleccion.where("resultado.validaciones", "array-contains", uid).get(),
+    coleccion.where("resultado.rechazos", "array-contains", uid).get(),
+    coleccion.where("incumplimientosPostPartidoUids", "array-contains", uid).get(),
+    coleccion.where("creadorAnterior", "==", uid).get(),
+    coleccion.where("uidSolicita", "==", uid).get(),
+    coleccion.where("uidReserva", "==", uid).get(),
+    coleccion.where("uidSale", "==", uid).get(),
+    coleccion.where("uidEntra", "==", uid).get(),
+    coleccion.where("uidReservaSustituta", "==", uid).get(),
+    coleccion.where("uidReservaRechaza", "==", uid).get(),
+    coleccion.where("uidNuevaReserva", "==", uid).get(),
+    coleccion.where("sustitucionSaleUid", "==", uid).get(),
+    coleccion.where("sustitucionEntraUid", "==", uid).get()
+  ];
+
+  if (firebase.firestore.FieldPath) {
+    consultas.push(
+      coleccion.where(new firebase.firestore.FieldPath("valoraciones", uid), "!=", null).get()
+    );
+  }
+
+  const snapshots = await Promise.all(consultas);
+  const docs = {};
+
+  snapshots.forEach(function(snapshot) {
+    snapshot.forEach(function(doc) {
+      docs[doc.id] = doc;
+    });
+  });
+
+  return Object.keys(docs).map(function(id) {
+    return docs[id];
+  });
+}
+
+async function anonimizarHistorialUsuarioEliminado(uid) {
+  if (!uid) return;
+
+  const uidAnonimo = generarUidAnonimoUsuarioEliminado(uid);
+  const docs = await obtenerHistorialCandidatoAnonimizacionPerfil(uid);
+  let batch = db.batch();
+  let contador = 0;
+  const commits = [];
+
+  docs.forEach(function(doc) {
+    const data = doc.data() || {};
+    const update = crearUpdateAnonimizacionHistorialPerfil(data, uid, uidAnonimo);
+
+    if (Object.keys(update).length === 0) return;
+
+    batch.update(doc.ref, update);
+    contador++;
+
+    if (contador >= 450) {
+      commits.push(batch.commit());
+      batch = db.batch();
+      contador = 0;
+    }
+  });
+
+  if (contador > 0) commits.push(batch.commit());
+  await Promise.all(commits);
+}
+
+function reemplazarNombreEnTextoNotificacionPerfil(texto, nombreUsuario) {
+  if (!texto || !nombreUsuario) return texto || "";
+
+  return String(texto).split(nombreUsuario).join("Usuario eliminado");
+}
+
+function notificacionMencionaUidEnDataPerfil(data, uid) {
+  if (data === uid) return true;
+  if (Array.isArray(data)) {
+    return data.some(function(item) {
+      return notificacionMencionaUidEnDataPerfil(item, uid);
+    });
+  }
+  if (!esObjetoPlanoPerfil(data)) return false;
+
+  return Object.keys(data).some(function(clave) {
+    return clave === uid || notificacionMencionaUidEnDataPerfil(data[clave], uid);
+  });
+}
+
+function notificacionApuntaPerfilEliminadoPerfil(n, uid) {
+  const data = n && esObjetoPlanoPerfil(n.data) ? n.data : {};
+
+  return !!(
+    n &&
+    n.accion === "abrir_perfil" &&
+    (
+      data.uid === uid ||
+      data.usuarioUid === uid ||
+      data.perfilUid === uid ||
+      data.jugadorUid === uid ||
+      data.creadorUid === uid ||
+      !n.partidaId
+    )
+  );
+}
+
+function notificacionDebeResolversePorUsuarioEliminadoPerfil(n, uid) {
+  if (!n) return false;
+  if (notificacionApuntaPerfilEliminadoPerfil(n, uid)) return true;
+  if (n.tipo === "chat_privado_eliminado_por_baja_usuario") return true;
+
+  const data = esObjetoPlanoPerfil(n.data) ? n.data : {};
+  if (
+    !n.partidaId &&
+    !n.chatId &&
+    (
+      data.uid === uid ||
+      data.usuarioUid === uid ||
+      data.perfilUid === uid ||
+      data.jugadorUid === uid ||
+      data.creadorUid === uid
+    )
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function crearUpdateNotificacionUsuarioEliminadoPerfil(n, uid, uidAnonimo, nombreUsuario) {
+  const dataOriginal = esObjetoPlanoPerfil(n && n.data) ? n.data : {};
+  const dataAnonimizada = anonimizarValorHistorialPerfil(dataOriginal, uid, uidAnonimo, false);
+  const titulo = reemplazarNombreEnTextoNotificacionPerfil(n && n.titulo, nombreUsuario);
+  const mensaje = reemplazarNombreEnTextoNotificacionPerfil(n && n.mensaje, nombreUsuario);
+  const mencionaUid = notificacionMencionaUidEnDataPerfil(dataOriginal, uid);
+  const apuntaPerfil = notificacionApuntaPerfilEliminadoPerfil(n, uid);
+  const debeResolver = notificacionDebeResolversePorUsuarioEliminadoPerfil(n, uid);
+  const update = {};
+
+  if (dataAnonimizada.cambiado) update.data = dataAnonimizada.valor;
+  if (titulo !== ((n && n.titulo) || "")) update.titulo = titulo;
+  if (mensaje !== ((n && n.mensaje) || "")) update.mensaje = mensaje;
+
+  if (apuntaPerfil || n.accion === "abrir_perfil") {
+    update.accion = null;
+  }
+
+  if (debeResolver) {
+    update.resuelta = true;
+    update.resueltaAt = firebase.firestore.FieldValue.serverTimestamp();
+    update.leida = true;
+    update.leidaAt = firebase.firestore.FieldValue.serverTimestamp();
+    update.accion = null;
+  } else if (mencionaUid && n.accion === "abrir_perfil") {
+    update.accion = null;
+  }
+
+  return update;
+}
+
+async function obtenerNotificacionesAjenasCandidatasUsuarioEliminadoPerfil(uid) {
+  const coleccion = db.collection("notificaciones");
+  const camposDataUid = [
+    "uid",
+    "usuarioUid",
+    "perfilUid",
+    "creadorUid",
+    "jugadorUid",
+    "reservaUid",
+    "sustitutoUid",
+    "nuevoCreador",
+    "creadorAnterior",
+    "uidSolicita",
+    "uidReserva",
+    "uidSale",
+    "uidEntra",
+    "uidReservaSustituta",
+    "uidReservaRechaza",
+    "uidNuevaReserva",
+    "sale"
+  ];
+  const camposDataArray = [
+    "jugadores",
+    "reservas",
+    "participantes",
+    "destinatarios",
+    "candidatos"
+  ];
+  const consultas = [];
+
+  camposDataUid.forEach(function(campo) {
+    consultas.push(coleccion.where("data." + campo, "==", uid).get());
+  });
+
+  camposDataArray.forEach(function(campo) {
+    consultas.push(coleccion.where("data." + campo, "array-contains", uid).get());
+  });
+
+  const snapshots = await Promise.all(consultas);
+  const docs = {};
+
+  snapshots.forEach(function(snapshot) {
+    snapshot.forEach(function(doc) {
+      const data = doc.data() || {};
+      if (data.uid === uid) return;
+      docs[doc.id] = doc;
+    });
+  });
+
+  return Object.keys(docs).map(function(id) {
+    return docs[id];
+  });
+}
+
+async function limpiarNotificacionesUsuarioEliminado(uid, uidAnonimo, nombreUsuario) {
+  if (!uid) return;
+
+  uidAnonimo = uidAnonimo || generarUidAnonimoUsuarioEliminado(uid);
+
+  const propiasSnap = await db.collection("notificaciones").where("uid", "==", uid).get();
+  await borrarSnapshotEnBatchesPerfil(propiasSnap);
+
+  const docs = await obtenerNotificacionesAjenasCandidatasUsuarioEliminadoPerfil(uid);
+  let batch = db.batch();
+  let contador = 0;
+  const commits = [];
+
+  docs.forEach(function(doc) {
+    const data = doc.data() || {};
+    const update = crearUpdateNotificacionUsuarioEliminadoPerfil(data, uid, uidAnonimo, nombreUsuario);
+
+    if (Object.keys(update).length === 0) return;
+
+    batch.set(doc.ref, update, { merge: true });
+    contador++;
+
+    if (contador >= 450) {
+      commits.push(batch.commit());
+      batch = db.batch();
+      contador = 0;
+    }
+  });
+
+  if (contador > 0) commits.push(batch.commit());
+  await Promise.all(commits);
+}
+
+async function borrarSubcoleccionesUsuario(uid) {
+  if (!uid) return;
+
+  const subcoleccionesPropias = ["chatLeidos"];
+  const userRef = db.collection("usuarios").doc(uid);
+
+  for (let i = 0; i < subcoleccionesPropias.length; i++) {
+    const snapshot = await userRef.collection(subcoleccionesPropias[i]).get();
+    await borrarSnapshotEnBatchesPerfil(snapshot);
+  }
+}
+
+function rutaStoragePerteneceAUsuarioPerfil(ref, uid) {
+  return !!(
+    ref &&
+    uid &&
+    typeof ref.fullPath === "string" &&
+    ref.fullPath.indexOf("usuarios/" + uid + "/") === 0
+  );
+}
+
+async function borrarStorageRefUsuarioPerfil(ref, uid) {
+  if (!rutaStoragePerteneceAUsuarioPerfil(ref, uid)) return false;
+
+  try {
+    await ref.delete();
+    return true;
+  } catch (error) {
+    if (error && error.code === "storage/object-not-found") return false;
+    console.warn("No se pudo borrar archivo personal de Storage:", error && error.message ? error.message : error);
+    return false;
+  }
+}
+
+async function borrarStorageFolderUsuarioPerfil(ref, uid) {
+  if (!ref || typeof ref.listAll !== "function") return;
+
+  let resultado;
+  try {
+    resultado = await ref.listAll();
+  } catch (error) {
+    console.warn("No se pudo listar Storage personal del usuario:", error && error.message ? error.message : error);
+    return;
+  }
+
+  const items = Array.isArray(resultado.items) ? resultado.items : [];
+  const prefixes = Array.isArray(resultado.prefixes) ? resultado.prefixes : [];
+
+  for (let i = 0; i < items.length; i++) {
+    await borrarStorageRefUsuarioPerfil(items[i], uid);
+  }
+
+  for (let j = 0; j < prefixes.length; j++) {
+    await borrarStorageFolderUsuarioPerfil(prefixes[j], uid);
+  }
+}
+
+async function eliminarStorageUsuario(uid, datosUsuario) {
+  if (!uid || !firebase.storage) return;
+
+  datosUsuario = datosUsuario || {};
+  const storage = firebase.storage();
+  const fotoPerfil = datosUsuario.fotoPerfil || "";
+
+  if (fotoPerfil && typeof fotoPerfil === "string" && fotoPerfil.includes("firebasestorage")) {
+    try {
+      const refFoto = storage.refFromURL(fotoPerfil);
+      await borrarStorageRefUsuarioPerfil(refFoto, uid);
+    } catch (error) {
+      if (!error || error.code !== "storage/invalid-url") {
+        console.warn("No se pudo resolver foto personal de Storage:", error && error.message ? error.message : error);
+      }
+    }
+  }
+
+  const carpetaUsuario = storage.ref().child("usuarios/" + uid);
+  await borrarStorageFolderUsuarioPerfil(carpetaUsuario, uid);
+}
+
+function usuarioPuedeReautenticarseConPasswordPerfil(user) {
+  if (!user || !user.email) return false;
+
+  const providers = Array.isArray(user.providerData) ? user.providerData : [];
+  if (providers.length === 0) return true;
+
+  return providers.some(function(provider) {
+    return provider && provider.providerId === "password";
+  });
+}
+
+async function reautenticarUsuarioParaEliminarPerfil(user) {
+  if (!usuarioPuedeReautenticarseConPasswordPerfil(user) || !firebase.auth.EmailAuthProvider) {
+    alert("Esta app solo puede eliminar cuentas iniciadas con email y contrasena. Si tu cuenta usa Google u otro proveedor, contacta con soporte.");
+    return false;
+  }
+
+  const password = prompt("Introduce tu contrasena actual para confirmar la eliminacion");
+  if (!password) {
+    alert("Eliminacion cancelada");
+    return false;
+  }
+
+  const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+
+  try {
+    await user.reauthenticateWithCredential(credential);
+    return true;
+  } catch (errorReauth) {
+    console.error(errorReauth);
+    alert("No se pudo confirmar tu identidad. No se ha borrado nada.");
+    return false;
+  }
+}
+
+async function borrarUsuarioFirestoreYAuthPerfil(userRef, user) {
+  try {
+    await userRef.delete();
+  } catch (errorFirestore) {
+    console.error(errorFirestore);
+    const error = new Error("No se pudo borrar el documento del usuario. No se ha borrado la cuenta de Auth.");
+    error.code = "perfil/firestore-delete-failed";
+    error.originalError = errorFirestore;
+    throw error;
+  }
+
+  try {
+    await user.delete();
+  } catch (errorAuth) {
+    console.error(errorAuth);
+    errorAuth.perfilFirestoreBorrado = true;
+    throw errorAuth;
+  }
+}
+
 async function eliminarPerfil() {
 
   const user = auth.currentUser;
@@ -899,25 +1440,8 @@ async function eliminarPerfil() {
       return;
     }
 
-    if (!user.email || !firebase.auth.EmailAuthProvider) {
-      alert("No se puede reautenticar esta cuenta desde la app");
-      return;
-    }
-
-    const password = prompt("Introduce tu contrasena actual para confirmar la eliminacion");
-    if (!password) {
-      alert("Eliminacion cancelada");
-      return;
-    }
-
-    const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
-    try {
-      await user.reauthenticateWithCredential(credential);
-    } catch (errorReauth) {
-      console.error(errorReauth);
-      alert("No se pudo confirmar tu identidad. No se ha borrado nada.");
-      return;
-    }
+    const reautenticado = await reautenticarUsuarioParaEliminarPerfil(user);
+    if (!reautenticado) return;
 
     const tienePartidasActivasComoCreador = await usuarioTienePartidasActivasComoCreadorPerfil(uid);
     if (tienePartidasActivasComoCreador) {
@@ -928,17 +1452,12 @@ async function eliminarPerfil() {
     const userRef = db.collection("usuarios").doc(uid);
     const userDoc = await userRef.get();
     const datosPerfil = userDoc.exists ? (userDoc.data() || {}) : {};
-    const fotoPerfil = datosPerfil.fotoPerfil || "";
+    const uidAnonimo = generarUidAnonimoUsuarioEliminado(uid);
+    const nombreUsuarioEliminado = datosPerfil.nombre || user.displayName || "";
 
     await resolverPartidasActivasAntesDeEliminarPerfil(uid);
 
-    // 1. borrar subcoleccion chatLeidos del propio usuario
-    const chatLeidosSnap = await userRef.collection("chatLeidos").get();
-    if (!chatLeidosSnap.empty) {
-      const batchChatLeidos = db.batch();
-      chatLeidosSnap.forEach(doc => batchChatLeidos.delete(doc.ref));
-      await batchChatLeidos.commit();
-    }
+    await borrarSubcoleccionesUsuario(uid);
 
     // 2. limpiar referencias sociales
     await limpiarRelacionesSocialesUsuario(uid);
@@ -947,20 +1466,13 @@ async function eliminarPerfil() {
 
     await anonimizarPistasCreadasUsuario(uid);
 
-    // 3. borrar foto de Storage si existe y la utilidad esta disponible
-    if (
-      fotoPerfil &&
-      fotoPerfil.includes("firebasestorage") &&
-      typeof borrarImagen === "function"
-    ) {
-      await borrarImagen(fotoPerfil);
-    }
+    await anonimizarHistorialUsuarioEliminado(uid);
 
-    // 4. borrar Firestore
-    await userRef.delete();
+    await limpiarNotificacionesUsuarioEliminado(uid, uidAnonimo, nombreUsuarioEliminado);
 
-    // 5. borrar Auth
-    await user.delete();
+    await eliminarStorageUsuario(uid, datosPerfil);
+
+    await borrarUsuarioFirestoreYAuthPerfil(userRef, user);
 
     alert("Cuenta eliminada");
     await auth.signOut();
@@ -970,7 +1482,19 @@ async function eliminarPerfil() {
 
     console.error(error);
 
-    if (error.code === "auth/requires-recent-login") {
+    if (error && error.perfilFirestoreBorrado === true) {
+      alert("El perfil se ha borrado de la base de datos, pero no se pudo borrar la cuenta de autenticacion. Vuelve a iniciar sesion si es posible o contacta con soporte.");
+      await auth.signOut();
+      mostrar("login");
+      return;
+    }
+
+    if (error && error.code === "perfil/firestore-delete-failed") {
+      alert("No se pudo borrar el perfil de la base de datos. No se ha borrado la cuenta de autenticacion.");
+      return;
+    }
+
+    if (error && error.code === "auth/requires-recent-login") {
       alert("Vuelve a iniciar sesión para eliminar la cuenta");
       await auth.signOut();
     } else {
