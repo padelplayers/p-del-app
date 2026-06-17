@@ -3187,6 +3187,32 @@ margin:0 auto;
   height: 8px;
 }
 
+@media (min-width: 601px) {
+  .guiaUsoContenido {
+    padding: 22px 24px;
+  }
+
+  .guiaUsoTexto {
+    display: inline;
+    margin: 0;
+  }
+
+  .guiaUsoTexto::after {
+    content: " ";
+  }
+
+  .guiaUsoTituloPrincipal,
+  .guiaUsoApartado,
+  .guiaUsoBloqueEspecial,
+  .guiaUsoLineaVacia {
+    display: block;
+  }
+
+  .guiaUsoLineaVacia {
+    height: 12px;
+  }
+}
+
 @media (max-width: 600px) {
   #instrucciones {
     width: 100%;
