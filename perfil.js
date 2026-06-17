@@ -832,6 +832,57 @@ async function limpiarRelacionesSocialesUsuario(uid) {
   await Promise.all(updates);
 }
 
+async function anonimizarPistasCreadasUsuario(uid) {
+  if (!uid) return;
+
+  const camposUidCreador = ["creadaPor", "creador", "creadorUid", "creadaPorUid"];
+  const camposNombreCreador = ["creadorNombre", "nombreCreador"];
+  const consultas = await Promise.all(camposUidCreador.map(function(campo) {
+    return db.collection("pistas").where(campo, "==", uid).get();
+  }));
+  const pistas = {};
+
+  consultas.forEach(function(snapshot) {
+    snapshot.forEach(function(doc) {
+      pistas[doc.id] = doc;
+    });
+  });
+
+  let batch = db.batch();
+  let contador = 0;
+  const commits = [];
+
+  Object.keys(pistas).forEach(function(id) {
+    const doc = pistas[id];
+    const data = doc.data() || {};
+    const update = {};
+
+    camposUidCreador.forEach(function(campo) {
+      if (data[campo] === uid) update[campo] = "usuario_eliminado";
+    });
+
+    camposNombreCreador.forEach(function(campo) {
+      if (Object.prototype.hasOwnProperty.call(data, campo) && data[campo] !== "Usuario eliminado") {
+        update[campo] = "Usuario eliminado";
+      }
+    });
+
+    if (Object.keys(update).length === 0) return;
+
+    batch.update(doc.ref, update);
+    contador++;
+
+    if (contador >= 450) {
+      commits.push(batch.commit());
+      batch = db.batch();
+      contador = 0;
+    }
+  });
+
+  if (contador > 0) commits.push(batch.commit());
+  await Promise.all(commits);
+}
+
 async function eliminarPerfil() {
 
   const user = auth.currentUser;
@@ -879,8 +930,6 @@ async function eliminarPerfil() {
     const datosPerfil = userDoc.exists ? (userDoc.data() || {}) : {};
     const fotoPerfil = datosPerfil.fotoPerfil || "";
 
-    await eliminarMensajesUsuarioAntesDeEliminarPerfil(uid);
-
     await resolverPartidasActivasAntesDeEliminarPerfil(uid);
 
     // 1. borrar subcoleccion chatLeidos del propio usuario
@@ -893,6 +942,10 @@ async function eliminarPerfil() {
 
     // 2. limpiar referencias sociales
     await limpiarRelacionesSocialesUsuario(uid);
+
+    await eliminarMensajesUsuarioAntesDeEliminarPerfil(uid);
+
+    await anonimizarPistasCreadasUsuario(uid);
 
     // 3. borrar foto de Storage si existe y la utilidad esta disponible
     if (
