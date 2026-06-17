@@ -728,6 +728,42 @@ async function eliminarMensajesUsuarioAntesDeEliminarPerfil(uid) {
   await eliminarMensajesPartidasUsuarioPerfil(uid);
 }
 
+function partidaBloqueaEliminarPerfilComoCreador(p) {
+  if (!p) return false;
+
+  const estado = String(p.estado || "").toLowerCase().trim();
+  if (
+    estado === "finalizada" ||
+    estado === "cancelada" ||
+    estado === "eliminada" ||
+    estado === "historial"
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+async function usuarioTienePartidasActivasComoCreadorPerfil(uid) {
+  if (!uid) return false;
+
+  const consultas = await Promise.all([
+    db.collection("partidas").where("creadaPor", "==", uid).get(),
+    db.collection("partidas").where("creador", "==", uid).get()
+  ]);
+  const partidas = {};
+
+  consultas.forEach(function(snapshot) {
+    snapshot.forEach(function(doc) {
+      partidas[doc.id] = doc.data() || {};
+    });
+  });
+
+  return Object.keys(partidas).some(function(id) {
+    return partidaBloqueaEliminarPerfilComoCreador(partidas[id]);
+  });
+}
+
 async function eliminarPerfil() {
 
   const user = auth.currentUser;
@@ -761,6 +797,12 @@ async function eliminarPerfil() {
     } catch (errorReauth) {
       console.error(errorReauth);
       alert("No se pudo confirmar tu identidad. No se ha borrado nada.");
+      return;
+    }
+
+    const tienePartidasActivasComoCreador = await usuarioTienePartidasActivasComoCreadorPerfil(uid);
+    if (tienePartidasActivasComoCreador) {
+      alert("Tienes una partida activa como creador. Debes cancelarla o resolverla antes de eliminar tu cuenta.");
       return;
     }
 
