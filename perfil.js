@@ -764,6 +764,34 @@ async function usuarioTienePartidasActivasComoCreadorPerfil(uid) {
   });
 }
 
+async function limpiarRelacionesSocialesUsuario(uid) {
+  if (!uid) return;
+
+  const snapshot = await db.collection("usuarios").get();
+  const updates = [];
+  const camposSociales = ["seguidores", "siguiendo", "seguidos"];
+
+  snapshot.forEach(function(doc) {
+    if (doc.id === uid) return;
+
+    const data = doc.data() || {};
+    const update = {};
+
+    camposSociales.forEach(function(campo) {
+      if (!Array.isArray(data[campo]) || !data[campo].includes(uid)) return;
+      update[campo] = data[campo].filter(function(id) {
+        return id !== uid;
+      });
+    });
+
+    if (Object.keys(update).length > 0) {
+      updates.push(doc.ref.update(update));
+    }
+  });
+
+  await Promise.all(updates);
+}
+
 async function eliminarPerfil() {
 
   const user = auth.currentUser;
@@ -824,33 +852,7 @@ async function eliminarPerfil() {
     }
 
     // 2. limpiar referencias sociales
-    const snapshot = await db.collection("usuarios").get();
-
-    const updates = [];
-
-    snapshot.forEach(doc => {
-      if (doc.id === uid) return;
-
-      const data = doc.data();
-
-      if (data.siguiendo && data.siguiendo.includes(uid)) {
-        updates.push(
-          db.collection("usuarios").doc(doc.id).update({
-            siguiendo: data.siguiendo.filter(id => id !== uid)
-          })
-        );
-      }
-
-      if (data.seguidores && data.seguidores.includes(uid)) {
-        updates.push(
-          db.collection("usuarios").doc(doc.id).update({
-            seguidores: data.seguidores.filter(id => id !== uid)
-          })
-        );
-      }
-    });
-
-    await Promise.all(updates);
+    await limpiarRelacionesSocialesUsuario(uid);
 
     // 3. borrar foto de Storage si existe y la utilidad esta disponible
     if (

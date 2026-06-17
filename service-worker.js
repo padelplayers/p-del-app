@@ -1,4 +1,4 @@
-const CACHE_NAME = "padel-players-morvedre-v29";
+const CACHE_NAME = "padel-players-morvedre-v30";
 const APP_SHELL = [
   "./",
   "./index.html",
