@@ -984,14 +984,18 @@ const documentosGuiaUso = [
 ];
 
 let guiaUsoBloquePendiente = null;
+let guiaUsoModoLegalRegistro = false;
 
 function cargarGuiaUso() {
   const contenedor = document.getElementById("guiaUsoLista");
   if (!contenedor) return;
+  const documentos = guiaUsoModoLegalRegistro
+    ? [documentosGuiaUso[12]]
+    : documentosGuiaUso;
 
   contenedor.textContent = "Cargando Guía de Uso...";
 
-  Promise.all(documentosGuiaUso.map(function(documento) {
+  Promise.all(documentos.map(function(documento) {
     return fetch(documento.archivo, { cache: "no-cache" })
       .then(function(respuesta) {
         if (!respuesta.ok) {
@@ -1010,10 +1014,10 @@ function cargarGuiaUso() {
       const fragment = document.createDocumentFragment();
 
       documentos.forEach(function(documento, indice) {
-        const abierto = indice === 0;
+        const abierto = guiaUsoModoLegalRegistro || indice === 0;
         const bloque = document.createElement("section");
         bloque.className = abierto ? "guiaUsoBloque abierto" : "guiaUsoBloque";
-        bloque.dataset.guiaUsoIndice = String(indice);
+        bloque.dataset.guiaUsoIndice = String(guiaUsoModoLegalRegistro ? 12 : indice);
 
         const boton = document.createElement("button");
         boton.type = "button";
@@ -1065,8 +1069,26 @@ function abrirAvisoLegalGuiaUso(event) {
     event.stopPropagation();
   }
 
-  guiaUsoBloquePendiente = 12;
+  guiaUsoModoLegalRegistro = true;
+  guiaUsoBloquePendiente = null;
   mostrar("instrucciones");
+}
+
+function abrirGuiaUsoNormal() {
+  guiaUsoModoLegalRegistro = false;
+  guiaUsoBloquePendiente = null;
+  mostrar("instrucciones");
+}
+
+function volverGuiaUso() {
+  if (guiaUsoModoLegalRegistro) {
+    guiaUsoModoLegalRegistro = false;
+    guiaUsoBloquePendiente = null;
+    mostrar("login");
+    return;
+  }
+
+  mostrar("menu");
 }
 
 function abrirBloqueGuiaUsoPorIndice(indice) {
