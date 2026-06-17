@@ -1,6 +1,5 @@
 window.pwaState = window.pwaState || {
-  deferredPrompt: null,
-  serviceWorkerActualizacion: null
+  deferredPrompt: null
 };
 
 const PWA_INSTALADA_KEY = "pwaInstalada";
@@ -29,29 +28,16 @@ function cerrarAvisoPwa() {
   if (aviso) aviso.style.display = "none";
 }
 
-function mostrarAvisoActualizacionPwa(worker) {
-  window.pwaState.serviceWorkerActualizacion = worker || window.pwaState.serviceWorkerActualizacion;
-
-  const aviso = document.getElementById("pwaActualizacionAviso");
-  if (aviso) aviso.style.display = "flex";
-}
-
-function actualizarPwa() {
-  const worker = window.pwaState.serviceWorkerActualizacion;
-
-  if (worker) {
-    worker.postMessage({ type: "SKIP_WAITING" });
-    return;
-  }
-
-  window.location.reload();
+function activarNuevoServiceWorker(worker) {
+  if (!worker) return;
+  worker.postMessage({ type: "SKIP_WAITING" });
 }
 
 function registrarActualizacionesServiceWorker(registration) {
   if (!registration) return;
 
   if (registration.waiting && navigator.serviceWorker.controller) {
-    mostrarAvisoActualizacionPwa(registration.waiting);
+    activarNuevoServiceWorker(registration.waiting);
   }
 
   registration.addEventListener("updatefound", function() {
@@ -60,7 +46,7 @@ function registrarActualizacionesServiceWorker(registration) {
 
     nuevoWorker.addEventListener("statechange", function() {
       if (nuevoWorker.state === "installed" && navigator.serviceWorker.controller) {
-        mostrarAvisoActualizacionPwa(nuevoWorker);
+        activarNuevoServiceWorker(nuevoWorker);
       }
     });
   });
@@ -152,12 +138,10 @@ function initPwaBasica() {
 
   const instalar = document.getElementById("pwaInstalarBtn");
   const instalarMenu = document.getElementById("btnInstalarPwaMenu");
-  const actualizar = document.getElementById("pwaActualizarBtn");
   const ahoraNo = document.getElementById("pwaAhoraNoBtn");
 
   if (instalar) instalar.onclick = instalarPwa;
   if (instalarMenu) instalarMenu.onclick = instalarPwa;
-  if (actualizar) actualizar.onclick = actualizarPwa;
   if (ahoraNo) ahoraNo.onclick = cerrarAvisoPwa;
 
   actualizarBotonInstalarPwa();
@@ -167,6 +151,5 @@ window.initPwaBasica = initPwaBasica;
 window.mostrarAvisoPwaSiProcede = mostrarAvisoPwaSiProcede;
 window.instalarPwa = instalarPwa;
 window.actualizarBotonInstalarPwa = actualizarBotonInstalarPwa;
-window.actualizarPwa = actualizarPwa;
 
 document.addEventListener("DOMContentLoaded", initPwaBasica);
