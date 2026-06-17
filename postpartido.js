@@ -50,7 +50,74 @@ function arrayUnicoPostPartido(valores) {
   });
 }
 
+function obtenerIncidenciaNoPresentadoPostPartido(p) {
+  const incidencia = p && p.incidenciaPostPartido;
+  if (!incidencia || incidencia.tipo !== "no_presentado") return null;
+  return incidencia;
+}
+
+function partidaTieneNoPresentadoPostPartido(p) {
+  return !!obtenerIncidenciaNoPresentadoPostPartido(p);
+}
+
+function partidaNoPresentadoJugadaIgualmentePostPartido(p) {
+  const incidencia = obtenerIncidenciaNoPresentadoPostPartido(p);
+  return !!(incidencia && incidencia.estado === "jugada_igualmente");
+}
+
+function partidaNoPresentadoNoPudoJugarsePostPartido(p) {
+  const incidencia = obtenerIncidenciaNoPresentadoPostPartido(p);
+  return !!(incidencia && incidencia.estado === "no_pudo_jugarse");
+}
+
+function obtenerTitularesNoPresentadoPostPartido(p) {
+  return arrayUnicoPostPartido(p && p.jugadores);
+}
+
+function obtenerParticipantesComputablesNoPresentadoPostPartido(p) {
+  const incidencia = obtenerIncidenciaNoPresentadoPostPartido(p);
+  if (!incidencia) return [];
+
+  const guardados = arrayUnicoPostPartido(incidencia.participantesComputables);
+  if (guardados.length > 0) return guardados;
+
+  return obtenerTitularesNoPresentadoPostPartido(p).filter(function(uid) {
+    return uid !== incidencia.infractorUid;
+  });
+}
+
+function limpiarValoracionesNoPresentadoPostPartido(valoraciones, participantes) {
+  const permitidos = arrayUnicoPostPartido(participantes);
+  const origen = valoraciones && typeof valoraciones === "object" ? valoraciones : {};
+  const limpias = {};
+
+  permitidos.forEach(function(uidValorador) {
+    const valoracionValorador = origen[uidValorador];
+    if (!valoracionValorador || typeof valoracionValorador !== "object") return;
+
+    const destinoValorador = {};
+    permitidos.forEach(function(uidValorado) {
+      if (uidValorado === uidValorador) return;
+      if (valoracionValorador[uidValorado]) {
+        destinoValorador[uidValorado] = valoracionValorador[uidValorado];
+      }
+    });
+
+    if (Object.keys(destinoValorador).length > 0) {
+      limpias[uidValorador] = destinoValorador;
+    }
+  });
+
+  return limpias;
+}
+
 function obtenerParticipantesAmistosaPostPartido(p) {
+  if (partidaNoPresentadoJugadaIgualmentePostPartido(p)) {
+    return obtenerParticipantesComputablesNoPresentadoPostPartido(p);
+  }
+
+  if (partidaNoPresentadoNoPudoJugarsePostPartido(p)) return [];
+
   const jugadores = arrayUnicoPostPartido(p && p.jugadores);
   const reservas = arrayUnicoPostPartido(p && p.reservas);
   const participantes = arrayUnicoPostPartido(p && p.participantesPostPartido);
@@ -72,6 +139,8 @@ function obtenerParticipantesAmistosaPostPartido(p) {
 }
 
 function obtenerParticipantesRankingPostPartido(p) {
+  if (partidaTieneNoPresentadoPostPartido(p)) return [];
+
   const resultado = p && p.resultado;
   if (!resultado || resultado.estado !== "validado") return [];
 
@@ -91,6 +160,11 @@ function obtenerParticipantesValoracionPostPartido(p) {
 }
 
 function obtenerParticipantesIncumplimientoPostPartido(p) {
+  if (partidaNoPresentadoNoPudoJugarsePostPartido(p)) return [];
+  if (partidaNoPresentadoJugadaIgualmentePostPartido(p)) {
+    return obtenerParticipantesComputablesNoPresentadoPostPartido(p);
+  }
+
   if (esPartidaRankingPostPartido(p)) {
     const participantesResultado = obtenerParticipantesRankingPostPartido(p);
     if (participantesResultado.length > 0) return participantesResultado;
@@ -164,6 +238,7 @@ function mensajeBloqueoSustitucionPostPartido(p) {
 function partidaRankingConDatosCompletosPostPartido(p) {
   return !!(
     p &&
+    !partidaTieneNoPresentadoPostPartido(p) &&
     esPartidaRankingPostPartido(p) &&
     p.resultado &&
     p.resultado.estado === "validado" &&
@@ -179,7 +254,8 @@ function calcularClasificacionComunitariaAmistosa(p) {
   if (!p || p.estado !== "finalizada" || !amistosaTieneValoracionesCompletasBase(p)) return null;
 
   const jugadores = obtenerParticipantesAmistosaPostPartido(p);
-  if (jugadores.length < 4) return null;
+  const minimoParticipantes = partidaNoPresentadoJugadaIgualmentePostPartido(p) ? 2 : 4;
+  if (jugadores.length < minimoParticipantes) return null;
   const valoraciones = p.valoraciones || {};
   const incrementos = {};
   const aspectos = ["puntualidad", "actitud", "compromiso"];
@@ -367,6 +443,7 @@ function crearContextoStatsAmistosaPostPartido(p, jugadores, docsUsuarios, docPi
 function partidaRankingPermiteStatsHabituales(p) {
   return !!(
     p &&
+    !partidaTieneNoPresentadoPostPartido(p) &&
     (p.estado === "confirmada" || p.estado === "finalizada") &&
     esPartidaRankingPostPartido(p) &&
     obtenerParticipantesRankingPostPartido(p).length === 4
@@ -374,11 +451,12 @@ function partidaRankingPermiteStatsHabituales(p) {
 }
 
 function partidaAmistosaPermiteStatsHabituales(p) {
+  const minimoParticipantes = partidaNoPresentadoJugadaIgualmentePostPartido(p) ? 2 : 4;
   return !!(
     p &&
     p.estado === "finalizada" &&
     esPartidaAmistosaPostPartido(p) &&
-    obtenerParticipantesAmistosaPostPartido(p).length >= 4
+    obtenerParticipantesAmistosaPostPartido(p).length >= minimoParticipantes
   );
 }
 
@@ -507,6 +585,7 @@ function aplicarClasificacionComunitariaRanking(idPartida) {
       if (!doc.exists) return null;
 
       const p = doc.data() || {};
+      if (partidaTieneNoPresentadoPostPartido(p)) return null;
       if (!esPartidaRankingPostPartido(p)) return null;
       const debeAplicarClasificacion = p.clasificacionComunitariaAplicada !== true;
       const debeAplicarStats = p.statsHabitualesAplicadas !== true;
@@ -572,6 +651,8 @@ function aplicarClasificacionComunitariaRanking(idPartida) {
 }
 
 function esPartidaConResultadoPostPartido(p) {
+  if (partidaTieneNoPresentadoPostPartido(p)) return false;
+
   const tipo = obtenerTipoPostPartido(p);
   return tipo === "ranking" || tipo === "competitiva" || tipo === "competitivo";
 }
@@ -592,6 +673,228 @@ function notificarPostPartido(uids, datos) {
   });
 }
 
+function crearPenalizacionNoPresentadoPostPartido(idPartida, uid) {
+  const creadaAt = firebase.firestore.Timestamp.now();
+  return {
+    id: "no_presentado_" + idPartida + "_" + uid,
+    tipo: "no_presentado",
+    motivo: "No presentado a una partida",
+    puntos: -8,
+    impactoPuntos: -8,
+    impactoFiabilidad: -30,
+    impactoCompromisoLogro: -5,
+    restriccionDiasUnirse: 3,
+    createdAt: creadaAt,
+    caducaAt: firebase.firestore.Timestamp.fromMillis(
+      creadaAt.toMillis() + 180 * 24 * 60 * 60 * 1000
+    ),
+    activa: true,
+    partidaId: idPartida
+  };
+}
+
+function usuarioTienePenalizacionNoPresentadoPostPartido(datosUsuario, penalizacionId) {
+  const penalizaciones = Array.isArray(datosUsuario && datosUsuario.penalizaciones)
+    ? datosUsuario.penalizaciones
+    : [];
+
+  return penalizaciones.some(function(penalizacion) {
+    return penalizacion && penalizacion.id === penalizacionId;
+  });
+}
+
+function crearUpdateUsuarioNoPresentadoPostPartido(datosUsuario, penalizacion, idPartida) {
+  datosUsuario = datosUsuario || {};
+  if (usuarioTienePenalizacionNoPresentadoPostPartido(datosUsuario, penalizacion.id)) {
+    return null;
+  }
+
+  const penalizaciones = Array.isArray(datosUsuario.penalizaciones)
+    ? datosUsuario.penalizaciones.slice()
+    : [];
+  const clasificacion = datosUsuario.clasificacion || {};
+  const compromisoActual = Number(clasificacion.compromisoLogro || 0);
+  const compromisoNuevo = isNaN(compromisoActual)
+    ? 0
+    : Math.max(0, compromisoActual - 5);
+  const datosClasificacion = typeof datosClasificacionPenalizaciones === "function"
+    ? datosClasificacionPenalizaciones(datosUsuario, [penalizacion])
+    : { update: {} };
+  const ahora = penalizacion.createdAt && typeof penalizacion.createdAt.toDate === "function"
+    ? penalizacion.createdAt.toDate()
+    : new Date();
+  const restriccionNoPresentado = typeof window.crearRestriccionNoPresentadoPartida === "function"
+    ? window.crearRestriccionNoPresentadoPartida(idPartida, datosUsuario.restriccionNoPresentado, ahora)
+    : null;
+
+  penalizaciones.push(penalizacion);
+
+  const update = Object.assign({}, datosClasificacion.update, {
+    "clasificacion.puntos": firebase.firestore.FieldValue.increment(-8),
+    "clasificacion.compromisoLogro": compromisoNuevo,
+    penalizaciones: penalizaciones
+  });
+
+  if (restriccionNoPresentado) {
+    update.restriccionNoPresentado = restriccionNoPresentado;
+  }
+
+  return update;
+}
+
+function registrarNoPresentadoPostPartido(idPartida, infractorUid, estadoIncidencia) {
+  const user = firebase.auth().currentUser;
+  if (!user) return Promise.reject(new Error("Debes iniciar sesion"));
+  if (!idPartida || !infractorUid) return Promise.reject(new Error("Selecciona el jugador no presentado"));
+  if (estadoIncidencia !== "no_pudo_jugarse" && estadoIncidencia !== "jugada_igualmente") {
+    return Promise.reject(new Error("Selecciona que ocurrio con la partida"));
+  }
+
+  const partidaRef = db.collection("partidas").doc(idPartida);
+
+  return db.runTransaction(async function(transaction) {
+    const partidaDoc = await transaction.get(partidaRef);
+    if (!partidaDoc.exists) throw new Error("La partida ya no existe");
+
+    const p = partidaDoc.data() || {};
+    const incidenciaExistente = obtenerIncidenciaNoPresentadoPostPartido(p);
+    if (incidenciaExistente) {
+      return {
+        yaRegistrada: true,
+        incidencia: incidenciaExistente,
+        estadoIncidencia: incidenciaExistente.estado,
+        infractorUid: incidenciaExistente.infractorUid,
+        participantesComputables: arrayUnicoPostPartido(incidenciaExistente.participantesComputables)
+      };
+    }
+
+    if (p.estado !== "confirmada") {
+      throw new Error("Esta partida ya no admite incidencia de no presentado");
+    }
+
+    if (
+      p.rankingCompetitivoAplicado === true ||
+      p.clasificacionComunitariaAplicada === true ||
+      p.statsHabitualesAplicadas === true ||
+      p.estado === "finalizada"
+    ) {
+      throw new Error("La partida ya tiene efectos aplicados y no se puede registrar esta incidencia");
+    }
+
+    const titulares = obtenerTitularesNoPresentadoPostPartido(p);
+    const declarantesPermitidos = arrayUnicoPostPartido(titulares.concat(p.reservas || []));
+    if (!declarantesPermitidos.includes(user.uid)) {
+      throw new Error("Solo participantes de la partida pueden registrar la incidencia");
+    }
+
+    if (!titulares.includes(infractorUid)) {
+      throw new Error("La incidencia de no presentado solo puede aplicarse a titulares");
+    }
+
+    const participantesComputables = titulares.filter(function(uid) {
+      return uid !== infractorUid;
+    });
+    const incidencia = {
+      tipo: "no_presentado",
+      infractorUid: infractorUid,
+      declaradaPorUid: user.uid,
+      estado: estadoIncidencia,
+      titularesOriginales: titulares,
+      participantesComputables: participantesComputables,
+      createdAt: firebase.firestore.Timestamp.now()
+    };
+    const updatePartida = {
+      incidenciaPostPartido: incidencia,
+      rankingOmitidoPorIncidencia: true,
+      resultado: firebase.firestore.FieldValue.delete()
+    };
+
+    if (estadoIncidencia === "jugada_igualmente") {
+      updatePartida.tipoOriginal = p.tipoOriginal || p.tipo || null;
+      updatePartida.tipo = "amistosa";
+      updatePartida.participantesPostPartido = participantesComputables;
+      updatePartida.valoraciones = limpiarValoracionesNoPresentadoPostPartido(p.valoraciones, participantesComputables);
+    } else {
+      updatePartida.estado = "cancelada_por_no_presentado";
+      updatePartida.valoraciones = firebase.firestore.FieldValue.delete();
+      updatePartida.valoracionesBloqueadasPorIncidencia = true;
+      updatePartida.incumplimientosPostPartidoAplicados = true;
+      updatePartida.incumplimientosPostPartidoAplicadosAt = firebase.firestore.FieldValue.serverTimestamp();
+      updatePartida.incumplimientosPostPartidoUids = [];
+      updatePartida.finalizadaAt = firebase.firestore.FieldValue.serverTimestamp();
+    }
+
+    const usuarioRef = db.collection("usuarios").doc(infractorUid);
+    const usuarioDoc = await transaction.get(usuarioRef);
+    const datosUsuario = usuarioDoc.exists ? (usuarioDoc.data() || {}) : {};
+    const penalizacion = crearPenalizacionNoPresentadoPostPartido(idPartida, infractorUid);
+    const updateUsuario = crearUpdateUsuarioNoPresentadoPostPartido(datosUsuario, penalizacion, idPartida);
+
+    transaction.update(partidaRef, updatePartida);
+    if (updateUsuario) transaction.update(usuarioRef, updateUsuario);
+
+    return {
+      yaRegistrada: false,
+      incidencia: incidencia,
+      estadoIncidencia: estadoIncidencia,
+      infractorUid: infractorUid,
+      participantesComputables: participantesComputables,
+      penalizacionAplicada: !!updateUsuario
+    };
+  }).then(function(resultado) {
+    if (!resultado || resultado.yaRegistrada) return resultado;
+
+    const resolver = typeof window.resolverNotificacionesTemporalesPorPartidaId === "function"
+      ? window.resolverNotificacionesTemporalesPorPartidaId(idPartida).catch(function(error) {
+          console.warn("No se pudieron resolver avisos tras no presentado:", error.message);
+          return 0;
+        })
+      : Promise.resolve(0);
+
+    return resolver.then(function() {
+      const avisos = [
+        notificarPostPartido(resultado.infractorUid, {
+          tipo: "penalizacion_no_presentado",
+          titulo: "Penalizacion por no presentado",
+          mensaje: "Se ha registrado una incidencia de no presentado: -30% fiabilidad, -8 reputacion, -5 compromiso y 3 dias sin apuntarte a partidas.",
+          partidaId: idPartida,
+          accion: "ver_perfil",
+          dedupeKey: "penalizacion_no_presentado_" + idPartida + "_" + resultado.infractorUid,
+          prioridad: "alta",
+          emailCritico: true,
+          data: {
+            infractorUid: resultado.infractorUid,
+            impactoFiabilidad: -30,
+            impactoPuntos: -8,
+            impactoCompromisoLogro: -5,
+            restriccionDiasUnirse: 3
+          }
+        })
+      ];
+
+      avisos.push(notificarPostPartido(resultado.participantesComputables, {
+        tipo: "incidencia_no_presentado_participante",
+        titulo: "Incidencia de no presentado",
+        mensaje: resultado.estadoIncidencia === "jugada_igualmente"
+          ? "Se ha registrado un no presentado. La partida pasa a amistosa y solo valoran los participantes reales."
+          : "Se ha registrado un no presentado. La partida queda cerrada sin resultado ni valoraciones.",
+        partidaId: idPartida,
+        accion: resultado.estadoIncidencia === "jugada_igualmente" ? "valorar_jugadores" : null,
+        dedupeKey: "incidencia_no_presentado_participante_" + idPartida + "_" + resultado.infractorUid,
+        prioridad: "alta",
+        data: {
+          infractorUid: resultado.infractorUid,
+          estadoIncidencia: resultado.estadoIncidencia
+        }
+      }));
+
+      return Promise.all(avisos).then(function() {
+        return resultado;
+      });
+    });
+  });
+}
+
 function generarAvisoPostPartidoPartida(idPartida) {
   const ref = db.collection("partidas").doc(idPartida);
 
@@ -600,6 +903,7 @@ function generarAvisoPostPartidoPartida(idPartida) {
       if (!doc.exists) return null;
 
       const p = doc.data() || {};
+      if (partidaNoPresentadoNoPudoJugarsePostPartido(p)) return null;
       if (!esPartidaPendientePostPartido(p)) return null;
 
       if (esPartidaRankingPostPartido(p)) {
@@ -674,6 +978,7 @@ function aplicarIncumplimientosPostPartidoPartida(idPartida) {
     if (!doc.exists) return null;
 
     const p = doc.data() || {};
+    if (partidaNoPresentadoNoPudoJugarsePostPartido(p)) return null;
     if (p.incumplimientosPostPartidoAplicados === true) return null;
     if (!partidaSuperaPlazoPostPartido(p)) return null;
 
@@ -819,6 +1124,7 @@ function finalizarPartidaRankingSiCompleta(idPartida) {
       if (!doc.exists) return false;
 
       const p = doc.data() || {};
+      if (partidaTieneNoPresentadoPostPartido(p)) return false;
       if (!partidaRankingConDatosCompletosPostPartido(p)) return false;
       if (p.rankingCompetitivoAplicado !== true) return false;
       if (p.clasificacionComunitariaAplicada !== true) return false;
@@ -860,6 +1166,7 @@ function cerrarPartidaRankingTrasValoraciones(idPartida) {
     if (!doc.exists) return null;
 
     const p = doc.data() || {};
+    if (partidaTieneNoPresentadoPostPartido(p)) return null;
     if (!partidaRankingListaParaCierre(p)) return null;
 
     if (typeof window.aplicarRankingCompetitivo !== "function") {
@@ -881,6 +1188,7 @@ window.cierresRankingEnCurso = window.cierresRankingEnCurso || {};
 
 function rankingNecesitaIntentoCierre(p) {
   return !!(
+    !partidaTieneNoPresentadoPostPartido(p) &&
     partidaRankingConDatosCompletosPostPartido(p) &&
     p.estado !== "finalizada" &&
     (
@@ -915,6 +1223,13 @@ function intentarCerrarRankingAtascada(idPartida, p) {
 function puedeValorarPostPartido(p, uidActual) {
   const jugadores = p && Array.isArray(p.jugadores) ? p.jugadores : [];
   if (!uidActual) return false;
+  if (partidaNoPresentadoNoPudoJugarsePostPartido(p)) return false;
+  if (partidaNoPresentadoJugadaIgualmentePostPartido(p)) {
+    if (!p || p.estado !== "confirmada") return false;
+    if (mensajeBloqueoSustitucionPostPartido(p)) return false;
+    if (!esPartidaPendientePostPartido(p)) return false;
+    return obtenerParticipantesComputablesNoPresentadoPostPartido(p).includes(uidActual);
+  }
   if (!p || p.estado !== "confirmada") return false;
   if (mensajeBloqueoSustitucionPostPartido(p)) return false;
   if (!esPartidaPendientePostPartido(p)) return false;
@@ -958,6 +1273,184 @@ function crearBotonSecundarioPostPartido(texto, accion) {
   btn.style.background = "#FFC107";
   btn.style.color = "#000";
   return btn;
+}
+
+function cerrarGateAsistenciaPostPartido() {
+  const modal = document.getElementById("modalAsistenciaPostPartido");
+  if (modal) modal.remove();
+}
+
+function mostrarSeleccionNoPresentadoPostPartido(modal, id, p) {
+  const titulares = obtenerTitularesNoPresentadoPostPartido(p);
+  modal.replaceChildren();
+
+  const titulo = document.createElement("h3");
+  titulo.textContent = "Incidencia de no presentado";
+
+  const descripcion = document.createElement("p");
+  descripcion.textContent = "Selecciona el titular que no se ha presentado.";
+
+  const select = document.createElement("select");
+  select.id = "noPresentadoTitularSelect";
+
+  const vacia = document.createElement("option");
+  vacia.value = "";
+  vacia.textContent = "Selecciona titular";
+  select.appendChild(vacia);
+
+  const acciones = document.createElement("div");
+  acciones.className = "postPartidoModalAcciones";
+
+  const cancelar = crearBotonSecundarioPostPartido("Cancelar", cerrarGateAsistenciaPostPartido);
+  const noPudo = crearBotonPostPartido("La partida no pudo jugarse", function() {
+    registrarDesdeGate("no_pudo_jugarse");
+  });
+  noPudo.style.background = "#C62828";
+  noPudo.style.color = "#fff";
+
+  const jugada = crearBotonPrimarioPostPartido("La partida se jugo igualmente", function() {
+    registrarDesdeGate("jugada_igualmente");
+  });
+  jugada.style.background = "#2E7D32";
+
+  function bloquearAcciones(bloqueado) {
+    cancelar.disabled = bloqueado;
+    noPudo.disabled = bloqueado;
+    jugada.disabled = bloqueado;
+    select.disabled = bloqueado;
+  }
+
+  function registrarDesdeGate(estadoIncidencia) {
+    const infractorUid = select.value;
+    if (!infractorUid) {
+      alert("Selecciona el titular no presentado");
+      return;
+    }
+
+    bloquearAcciones(true);
+    registrarNoPresentadoPostPartido(id, infractorUid, estadoIncidencia).then(function(resultado) {
+      cerrarGateAsistenciaPostPartido();
+      if (typeof cargarPartidas === "function") cargarPartidas();
+
+      if (resultado && resultado.estadoIncidencia === "jugada_igualmente") {
+        abrirFormularioValoracionesAmistosa(id);
+        return;
+      }
+
+      alert("Incidencia registrada. La partida queda cerrada sin resultado ni valoraciones.");
+    }, function(error) {
+      bloquearAcciones(false);
+      console.error("Error registrando no presentado:", error);
+      alert(error && error.message ? error.message : "No se pudo registrar la incidencia");
+    });
+  }
+
+  modal.appendChild(titulo);
+  modal.appendChild(descripcion);
+  modal.appendChild(select);
+  modal.appendChild(crearTextoPostPartido("Que ocurrio?"));
+  acciones.appendChild(cancelar);
+  acciones.appendChild(noPudo);
+  acciones.appendChild(jugada);
+  modal.appendChild(acciones);
+
+  cargarDatosJugadoresPostPartido(titulares).then(function(jugadoresDatos) {
+    jugadoresDatos.forEach(function(jugador) {
+      const option = document.createElement("option");
+      option.value = jugador.uid;
+      option.textContent = jugador.nombre || "Jugador";
+      select.appendChild(option);
+    });
+  }).catch(function() {
+    titulares.forEach(function(uid) {
+      const option = document.createElement("option");
+      option.value = uid;
+      option.textContent = uid;
+      select.appendChild(option);
+    });
+  });
+}
+
+function mostrarGateAsistenciaPostPartido(id, p, modo, continuar) {
+  cerrarGateAsistenciaPostPartido();
+
+  const overlay = document.createElement("div");
+  overlay.id = "modalAsistenciaPostPartido";
+  overlay.className = "postPartidoModalOverlay";
+
+  const modal = document.createElement("div");
+  modal.className = "postPartidoModal";
+
+  const titulo = document.createElement("h3");
+  titulo.textContent = "Asistencia";
+
+  const pregunta = document.createElement("p");
+  pregunta.textContent = "Se ha presentado todo el mundo?";
+
+  const acciones = document.createElement("div");
+  acciones.className = "postPartidoModalAcciones";
+
+  const si = crearBotonPrimarioPostPartido("Si", function() {
+    cerrarGateAsistenciaPostPartido();
+    continuar();
+  });
+  si.style.background = "#2E7D32";
+
+  const no = crearBotonPostPartido("No", function() {
+    mostrarSeleccionNoPresentadoPostPartido(modal, id, p);
+  });
+  no.style.background = "#C62828";
+  no.style.color = "#fff";
+
+  const cancelar = crearBotonSecundarioPostPartido("Cancelar", cerrarGateAsistenciaPostPartido);
+
+  acciones.appendChild(cancelar);
+  acciones.appendChild(si);
+  acciones.appendChild(no);
+  modal.appendChild(titulo);
+  modal.appendChild(pregunta);
+  modal.appendChild(acciones);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+}
+
+function resolverGateAsistenciaPostPartido(id, modo, continuar) {
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    alert("Debes iniciar sesion");
+    return;
+  }
+
+  db.collection("partidas").doc(id).get().then(function(doc) {
+    if (!doc.exists) {
+      alert("La partida ya no existe");
+      return;
+    }
+
+    const p = doc.data() || {};
+    const incidencia = obtenerIncidenciaNoPresentadoPostPartido(p);
+
+    if (incidencia) {
+      if (incidencia.estado === "jugada_igualmente" && modo === "valoraciones") {
+        continuar();
+        return;
+      }
+
+      if (incidencia.estado === "jugada_igualmente" && modo === "resultado") {
+        alert("La partida se convirtio en amistosa por no presentado. No hay resultado ranking.");
+        abrirFormularioValoracionesAmistosa(id);
+        return;
+      }
+
+      alert("La partida se cerro por no presentado. No hay resultado ni valoraciones.");
+      return;
+    }
+
+    mostrarGateAsistenciaPostPartido(id, p, modo, continuar);
+  }).catch(function(error) {
+    console.error("Error abriendo control de asistencia:", error);
+    alert("No se pudo comprobar la asistencia");
+  });
 }
 
 function cerrarFormularioResultado() {
@@ -1272,6 +1765,11 @@ function guardarResultadoPropuesto(id) {
     const jugadores = Array.isArray(p.jugadores) ? p.jugadores : [];
     const jugadoresPermitidos = obtenerJugadoresPermitidosResultadoRanking(p);
 
+    if (partidaTieneNoPresentadoPostPartido(p)) {
+      alert("Esta partida tiene una incidencia de no presentado. No admite resultado ranking.");
+      return;
+    }
+
     if (!jugadoresPermitidos.includes(user.uid)) {
       alert("Solo los jugadores titulares o reservas pueden introducir resultado");
       return;
@@ -1577,6 +2075,11 @@ function crearFormularioResultado(id) {
     const jugadoresPermitidos = obtenerJugadoresPermitidosResultadoRanking(p);
     const mensajeBloqueo = mensajeBloqueoSustitucionPostPartido(p);
 
+    if (partidaTieneNoPresentadoPostPartido(p)) {
+      alert("Esta partida tiene una incidencia de no presentado. No admite resultado ranking.");
+      return;
+    }
+
     if (mensajeBloqueo) {
       alert(mensajeBloqueo);
       return;
@@ -1690,6 +2193,11 @@ function guardarValoracionesAmistosa(id, jugadoresValorados) {
     const jugadoresUnicos = new Set(jugadores);
     const mensajeBloqueo = mensajeBloqueoSustitucionPostPartido(p);
 
+    if (partidaNoPresentadoNoPudoJugarsePostPartido(p)) {
+      alert("La partida se cerro por no presentado. No admite valoraciones.");
+      return;
+    }
+
     if (mensajeBloqueo) {
       alert(mensajeBloqueo);
       return;
@@ -1788,6 +2296,11 @@ function abrirFormularioValoracionesAmistosa(id) {
     const jugadores = obtenerParticipantesValoracionPostPartido(p);
     const jugadoresUnicos = new Set(jugadores);
     const mensajeBloqueo = mensajeBloqueoSustitucionPostPartido(p);
+
+    if (partidaNoPresentadoNoPudoJugarsePostPartido(p)) {
+      alert("La partida se cerro por no presentado. No admite valoraciones.");
+      return;
+    }
 
     if (mensajeBloqueo) {
       alert(mensajeBloqueo);
@@ -2004,6 +2517,11 @@ window.crearAccionesPostPartido = function(id, p, uidActual) {
       return box;
     }
 
+    if (!puedeValorarPostPartido(p, uidActual)) {
+      box.appendChild(crearTextoPostPartido("No figuras como participante real de esta partida."));
+      return box;
+    }
+
     const accionesAmistosa = document.createElement("div");
     accionesAmistosa.className = "postPartidoAcciones";
     accionesAmistosa.appendChild(crearBotonPrimarioPostPartido("Valorar jugadores", function() {
@@ -2101,16 +2619,24 @@ window.crearAccionesPostPartido = function(id, p, uidActual) {
 };
 
 window.abrirFormularioResultado = function(id) {
-  crearFormularioResultado(id);
+  resolverGateAsistenciaPostPartido(id, "resultado", function() {
+    crearFormularioResultado(id);
+  });
 };
 
 window.abrirValoracionesPostPartido = function(id) {
-  abrirFormularioValoracionesAmistosa(id);
+  resolverGateAsistenciaPostPartido(id, "valoraciones", function() {
+    abrirFormularioValoracionesAmistosa(id);
+  });
 };
 
 function validarContextoResultadoPendiente(p, uid) {
   const jugadoresPermitidos = obtenerJugadoresPermitidosResultadoRanking(p);
   const mensajeBloqueo = mensajeBloqueoSustitucionPostPartido(p);
+
+  if (partidaTieneNoPresentadoPostPartido(p)) {
+    return { error: "Esta partida tiene una incidencia de no presentado. No admite resultado ranking" };
+  }
 
   if (mensajeBloqueo) {
     return { error: mensajeBloqueo };

@@ -2,9 +2,11 @@ window.modoPartidas = window.modoPartidas || "proximas";
 
 const DESCUENTO_FIABILIDAD_PENALIZACION = {
   abandono_confirmada: 10,
-  cancelacion_por_falta_sustituto: 10
+  cancelacion_por_falta_sustituto: 10,
+  no_presentado: 30
 };
 const DURACION_PENALIZACION_MS = 180 * 24 * 60 * 60 * 1000;
+const DURACION_RESTRICCION_NO_PRESENTADO_MS = 3 * 24 * 60 * 60 * 1000;
 
 function fechaPenalizacionToMillis(valor) {
   if (!valor) return null;
@@ -138,6 +140,42 @@ function obtenerRestriccionFiabilidadActiva(dataUsuario, ahora) {
   return restriccion;
 }
 
+function obtenerRestriccionNoPresentadoActiva(dataUsuario, ahora) {
+  const restriccion = dataUsuario && dataUsuario.restriccionNoPresentado;
+  if (!restriccion || restriccion.activa !== true) return null;
+
+  const hastaMillis = fechaPenalizacionToMillis(restriccion.hasta);
+  const ahoraMillis = fechaPenalizacionToMillis(ahora || new Date());
+  if (!hastaMillis || !ahoraMillis || hastaMillis <= ahoraMillis) return null;
+
+  return restriccion;
+}
+
+function crearRestriccionNoPresentadoPartida(partidaId, restriccionActual, ahora) {
+  const inicio = ahora || new Date();
+  const activa = obtenerRestriccionNoPresentadoActiva({ restriccionNoPresentado: restriccionActual }, inicio);
+  const hastaActualMillis = activa ? fechaPenalizacionToMillis(activa.hasta) : null;
+  const baseMillis = Math.max(inicio.getTime(), hastaActualMillis || 0);
+  const partidaIds = Array.isArray(activa && activa.partidaIds) ? activa.partidaIds.slice() : [];
+
+  if (partidaId && !partidaIds.includes(partidaId)) partidaIds.push(partidaId);
+
+  return {
+    id: activa && activa.id ? activa.id : "no_presentado_" + (partidaId || "partida") + "_" + inicio.getTime(),
+    activa: true,
+    tipo: "no_presentado",
+    motivo: "No presentado a una partida. Durante 3 dias acumulados no puedes apuntarte a partidas.",
+    bloqueaCrear: false,
+    bloqueaUnirse: true,
+    bloqueaChat: false,
+    desde: activa && activa.desde ? activa.desde : inicio,
+    hasta: new Date(baseMillis + DURACION_RESTRICCION_NO_PRESENTADO_MS),
+    diasAcumulados: Number((activa && activa.diasAcumulados) || 0) + 3,
+    partidaIds: partidaIds,
+    notificadaFin: false
+  };
+}
+
 function crearRestriccionFiabilidad(regla, fiabilidad, ahora) {
   const inicio = ahora || new Date();
   const hasta = new Date(inicio.getTime() + regla.dias * 24 * 60 * 60 * 1000);
@@ -163,6 +201,23 @@ function textoRestriccionFiabilidad(restriccion) {
   return restriccion && restriccion.motivo
     ? restriccion.motivo
     : "Tienes una restriccion temporal por fiabilidad.";
+}
+
+function textoRestriccionNoPresentado(restriccion) {
+  if (!restriccion) return "Tienes una restriccion temporal por no presentarte.";
+
+  const hastaMillis = fechaPenalizacionToMillis(restriccion.hasta);
+  const hasta = hastaMillis
+    ? new Date(hastaMillis).toLocaleString("es-ES", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      })
+    : "";
+
+  return "No puedes apuntarte a partidas por una incidencia de no presentado" +
+    (hasta ? " hasta el " + hasta + "." : ".");
 }
 
 function notificarRestriccionFiabilidad(uid, tipo, restriccion) {
@@ -256,11 +311,23 @@ async function validarAccionPorFiabilidad(accion, opciones) {
   const doc = await db.collection("usuarios").doc(user.uid).get();
   if (!doc.exists) return true;
 
-  const restriccion = await asegurarRestriccionFiabilidadUsuario(user.uid, doc.data() || {});
-  if (!restriccionBloqueaAccion(restriccion, accion)) return true;
+  const datosUsuario = doc.data() || {};
+  const restriccion = await asegurarRestriccionFiabilidadUsuario(user.uid, datosUsuario);
+  const restriccionNoPresentado = obtenerRestriccionNoPresentadoActiva(datosUsuario);
+  const mensajes = [];
+
+  if (restriccionBloqueaAccion(restriccion, accion)) {
+    mensajes.push(textoRestriccionFiabilidad(restriccion));
+  }
+
+  if (restriccionBloqueaAccion(restriccionNoPresentado, accion)) {
+    mensajes.push(textoRestriccionNoPresentado(restriccionNoPresentado));
+  }
+
+  if (mensajes.length === 0) return true;
 
   if (opciones.silencioso !== true) {
-    alert(textoRestriccionFiabilidad(restriccion));
+    alert(mensajes.join("\n\n"));
   }
   return false;
 }
@@ -268,6 +335,8 @@ async function validarAccionPorFiabilidad(accion, opciones) {
 window.asegurarRestriccionFiabilidadUsuario = asegurarRestriccionFiabilidadUsuario;
 window.validarAccionPorFiabilidad = validarAccionPorFiabilidad;
 window.obtenerRestriccionFiabilidadActiva = obtenerRestriccionFiabilidadActiva;
+window.obtenerRestriccionNoPresentadoActiva = obtenerRestriccionNoPresentadoActiva;
+window.crearRestriccionNoPresentadoPartida = crearRestriccionNoPresentadoPartida;
 
 function textoNodo(texto, tag) {
   const el = document.createElement(tag || "div");
@@ -1032,6 +1101,9 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   } else if (p.estado === "pendiente_cancelacion_club") {
     textoEstadoPartida = "PENDIENTE DE CANCELACIÓN";
     claseEstadoPartida = "partidaCabeceraPendienteCancelacion";
+  } else if (p.estado === "cancelada_por_no_presentado") {
+    textoEstadoPartida = "CANCELADA POR NO PRESENTADO";
+    claseEstadoPartida = "partidaCabeceraPendienteCancelacion";
   } else if (p.estado === "cerrada") {
     textoEstadoPartida = "CERRADA";
     claseEstadoPartida = "partidaCabeceraCerrada";
@@ -1417,6 +1489,19 @@ function esTipoRanking(tipo) {
 function participantesValoracionesPartida(p) {
   if (!p) return [];
 
+  const incidencia = p.incidenciaPostPartido;
+  if (incidencia && incidencia.tipo === "no_presentado") {
+    if (incidencia.estado === "no_pudo_jugarse") return [];
+    if (incidencia.estado === "jugada_igualmente") {
+      const participantesIncidencia = Array.isArray(incidencia.participantesComputables)
+        ? incidencia.participantesComputables
+        : [];
+      if (participantesIncidencia.length >= 2 && new Set(participantesIncidencia).size === participantesIncidencia.length) {
+        return participantesIncidencia;
+      }
+    }
+  }
+
   if (esTipoRanking(p.tipo) && p.resultado && p.resultado.estado === "validado") {
     const equipo1 = Array.isArray(p.resultado.equipo1) ? p.resultado.equipo1 : [];
     const equipo2 = Array.isArray(p.resultado.equipo2) ? p.resultado.equipo2 : [];
@@ -1438,6 +1523,7 @@ function participantesValoracionesPartida(p) {
 
 function partidaConfirmadaIncompleta(p) {
   if (!p || p.estado !== "confirmada") return false;
+  if (p.incidenciaPostPartido && p.incidenciaPostPartido.tipo === "no_presentado" && p.incidenciaPostPartido.estado === "no_pudo_jugarse") return false;
 
   const tipo = String(p.tipo || "ranking").toLowerCase().trim();
   const valoracionesCompletas = partidaTieneValoracionesCompletas(p);
@@ -2073,6 +2159,13 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
       const restriccion = await window.asegurarRestriccionFiabilidadUsuario(user.uid, datosUsuario);
       if (restriccionBloqueaAccion(restriccion, "unirse")) {
         throw new Error(textoRestriccionFiabilidad(restriccion));
+      }
+    }
+
+    if (typeof window.obtenerRestriccionNoPresentadoActiva === "function") {
+      const restriccionNoPresentado = window.obtenerRestriccionNoPresentadoActiva(datosUsuario);
+      if (restriccionBloqueaAccion(restriccionNoPresentado, "unirse")) {
+        throw new Error(textoRestriccionNoPresentado(restriccionNoPresentado));
       }
     }
 

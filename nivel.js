@@ -96,6 +96,8 @@ window.aplicarRankingCompetitivo = async function(idPartida) {
    });
 
    if (p.rankingCompetitivoAplicado === true) return null;
+   if (p.incidenciaPostPartido && p.incidenciaPostPartido.tipo === "no_presentado") return null;
+   if (p.rankingOmitidoPorIncidencia === true) return null;
    if (tipo !== "ranking") return null;
    if (!resultadoRankingValido(p.resultado, jugadoresPermitidos)) return null;
 

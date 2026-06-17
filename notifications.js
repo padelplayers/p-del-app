@@ -80,7 +80,8 @@ function crearNotificacionesParaUids(uids, datos) {
 function esNotificacionPenalizacionPerfil(n) {
   return !!n && (
     n.tipo === "penalizacion_abandono_confirmada" ||
-    n.tipo === "penalizacion_agravada_cancelacion"
+    n.tipo === "penalizacion_agravada_cancelacion" ||
+    n.tipo === "penalizacion_no_presentado"
   );
 }
 
