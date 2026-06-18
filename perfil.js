@@ -1544,6 +1544,7 @@ function verPerfil(uid = auth.currentUser?.uid){
 if (typeof unsubscribeUser === "function") unsubscribeUser();
 
   mostrar("perfil");
+  window.scrollTo({ top: 0, behavior: "auto" });
 
   // guardar uid activo
   const perfilEl = document.getElementById("perfil");
