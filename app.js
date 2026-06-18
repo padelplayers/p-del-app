@@ -82,8 +82,6 @@ auth.onAuthStateChanged(async user => {
 
     // El listener principal de autenticacion decide la pantalla inicial.
 
-  } else {
-    mostrar("login");
   }
 });
 
@@ -816,6 +814,8 @@ function cargarClasificacionComunitaria() {
 
 function mostrar(seccion){
   console.log("MOSTRAR:", seccion);
+  const cargaInicial = document.getElementById("pantallaCargaInicial");
+  if (cargaInicial) cargaInicial.style.display = "none";
   actualizarBottomNavActivo(seccion);
   const abriendoChat = seccion === "chat";
   const chatPantalla = document.getElementById("chat");

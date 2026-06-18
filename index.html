@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Padel Morvedre">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="logo.png">
-<link rel="stylesheet" href="styles.css?v=34">
+<link rel="stylesheet" href="styles.css?v=35">
 </head>
 
 <body>
@@ -33,6 +33,12 @@
 </div>
 
 <div id="notificacionesPopup" class="notificacionesPopupWrap"></div>
+
+<div id="pantallaCargaInicial" class="pantallaCargaInicial">
+  <div class="pantallaCargaCaja">
+    <strong>Cargando...</strong>
+  </div>
+</div>
 
 <div id="pwaAviso" class="pwaAviso" style="display:none;">
   <div class="pwaAvisoBox">
@@ -198,7 +204,7 @@
 </div>
 <!-- LOGIN -->
 
-<div id="login" class="container">
+<div id="login" class="container" style="display:none;">
 
 <label>Email</label>
 <input id="email">
@@ -1216,8 +1222,8 @@ const db = firebase.firestore();
 <script src="nivel.js?v=4"></script>
 <script src="postpartido.js?v=19"></script>
 <script src="notifications.js?v=9"></script>
-<script src="pwa.js?v=9"></script>
-<script src="app.js?v=13"></script>
+<script src="pwa.js?v=10"></script>
+<script src="app.js?v=14"></script>
 <script src="testNivel.js"></script>
 
 <nav id="bottomNav" class="bottomNav" aria-label="Navegacion principal">
