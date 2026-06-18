@@ -1,12 +1,10 @@
-const CACHE_NAME = "padel-players-morvedre-v44";
+const CACHE_NAME = "padel-players-morvedre-v47";
 const APP_SHELL = [
-  "./",
-  "./index.html",
-  "./styles.css?v=32",
+  "./styles.css?v=33",
   "./logros.js?v=5",
-  "./chat.js?v=11",
-  "./partidas.js?v=21",
-  "./pwa.js?v=5",
+  "./chat.js?v=13",
+  "./partidas.js?v=23",
+  "./pwa.js?v=7",
   "./logo.png"
 ];
 
@@ -33,9 +31,40 @@ self.addEventListener("activate", function(event) {
 
 self.addEventListener("fetch", function(event) {
   if (event.request.method !== "GET") return;
-  event.respondWith(
-    fetch(event.request).catch(function() {
+
+  const url = new URL(event.request.url);
+  const esNavegacion =
+    event.request.mode === "navigate" ||
+    event.request.destination === "document" ||
+    url.pathname.endsWith("/") ||
+    url.pathname.endsWith("/index.html");
+
+  if (esNavegacion) {
+    event.respondWith(
+      fetch(event.request, { cache: "no-store" }).catch(function() {
+        return caches.match("./index.html");
+      })
+    );
+    return;
+  }
+
+  if (url.origin !== self.location.origin) {
+    event.respondWith(fetch(event.request).catch(function() {
       return caches.match(event.request);
+    }));
+    return;
+  }
+
+  event.respondWith(
+    caches.open(CACHE_NAME).then(function(cache) {
+      return fetch(event.request, { cache: "no-cache" }).then(function(response) {
+        if (response && response.status === 200) {
+          cache.put(event.request, response.clone()).catch(function() {});
+        }
+        return response;
+      }).catch(function() {
+        return caches.match(event.request);
+      });
     })
   );
 });

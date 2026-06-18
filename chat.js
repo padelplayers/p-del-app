@@ -498,6 +498,7 @@ function resolverMensajesSistemaPorPartida(partidaId, opciones) {
 function abrirPartidaDesdeChatGeneral(partidaId) {
   if (!partidaId) return;
 
+  window.partidaChatFiltroId = partidaId;
   window.partidaPendienteDestacar = partidaId;
   if (typeof mostrar === "function") {
     mostrar("partidas");
@@ -506,20 +507,23 @@ function abrirPartidaDesdeChatGeneral(partidaId) {
   if (typeof cargarPartidas === "function") {
     cargarPartidas();
   }
+}
 
-  let intentos = 0;
-  const intentarDestacar = function() {
-    intentos++;
-    if (typeof window.destacarPartidaEnLista === "function" && window.destacarPartidaEnLista(partidaId)) {
-      window.partidaPendienteDestacar = null;
-      return;
-    }
-    if (intentos < 8) {
-      setTimeout(intentarDestacar, 250);
-    }
-  };
+function mensajeSistemaPuedeAbrirPartida(msg) {
+  if (!msg || msg.action !== "abrir_partida" || !msg.partidaId || msg.valid === false) return false;
 
-  setTimeout(intentarDestacar, 250);
+  return [
+    "partida_creada",
+    "falta_1",
+    "falta_1_hombre",
+    "falta_1_mujer",
+    "partida_completa",
+    "cambio_creador_pendiente",
+    "nuevo_creador",
+    "plaza_libre_confirmada",
+    "sustitucion_urgente",
+    "reserva_pendiente"
+  ].includes(msg.eventType);
 }
 
 async function obtenerNombreAutorChat(user) {
@@ -642,7 +646,7 @@ function crearNodoMensaje(msg) {
   div.dataset.msgId = msg.id; // Identificador persistente
 
   if (esSistema) {
-    const puedeAbrirPartida = msg.action === "abrir_partida" && !!msg.partidaId;
+    const puedeAbrirPartida = mensajeSistemaPuedeAbrirPartida(msg);
     const header = document.createElement("div");
     header.className = "chatSistemaHeader";
 
@@ -811,7 +815,8 @@ function gestionarListenerChat(chatId, query) {
         partidaId: data.partidaId || null,
         action: data.action || null,
         eventType: data.eventType || null,
-        dedupeKey: data.dedupeKey || null
+        dedupeKey: data.dedupeKey || null,
+        valid: data.valid !== false
       };
 
       if (change.type === "added" || change.type === "modified") {

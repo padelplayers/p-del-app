@@ -2,6 +2,7 @@ window.pwaState = window.pwaState || {
   deferredPrompt: null
 };
 
+const PWA_SW_VERSION = "v47";
 const PWA_INSTALADA_KEY = "pwaInstalada";
 
 function pwaEstaInstalada() {
@@ -106,7 +107,7 @@ function initPwaBasica() {
   localStorage.removeItem(PWA_INSTALADA_KEY);
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js")
+    navigator.serviceWorker.register("service-worker.js?" + PWA_SW_VERSION)
       .then(function(registration) {
         registrarActualizacionesServiceWorker(registration);
         return registration.update();
@@ -118,7 +119,10 @@ function initPwaBasica() {
     let recargaPorServiceWorker = false;
     navigator.serviceWorker.addEventListener("controllerchange", function() {
       if (recargaPorServiceWorker) return;
+      const reloadKey = "swReloadDone_" + PWA_SW_VERSION;
+      if (sessionStorage.getItem(reloadKey) === "true") return;
       recargaPorServiceWorker = true;
+      sessionStorage.setItem(reloadKey, "true");
       window.location.reload();
     });
   }

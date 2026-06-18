@@ -524,6 +524,27 @@ function resolverSistemaPartida(partidaId, eventTypes) {
   });
 }
 
+function resolverEstadosSistemaIncompatibles(partidaId, eventTypes) {
+  return resolverSistemaPartida(partidaId, eventTypes);
+}
+
+function obtenerEventosSistemaPartida() {
+  return [
+    "partida_creada",
+    "falta_1",
+    "falta_1_hombre",
+    "falta_1_mujer",
+    "partida_completa",
+    "partida_confirmada",
+    "partida_cancelada",
+    "cambio_creador_pendiente",
+    "nuevo_creador",
+    "plaza_libre_confirmada",
+    "sustitucion_urgente",
+    "reserva_pendiente"
+  ];
+}
+
 function emitirSistemaPartidaCreada(partidaId, p) {
   return crearMensajeSistemaPartida(partidaId, p, {
     eventType: "partida_creada",
@@ -538,7 +559,27 @@ function emitirSistemaFalta1SiProcede(partidaId, p) {
   const jugadores = arrayUnicoPartida(p && p.jugadores);
   if (!p || p.estado !== "abierta" || jugadores.length !== 3) return Promise.resolve(null);
 
-  return resolverSistemaPartida(partidaId, ["partida_creada"]).then(function() {
+  if (String(p.genero || "").toLowerCase().trim() === "mixto") {
+    return obtenerSexoFaltanteMixtaPartida(p).then(function(sexoFaltante) {
+      if (sexoFaltante === "masculino") {
+        return emitirSistemaFalta1Hombre(partidaId, p);
+      }
+      if (sexoFaltante === "femenino") {
+        return emitirSistemaFalta1Mujer(partidaId, p);
+      }
+      return emitirSistemaFalta1Generico(partidaId, p);
+    });
+  }
+
+  return emitirSistemaFalta1Generico(partidaId, p);
+}
+
+function emitirSistemaFalta1Generico(partidaId, p) {
+  return resolverEstadosSistemaIncompatibles(partidaId, [
+    "partida_creada",
+    "falta_1_hombre",
+    "falta_1_mujer"
+  ]).then(function() {
     return crearMensajeSistemaPartida(partidaId, p, {
       eventType: "falta_1",
       dedupeKey: "system_falta_1_" + partidaId,
@@ -549,11 +590,51 @@ function emitirSistemaFalta1SiProcede(partidaId, p) {
   });
 }
 
+function emitirSistemaFalta1Hombre(partidaId, p) {
+  return resolverEstadosSistemaIncompatibles(partidaId, [
+    "partida_creada",
+    "falta_1",
+    "falta_1_mujer"
+  ]).then(function() {
+    return crearMensajeSistemaPartida(partidaId, p, {
+      eventType: "falta_1_hombre",
+      dedupeKey: "system_falta_1_hombre_" + partidaId,
+      texto: function(datos) {
+        return "Falta 1 jugador para completar una partida mixta en " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + ".";
+      }
+    });
+  });
+}
+
+function emitirSistemaFalta1Mujer(partidaId, p) {
+  return resolverEstadosSistemaIncompatibles(partidaId, [
+    "partida_creada",
+    "falta_1",
+    "falta_1_hombre"
+  ]).then(function() {
+    return crearMensajeSistemaPartida(partidaId, p, {
+      eventType: "falta_1_mujer",
+      dedupeKey: "system_falta_1_mujer_" + partidaId,
+      texto: function(datos) {
+        return "Falta 1 jugadora para completar una partida mixta en " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + ".";
+      }
+    });
+  });
+}
+
 function emitirSistemaPartidaCompleta(partidaId, p) {
   const jugadores = arrayUnicoPartida(p && p.jugadores);
   if (!p || jugadores.length !== 4) return Promise.resolve(null);
 
-  return resolverSistemaPartida(partidaId, ["partida_creada", "falta_1"]).then(function() {
+  return resolverSistemaPartida(partidaId, [
+    "partida_creada",
+    "falta_1",
+    "falta_1_hombre",
+    "falta_1_mujer",
+    "plaza_libre_confirmada",
+    "sustitucion_urgente",
+    "reserva_pendiente"
+  ]).then(function() {
     return crearMensajeSistemaPartida(partidaId, p, {
       eventType: "partida_completa",
       dedupeKey: "system_partida_completa_" + partidaId,
@@ -565,42 +646,37 @@ function emitirSistemaPartidaCompleta(partidaId, p) {
 }
 
 function emitirSistemaPartidaConfirmada(partidaId, p) {
-  return resolverSistemaPartida(partidaId, ["partida_creada", "falta_1", "partida_completa"]).then(function() {
-    return crearMensajeSistemaPartida(partidaId, p, {
-      eventType: "partida_confirmada",
-      dedupeKey: "system_partida_confirmada_" + partidaId,
-      texto: function(datos) {
-        return "Partida confirmada en " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + ".";
-      }
-    });
-  });
-}
-
-function emitirSistemaPartidaCancelada(partidaId, p) {
   return resolverSistemaPartida(partidaId, [
     "partida_creada",
     "falta_1",
+    "falta_1_hombre",
+    "falta_1_mujer",
     "partida_completa",
-    "partida_confirmada",
-    "cambio_creador_pendiente"
-  ]).then(function() {
-    return crearMensajeSistemaPartida(partidaId, p, {
-      eventType: "partida_cancelada",
-      dedupeKey: "system_partida_cancelada_" + partidaId,
-      texto: function(datos) {
-        return "Partida cancelada: " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + ".";
-      }
-    });
-  });
+    "plaza_libre_confirmada",
+    "sustitucion_urgente",
+    "reserva_pendiente"
+  ]);
+}
+
+function emitirSistemaPartidaCancelada(partidaId, p) {
+  return resolverSistemaPartida(partidaId, obtenerEventosSistemaPartida());
 }
 
 function emitirSistemaCambioCreadorPendiente(partidaId, p) {
-  return crearMensajeSistemaPartida(partidaId, p, {
-    eventType: "cambio_creador_pendiente",
-    dedupeKey: "system_cambio_creador_pendiente_" + partidaId,
-    texto: function(datos) {
-      return "Se necesita nuevo creador para una partida en " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + ".";
-    }
+  return resolverEstadosSistemaIncompatibles(partidaId, [
+    "partida_creada",
+    "falta_1",
+    "falta_1_hombre",
+    "falta_1_mujer",
+    "partida_completa"
+  ]).then(function() {
+    return crearMensajeSistemaPartida(partidaId, p, {
+      eventType: "cambio_creador_pendiente",
+      dedupeKey: "system_cambio_creador_pendiente_" + partidaId,
+      texto: function(datos) {
+        return "Se necesita nuevo creador para una partida en " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + ".";
+      }
+    });
   });
 }
 
@@ -614,6 +690,179 @@ function emitirSistemaNuevoCreador(partidaId, p) {
       }
     });
   });
+}
+
+function emitirSistemaReservaPendiente(partidaId, p) {
+  if (!tieneSustitucionPendientePartida(p)) return Promise.resolve(null);
+
+  return resolverEstadosSistemaIncompatibles(partidaId, [
+    "partida_creada",
+    "falta_1",
+    "falta_1_hombre",
+    "falta_1_mujer",
+    "partida_completa",
+    "plaza_libre_confirmada",
+    "sustitucion_urgente"
+  ]).then(function() {
+    return crearMensajeSistemaPartida(partidaId, p, {
+      eventType: "reserva_pendiente",
+      dedupeKey: "system_reserva_pendiente_" + partidaId,
+      texto: function(datos) {
+        return "Una reserva debe aceptar una plaza para completar una partida en " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + ".";
+      }
+    });
+  });
+}
+
+function emitirSistemaPlazaLibreConfirmadaSiProcede(partidaId, p) {
+  if (!partidaConfirmadaAccionableConPlazaLibre(p)) {
+    return resolverSistemaPartida(partidaId, ["plaza_libre_confirmada", "sustitucion_urgente"]);
+  }
+
+  if (partidaEnVentanaSustitucionUrgente(p)) {
+    return emitirSistemaSustitucionUrgente(partidaId, p);
+  }
+
+  return resolverEstadosSistemaIncompatibles(partidaId, [
+    "partida_creada",
+    "falta_1",
+    "falta_1_hombre",
+    "falta_1_mujer",
+    "partida_completa",
+    "sustitucion_urgente",
+    "reserva_pendiente"
+  ]).then(function() {
+    return crearMensajeSistemaPartida(partidaId, p, {
+      eventType: "plaza_libre_confirmada",
+      dedupeKey: "system_plaza_libre_confirmada_" + partidaId,
+      texto: function(datos) {
+        return "Plaza libre en una partida confirmada en " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + ".";
+      }
+    });
+  });
+}
+
+function emitirSistemaSustitucionUrgente(partidaId, p) {
+  if (!partidaNecesitaSustitucionUrgente(p)) {
+    return resolverSistemaPartida(partidaId, ["sustitucion_urgente"]);
+  }
+
+  return resolverEstadosSistemaIncompatibles(partidaId, [
+    "partida_creada",
+    "falta_1",
+    "falta_1_hombre",
+    "falta_1_mujer",
+    "partida_completa",
+    "plaza_libre_confirmada",
+    "reserva_pendiente"
+  ]).then(function() {
+    return crearMensajeSistemaPartida(partidaId, p, {
+      eventType: "sustitucion_urgente",
+      dedupeKey: "system_sustitucion_urgente_" + partidaId,
+      texto: function(datos) {
+        return "Sustitución urgente: se necesita 1 jugador para una partida en " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + ".";
+      }
+    });
+  });
+}
+
+function contarSexosTitularesPartida(p) {
+  const jugadores = arrayUnicoPartida(p && p.jugadores);
+  return Promise.all(jugadores.map(function(uid) {
+    return obtenerSexoUsuarioPartida(uid);
+  })).then(function(sexos) {
+    return sexos.reduce(function(total, sexo) {
+      if (sexo === "masculino") total.hombres++;
+      if (sexo === "femenino") total.mujeres++;
+      return total;
+    }, { hombres: 0, mujeres: 0 });
+  });
+}
+
+function obtenerSexoFaltanteMixtaPartida(p) {
+  const jugadores = arrayUnicoPartida(p && p.jugadores);
+  if (!p || String(p.genero || "").toLowerCase().trim() !== "mixto" || jugadores.length !== 3) return Promise.resolve(null);
+
+  return contarSexosTitularesPartida(p).then(function(total) {
+    if (total.hombres === 1 && total.mujeres === 2) return "masculino";
+    if (total.hombres === 2 && total.mujeres === 1) return "femenino";
+    return null;
+  });
+}
+
+function partidaConfirmadaAccionableConPlazaLibre(p) {
+  return !!(
+    p &&
+    p.estado === "confirmada" &&
+    arrayUnicoPartida(p.jugadores).length < 4 &&
+    !tieneSustitucionPendientePartida(p) &&
+    !tieneSolicitudSustitucionPartida(p) &&
+    !partidaAlcanzoLimiteCancelacionClub(p) &&
+    !p.resultado &&
+    (!p.valoraciones || Object.keys(p.valoraciones).length === 0)
+  );
+}
+
+function partidaEnVentanaSustitucionUrgente(p) {
+  const fechaPartida = obtenerFechaHoraPartida(p);
+  if (!fechaPartida) return false;
+
+  const ahora = new Date();
+  const msHastaInicio = fechaPartida.getTime() - ahora.getTime();
+  return msHastaInicio > 5 * 60 * 60 * 1000 &&
+    msHastaInicio <= 8 * 60 * 60 * 1000;
+}
+
+function partidaNecesitaSustitucionUrgente(p) {
+  return !!(
+    p &&
+    p.estado === "confirmada" &&
+    partidaEnVentanaSustitucionUrgente(p) &&
+    !partidaAlcanzoLimiteCancelacionClub(p) &&
+    !p.resultado &&
+    (!p.valoraciones || Object.keys(p.valoraciones).length === 0) &&
+    (
+      partidaConfirmadaAccionableConPlazaLibre(p) ||
+      tieneSolicitudSustitucionPartida(p)
+    )
+  );
+}
+
+function sincronizarMensajesSistemaPartida(partidaId, p) {
+  if (!partidaId || !p) return Promise.resolve(null);
+
+  if (tieneSustitucionPendientePartida(p)) {
+    return emitirSistemaReservaPendiente(partidaId, p);
+  }
+
+  if (p.cambioCreadorPendiente === true && p.estado === "abierta") {
+    return emitirSistemaCambioCreadorPendiente(partidaId, p);
+  }
+
+  if (partidaNecesitaSustitucionUrgente(p)) {
+    return emitirSistemaSustitucionUrgente(partidaId, p);
+  }
+
+  if (partidaConfirmadaAccionableConPlazaLibre(p)) {
+    return emitirSistemaPlazaLibreConfirmadaSiProcede(partidaId, p);
+  }
+
+  if (p.estado === "abierta" && arrayUnicoPartida(p.jugadores).length === 3) {
+    return emitirSistemaFalta1SiProcede(partidaId, p);
+  }
+
+  if (p.estado === "abierta" && arrayUnicoPartida(p.jugadores).length === 4) {
+    return emitirSistemaPartidaCompleta(partidaId, p);
+  }
+
+  return resolverSistemaPartida(partidaId, [
+    "falta_1",
+    "falta_1_hombre",
+    "falta_1_mujer",
+    "plaza_libre_confirmada",
+    "sustitucion_urgente",
+    "reserva_pendiente"
+  ]);
 }
 
 function textoFechaAvisoPartida(p) {
@@ -688,6 +937,41 @@ window.destacarPartidaEnLista = function(partidaId) {
   }, 3500);
   return true;
 };
+
+function crearBotonVerTodasPartidasDesdeChat() {
+  const boton = document.createElement("button");
+  boton.type = "button";
+  boton.className = "btnBlue partidaFiltroChatBtn";
+  boton.textContent = "Ver todas las partidas";
+  boton.onclick = function() {
+    limpiarFiltroPartidaDesdeChat();
+  };
+  return boton;
+}
+
+function crearBarraFiltroPartidaDesdeChat() {
+  const barra = document.createElement("div");
+  barra.className = "partidaFiltroChatBar";
+  barra.appendChild(crearBotonVerTodasPartidasDesdeChat());
+  return barra;
+}
+
+function mostrarPartidaNoDisponibleDesdeChat(contenedor) {
+  const fragment = document.createDocumentFragment();
+  const aviso = textoNodo("La partida ya no está disponible.");
+  aviso.className = "partidaFiltroChatAviso";
+  fragment.appendChild(aviso);
+  fragment.appendChild(crearBotonVerTodasPartidasDesdeChat());
+  contenedor.replaceChildren(fragment);
+}
+
+function limpiarFiltroPartidaDesdeChat() {
+  window.partidaChatFiltroId = null;
+  window.partidaPendienteDestacar = null;
+  cargarPartidas();
+}
+
+window.limpiarFiltroPartidaDesdeChat = limpiarFiltroPartidaDesdeChat;
 
 function normalizarSexoPartida(valor) {
   const sexo = String(valor || "").toLowerCase().trim();
@@ -1120,14 +1404,7 @@ async function eliminarPartidaConChat(partidaId) {
     return false;
   }
 
-  await resolverSistemaPartida(partidaId, [
-    "partida_creada",
-    "falta_1",
-    "partida_completa",
-    "partida_confirmada",
-    "cambio_creador_pendiente",
-    "nuevo_creador"
-  ]);
+  await resolverSistemaPartida(partidaId, obtenerEventosSistemaPartida());
 
   await db.collection("partidas").doc(partidaId).delete();
   if (typeof window.resolverNotificacionesTemporalesPorPartidaId === "function") {
@@ -1939,6 +2216,7 @@ function cargarPartidas() {
   const contenedor = document.getElementById("listaPartidas");
   if (!contenedor) return;
 
+  const filtroPartidaChatId = window.partidaChatFiltroId || null;
   contenedor.replaceChildren(textoNodo("Cargando..."));
 
   revisarCancelacionesAntesDePostPartido()
@@ -1947,7 +2225,11 @@ function cargarPartidas() {
   })
   .then(function(snapshot) {
     if (snapshot.empty) {
-      contenedor.replaceChildren(textoNodo("No hay partidas"));
+      if (filtroPartidaChatId) {
+        mostrarPartidaNoDisponibleDesdeChat(contenedor);
+      } else {
+        contenedor.replaceChildren(textoNodo("No hay partidas"));
+      }
       return;
     }
 
@@ -1966,10 +2248,14 @@ function cargarPartidas() {
     snapshot.forEach(function(doc) {
       const p = doc.data() || {};
 
-      if (filtroTipo && ((p.tipo || "ranking").toLowerCase().trim() !== filtroTipo)) return;
-      if (filtroFecha && ((p.fecha || "") !== filtroFecha)) return;
-      if (filtroGenero && ((p.genero || "").toLowerCase().trim() !== filtroGenero)) return;
-      if (filtroPista && ((p.pistaId || p.pista || "") !== filtroPista)) return;
+      if (filtroPartidaChatId) {
+        if (doc.id !== filtroPartidaChatId) return;
+      } else {
+        if (filtroTipo && ((p.tipo || "ranking").toLowerCase().trim() !== filtroTipo)) return;
+        if (filtroFecha && ((p.fecha || "") !== filtroFecha)) return;
+        if (filtroGenero && ((p.genero || "").toLowerCase().trim() !== filtroGenero)) return;
+        if (filtroPista && ((p.pistaId || p.pista || "") !== filtroPista)) return;
+      }
 
       let pasaNivel = true;
       let nivelPartidaDesde = "";
@@ -1995,7 +2281,7 @@ function cargarPartidas() {
         if (pasaNivel && !isNaN(filtroHastaNum)) pasaNivel = filtroHastaNum <= partidaHastaNum;
       }
 
-      if (tipoNivel && !pasaNivel) return;
+      if (!filtroPartidaChatId && tipoNivel && !pasaNivel) return;
 
       let fechaPartida = null;
 
@@ -2090,6 +2376,9 @@ function cargarPartidas() {
 
       p.jugadores = p.jugadores || [];
       p.reservas = p.reservas || [];
+      sincronizarMensajesSistemaPartida(doc.id, p).catch(function(error) {
+        console.warn("No se pudo sincronizar mensaje Sistema de partida:", error && error.message ? error.message : error);
+      });
 
       let fondo = "#ffffff";
       if (
@@ -2157,14 +2446,21 @@ function cargarPartidas() {
       return b._fechaOrden - a._fechaOrden;
     });
 
-    const seleccion = modo === "pendientes" ? pendientes : proximas;
+    const seleccion = filtroPartidaChatId ? proximas.concat(pendientes) : (modo === "pendientes" ? pendientes : proximas);
     const fragment = document.createDocumentFragment();
+    if (filtroPartidaChatId) {
+      fragment.appendChild(crearBarraFiltroPartidaDesdeChat());
+    }
     seleccion.forEach(function(item) {
       fragment.appendChild(item.nodo);
     });
 
     if (seleccion.length === 0) {
-      contenedor.replaceChildren(textoNodo("No hay partidas"));
+      if (filtroPartidaChatId) {
+        mostrarPartidaNoDisponibleDesdeChat(contenedor);
+      } else {
+        contenedor.replaceChildren(textoNodo("No hay partidas"));
+      }
     } else {
       contenedor.replaceChildren(fragment);
       seleccion.forEach(cargarDatosPartidaRenderizada);
@@ -2541,6 +2837,11 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
           prioridad: "alta",
           data: { jugadores: actualizada.jugadores }
         }));
+        avisos.push(resolverSistemaPartida(partidaId, [
+          "plaza_libre_confirmada",
+          "sustitucion_urgente",
+          "reserva_pendiente"
+        ]));
       }
       if (!actualizada.entroComoReserva && actualizada.estado === "abierta" && actualizada.jugadores.length === 3) {
         avisos.push(emitirSistemaFalta1SiProcede(partidaId, actualizada));
@@ -2657,8 +2958,13 @@ function solicitarSustitutoPartida(partidaId) {
             jugadores: jugadores,
             reservas: reservas,
             reservasCompatibles: reservasCompatibles,
+            estado: p.estado || null,
+            pistaId: p.pistaId || null,
             fecha: p.fecha || null,
-            hora: p.hora || null
+            hora: p.hora || null,
+            solicitudSustitucionEstado: "solicitud_sustitucion_pendiente",
+            solicitudSustitucionUid: user.uid,
+            solicitudSustitucionReservasCompatibles: reservasCompatibles
           };
         });
     });
@@ -2708,6 +3014,8 @@ function solicitarSustitutoPartida(partidaId) {
         data: { uidSolicita: actualizada.uidSolicita }
       }));
     }
+
+    avisos.push(emitirSistemaSustitucionUrgente(partidaId, actualizada));
 
     return Promise.all(avisos).then(function() {
       cargarPartidas();
@@ -2942,6 +3250,10 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
                 uidSale: uid,
                 jugadores: datosUpdate.jugadores,
                 reservas: datosUpdate.reservas,
+                sustitucionPendiente: !!uidReservaSustituta,
+                sustitucionTipo: uidReservaSustituta ? "reserva_subida_pendiente_aceptar" : null,
+                sustitucionSaleUid: uidReservaSustituta ? uid : null,
+                sustitucionEntraUid: uidReservaSustituta || null,
                 reservasSolicitudAnterior: arrayUnicoPartida(p.solicitudSustitucionReservasCompatibles),
                 solicitudAnteriorUid: p.solicitudSustitucionUid || null,
                 participantesSolicitudAnterior: arrayUnicoPartida(p.jugadores).concat(p.reservas || []),
@@ -3030,10 +3342,17 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
       return resolverSolicitudAnterior.then(function() {
         return aviso;
       }).then(function() {
+        if (actualizada.tipoAviso === "reserva_pendiente_aceptar") {
+          return emitirSistemaReservaPendiente(partidaId, actualizada);
+        }
+        if (actualizada.tipoAviso === "sin_reserva_compatible") {
+          return emitirSistemaPlazaLibreConfirmadaSiProcede(partidaId, actualizada);
+        }
         if (actualizada.estado === "abierta" && actualizada.jugadores.length === 3) {
           return emitirSistemaFalta1SiProcede(partidaId, actualizada);
         }
-        return null;
+        if (!actualizada.estado) return null;
+        return sincronizarMensajesSistemaPartida(partidaId, actualizada);
       }).then(function() {
         if (!actualizada.penalizacionAbandono) return null;
 
@@ -3223,6 +3542,8 @@ function aceptarSustitucionPartida(idPartida) {
           reservasCompatibles: compatibles,
           participantesAnteriores: arrayUnicoPartida(p.jugadores).concat(p.reservas || []),
           creadaPor: p.creadaPor || p.creador || null,
+          estado: "confirmada",
+          pistaId: p.pistaId || null,
           fecha: p.fecha || null,
           hora: p.hora || null
         };
@@ -3260,7 +3581,12 @@ function aceptarSustitucionPartida(idPartida) {
         modo: "abandono",
         uidReserva: user.uid,
         jugadores: jugadores.slice(0, 4),
+        reservas: arrayUnicoPartida(p.reservas).filter(function(uidReserva) {
+          return !jugadores.includes(uidReserva);
+        }).slice(0, 2),
         creadaPor: p.creadaPor || p.creador || null,
+        estado: p.estado === "confirmada" ? "confirmada" : "abierta",
+        pistaId: p.pistaId || null,
         fecha: p.fecha || null,
         hora: p.hora || null
       };
@@ -3296,6 +3622,12 @@ function aceptarSustitucionPartida(idPartida) {
           }
         });
       }).then(function() {
+        return resolverSistemaPartida(idPartida, [
+          "sustitucion_urgente",
+          "plaza_libre_confirmada",
+          "reserva_pendiente"
+        ]);
+      }).then(function() {
         cargarPartidas();
       });
     }
@@ -3327,6 +3659,8 @@ function aceptarSustitucionPartida(idPartida) {
         emailCritico: true,
         data: { uidReserva: actualizada.uidReserva }
       });
+    }).then(function() {
+      return sincronizarMensajesSistemaPartida(idPartida, actualizada);
     }).then(function() {
       cargarPartidas();
     });
@@ -3407,10 +3741,18 @@ function rechazarSustitucionPartida(idPartida) {
           uidReservaRechaza: user.uid,
           uidNuevaReserva: nuevoReservaUid || null,
           uidSale: uidSale,
+          jugadores: datosUpdate.jugadores,
+          reservas: datosUpdate.reservas,
           jugadoresTrasRechazo: jugadoresTrasRechazo,
           creadaPor: p.creadaPor || p.creador || null,
+          estado: datosUpdate.estado || p.estado || null,
+          pistaId: p.pistaId || null,
           fecha: p.fecha || null,
-          hora: p.hora || null
+          hora: p.hora || null,
+          sustitucionPendiente: !!nuevoReservaUid,
+          sustitucionTipo: nuevoReservaUid ? "reserva_subida_pendiente_aceptar" : null,
+          sustitucionSaleUid: nuevoReservaUid ? uidSale : null,
+          sustitucionEntraUid: nuevoReservaUid || null
         };
       });
     });
@@ -3496,6 +3838,11 @@ function rechazarSustitucionPartida(idPartida) {
 
     return resolverPendiente.then(function() {
       return Promise.all(avisos);
+    }).then(function() {
+      if (actualizada.uidNuevaReserva) {
+        return emitirSistemaReservaPendiente(idPartida, actualizada);
+      }
+      return sincronizarMensajesSistemaPartida(idPartida, actualizada);
     }).then(function() {
       cargarPartidas();
     });
