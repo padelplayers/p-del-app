@@ -77,6 +77,86 @@ function crearNotificacionesParaUids(uids, datos) {
   }));
 }
 
+function textoNotificacionSeguidoresAgrupada(tipo, cantidad) {
+  const total = Number(cantidad || 0);
+
+  if (tipo === "nuevos_seguidores") {
+    return total === 1 ? "Tienes 1 nuevo seguidor" : "Tienes " + total + " nuevos seguidores";
+  }
+
+  if (tipo === "seguidores_perdidos_perfil_borrado") {
+    return total === 1
+      ? "1 jugador ha dejado de seguirte porque borró el perfil"
+      : total + " jugadores han dejado de seguirte porque borraron el perfil";
+  }
+
+  return total === 1
+    ? "1 jugador ha dejado de seguirte"
+    : total + " jugadores han dejado de seguirte";
+}
+
+function crearOActualizarNotificacionSeguidoresAgrupada(datos) {
+  if (!datos || !datos.paraUid || !datos.tipo) return Promise.resolve(null);
+
+  const tipo = datos.tipo;
+  const paraUid = datos.paraUid;
+  const actorUid = datos.actorUid || null;
+  const actorNombre = datos.actorNombre || null;
+  const motivo = datos.motivo || null;
+  const dedupeKey = tipo + "_" + paraUid;
+  const docId = crearDocIdNotificacion(paraUid + "_" + dedupeKey);
+  const ref = db.collection("notificaciones").doc(docId);
+
+  return db.runTransaction(function(transaction) {
+    return transaction.get(ref).then(function(doc) {
+      const anterior = doc.exists ? (doc.data() || {}) : {};
+      const pendiente = doc.exists && anterior.leida !== true && anterior.resuelta !== true;
+      const uids = pendiente && Array.isArray(anterior.uids) ? anterior.uids.slice() : [];
+      const nombres = pendiente && Array.isArray(anterior.nombres) ? anterior.nombres.slice() : [];
+
+      if (actorUid && !uids.includes(actorUid)) uids.push(actorUid);
+      if (actorNombre && !nombres.includes(actorNombre)) nombres.push(actorNombre);
+
+      const cantidad = uids.length > 0
+        ? uids.length
+        : (pendiente ? Number(anterior.cantidad || 0) + 1 : 1);
+      const mensaje = textoNotificacionSeguidoresAgrupada(tipo, cantidad);
+      const ahora = firebase.firestore.FieldValue.serverTimestamp();
+      const payload = {
+        uid: paraUid,
+        paraUid: paraUid,
+        tipo: tipo,
+        titulo: "Aviso",
+        mensaje: mensaje,
+        cantidad: cantidad,
+        uids: uids,
+        nombres: nombres,
+        motivo: motivo,
+        leida: false,
+        resuelta: false,
+        accion: tipo === "seguidores_perdidos_perfil_borrado" ? null : "ver_usuarios_sociales",
+        prioridad: "normal",
+        popupMostrado: false,
+        origen: "perfil",
+        dedupeKey: dedupeKey,
+        updatedAt: ahora,
+        data: {
+          paraUid: paraUid,
+          cantidad: cantidad,
+          uids: uids,
+          nombres: nombres,
+          motivo: motivo
+        }
+      };
+
+      if (!pendiente) payload.createdAt = ahora;
+
+      transaction.set(ref, payload, { merge: true });
+      return docId;
+    });
+  });
+}
+
 function esNotificacionPenalizacionPerfil(n) {
   return !!n && (
     n.tipo === "penalizacion_abandono_confirmada" ||
@@ -186,6 +266,20 @@ function obtenerNotificacionesNoLeidas(notificaciones) {
 function obtenerTextoVisibleNotificacion(n) {
   if (
     n &&
+    (
+      n.tipo === "nuevos_seguidores" ||
+      n.tipo === "seguidores_perdidos" ||
+      n.tipo === "seguidores_perdidos_perfil_borrado"
+    )
+  ) {
+    return {
+      titulo: "Aviso",
+      mensaje: textoNotificacionSeguidoresAgrupada(n.tipo, n.cantidad || (Array.isArray(n.uids) ? n.uids.length : 1))
+    };
+  }
+
+  if (
+    n &&
     n.tipo === "nuevo_resultado_propuesto" &&
     n.data &&
     n.data.equiposCorregidos === true
@@ -224,6 +318,18 @@ function obtenerContactoReservaNotificacion(n) {
 }
 
 function obtenerAccionVisibleNotificacion(n) {
+  if (n && n.tipo === "seguidores_perdidos_perfil_borrado") {
+    return null;
+  }
+
+  if (n && (n.tipo === "nuevos_seguidores" || n.tipo === "seguidores_perdidos")) {
+    const cantidad = Number(n.cantidad || (Array.isArray(n.uids) ? n.uids.length : 1));
+    if (n.tipo === "nuevos_seguidores") {
+      return { texto: cantidad === 1 ? "Ver seguidor" : "Ver seguidores" };
+    }
+    return { texto: cantidad === 1 ? "Ver jugador" : "Ver jugadores" };
+  }
+
   if (esNotificacionPenalizacionPerfil(n)) {
     return { texto: "Ver perfil" };
   }
@@ -474,6 +580,17 @@ function abrirAccionNotificacion(id, n) {
   marcarNotificacionLeida(id).catch(function() {});
   cerrarPanelNotificaciones();
 
+  if (n && (n.tipo === "nuevos_seguidores" || n.tipo === "seguidores_perdidos")) {
+    if (typeof window.abrirListaNotificacionSocialPerfil === "function") {
+      window.abrirListaNotificacionSocialPerfil({
+        tipo: n.tipo,
+        uids: Array.isArray(n.uids) ? n.uids : [],
+        titulo: n.tipo === "nuevos_seguidores" ? "Nuevos seguidores" : "Jugadores que dejaron de seguirte"
+      });
+    }
+    return;
+  }
+
   const contactoReserva = obtenerContactoReservaNotificacion(n);
   if (contactoReserva) {
     if (contactoReserva.tipo === "web") {
@@ -546,6 +663,7 @@ function initNotificacionesUI() {
 
 window.crearNotificacionInterna = crearNotificacionInterna;
 window.crearNotificacionesParaUids = crearNotificacionesParaUids;
+window.crearOActualizarNotificacionSeguidoresAgrupada = crearOActualizarNotificacionSeguidoresAgrupada;
 window.resolverNotificacionPorDedupe = resolverNotificacionPorDedupe;
 window.resolverNotificacionesTemporalesPorPartidaId = resolverNotificacionesTemporalesPorPartidaId;
 window.resolverNotificacionesPorPartidaId = resolverNotificacionesPorPartidaId;

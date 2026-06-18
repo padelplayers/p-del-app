@@ -6,6 +6,7 @@ const perfilSocialState = {
   tipo: "seguidores",
   usuarios: [],
   filtroSexo: "todos",
+  textoVacio: "",
   eventosRegistrados: false,
   delegacionPerfilRegistrada: false
 };
@@ -682,6 +683,8 @@ function registrarEventosPerfilSocial() {
 }
 
 function textoVacioSocialPerfil() {
+  if (perfilSocialState.textoVacio) return perfilSocialState.textoVacio;
+
   return perfilSocialState.tipo === "seguidores"
     ? "Todavia no tiene seguidores"
     : "Todavia no sigue a nadie";
@@ -744,6 +747,21 @@ function cargarUsuariosSocialesPerfil(uids) {
   });
 }
 
+function notificarCambioSeguidoresAgrupadoPerfil(datos) {
+  if (!datos || !datos.paraUid || !datos.tipo) return Promise.resolve(null);
+  if (datos.actorUid && datos.actorUid === datos.paraUid) return Promise.resolve(null);
+  if (typeof window.crearOActualizarNotificacionSeguidoresAgrupada !== "function") {
+    console.warn("No esta disponible la notificacion agrupada de seguidores");
+    return Promise.resolve(null);
+  }
+
+  return window.crearOActualizarNotificacionSeguidoresAgrupada(datos)
+    .catch(function(error) {
+      console.warn("No se pudo crear la notificacion agrupada de seguidores:", error.message);
+      return null;
+    });
+}
+
 function normalizarTipoSocialPerfil(tipo) {
   return tipo === "seguidos" || tipo === "siguiendo" ? "seguidos" : "seguidores";
 }
@@ -756,6 +774,7 @@ function abrirPerfilSocial(uid, tipo) {
   perfilSocialState.tipo = normalizarTipoSocialPerfil(tipo);
   perfilSocialState.usuarios = [];
   perfilSocialState.filtroSexo = "todos";
+  perfilSocialState.textoVacio = "";
 
   const input = document.getElementById("buscarPerfilSocial");
   if (input) input.value = "";
@@ -797,6 +816,43 @@ function abrirPerfilSocial(uid, tipo) {
   });
 }
 
+function abrirListaNotificacionSocialPerfil(config) {
+  config = config || {};
+
+  registrarEventosPerfilSocial();
+  perfilSocialState.perfilUid = auth.currentUser ? auth.currentUser.uid : null;
+  perfilSocialState.perfilNombre = "";
+  perfilSocialState.tipo = "seguidores";
+  perfilSocialState.usuarios = [];
+  perfilSocialState.filtroSexo = "todos";
+  perfilSocialState.textoVacio = config.tipo === "nuevos_seguidores"
+    ? "No hay seguidores para mostrar"
+    : "No hay jugadores para mostrar";
+
+  const input = document.getElementById("buscarPerfilSocial");
+  if (input) input.value = "";
+
+  document.querySelectorAll(".perfilSocialFiltroBtn").forEach(function(btn) {
+    btn.classList.toggle("activo", btn.dataset.filtroSexo === "todos");
+  });
+
+  const titulo = document.getElementById("perfilSocialTitulo");
+  const contenedor = document.getElementById("listaPerfilSocial");
+  if (titulo) titulo.textContent = config.titulo || "Jugadores";
+  if (contenedor) contenedor.replaceChildren(document.createTextNode("Cargando usuarios..."));
+
+  mostrar("perfilSocial");
+  window.scrollTo({ top: 0, behavior: "auto" });
+
+  return cargarUsuariosSocialesPerfil(config.uids).then(function(usuarios) {
+    perfilSocialState.usuarios = usuarios;
+    renderizarListaSocialPerfil();
+  }).catch(function(error) {
+    console.error("Error cargando lista de notificacion social:", error);
+    if (contenedor) contenedor.replaceChildren(document.createTextNode("No se pudo cargar la lista"));
+  });
+}
+
 function abrirListaSocialPerfil(tipo) {
   const perfilEl = document.getElementById("perfil");
   const uid = perfilEl && perfilEl.dataset ? perfilEl.dataset.uid : null;
@@ -813,6 +869,7 @@ function volverPerfilSocial() {
 }
 
 window.abrirPerfilSocial = abrirPerfilSocial;
+window.abrirListaNotificacionSocialPerfil = abrirListaNotificacionSocialPerfil;
 window.abrirListaSocialPerfil = abrirListaSocialPerfil;
 window.volverPerfilSocial = volverPerfilSocial;
 
@@ -1050,11 +1107,12 @@ async function usuarioTienePartidasActivasComoCreadorPerfil(uid) {
   });
 }
 
-async function limpiarRelacionesSocialesUsuario(uid) {
+async function limpiarRelacionesSocialesUsuario(uid, nombreUsuarioEliminado) {
   if (!uid) return;
 
   const snapshot = await db.collection("usuarios").get();
   const updates = [];
+  const usuariosQuePierdenSeguidorPorPerfilBorrado = [];
   const camposSociales = ["seguidores", "siguiendo", "seguidos"];
 
   snapshot.forEach(function(doc) {
@@ -1062,6 +1120,11 @@ async function limpiarRelacionesSocialesUsuario(uid) {
 
     const data = doc.data() || {};
     const update = {};
+    const pierdeSeguidorPorPerfilBorrado = Array.isArray(data.seguidores) && data.seguidores.includes(uid);
+
+    if (pierdeSeguidorPorPerfilBorrado) {
+      usuariosQuePierdenSeguidorPorPerfilBorrado.push(doc.id);
+    }
 
     camposSociales.forEach(function(campo) {
       if (!Array.isArray(data[campo]) || !data[campo].includes(uid)) return;
@@ -1076,6 +1139,16 @@ async function limpiarRelacionesSocialesUsuario(uid) {
   });
 
   await Promise.all(updates);
+
+  await Promise.all(usuariosQuePierdenSeguidorPorPerfilBorrado.map(function(paraUid) {
+    return notificarCambioSeguidoresAgrupadoPerfil({
+      tipo: "seguidores_perdidos_perfil_borrado",
+      paraUid: paraUid,
+      actorUid: uid,
+      actorNombre: nombreUsuarioEliminado || "",
+      motivo: "perfil_borrado"
+    });
+  }));
 }
 
 async function anonimizarPistasCreadasUsuario(uid) {
@@ -1726,7 +1799,7 @@ async function eliminarPerfil() {
     await resolverPartidasActivasAntesDeEliminarPerfil(uid);
 
     // 2. limpiar referencias sociales
-    await limpiarRelacionesSocialesUsuario(uid);
+    await limpiarRelacionesSocialesUsuario(uid, nombreUsuarioEliminado);
 
     await eliminarMensajesUsuarioAntesDeEliminarPerfil(uid);
 
@@ -1942,8 +2015,10 @@ function toggleSeguir(){
 
   return miRef.get().then(miDoc => {
 
-    const siguiendo = miDoc.data()?.siguiendo || [];
+    const misDatos = miDoc.data() || {};
+    const siguiendo = misDatos.siguiendo || [];
     const sigo = siguiendo.includes(uid);
+    const nombreActor = misDatos.nombre || user.displayName || (user.email ? user.email.split("@")[0] : "");
 
     if (btnSeguir) {
   if (!sigo) {
@@ -1968,7 +2043,15 @@ function toggleSeguir(){
         otroRef.update({
           seguidores: firebase.firestore.FieldValue.arrayRemove(user.uid)
         })
-      ]);
+      ]).then(function() {
+        return notificarCambioSeguidoresAgrupadoPerfil({
+          tipo: "seguidores_perdidos",
+          paraUid: uid,
+          actorUid: user.uid,
+          actorNombre: nombreActor,
+          motivo: "unfollow"
+        });
+      });
 
     } else {
 
@@ -1979,7 +2062,15 @@ function toggleSeguir(){
         otroRef.update({
           seguidores: firebase.firestore.FieldValue.arrayUnion(user.uid)
         })
-      ]);
+      ]).then(function() {
+        return notificarCambioSeguidoresAgrupadoPerfil({
+          tipo: "nuevos_seguidores",
+          paraUid: uid,
+          actorUid: user.uid,
+          actorNombre: nombreActor,
+          motivo: "follow"
+        });
+      });
 
     }
 
