@@ -1241,8 +1241,14 @@ body.chatAbierto{
 
 @media (min-width: 680px) {
   #listaJugadores {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  #listaJugadores {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -3466,6 +3472,7 @@ margin:0 auto;
   height: 56px;
   margin: 0;
   padding: 6px 2px 5px;
+  transform: translateY(-2px);
   border-radius: 8px;
   background: transparent;
   color: #fff;
@@ -3550,11 +3557,11 @@ margin:0 auto;
 
 @keyframes bottomNavUnreadPulse {
   0%, 100% {
-    transform: translateY(0);
+    transform: translateY(-2px);
     opacity: 1;
   }
   50% {
-    transform: translateY(-2px);
+    transform: translateY(-4px);
     opacity: 0.76;
   }
 }
@@ -3586,6 +3593,19 @@ body.chatAbierto #chat.chatFullscreen,
 #chat.chatFullscreen {
   bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)) !important;
   height: calc(100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom, 0px)) !important;
+}
+
+@media (min-width: 680px) {
+  #listaJugadores {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  #listaJugadores {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
 }
 
 @media (min-width: 760px) {
