@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Padel Morvedre">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="logo.png">
-<link rel="stylesheet" href="styles.css?v=35">
+<link rel="stylesheet" href="styles.css?v=36">
 </head>
 
 <body>
@@ -915,6 +915,27 @@ Añadir pista
 
 </div>
 
+<div id="perfilSocial" class="container" style="display:none;">
+
+  <div class="jugadoresSticky">
+    <div class="jugadoresTopbar">
+      <h2 id="perfilSocialTitulo">Usuarios</h2>
+      <button class="btnBlue" onclick="volverPerfilSocial()">Volver</button>
+    </div>
+
+    <input id="buscarPerfilSocial" class="jugadoresBuscador" type="search" placeholder="Buscar jugador">
+
+    <div class="jugadoresFiltros" role="group" aria-label="Filtrar usuarios por sexo">
+      <button type="button" class="jugadorFiltroBtn perfilSocialFiltroBtn activo" data-filtro-sexo="todos">Todos</button>
+      <button type="button" class="jugadorFiltroBtn perfilSocialFiltroBtn" data-filtro-sexo="hombre">Hombres</button>
+      <button type="button" class="jugadorFiltroBtn perfilSocialFiltroBtn" data-filtro-sexo="mujer">Mujeres</button>
+    </div>
+  </div>
+
+  <div id="listaPerfilSocial"></div>
+
+</div>
+
 <!-- CHAT -->
 <div id="chat" class="container" style="display:none;">
   <div class="chatHeader">
@@ -1214,16 +1235,16 @@ const db = firebase.firestore();
 </script>
 
 <script src="logros.js?v=5"></script>
-<script src="perfil.js?v=24"></script>
-<script src="jugadores.js"></script>
+<script src="perfil.js?v=25"></script>
+<script src="jugadores.js?v=3"></script>
 <script src="pistas.js?v=11"></script>
 <script src="chat.js?v=13"></script>
 <script src="partidas.js?v=23"></script>
 <script src="nivel.js?v=4"></script>
 <script src="postpartido.js?v=19"></script>
 <script src="notifications.js?v=9"></script>
-<script src="pwa.js?v=11"></script>
-<script src="app.js?v=14"></script>
+<script src="pwa.js?v=13"></script>
+<script src="app.js?v=15"></script>
 <script src="testNivel.js"></script>
 
 <nav id="bottomNav" class="bottomNav" aria-label="Navegacion principal">

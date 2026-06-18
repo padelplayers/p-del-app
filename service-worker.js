@@ -1,12 +1,13 @@
-const CACHE_NAME = "padel-players-morvedre-v51";
+const CACHE_NAME = "padel-players-morvedre-v53";
 const APP_SHELL = [
-  "./styles.css?v=35",
+  "./styles.css?v=36",
   "./logros.js?v=5",
-  "./perfil.js?v=24",
+  "./perfil.js?v=25",
+  "./jugadores.js?v=3",
   "./chat.js?v=13",
   "./partidas.js?v=23",
-  "./pwa.js?v=11",
-  "./app.js?v=14",
+  "./pwa.js?v=13",
+  "./app.js?v=15",
   "./logo.png"
 ];
 
@@ -43,22 +44,10 @@ self.addEventListener("fetch", function(event) {
 
   if (esNavegacion) {
     event.respondWith(
-      fetch(event.request, { cache: "no-store" }).then(function(response) {
-        if (response && response.status === 200) {
-          caches.open(CACHE_NAME).then(function(cache) {
-            cache.put("./index.html", response.clone()).catch(function() {});
-          }).catch(function() {});
-        }
-        return response;
-      }).catch(function() {
-        return caches.match(event.request).then(function(cached) {
-          if (cached) return cached;
-          return caches.match("./index.html").then(function(appShell) {
-            return appShell || new Response("Sin conexi\u00f3n", {
-              status: 503,
-              headers: { "Content-Type": "text/plain; charset=utf-8" }
-            });
-          });
+      fetch(event.request, { cache: "reload" }).catch(function() {
+        return new Response("Sin conexi\u00f3n", {
+          status: 503,
+          headers: { "Content-Type": "text/plain; charset=utf-8" }
         });
       })
     );
@@ -77,9 +66,45 @@ self.addEventListener("fetch", function(event) {
     return;
   }
 
+  if (["script", "style", "worker", "manifest"].includes(event.request.destination)) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(function(cache) {
+        return fetch(event.request, { cache: "reload" }).then(function(response) {
+          if (response && response.status === 200) {
+            cache.put(event.request, response.clone()).catch(function() {});
+          }
+          return response;
+        }).catch(function() {
+          return caches.match(event.request).then(function(cached) {
+            return cached || new Response("", { status: 504 });
+          });
+        });
+      })
+    );
+    return;
+  }
+
+  if (["image", "font"].includes(event.request.destination)) {
+    event.respondWith(
+      caches.match(event.request).then(function(cached) {
+        if (cached) return cached;
+
+        return caches.open(CACHE_NAME).then(function(cache) {
+          return fetch(event.request).then(function(response) {
+            if (response && response.status === 200) {
+              cache.put(event.request, response.clone()).catch(function() {});
+            }
+            return response;
+          });
+        });
+      })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.open(CACHE_NAME).then(function(cache) {
-      return fetch(event.request, { cache: "no-cache" }).then(function(response) {
+      return fetch(event.request, { cache: "reload" }).then(function(response) {
         if (response && response.status === 200) {
           cache.put(event.request, response.clone()).catch(function() {});
         }

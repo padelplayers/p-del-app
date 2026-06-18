@@ -1,5 +1,13 @@
 let unsubscribePerfil = null;
 let unsubscribeUser = null;
+const perfilSocialState = {
+  perfilUid: null,
+  perfilNombre: "",
+  tipo: "seguidores",
+  usuarios: [],
+  filtroSexo: "todos",
+  eventosRegistrados: false
+};
 
 function obtenerTotalPerfil(valor) {
   if (Array.isArray(valor)) return valor.length;
@@ -123,6 +131,34 @@ function renderizarReputacionResumenPerfil(clasificacion) {
       document.createTextNode("reputaci\u00f3n")
     );
   }
+}
+
+function configurarContadorSocialPerfil(elemento, tipo, data) {
+  if (!elemento) return;
+
+  const stat = elemento.closest(".stat");
+  const perfilEl = document.getElementById("perfil");
+  const uid = perfilEl && perfilEl.dataset ? perfilEl.dataset.uid : null;
+
+  if (!stat || !uid) return;
+
+  stat.classList.add("perfilStatPulsable");
+  stat.setAttribute("role", "button");
+  stat.tabIndex = 0;
+  stat.onclick = function() {
+    abrirListaSocialPerfil(tipo);
+  };
+  stat.onkeydown = function(event) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      abrirListaSocialPerfil(tipo);
+    }
+  };
+}
+
+function configurarContadoresSocialesPerfil(data) {
+  configurarContadorSocialPerfil(document.getElementById("seguidores"), "seguidores", data);
+  configurarContadorSocialPerfil(document.getElementById("seguidos"), "seguidos", data);
 }
 
 function crearDatoStatsAvanzadasPerfil(etiqueta, valor) {
@@ -537,6 +573,8 @@ function renderizarDatosVisualesPerfil(data, opciones) {
 
     const seguidos = document.getElementById("seguidos");
     if (seguidos) seguidos.innerText = obtenerTotalPerfil(data.siguiendo);
+
+    configurarContadoresSocialesPerfil(data);
   }
 
   const manoSelect = document.getElementById("manoEditar");
@@ -570,6 +608,152 @@ function configurarBotonChatPrivadoPerfil(uid) {
     }
   } : null;
 }
+
+function registrarEventosPerfilSocial() {
+  if (perfilSocialState.eventosRegistrados) return;
+  perfilSocialState.eventosRegistrados = true;
+
+  const input = document.getElementById("buscarPerfilSocial");
+  if (input) {
+    input.addEventListener("input", renderizarListaSocialPerfil);
+  }
+
+  document.querySelectorAll(".perfilSocialFiltroBtn").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      perfilSocialState.filtroSexo = btn.dataset.filtroSexo || "todos";
+      document.querySelectorAll(".perfilSocialFiltroBtn").forEach(function(boton) {
+        boton.classList.toggle("activo", boton === btn);
+      });
+      renderizarListaSocialPerfil();
+    });
+  });
+}
+
+function textoVacioSocialPerfil() {
+  return perfilSocialState.tipo === "seguidores"
+    ? "Todavia no tiene seguidores"
+    : "Todavia no sigue a nadie";
+}
+
+function renderizarListaSocialPerfil() {
+  const contenedor = document.getElementById("listaPerfilSocial");
+  if (!contenedor) return;
+
+  const input = document.getElementById("buscarPerfilSocial");
+  const texto = typeof window.normalizarTextoJugadores === "function"
+    ? window.normalizarTextoJugadores(input ? input.value : "")
+    : String(input ? input.value : "").toLowerCase().trim();
+
+  const usuarios = perfilSocialState.usuarios.filter(function(jugador) {
+    const nombreNormalizado = jugador.nombreNormalizado || "";
+    const coincideTexto = !texto || nombreNormalizado.startsWith(texto);
+    const coincideSexo = perfilSocialState.filtroSexo === "todos" || jugador.sexoNormalizado === perfilSocialState.filtroSexo;
+    return coincideTexto && coincideSexo;
+  });
+
+  if (usuarios.length === 0) {
+    const vacio = document.createElement("div");
+    vacio.className = "jugadoresVacio";
+    vacio.textContent = perfilSocialState.usuarios.length === 0 ? textoVacioSocialPerfil() : "No hay jugadores";
+    contenedor.replaceChildren(vacio);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  usuarios.forEach(function(jugador) {
+    if (typeof window.crearTarjetaJugadorLista === "function") {
+      fragment.appendChild(window.crearTarjetaJugadorLista(jugador));
+    }
+  });
+
+  contenedor.replaceChildren(fragment);
+}
+
+function cargarUsuariosSocialesPerfil(uids) {
+  const lista = Array.isArray(uids) ? uids.filter(Boolean) : [];
+  const unicos = lista.filter(function(uid, index, arr) {
+    return arr.indexOf(uid) === index;
+  });
+
+  return Promise.all(unicos.map(function(uid) {
+    return db.collection("usuarios").doc(uid).get()
+      .then(function(doc) {
+        if (!doc.exists || typeof window.crearJugadorListaDesdeDoc !== "function") return null;
+        return window.crearJugadorListaDesdeDoc(doc);
+      })
+      .catch(function(error) {
+        console.warn("No se pudo cargar usuario social:", error.message);
+        return null;
+      });
+  })).then(function(usuarios) {
+    return usuarios.filter(Boolean).sort(function(a, b) {
+      return (a.nombreNormalizado || "").localeCompare(b.nombreNormalizado || "");
+    });
+  });
+}
+
+function abrirListaSocialPerfil(tipo) {
+  const perfilEl = document.getElementById("perfil");
+  const uid = perfilEl && perfilEl.dataset ? perfilEl.dataset.uid : null;
+  if (!uid) return;
+
+  registrarEventosPerfilSocial();
+  perfilSocialState.perfilUid = uid;
+  perfilSocialState.tipo = tipo === "seguidos" ? "seguidos" : "seguidores";
+  perfilSocialState.usuarios = [];
+  perfilSocialState.filtroSexo = "todos";
+
+  const input = document.getElementById("buscarPerfilSocial");
+  if (input) input.value = "";
+
+  document.querySelectorAll(".perfilSocialFiltroBtn").forEach(function(btn) {
+    btn.classList.toggle("activo", btn.dataset.filtroSexo === "todos");
+  });
+
+  const titulo = document.getElementById("perfilSocialTitulo");
+  const contenedor = document.getElementById("listaPerfilSocial");
+  if (contenedor) contenedor.replaceChildren(document.createTextNode("Cargando usuarios..."));
+
+  mostrar("perfilSocial");
+  window.scrollTo({ top: 0, behavior: "auto" });
+
+  db.collection("usuarios").doc(uid).get().then(function(doc) {
+    if (!doc.exists) {
+      if (contenedor) contenedor.replaceChildren(document.createTextNode("No se pudo cargar la lista"));
+      return;
+    }
+
+    const data = doc.data() || {};
+    perfilSocialState.perfilNombre = data.nombre || "Jugador";
+    const ids = perfilSocialState.tipo === "seguidores" ? data.seguidores : data.siguiendo;
+
+    if (titulo) {
+      titulo.textContent = perfilSocialState.tipo === "seguidores"
+        ? "Seguidores de " + perfilSocialState.perfilNombre
+        : "Seguidos de " + perfilSocialState.perfilNombre;
+    }
+
+    return cargarUsuariosSocialesPerfil(ids).then(function(usuarios) {
+      perfilSocialState.usuarios = usuarios;
+      renderizarListaSocialPerfil();
+    });
+  }).catch(function(error) {
+    console.error("Error cargando lista social:", error);
+    if (contenedor) contenedor.replaceChildren(document.createTextNode("No se pudo cargar la lista"));
+  });
+}
+
+function volverPerfilSocial() {
+  if (perfilSocialState.perfilUid) {
+    verPerfil(perfilSocialState.perfilUid);
+    return;
+  }
+
+  mostrar("perfil");
+}
+
+window.abrirListaSocialPerfil = abrirListaSocialPerfil;
+window.volverPerfilSocial = volverPerfilSocial;
 
 async function resolverPartidasActivasAntesDeEliminarPerfil(uid) {
   if (!uid) return;

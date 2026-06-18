@@ -717,6 +717,7 @@ function actualizarBottomNavActivo(seccion) {
     buscarPartida: "partidas",
     perfil: "perfil",
     perfilEditar: "perfil",
+    perfilSocial: "perfil",
     chat: "chat"
   };
   const activa = mapaSeccion[seccion] || "";
@@ -846,6 +847,7 @@ function mostrar(seccion){
     "perfilCompletar",
     "perfil",
     "perfilEditar",
+    "perfilSocial",
     "jugadores",
     "pistas",
     "editarPista",

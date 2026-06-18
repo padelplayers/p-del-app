@@ -65,6 +65,22 @@ function crearTarjetaJugador(jugador) {
   return boton;
 }
 
+function crearJugadorListaDesdeDoc(doc) {
+  const data = doc && typeof doc.data === "function" ? (doc.data() || {}) : {};
+  const nombre = data.nombre || "";
+  const sexoNormalizado = normalizarSexoJugador(data.sexo);
+
+  return {
+    uid: doc.id,
+    nombre: nombre,
+    nombreNormalizado: normalizarTextoJugadores(nombre),
+    foto: obtenerFotoJugador(data),
+    nivel: data.nivel || "",
+    sexoTexto: data.sexo || "",
+    sexoNormalizado: sexoNormalizado
+  };
+}
+
 function renderizarJugadores() {
   const contenedor = document.getElementById("listaJugadores");
   if (!contenedor) return;
@@ -109,19 +125,7 @@ function cargarJugadores() {
     jugadoresCache = [];
 
     snapshot.forEach(function(doc) {
-      const data = doc.data() || {};
-      const nombre = data.nombre || "";
-      const sexoNormalizado = normalizarSexoJugador(data.sexo);
-
-      jugadoresCache.push({
-        uid: doc.id,
-        nombre: nombre,
-        nombreNormalizado: normalizarTextoJugadores(nombre),
-        foto: obtenerFotoJugador(data),
-        nivel: data.nivel || "",
-        sexoTexto: data.sexo || "",
-        sexoNormalizado: sexoNormalizado
-      });
+      jugadoresCache.push(crearJugadorListaDesdeDoc(doc));
     });
 
     jugadoresCache.sort(function(a, b) {
@@ -164,3 +168,6 @@ function abrirJugadores() {
 
 window.cargarJugadores = cargarJugadores;
 window.abrirJugadores = abrirJugadores;
+window.crearTarjetaJugadorLista = crearTarjetaJugador;
+window.crearJugadorListaDesdeDoc = crearJugadorListaDesdeDoc;
+window.normalizarTextoJugadores = normalizarTextoJugadores;

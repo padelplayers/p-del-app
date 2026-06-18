@@ -2,7 +2,7 @@ window.pwaState = window.pwaState || {
   deferredPrompt: null
 };
 
-const PWA_APP_VERSION = "v51";
+const PWA_APP_VERSION = "v53";
 const PWA_INSTALADA_KEY = "pwaInstalada";
 const PWA_SW_UPDATE_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -148,10 +148,7 @@ function initPwaBasica() {
     let recargaPorServiceWorker = false;
     navigator.serviceWorker.addEventListener("controllerchange", function() {
       if (recargaPorServiceWorker) return;
-      const reloadKey = "swReloadDone_" + PWA_APP_VERSION;
-      if (sessionStorage.getItem(reloadKey) === "true") return;
       recargaPorServiceWorker = true;
-      sessionStorage.setItem(reloadKey, "true");
       window.location.reload();
     });
   }

@@ -1196,7 +1196,8 @@ body.chatAbierto{
   color: #fff;
 }
 
-#listaJugadores {
+#listaJugadores,
+#listaPerfilSocial {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
@@ -1258,14 +1259,16 @@ body.chatAbierto{
 }
 
 @media (min-width: 680px) {
-  #listaJugadores {
+  #listaJugadores,
+  #listaPerfilSocial {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
   }
 }
 
 @media (min-width: 1024px) {
-  #listaJugadores {
+  #listaJugadores,
+  #listaPerfilSocial {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
@@ -1303,6 +1306,16 @@ button[onclick*="mostrar('menu')"]{
   flex-direction:column;
   align-items:center;
   flex:1;
+}
+
+.perfil-stats > .stat.perfilStatPulsable {
+  cursor: pointer;
+}
+
+@media (hover:hover) {
+  .perfil-stats > .stat.perfilStatPulsable:hover {
+    color:#1565C0;
+  }
 }
 
 .perfil-stats > .stat > div{
@@ -2955,7 +2968,8 @@ margin:0 auto;
     display:inline-flex !important;
   }
 
-  #listaJugadores {
+  #listaJugadores,
+  #listaPerfilSocial {
     display:grid !important;
     grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
     align-items:stretch !important;
@@ -3625,14 +3639,16 @@ body.chatAbierto #chat.chatFullscreen,
 }
 
 @media (min-width: 680px) {
-  #listaJugadores {
+  #listaJugadores,
+  #listaPerfilSocial {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 16px !important;
   }
 }
 
 @media (min-width: 1024px) {
-  #listaJugadores {
+  #listaJugadores,
+  #listaPerfilSocial {
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 }
