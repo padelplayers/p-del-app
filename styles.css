@@ -1310,11 +1310,19 @@ button[onclick*="mostrar('menu')"]{
 
 .perfil-stats > .stat.perfilStatPulsable {
   cursor: pointer;
+  padding: 6px 4px;
+  border: 1px solid rgba(21,101,192,0.18);
+  border-radius: 8px;
+  background: #fff;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
 @media (hover:hover) {
   .perfil-stats > .stat.perfilStatPulsable:hover {
-    color:#1565C0;
+    background:#f5f9ff;
+    border-color:#1565C0;
+    transform: translateY(-1px);
   }
 }
 

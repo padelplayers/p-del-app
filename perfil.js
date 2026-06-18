@@ -144,14 +144,17 @@ function configurarContadorSocialPerfil(elemento, tipo, data) {
 
   stat.classList.add("perfilStatPulsable");
   stat.setAttribute("role", "button");
+  stat.setAttribute("aria-label", tipo === "seguidores" ? "Ver seguidores" : "Ver seguidos");
   stat.tabIndex = 0;
+  stat.dataset.uidPerfil = uid;
+  stat.dataset.tipoSocial = tipo;
   stat.onclick = function() {
-    abrirListaSocialPerfil(tipo);
+    abrirPerfilSocial(uid, tipo);
   };
   stat.onkeydown = function(event) {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      abrirListaSocialPerfil(tipo);
+      abrirPerfilSocial(uid, tipo);
     }
   };
 }
@@ -692,14 +695,16 @@ function cargarUsuariosSocialesPerfil(uids) {
   });
 }
 
-function abrirListaSocialPerfil(tipo) {
-  const perfilEl = document.getElementById("perfil");
-  const uid = perfilEl && perfilEl.dataset ? perfilEl.dataset.uid : null;
+function normalizarTipoSocialPerfil(tipo) {
+  return tipo === "seguidos" || tipo === "siguiendo" ? "seguidos" : "seguidores";
+}
+
+function abrirPerfilSocial(uid, tipo) {
   if (!uid) return;
 
   registrarEventosPerfilSocial();
   perfilSocialState.perfilUid = uid;
-  perfilSocialState.tipo = tipo === "seguidos" ? "seguidos" : "seguidores";
+  perfilSocialState.tipo = normalizarTipoSocialPerfil(tipo);
   perfilSocialState.usuarios = [];
   perfilSocialState.filtroSexo = "todos";
 
@@ -743,6 +748,12 @@ function abrirListaSocialPerfil(tipo) {
   });
 }
 
+function abrirListaSocialPerfil(tipo) {
+  const perfilEl = document.getElementById("perfil");
+  const uid = perfilEl && perfilEl.dataset ? perfilEl.dataset.uid : null;
+  abrirPerfilSocial(uid, tipo);
+}
+
 function volverPerfilSocial() {
   if (perfilSocialState.perfilUid) {
     verPerfil(perfilSocialState.perfilUid);
@@ -752,6 +763,7 @@ function volverPerfilSocial() {
   mostrar("perfil");
 }
 
+window.abrirPerfilSocial = abrirPerfilSocial;
 window.abrirListaSocialPerfil = abrirListaSocialPerfil;
 window.volverPerfilSocial = volverPerfilSocial;
 
