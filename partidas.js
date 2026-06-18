@@ -497,7 +497,10 @@ function datosTextoSistemaPartida(p) {
 }
 
 function crearMensajeSistemaPartida(partidaId, p, config) {
-  if (typeof window.crearOMantenerMensajeSistemaGeneral !== "function") return Promise.resolve(null);
+  if (typeof window.crearOMantenerMensajeSistemaGeneral !== "function") {
+    console.warn("[SISTEMA CHAT] Helper crearOMantenerMensajeSistemaGeneral no disponible. Revisar carga/versionado de chat.js.");
+    return Promise.resolve(null);
+  }
   if (!partidaId || !p || !config || !config.dedupeKey || !config.eventType || typeof config.texto !== "function") {
     return Promise.resolve(null);
   }

@@ -439,7 +439,13 @@ function crearOMantenerMensajeSistemaGeneral(config) {
       return docId;
     });
   }).catch(function(error) {
-    console.warn("[CHAT] No se pudo crear mensaje Sistema:", error.message);
+    console.warn("[CHAT] No se pudo crear mensaje Sistema:", {
+      dedupeKey: config.dedupeKey,
+      partidaId: config.partidaId || null,
+      eventType: config.eventType || null,
+      code: error && error.code,
+      message: error && error.message
+    });
     return null;
   });
 }
