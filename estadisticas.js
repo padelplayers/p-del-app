@@ -80,6 +80,7 @@ function fechaPartidaEstadisticas(partida) {
 
 function resultadoValidoEstadisticas(partida) {
   const resultado = partida && partida.resultado;
+  if (partida && partida.resultadoValido === true) return true;
   if (!resultado || resultado.estado !== "validado") return false;
 
   const equipo1 = Array.isArray(resultado.equipo1) ? resultado.equipo1 : [];
@@ -89,13 +90,18 @@ function resultadoValidoEstadisticas(partida) {
   return equipo1.length === 2 && equipo2.length === 2 && sets.length >= 2;
 }
 
+function estadoValidoHistorialEstadisticas(partida) {
+  const estado = String((partida && (partida.estadoFinal || partida.estado)) || "").toLowerCase().trim();
+  return estado === "finalizada" || estado === "confirmada";
+}
+
 function partidaEsPruebaEstadisticas(partida) {
   if (!partida) return false;
   return partida.prueba === true || partida.test === true || partida.esPrueba === true;
 }
 
 function partidaValidaEstadisticas(partida, periodo, inicio, fin) {
-  if (!partida || partida.estado !== "finalizada") return false;
+  if (!partida || !estadoValidoHistorialEstadisticas(partida)) return false;
   if (partidaEsPruebaEstadisticas(partida)) return false;
   if (!resultadoValidoEstadisticas(partida)) return false;
   if (!partida.pistaId && !partida.pistaNombre && !partida.nombrePista) return false;
@@ -174,15 +180,7 @@ function cargarPistaEstadisticas(pistaId) {
 }
 
 function cargarPartidasHistorialEstadisticas(periodo, inicio, fin) {
-  let consulta = db.collection("historial_partidas").where("estado", "==", "finalizada");
-
-  if (periodo !== "total" && inicio && fin) {
-    consulta = consulta
-      .where("finalizadaAt", ">=", inicio)
-      .where("finalizadaAt", "<", fin);
-  }
-
-  return consulta.get().then(function(snapshot) {
+  return db.collection("historial_partidas").get().then(function(snapshot) {
     return snapshot.docs.map(function(doc) {
       return Object.assign({ idPartida: doc.id }, doc.data() || {});
     });
