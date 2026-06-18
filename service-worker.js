@@ -1,10 +1,11 @@
-const CACHE_NAME = "padel-players-morvedre-v47";
+const CACHE_NAME = "padel-players-morvedre-v48";
 const APP_SHELL = [
   "./styles.css?v=33",
   "./logros.js?v=5",
   "./chat.js?v=13",
   "./partidas.js?v=23",
-  "./pwa.js?v=7",
+  "./pwa.js?v=8",
+  "./app.js?v=13",
   "./logo.png"
 ];
 
@@ -41,10 +42,30 @@ self.addEventListener("fetch", function(event) {
 
   if (esNavegacion) {
     event.respondWith(
-      fetch(event.request, { cache: "no-store" }).catch(function() {
-        return caches.match("./index.html");
+      fetch(event.request, { cache: "no-store" }).then(function(response) {
+        if (response && response.status === 200) {
+          caches.open(CACHE_NAME).then(function(cache) {
+            cache.put("./index.html", response.clone()).catch(function() {});
+          }).catch(function() {});
+        }
+        return response;
+      }).catch(function() {
+        return caches.match(event.request).then(function(cached) {
+          if (cached) return cached;
+          return caches.match("./index.html").then(function(appShell) {
+            return appShell || new Response("Sin conexi\u00f3n", {
+              status: 503,
+              headers: { "Content-Type": "text/plain; charset=utf-8" }
+            });
+          });
+        });
       })
     );
+    return;
+  }
+
+  if (url.origin === self.location.origin && url.pathname.endsWith("/service-worker.js")) {
+    event.respondWith(fetch(event.request, { cache: "no-store" }));
     return;
   }
 
@@ -63,7 +84,9 @@ self.addEventListener("fetch", function(event) {
         }
         return response;
       }).catch(function() {
-        return caches.match(event.request);
+        return caches.match(event.request).then(function(cached) {
+          return cached || new Response("", { status: 504 });
+        });
       });
     })
   );

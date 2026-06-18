@@ -2,8 +2,9 @@ window.pwaState = window.pwaState || {
   deferredPrompt: null
 };
 
-const PWA_SW_VERSION = "v47";
+const PWA_APP_VERSION = "v48";
 const PWA_INSTALADA_KEY = "pwaInstalada";
+const PWA_SW_UPDATE_INTERVAL_MS = 60 * 60 * 1000;
 
 function pwaEstaInstalada() {
   return (
@@ -51,6 +52,33 @@ function registrarActualizacionesServiceWorker(registration) {
       }
     });
   });
+}
+
+function comprobarActualizacionServiceWorker(registration) {
+  if (!registration || typeof registration.update !== "function") {
+    return Promise.resolve(null);
+  }
+
+  return registration.update().catch(function(error) {
+    console.warn("No se pudo comprobar actualizaci\u00f3n del service worker:", error.message);
+    return null;
+  });
+}
+
+function programarComprobacionesServiceWorker(registration) {
+  if (!registration || window.pwaState.swUpdateProgramado) return;
+
+  window.pwaState.swUpdateProgramado = true;
+  const comprobar = function() {
+    comprobarActualizacionServiceWorker(registration);
+  };
+
+  window.pwaState.swUpdateTimer = setInterval(comprobar, PWA_SW_UPDATE_INTERVAL_MS);
+  document.addEventListener("visibilitychange", function() {
+    if (document.visibilityState === "visible") comprobar();
+  });
+  window.addEventListener("focus", comprobar);
+  window.addEventListener("online", comprobar);
 }
 
 function actualizarBotonInstalarPwa() {
@@ -107,10 +135,11 @@ function initPwaBasica() {
   localStorage.removeItem(PWA_INSTALADA_KEY);
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js?" + PWA_SW_VERSION)
+    navigator.serviceWorker.register("service-worker.js", { updateViaCache: "none" })
       .then(function(registration) {
         registrarActualizacionesServiceWorker(registration);
-        return registration.update();
+        programarComprobacionesServiceWorker(registration);
+        return comprobarActualizacionServiceWorker(registration);
       })
       .catch(function(error) {
         console.warn("No se pudo registrar service worker:", error.message);
@@ -119,7 +148,7 @@ function initPwaBasica() {
     let recargaPorServiceWorker = false;
     navigator.serviceWorker.addEventListener("controllerchange", function() {
       if (recargaPorServiceWorker) return;
-      const reloadKey = "swReloadDone_" + PWA_SW_VERSION;
+      const reloadKey = "swReloadDone_" + PWA_APP_VERSION;
       if (sessionStorage.getItem(reloadKey) === "true") return;
       recargaPorServiceWorker = true;
       sessionStorage.setItem(reloadKey, "true");
