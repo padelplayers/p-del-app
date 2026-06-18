@@ -3464,7 +3464,7 @@ margin:0 auto;
   min-width: 0;
   height: 100%;
   margin: 0;
-  padding: 4px 2px;
+  padding: 5px 2px;
   border-radius: 8px;
   background: transparent;
   color: #fff;
@@ -3475,12 +3475,29 @@ margin:0 auto;
   gap: 3px;
   line-height: 1;
   box-shadow: none;
+  box-sizing: border-box;
 }
 
 .bottomNavIcon {
   color: #fff;
-  font-size: 22px;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
+}
+
+.bottomNavIcon svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
 }
 
 .bottomNavLabel {
@@ -3494,19 +3511,16 @@ margin:0 auto;
   white-space: nowrap;
 }
 
-.bottomNavBtn.activo .bottomNavIcon,
-.bottomNavBtn.activo .bottomNavLabel {
-  color: #2E7D32;
+.bottomNavBtn.activo {
+  background: #2E7D32;
 }
 
-.bottomNavBtn.hasUnread .bottomNavIcon,
-.bottomNavBtn.hasUnread .bottomNavLabel {
-  color: #FFC107;
+.bottomNavBtn.hasUnread {
+  background: #FFC107;
 }
 
-.bottomNavBtn.activo.hasUnread .bottomNavIcon,
-.bottomNavBtn.activo.hasUnread .bottomNavLabel {
-  color: #2E7D32;
+.bottomNavBtn.activo.hasUnread {
+  background: #2E7D32;
 }
 
 .bottomNavBtn.hasUnread:not(.activo) {
