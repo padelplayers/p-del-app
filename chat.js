@@ -387,6 +387,135 @@ function obtenerMensajesChatRef(chatId) {
   return null;
 }
 
+function obtenerMensajesGeneralRef() {
+  return db.collection("chats").doc("general").collection("mensajes");
+}
+
+function crearDocIdMensajeSistema(dedupeKey) {
+  const base = String(dedupeKey || "")
+    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .slice(0, 150);
+  return base || ("system_" + Date.now());
+}
+
+function crearOMantenerMensajeSistemaGeneral(config) {
+  if (!config || !config.dedupeKey || !config.texto) return Promise.resolve(null);
+
+  const mensajesRef = obtenerMensajesGeneralRef();
+  const docId = crearDocIdMensajeSistema(config.dedupeKey);
+  const msgRef = mensajesRef.doc(docId);
+  const generalRef = db.collection("chats").doc("general");
+
+  return db.runTransaction(function(transaction) {
+    return transaction.get(msgRef).then(function(doc) {
+      if (doc.exists) return doc.id;
+
+      const ahora = firebase.firestore.FieldValue.serverTimestamp();
+      const payload = {
+        u: "sistema",
+        n: "Sistema",
+        t: config.texto,
+        at: ahora,
+        type: "system",
+        system: true,
+        origin: config.origin || "partidas",
+        partidaId: config.partidaId || null,
+        eventType: config.eventType || null,
+        dedupeKey: config.dedupeKey,
+        action: config.action || "abrir_partida",
+        valid: true,
+        createdAt: ahora
+      };
+
+      transaction.set(msgRef, payload);
+      transaction.set(generalRef, {
+        lastMessage: config.texto,
+        lastActivity: ahora,
+        lastSender: "sistema",
+        lastSenderName: "Sistema",
+        lastMessageType: "system"
+      }, { merge: true });
+
+      return docId;
+    });
+  }).catch(function(error) {
+    console.warn("[CHAT] No se pudo crear mensaje Sistema:", error.message);
+    return null;
+  });
+}
+
+function resolverMensajeSistemaGeneral(dedupeKey) {
+  if (!dedupeKey) return Promise.resolve(false);
+
+  const msgRef = obtenerMensajesGeneralRef().doc(crearDocIdMensajeSistema(dedupeKey));
+  return msgRef.get().then(function(doc) {
+    if (!doc.exists) return false;
+    const data = doc.data() || {};
+    if (data.system !== true && data.type !== "system") return false;
+    return msgRef.delete().then(function() { return true; });
+  }).catch(function(error) {
+    console.warn("[CHAT] No se pudo resolver mensaje Sistema:", error.message);
+    return false;
+  });
+}
+
+function resolverMensajesSistemaPorPartida(partidaId, opciones) {
+  if (!partidaId) return Promise.resolve(0);
+  opciones = opciones || {};
+  const dedupeKeys = Array.isArray(opciones.dedupeKeys) ? opciones.dedupeKeys : null;
+  const eventTypes = Array.isArray(opciones.eventTypes) ? opciones.eventTypes : null;
+
+  return obtenerMensajesGeneralRef().where("partidaId", "==", partidaId).get()
+    .then(function(snapshot) {
+      const batch = db.batch();
+      let contador = 0;
+
+      snapshot.forEach(function(doc) {
+        const data = doc.data() || {};
+        const esSistema = data.system === true || data.type === "system";
+        if (!esSistema) return;
+        if (dedupeKeys && !dedupeKeys.includes(data.dedupeKey)) return;
+        if (eventTypes && !eventTypes.includes(data.eventType)) return;
+
+        batch.delete(doc.ref);
+        contador++;
+      });
+
+      if (!contador) return 0;
+      return batch.commit().then(function() { return contador; });
+    }).catch(function(error) {
+      console.warn("[CHAT] No se pudieron resolver mensajes Sistema de la partida:", error.message);
+      return 0;
+    });
+}
+
+function abrirPartidaDesdeChatGeneral(partidaId) {
+  if (!partidaId) return;
+
+  window.partidaPendienteDestacar = partidaId;
+  if (typeof mostrar === "function") {
+    mostrar("partidas");
+  }
+
+  if (typeof cargarPartidas === "function") {
+    cargarPartidas();
+  }
+
+  let intentos = 0;
+  const intentarDestacar = function() {
+    intentos++;
+    if (typeof window.destacarPartidaEnLista === "function" && window.destacarPartidaEnLista(partidaId)) {
+      window.partidaPendienteDestacar = null;
+      return;
+    }
+    if (intentos < 8) {
+      setTimeout(intentarDestacar, 250);
+    }
+  };
+
+  setTimeout(intentarDestacar, 250);
+}
+
 async function obtenerNombreAutorChat(user) {
   if (!user) return "Jugador";
   if (chatNombresUsuarios[user.uid]) return chatNombresUsuarios[user.uid];
@@ -501,9 +630,67 @@ function limpiarListenerUsuariosOnline() {
  * Arquitectura atómica para permitir actualizaciones futuras (reacciones, edición).
  */
 function crearNodoMensaje(msg) {
+  const esSistema = msg && (msg.system === true || msg.type === "system");
   const div = document.createElement("div");
-  div.className = "chatMessage" + (msg.propio ? " mine" : "");
+  div.className = "chatMessage" + (!esSistema && msg.propio ? " mine" : "") + (esSistema ? " chatMessageSistema" : "");
   div.dataset.msgId = msg.id; // Identificador persistente
+
+  if (esSistema) {
+    const puedeAbrirPartida = msg.action === "abrir_partida" && !!msg.partidaId;
+    const header = document.createElement("div");
+    header.className = "chatSistemaHeader";
+
+    const logo = document.createElement("img");
+    logo.className = "chatSistemaLogo";
+    logo.src = "logo.png";
+    logo.alt = "";
+    logo.setAttribute("aria-hidden", "true");
+
+    const name = document.createElement("div");
+    name.className = "chatMessageName chatSistemaAutor";
+    name.textContent = "Sistema";
+
+    const text = document.createElement("div");
+    text.className = "chatSistemaTexto";
+    text.textContent = msg.texto || "";
+
+    const meta = document.createElement("div");
+    meta.className = "chatMessageMeta chatSistemaMeta";
+    meta.textContent = msg.hora || "";
+
+    header.appendChild(logo);
+    header.appendChild(name);
+    div.appendChild(header);
+    div.appendChild(text);
+
+    if (puedeAbrirPartida) {
+      const accion = document.createElement("button");
+      accion.type = "button";
+      accion.className = "chatSistemaAccion";
+      accion.textContent = "Abrir partida";
+      accion.onclick = function(event) {
+        event.stopPropagation();
+        abrirPartidaDesdeChatGeneral(msg.partidaId);
+      };
+
+      div.classList.add("chatMessageActionable");
+      div.tabIndex = 0;
+      div.onclick = function() {
+        abrirPartidaDesdeChatGeneral(msg.partidaId);
+      };
+      div.onkeydown = function(event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          abrirPartidaDesdeChatGeneral(msg.partidaId);
+        }
+      };
+
+      div.appendChild(accion);
+    }
+
+    div.appendChild(meta);
+    return div;
+  }
 
   const name = document.createElement("div");
   name.className = "chatMessageName";
@@ -608,11 +795,17 @@ function gestionarListenerChat(chatId, query) {
 
       const msgObj = {
         id: doc.id,
-        autor: data.n || "Jugador",
+        autor: (data.system === true || data.type === "system") ? "Sistema" : (data.n || "Jugador"),
         texto: data.t || "",
         at_val: atMillis,
         hora: data.at ? new Date(atMillis).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "...",
-        propio: data.u === auth.currentUser?.uid
+        propio: !(data.system === true || data.type === "system") && data.u === auth.currentUser?.uid,
+        type: data.type || "text",
+        system: data.system === true,
+        partidaId: data.partidaId || null,
+        action: data.action || null,
+        eventType: data.eventType || null,
+        dedupeKey: data.dedupeKey || null
       };
 
       if (change.type === "added" || change.type === "modified") {
@@ -1279,6 +1472,11 @@ window.marcarChatNoLeido = marcarChatNoLeido;
 window.limpiarListenersChat = limpiarListenersChat;
 window.cerrarChatTab = cerrarChatTab;
 window.gestionarListenerChat = gestionarListenerChat;
+window.crearDocIdMensajeSistema = crearDocIdMensajeSistema;
+window.crearOMantenerMensajeSistemaGeneral = crearOMantenerMensajeSistemaGeneral;
+window.resolverMensajeSistemaGeneral = resolverMensajeSistemaGeneral;
+window.resolverMensajesSistemaPorPartida = resolverMensajesSistemaPorPartida;
+window.abrirPartidaDesdeChatGeneral = abrirPartidaDesdeChatGeneral;
 window.chatPartidaTieneNoLeidos = function(chatId) {
   return !!(chatState.chats[chatId] && chatState.chats[chatId].noLeidos);
 };

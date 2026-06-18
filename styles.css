@@ -508,6 +508,62 @@ body.chatAbierto{
   text-align:right;
 }
 
+.chatMessageSistema{
+  max-width:82%;
+  border:1px solid rgba(21,101,192,0.18);
+  border-radius:14px;
+  background:#E3F2FD;
+  color:#0D47A1;
+  box-shadow:0 2px 8px rgba(21,101,192,0.12);
+}
+
+.chatMessageSistema.chatMessageActionable{
+  cursor:pointer;
+}
+
+.chatSistemaHeader{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-bottom:4px;
+}
+
+.chatSistemaLogo{
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  object-fit:cover;
+  flex:0 0 auto;
+  background:#fff;
+}
+
+.chatSistemaAutor{
+  color:#1565C0;
+  font-size:12px;
+}
+
+.chatSistemaTexto{
+  color:#0D47A1;
+  font-weight:600;
+}
+
+.chatSistemaMeta{
+  color:#1565C0;
+}
+
+.chatSistemaAccion{
+  margin-top:7px;
+  width:auto;
+  border:0;
+  border-radius:8px;
+  background:#1565C0;
+  color:#fff;
+  padding:5px 9px;
+  font-size:12px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
 .chatEmpty{
   height:100%;
   display:flex;
@@ -1716,6 +1772,11 @@ button[onclick*="mostrar('menu')"]{
   margin-bottom: 10px;
   border-radius: 10px;
   box-sizing: border-box;
+}
+
+.partidaCardDestacada {
+  border-color: #1565C0;
+  box-shadow: 0 0 0 3px rgba(21,101,192,0.18);
 }
 
 .partidaCabecera {
