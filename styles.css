@@ -2235,6 +2235,17 @@ button[onclick*="mostrar('menu')"]{
   justify-items: center;
 }
 
+.jugadorSlot.perfilPulsable,
+.jugadorPartidaPerfil {
+  cursor: pointer;
+}
+
+@media (hover:hover) {
+  .jugadorPartidaPerfil:hover {
+    transform: translateY(-1px);
+  }
+}
+
 .cardPista {
   border: 1px solid #ddd;
   border-radius: 10px;

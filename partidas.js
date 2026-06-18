@@ -1134,6 +1134,7 @@ function pintarJugador(uid, slotId) {
   if (!el) return;
 
   if (!uid) {
+    el.classList.remove("perfilPulsable");
     const wrapper = document.createElement("div");
     wrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; gap:4px; color:#999; cursor:pointer;";
     wrapper.onclick = function() { unirseAPartida(slotId); };
@@ -1177,7 +1178,20 @@ function pintarJugador(uid, slotId) {
     else if (u.genero === "mujer") imgSrc = "imagen/mujer.jpeg";
 
     const wrapper = document.createElement("div");
+    wrapper.className = "jugadorPartidaPerfil";
     wrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; gap:4px;";
+    wrapper.setAttribute("role", "button");
+    wrapper.tabIndex = 0;
+    wrapper.onclick = function() {
+      if (uid && typeof verPerfil === "function") verPerfil(uid);
+    };
+    wrapper.onkeydown = function(event) {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        if (uid && typeof verPerfil === "function") verPerfil(uid);
+      }
+    };
+    el.classList.add("perfilPulsable");
 
     const fotoWrap = document.createElement("div");
     fotoWrap.style.cssText = "position:relative; width:40px; height:40px;";
