@@ -72,7 +72,7 @@ auth.onAuthStateChanged(async user => {
     const doc = await db.collection("usuarios").doc(user.uid).get();
     const data = doc.data();
 
-    esAdmin = data && data.rol === "admin";
+    esAdmin = data && (data.admin === true || data.rol === "admin");
 
     if (typeof window.asegurarRestriccionFiabilidadUsuario === "function") {
       await window.asegurarRestriccionFiabilidadUsuario(user.uid, data || {}).catch(function(error) {
@@ -167,6 +167,13 @@ function iniciarPresenciaAvanzada(uid) {
   }, PRESENCIA_HEARTBEAT_MS);
 
   return actualizarPresenciaUsuario(uid, true);
+}
+
+function actualizarBotonEstadisticasAdmin() {
+  const btnMenu = document.getElementById("btnMenuEstadisticas");
+  const btnPerfil = document.getElementById("btnPerfilEstadisticas");
+  if (btnMenu) btnMenu.style.display = esAdmin ? "flex" : "none";
+  if (btnPerfil) btnPerfil.style.display = esAdmin ? "block" : "none";
 }
 
 function recuperarPassword() {
@@ -392,6 +399,7 @@ auth.onAuthStateChanged(async user => {
 
       const data = doc.data();
       esAdmin = data && (data.admin === true || data.rol === "admin");
+      actualizarBotonEstadisticasAdmin();
 
       try {
         await iniciarPresenciaAvanzada(user.uid);
@@ -432,6 +440,7 @@ auth.onAuthStateChanged(async user => {
 
     } else {
       esAdmin = false;
+      actualizarBotonEstadisticasAdmin();
       avisoNivelMostrado = false;
       mostrar("perfilCompletar");
     }
@@ -440,6 +449,7 @@ auth.onAuthStateChanged(async user => {
   }
 
   esAdmin = false;
+  actualizarBotonEstadisticasAdmin();
   revisionCancelaciones5hSesionUid = null;
   detenerPresenciaAvanzada(null, false);
   if (typeof window.limpiarTodoChat === "function") {
@@ -858,7 +868,8 @@ function mostrar(seccion){
     "partidas",
     "crearPartida",
     "buscarPartida",
-    "clasificacion"
+    "clasificacion",
+    "estadisticas"
   ];
 
   secciones.forEach(function(id){
@@ -935,6 +946,10 @@ function mostrar(seccion){
 
 if (seccion === "pistas"){
   cargarPistas();
+}
+
+if (seccion === "estadisticas" && typeof window.cargarEstadisticas === "function") {
+  window.cargarEstadisticas();
 }
 
 if (seccion === "crearPartida") {

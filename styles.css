@@ -143,9 +143,171 @@ button{
   border-radius:10px;
 }
 
+.menuButtonIcon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.menuButtonIcon svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: 0 0 auto;
+}
+
 #menu{display:none;}
 #perfilCompletar{display:none;}
 #testNivel{display:none;}
+
+.estadisticasHeader {
+  position: sticky;
+  top: 48px;
+  z-index: 20;
+  background: #fff;
+  padding: 8px 0 12px;
+}
+
+.estadisticasHeader h2 {
+  color: #1565C0;
+  margin: 8px 0 12px;
+  text-align: center;
+}
+
+.estadisticasFiltros {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 4px 4px;
+}
+
+.estadisticasFiltroBtn {
+  flex: 1 0 auto;
+  min-width: 72px;
+  border: 2px solid #1565C0;
+  background: #fff;
+  color: #1565C0;
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-weight: 700;
+}
+
+.estadisticasFiltroBtn.activo {
+  background: #1565C0;
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.35);
+}
+
+.estadisticasResumen {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.estadisticasResumenCard,
+.estadisticasPistaCard {
+  background: #fff;
+  border: 2px solid #1565C0;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.estadisticasResumenCard {
+  padding: 12px;
+  text-align: center;
+}
+
+.estadisticasResumenCard span {
+  display: block;
+  color: #1565C0;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.estadisticasResumenCard strong {
+  display: block;
+  color: #222;
+  font-size: 20px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.estadisticasLista {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding-bottom: 20px;
+}
+
+.estadisticasPistaCard {
+  padding: 12px;
+  text-align: left;
+}
+
+.estadisticasPistaCabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  color: #1565C0;
+  margin-bottom: 8px;
+}
+
+.estadisticasPistaCabecera strong {
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.estadisticasPistaCabecera span {
+  flex: 0 0 auto;
+  background: #FFC107;
+  color: #222;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-weight: 800;
+}
+
+.estadisticasPistaLocalidad,
+.estadisticasPistaDetalle,
+.estadisticasPistaUltima {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.35;
+  margin-top: 5px;
+}
+
+.estadisticasPistaDetalle {
+  font-weight: 700;
+}
+
+.estadisticasVacio {
+  grid-column: 1 / -1;
+  background: #fff;
+  border: 2px solid #1565C0;
+  border-radius: 8px;
+  color: #1565C0;
+  font-weight: 700;
+  padding: 18px;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .estadisticasHeader {
+    top: 46px;
+  }
+
+  .estadisticasResumen,
+  .estadisticasLista {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* CHAT */
 

@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Padel Morvedre">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="logo.png">
-<link rel="stylesheet" href="styles.css?v=37">
+<link rel="stylesheet" href="styles.css?v=38">
 </head>
 
 <body>
@@ -135,6 +135,7 @@
       <button id="btnEditar" onclick="editarPerfil()">Editar perfil</button>
       <button id="btnSeguir" class="btnYellow" style="display:none;">Seguir</button>
       <button id="btnChatPrivadoPerfil" class="btnBlue" type="button" style="display:none;">Chat privado</button>
+      <button id="btnPerfilEstadisticas" class="btnBlue" type="button" onclick="abrirEstadisticas()" style="display:none;">Estadísticas</button>
       <button id="btnEliminar" class="rojo" onclick="eliminarPerfil()">Eliminar perfil</button>
     </div>
 
@@ -501,12 +502,42 @@ Juego en red
 
   <button id="btnMenuChat" class="menuButton" onclick="abrirChatGeneral()">Chat</button>
 
+  <button id="btnMenuEstadisticas" class="menuButton menuButtonIcon" type="button" onclick="abrirEstadisticas()" style="display:none;">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 19h16"></path>
+      <path d="M6 16l4-5 3 3 5-7"></path>
+      <path d="M15 7h3v3"></path>
+    </svg>
+    <span>Estadísticas</span>
+  </button>
+
   <button class="menuButton" onclick="abrirGuiaUsoNormal()">Guía de Uso</button>
 
   <button id="btnInstalarPwaMenu" class="menuButton" type="button" style="display:none;">Instalar app</button>
 
   <button class="logout" onclick="logout()">Cerrar sesión</button>
 
+</div>
+
+<!-- SECCION ESTADISTICAS -->
+<div id="estadisticas" class="container" style="display:none;">
+  <div class="volverSticky">
+    <button class="btnBlue" onclick="volverEstadisticas()">Volver</button>
+  </div>
+
+  <div class="estadisticasHeader">
+    <h2>Estadísticas</h2>
+    <div class="estadisticasFiltros" aria-label="Periodo">
+      <button type="button" class="estadisticasFiltroBtn" data-periodo="dia">Día</button>
+      <button type="button" class="estadisticasFiltroBtn" data-periodo="semana">Semana</button>
+      <button type="button" class="estadisticasFiltroBtn activo" data-periodo="mes">Mes</button>
+      <button type="button" class="estadisticasFiltroBtn" data-periodo="ano">Año</button>
+      <button type="button" class="estadisticasFiltroBtn" data-periodo="total">Total</button>
+    </div>
+  </div>
+
+  <div id="estadisticasResumen" class="estadisticasResumen"></div>
+  <div id="estadisticasLista" class="estadisticasLista"></div>
 </div>
 
 <!-- SECCION PISTAS -->
@@ -1243,8 +1274,9 @@ const db = firebase.firestore();
 <script src="nivel.js?v=4"></script>
 <script src="postpartido.js?v=19"></script>
 <script src="notifications.js?v=10"></script>
-<script src="pwa.js?v=16"></script>
-<script src="app.js?v=15"></script>
+<script src="estadisticas.js?v=1"></script>
+<script src="pwa.js?v=17"></script>
+<script src="app.js?v=16"></script>
 <script src="testNivel.js"></script>
 
 <nav id="bottomNav" class="bottomNav" aria-label="Navegacion principal">
