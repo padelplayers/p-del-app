@@ -6,7 +6,8 @@ const perfilSocialState = {
   tipo: "seguidores",
   usuarios: [],
   filtroSexo: "todos",
-  eventosRegistrados: false
+  eventosRegistrados: false,
+  delegacionPerfilRegistrada: false
 };
 
 function obtenerTotalPerfil(valor) {
@@ -140,28 +141,76 @@ function configurarContadorSocialPerfil(elemento, tipo, data) {
   const perfilEl = document.getElementById("perfil");
   const uid = perfilEl && perfilEl.dataset ? perfilEl.dataset.uid : null;
 
-  if (!stat || !uid) return;
+  if (!stat || !uid) {
+    console.warn("[PERFIL SOCIAL] No se pudo preparar contador social", {
+      existeStat: !!stat,
+      uid: uid || null,
+      tipo: tipo || null
+    });
+    return;
+  }
 
   stat.classList.add("perfilStatPulsable");
   stat.setAttribute("role", "button");
   stat.setAttribute("aria-label", tipo === "seguidores" ? "Ver seguidores" : "Ver seguidos");
   stat.tabIndex = 0;
+  stat.dataset.accionSocialPerfil = "abrir";
   stat.dataset.uidPerfil = uid;
   stat.dataset.tipoSocial = tipo;
-  stat.onclick = function() {
-    abrirPerfilSocial(uid, tipo);
-  };
-  stat.onkeydown = function(event) {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      abrirPerfilSocial(uid, tipo);
-    }
-  };
+  stat.onclick = null;
+  stat.onkeydown = null;
 }
 
 function configurarContadoresSocialesPerfil(data) {
   configurarContadorSocialPerfil(document.getElementById("seguidores"), "seguidores", data);
   configurarContadorSocialPerfil(document.getElementById("seguidos"), "seguidos", data);
+}
+
+function manejarAccionSocialPerfil(elemento) {
+  if (!elemento) return;
+
+  const uid = elemento.dataset.uidPerfil;
+  const tipo = elemento.dataset.tipoSocial;
+
+  if (!uid || !tipo) {
+    console.warn("[PERFIL SOCIAL] Falta uid o tipo en contador social", {
+      uid: uid || null,
+      tipo: tipo || null
+    });
+    return;
+  }
+
+  if (typeof abrirPerfilSocial !== "function") {
+    console.warn("[PERFIL SOCIAL] abrirPerfilSocial no esta disponible");
+    return;
+  }
+
+  abrirPerfilSocial(uid, tipo);
+}
+
+function registrarDelegacionSocialPerfil() {
+  if (perfilSocialState.delegacionPerfilRegistrada) return;
+
+  const perfil = document.getElementById("perfil");
+  if (!perfil) return;
+
+  perfilSocialState.delegacionPerfilRegistrada = true;
+
+  perfil.addEventListener("click", function(event) {
+    const accion = event.target.closest("[data-accion-social-perfil]");
+    if (!accion || !perfil.contains(accion)) return;
+    manejarAccionSocialPerfil(accion);
+  });
+
+  perfil.addEventListener("keydown", function(event) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+
+    const accion = event.target.closest("[data-accion-social-perfil]");
+    if (!accion || !perfil.contains(accion)) return;
+
+    event.preventDefault();
+    manejarAccionSocialPerfil(accion);
+  });
 }
 
 function crearDatoStatsAvanzadasPerfil(etiqueta, valor) {
@@ -1731,6 +1780,7 @@ async function eliminarPerfil() {
 function verPerfil(uid = auth.currentUser?.uid){
 
   document.getElementById("btnCambiarFoto").style.display = "none";
+  registrarDelegacionSocialPerfil();
 
   const user = auth.currentUser;
   if (!user || !uid) return;
@@ -1975,6 +2025,7 @@ function guardarPerfil(){
 function cargarPerfil(uid){
 
   unsubscribePerfil && unsubscribePerfil();
+  registrarDelegacionSocialPerfil();
   configurarBotonChatPrivadoPerfil(uid);
 
   const user = auth.currentUser;
@@ -1989,6 +2040,9 @@ function cargarPerfil(uid){
   }
   if (editarBtn) editarBtn.style.display = esPerfilPropio ? "block" : "none";
   if (eliminarBtn) eliminarBtn.style.display = esPerfilPropio ? "block" : "none";
+
+  const perfilEl = document.getElementById("perfil");
+  if (perfilEl) perfilEl.dataset.uid = uid;
 
   unsubscribePerfil = db.collection("usuarios")
     .doc(uid)
