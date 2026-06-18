@@ -707,6 +707,29 @@ function crearCardClasificacion(jugador, posicion) {
   return card;
 }
 
+function actualizarBottomNavActivo(seccion) {
+  window.seccionActualApp = seccion;
+  const botones = document.querySelectorAll("#bottomNav .bottomNavBtn");
+  if (!botones.length) return;
+
+  const mapaSeccion = {
+    menu: "menu",
+    partidas: "partidas",
+    crearPartida: "partidas",
+    buscarPartida: "partidas",
+    perfil: "perfil",
+    perfilEditar: "perfil",
+    chat: "chat"
+  };
+  const activa = mapaSeccion[seccion] || "";
+
+  botones.forEach(function(btn) {
+    btn.classList.toggle("activo", btn.dataset.navSection === activa);
+  });
+}
+
+window.actualizarBottomNavActivo = actualizarBottomNavActivo;
+
 function cargarClasificacionComunitaria() {
   const contenedor = document.getElementById("listaClasificacion");
   if (!contenedor) return;
@@ -793,6 +816,7 @@ function cargarClasificacionComunitaria() {
 
 function mostrar(seccion){
   console.log("MOSTRAR:", seccion);
+  actualizarBottomNavActivo(seccion);
   const abriendoChat = seccion === "chat";
   const chatPantalla = document.getElementById("chat");
   const saliendoChat = !abriendoChat && (

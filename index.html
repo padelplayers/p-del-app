@@ -890,10 +890,19 @@ Añadir pista
 
 <div id="jugadores" class="container" style="display:none;">
 
-  <h2>Jugadores</h2>
+  <div class="jugadoresSticky">
+    <div class="jugadoresTopbar">
+      <h2>Jugadores</h2>
+      <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
+    </div>
 
-  <div class="volverSticky">
-    <button class="btnBlue" onclick="mostrar('menu')">Volver</button>
+    <input id="buscarJugadores" class="jugadoresBuscador" type="search" placeholder="Buscar jugador">
+
+    <div class="jugadoresFiltros" role="group" aria-label="Filtrar jugadores por sexo">
+      <button type="button" class="jugadorFiltroBtn activo" data-filtro-sexo="todos">Todos</button>
+      <button type="button" class="jugadorFiltroBtn" data-filtro-sexo="hombre">Hombres</button>
+      <button type="button" class="jugadorFiltroBtn" data-filtro-sexo="mujer">Mujeres</button>
+    </div>
   </div>
 
   <div id="listaJugadores"></div>
@@ -1211,6 +1220,29 @@ const db = firebase.firestore();
 <script src="app.js?v=13"></script>
 <script src="testNivel.js"></script>
 
+<nav id="bottomNav" class="bottomNav" aria-label="Navegacion principal">
+  <button type="button" class="bottomNavBtn" data-nav-section="menu" onclick="mostrar('menu')" aria-label="Inicio">
+    <span class="bottomNavIcon">⌂</span>
+    <span class="bottomNavLabel">Inicio</span>
+  </button>
+  <button type="button" class="bottomNavBtn" data-nav-section="partidas" onclick="mostrar('partidas')" aria-label="Partidas">
+    <span class="bottomNavIcon">▦</span>
+    <span class="bottomNavLabel">Partidas</span>
+  </button>
+  <button type="button" class="bottomNavBtn" data-nav-section="perfil" onclick="irPerfil()" aria-label="Perfil">
+    <span class="bottomNavIcon">◉</span>
+    <span class="bottomNavLabel">Perfil</span>
+  </button>
+  <button type="button" id="bottomNavChat" class="bottomNavBtn" data-nav-section="chat" onclick="abrirChatGeneral()" aria-label="Chat">
+    <span class="bottomNavIcon">✉</span>
+    <span class="bottomNavLabel">Chat</span>
+  </button>
+  <button type="button" id="bottomNavNotificaciones" class="bottomNavBtn" data-nav-section="notificaciones" aria-label="Notificaciones">
+    <span class="bottomNavIcon">&#128276;&#65038;</span>
+    <span class="bottomNavLabel">Notificaciones</span>
+    <span id="bottomNavNotificacionesContador" class="bottomNavBadge" style="display:none;">0</span>
+  </button>
+</nav>
 
 
 </body>

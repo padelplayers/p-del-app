@@ -1019,13 +1019,24 @@ function marcarChatNoLeido(chatId) {
 
 function actualizarIndicadorMenuChat() {
   const btn = document.getElementById("btnMenuChat");
-  if (!btn) return;
 
   const hayNoLeidos = Object.keys(chatState.chats).some(function(chatId) {
     return !!chatState.chats[chatId].noLeidos;
   });
 
-  btn.classList.toggle("hasUnread", hayNoLeidos);
+  const hayNoLeidosBarra = Object.keys(chatState.chats).some(function(chatId) {
+    const chat = chatState.chats[chatId];
+    return !!(chat && chat.noLeidos && (chat.tipo === "partida" || chat.tipo === "privado"));
+  });
+
+  if (btn) {
+    btn.classList.toggle("hasUnread", hayNoLeidos);
+  }
+
+  const btnBarra = document.getElementById("bottomNavChat");
+  if (btnBarra) {
+    btnBarra.classList.toggle("hasUnread", hayNoLeidosBarra);
+  }
 }
 
 function estaPantallaChatVisible() {

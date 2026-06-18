@@ -251,12 +251,26 @@ function obtenerAccionVisibleNotificacion(n) {
 
 function renderizarCampanaNotificaciones(notificaciones) {
   const contador = document.getElementById("notificacionesContador");
+  const contadorBottom = document.getElementById("bottomNavNotificacionesContador");
+  const btnBottom = document.getElementById("bottomNavNotificaciones");
   const lista = document.getElementById("notificacionesLista");
-  if (!contador || !lista) return;
+  if (!lista) return;
 
   const noLeidas = obtenerNotificacionesNoLeidas(notificaciones);
-  contador.textContent = String(noLeidas.length);
-  contador.style.display = noLeidas.length > 0 ? "inline-flex" : "none";
+
+  if (contador) {
+    contador.textContent = String(noLeidas.length);
+    contador.style.display = noLeidas.length > 0 ? "inline-flex" : "none";
+  }
+
+  if (contadorBottom) {
+    contadorBottom.textContent = String(noLeidas.length);
+    contadorBottom.style.display = noLeidas.length > 0 ? "inline-flex" : "none";
+  }
+
+  if (btnBottom) {
+    btnBottom.classList.toggle("hasUnread", noLeidas.length > 0);
+  }
 
   if (noLeidas.length === 0) {
     lista.replaceChildren(crearTextoNotificacion("No tienes avisos"));
@@ -499,18 +513,34 @@ function abrirAccionNotificacion(id, n) {
 function togglePanelNotificaciones() {
   const panel = document.getElementById("notificacionesPanel");
   if (!panel) return;
-  panel.classList.toggle("abierto");
+  const abierto = panel.classList.toggle("abierto");
+  const btnBottom = document.getElementById("bottomNavNotificaciones");
+  if (abierto) {
+    document.querySelectorAll("#bottomNav .bottomNavBtn").forEach(function(btn) {
+      btn.classList.remove("activo");
+    });
+  } else if (typeof window.actualizarBottomNavActivo === "function") {
+    window.actualizarBottomNavActivo(window.seccionActualApp || "");
+  }
+  if (btnBottom) btnBottom.classList.toggle("activo", abierto);
 }
 
 function cerrarPanelNotificaciones() {
   const panel = document.getElementById("notificacionesPanel");
   if (panel) panel.classList.remove("abierto");
+  const btnBottom = document.getElementById("bottomNavNotificaciones");
+  if (btnBottom) btnBottom.classList.remove("activo");
+  if (typeof window.actualizarBottomNavActivo === "function") {
+    window.actualizarBottomNavActivo(window.seccionActualApp || "");
+  }
 }
 
 function initNotificacionesUI() {
   const btn = document.getElementById("notificacionesBtn");
+  const btnBottom = document.getElementById("bottomNavNotificaciones");
   const cerrar = document.getElementById("notificacionesCerrar");
   if (btn) btn.onclick = togglePanelNotificaciones;
+  if (btnBottom) btnBottom.onclick = togglePanelNotificaciones;
   if (cerrar) cerrar.onclick = cerrarPanelNotificaciones;
 }
 

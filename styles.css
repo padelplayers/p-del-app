@@ -4,6 +4,8 @@ body{
   margin:0;
   text-align:center;
   --chat-header-height:64px;
+  --bottom-nav-height:72px;
+  padding-bottom:calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 16px);
 }
 
 html{
@@ -39,7 +41,7 @@ html{
 
 .container{
   background:white;
-  padding:20px;
+  padding:20px 20px calc(20px + var(--bottom-nav-height));
   width:100%;
   max-width:1200px;
   margin:0;
@@ -632,7 +634,7 @@ body.chatAbierto{
     max-height:none;
   }
 
-  button:not(.chatVolver):not(.chatComposer button):not(.partidaChatBtn):not(.chatTab):not(.chatRecentItem):not(.notificacionesBtn) {
+  button:not(.chatVolver):not(.chatComposer button):not(.partidaChatBtn):not(.chatTab):not(.chatRecentItem):not(.notificacionesBtn):not(.jugadorFiltroBtn):not(.bottomNavBtn) {
     width: 95%;
     margin-left: auto;
     margin-right: auto;
@@ -1110,26 +1112,97 @@ body.chatAbierto{
 
 /* JUGADORES */
 
-#listaJugadores {
+#jugadores {
+  max-width: 1200px;
+  box-shadow: none;
+}
+
+.jugadoresSticky {
+  position: sticky;
+  top: 0;
+  z-index: 35;
+  background: #fff;
+  padding: 8px 0 12px;
+  border-bottom: 1px solid #e5e9f0;
+}
+
+.jugadoresTopbar {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.jugadoresTopbar h2 {
+  margin: 0;
+  color: #1565C0;
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.jugadoresTopbar .btnBlue {
+  width: auto;
+  margin: 0;
+  padding: 10px 14px;
+}
+
+.jugadoresBuscador {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto 10px;
+  border: 1px solid #cfd8e3;
+  background: #fff;
+}
+
+.jugadoresFiltros {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.jugadorFiltroBtn {
+  width: auto;
+  min-width: 92px;
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid #1565C0;
+  background: #fff;
+  color: #1565C0;
+  font-weight: bold;
+}
+
+.jugadorFiltroBtn.activo {
+  background: #1565C0;
+  color: #fff;
+}
+
+#listaJugadores {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+  margin-top: 16px;
 }
 
 .jugadorCard {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 18px auto;
-  text-align: center;
-}
-
-.jugadorCard > div {
-  display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px;
+  min-height: 184px;
+  width: 100%;
+  margin: 0;
+  padding: 14px 10px;
+  text-align: center;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(21,101,192,0.08);
+  color: #1f2933;
+  box-sizing: border-box;
 }
 
 .jugadorFoto {
@@ -1144,7 +1217,33 @@ body.chatAbierto{
 .jugadorNombre {
   display: block;
   text-align: center;
-  font-size: 18px;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.jugadorMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 34px;
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.jugadoresVacio {
+  grid-column: 1 / -1;
+  padding: 24px;
+  color: #4b5563;
+}
+
+@media (min-width: 680px) {
+  #listaJugadores {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+  }
 }
 
 button[onclick*="mostrar('menu')"]{
@@ -2822,19 +2921,20 @@ margin:0 auto;
   }
 
   #listaJugadores {
-    display:flex !important;
-    flex-direction:column !important;
-    align-items:center !important;
+    display:grid !important;
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    align-items:stretch !important;
+    gap:12px !important;
   }
 
   .jugadorCard {
     display:flex !important;
     flex-direction:column !important;
     align-items:center !important;
-    justify-content:center !important;
+    justify-content:flex-start !important;
     text-align:center !important;
-    width:fit-content !important;
-    margin:18px auto !important;
+    width:100% !important;
+    margin:0 !important;
     gap:8px !important;
   }
 
@@ -3015,8 +3115,8 @@ margin:0 auto;
   height: 16px;
   padding: 0 5px;
   border-radius: 999px;
-  background: #C62828;
-  color: #fff;
+  background: #FFC107;
+  color: #1565C0;
   font-size: 10px;
   align-items: center;
   justify-content: center;
@@ -3339,5 +3439,143 @@ margin:0 auto;
   .guiaUsoTexto {
     font-size: 14px;
     text-align: left !important;
+  }
+}
+
+.bottomNav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10050;
+  height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  background: #1565C0;
+  box-shadow: 0 -8px 24px rgba(0,0,0,0.18);
+  box-sizing: border-box;
+}
+
+.bottomNavBtn {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 4px 2px;
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.bottomNavIcon {
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.bottomNavLabel {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bottomNavBtn.activo .bottomNavIcon,
+.bottomNavBtn.activo .bottomNavLabel {
+  color: #2E7D32;
+}
+
+.bottomNavBtn.hasUnread .bottomNavIcon,
+.bottomNavBtn.hasUnread .bottomNavLabel {
+  color: #FFC107;
+}
+
+.bottomNavBtn.activo.hasUnread .bottomNavIcon,
+.bottomNavBtn.activo.hasUnread .bottomNavLabel {
+  color: #2E7D32;
+}
+
+.bottomNavBtn.hasUnread:not(.activo) {
+  animation: bottomNavUnreadPulse 1.4s ease-in-out infinite;
+}
+
+.bottomNavBadge {
+  position: absolute;
+  top: 3px;
+  right: 50%;
+  transform: translateX(24px);
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #FFC107;
+  color: #1565C0;
+  border: 1px solid #fff;
+  font-size: 10px;
+  font-weight: 700;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+@keyframes bottomNavUnreadPulse {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-2px);
+    opacity: 0.76;
+  }
+}
+
+@media (min-width: 760px) {
+  .bottomNav {
+    left: 50%;
+    right: auto;
+    bottom: 14px;
+    width: min(560px, calc(100vw - 32px));
+    height: 68px;
+    padding: 6px;
+    border-radius: 8px;
+    transform: translateX(-50%);
+  }
+
+  .bottomNavLabel {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .bottomNavLabel {
+    font-size: 10px;
+  }
+}
+
+body.chatAbierto #chat.chatFullscreen,
+#chat.chatFullscreen {
+  bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)) !important;
+  height: calc(100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom, 0px)) !important;
+}
+
+@media (min-width: 760px) {
+  body.chatAbierto #chat.chatFullscreen,
+  #chat.chatFullscreen {
+    bottom: 92px !important;
+    height: calc(100dvh - 92px) !important;
   }
 }
