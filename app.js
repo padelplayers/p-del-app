@@ -12,6 +12,56 @@ window.subirImagen = async function(ruta, archivo) {
   return url;
 }
 
+const STORAGE_RUTAS_IMAGENES_APP = ["usuarios/", "fotosPerfil/", "pistas/", "imagenesPistas/"];
+const STORAGE_IMAGENES_DEFAULT_APP = ["imagen/hombre.jpeg", "imagen/mujer.jpeg"];
+
+function obtenerStoragePathDesdeUrl(url) {
+  if (!url || typeof url !== "string") return "";
+  const valor = url.trim();
+  if (!valor || STORAGE_IMAGENES_DEFAULT_APP.includes(valor)) return "";
+  if (
+    valor.indexOf("firebasestorage.googleapis.com") === -1 &&
+    valor.indexOf("storage.googleapis.com") === -1 &&
+    valor.indexOf("gs://") !== 0
+  ) {
+    return "";
+  }
+
+  try {
+    return firebase.storage().refFromURL(valor).fullPath || "";
+  } catch (error) {
+    return "";
+  }
+}
+
+function esImagenStorageApp(url, rutasPermitidas) {
+  const path = obtenerStoragePathDesdeUrl(url);
+  const permitidas = Array.isArray(rutasPermitidas) && rutasPermitidas.length > 0
+    ? rutasPermitidas
+    : STORAGE_RUTAS_IMAGENES_APP;
+
+  return !!path && permitidas.some(function(ruta) {
+    return path.indexOf(ruta) === 0;
+  });
+}
+
+async function borrarImagenStorageSiProcede(url, rutasPermitidas) {
+  if (!esImagenStorageApp(url, rutasPermitidas)) return false;
+
+  try {
+    await firebase.storage().refFromURL(url).delete();
+    return true;
+  } catch (error) {
+    if (error && error.code === "storage/object-not-found") return false;
+    console.warn("No se pudo borrar imagen antigua de Storage:", error && error.message ? error.message : error);
+    return false;
+  }
+}
+
+window.obtenerStoragePathDesdeUrl = obtenerStoragePathDesdeUrl;
+window.esImagenStorageApp = esImagenStorageApp;
+window.borrarImagenStorageSiProcede = borrarImagenStorageSiProcede;
+
 let avisoNivelMostrado = false;
 
 
@@ -54,14 +104,7 @@ window.subirImagen = async function(ruta, archivo) {
 
 async function borrarImagen(url) {
 
-  if (!url) return;
-
-  try {
-    const ref = firebase.storage().refFromURL(url);
-    await ref.delete();
-  } catch (e) {
-    console.log("No se pudo borrar");
-  }
+  return borrarImagenStorageSiProcede(url);
 
 }
 
@@ -261,21 +304,19 @@ async function guardarPerfilRegistro(){
     return;
   }
 
-  let fotoURL = sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
-
-  if (archivo) {
-    const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
-
-    subirImagen(ruta, archivo).then(url => {
-      db.collection("usuarios").doc(auth.currentUser.uid).update({
-        fotoPerfil: url
-      });
-    });
-  }
-
   const userRef = db.collection("usuarios").doc(auth.currentUser.uid);
   const userDoc = await userRef.get();
   const datosUsuarioExistente = userDoc.exists ? (userDoc.data() || {}) : {};
+  const fotoAnterior = datosUsuarioExistente.fotoPerfil || "";
+  let fotoURL = sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
+  let fotoNuevaSubida = "";
+
+  if (archivo) {
+    const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
+    fotoURL = await subirImagen(ruta, archivo);
+    fotoNuevaSubida = fotoURL;
+  }
+
   const datosPerfil = {
     nombre: nombre,
     nombreNormalizado: nombreNormalizado,
@@ -300,7 +341,13 @@ async function guardarPerfilRegistro(){
     datosPerfil.fechaAlta = firebase.firestore.FieldValue.serverTimestamp();
   }
 
-  await userRef.set(datosPerfil, { merge: true });
+  try {
+    await userRef.set(datosPerfil, { merge: true });
+  } catch (error) {
+    await borrarImagenStorageSiProcede(fotoNuevaSubida, ["usuarios/", "fotosPerfil/"]);
+    throw error;
+  }
+  await borrarImagenStorageSiProcede(fotoAnterior, ["usuarios/", "fotosPerfil/"]);
   await iniciarPresenciaAvanzada(auth.currentUser.uid);
 
   await userRef.collection("chatLeidos").doc("general").set({
@@ -493,18 +540,21 @@ if (inputFotoGlobal) {
     try {
       const docRef = db.collection("usuarios").doc(user.uid);
       const doc = await docRef.get();
-      const data = doc.data();
-    
-      if (data && data.fotoPerfil && data.fotoPerfil.includes("firebasestorage")) {
-        await borrarImagen(data.fotoPerfil);
-      }
+      const data = doc.exists ? (doc.data() || {}) : {};
+      const fotoAnterior = data.fotoPerfil || "";
 
       const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
       const url = await subirImagen(ruta, file);
 
-      await docRef.update({
-        fotoPerfil: url
-      });
+      try {
+        await docRef.update({
+          fotoPerfil: url
+        });
+      } catch (error) {
+        await borrarImagenStorageSiProcede(url, ["usuarios/", "fotosPerfil/"]);
+        throw error;
+      }
+      await borrarImagenStorageSiProcede(fotoAnterior, ["usuarios/", "fotosPerfil/"]);
     } finally {
       URL.revokeObjectURL(previewURL);
     }

@@ -1646,15 +1646,15 @@ async function borrarStorageRefUsuarioPerfil(ref, uid) {
     return true;
   } catch (error) {
     if (error && error.code === "storage/object-not-found") return false;
-    throw error;
+    console.warn("No se pudo borrar un archivo de Storage del usuario:", error.message);
+    return false;
   }
 }
 
 async function borrarStorageFolderUsuarioPerfil(ref, uid) {
   if (!ref || typeof ref.listAll !== "function") {
-    const errorCritico = new Error("No esta disponible el listado de Storage personal del usuario. Se detiene el borrado del perfil.");
-    errorCritico.code = "perfil/storage-list-failed";
-    throw errorCritico;
+    console.warn("No esta disponible el listado de Storage personal del usuario.");
+    return;
   }
 
   let resultado;
@@ -1662,10 +1662,8 @@ async function borrarStorageFolderUsuarioPerfil(ref, uid) {
     resultado = await ref.listAll();
   } catch (error) {
     if (error && error.code === "storage/object-not-found") return;
-    const errorCritico = new Error("No se pudo listar Storage personal del usuario. Se detiene el borrado del perfil.");
-    errorCritico.code = "perfil/storage-list-failed";
-    errorCritico.originalError = error;
-    throw errorCritico;
+    console.warn("No se pudo listar Storage personal del usuario:", error.message);
+    return;
   }
 
   const items = Array.isArray(resultado.items) ? resultado.items : [];
@@ -1683,27 +1681,16 @@ async function borrarStorageFolderUsuarioPerfil(ref, uid) {
 async function eliminarStorageUsuario(uid, datosUsuario) {
   if (!uid) return;
   if (!firebase.storage) {
-    const errorCritico = new Error("No esta disponible Firebase Storage. Se detiene el borrado del perfil.");
-    errorCritico.code = "perfil/storage-list-failed";
-    throw errorCritico;
+    console.warn("No esta disponible Firebase Storage para limpiar imagenes del usuario.");
+    return;
   }
 
   datosUsuario = datosUsuario || {};
   const storage = firebase.storage();
   const fotoPerfil = datosUsuario.fotoPerfil || "";
 
-  if (fotoPerfil && typeof fotoPerfil === "string" && fotoPerfil.includes("firebasestorage")) {
-    try {
-      const refFoto = storage.refFromURL(fotoPerfil);
-      await borrarStorageRefUsuarioPerfil(refFoto, uid);
-    } catch (error) {
-      if (!error || (error.code !== "storage/invalid-url" && error.code !== "storage/object-not-found")) {
-        const errorCritico = new Error("No se pudo borrar la foto personal de Storage. Se detiene el borrado del perfil.");
-        errorCritico.code = "perfil/storage-delete-failed";
-        errorCritico.originalError = error;
-        throw errorCritico;
-      }
-    }
+  if (typeof window.borrarImagenStorageSiProcede === "function") {
+    await window.borrarImagenStorageSiProcede(fotoPerfil, ["usuarios/", "fotosPerfil/"]);
   }
 
   const carpetaUsuario = storage.ref().child("usuarios/" + uid);

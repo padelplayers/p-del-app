@@ -64,19 +64,13 @@ if (btnGuardarPista) {
       const reserva = document.getElementById("reserva").value;
       const direccion = document.getElementById("direccionPista").value;
       const nota = document.getElementById("notaPista").value.trim();
-      let urlImagen = "";
       const inputFotoPista = document.getElementById("inputFotoPista");
+      const archivoImagenPista = inputFotoPista && inputFotoPista.files.length > 0 ? inputFotoPista.files[0] : null;
+      let imagenAnterior = "";
 
-      if (inputFotoPista.files.length > 0) {
-        const file = inputFotoPista.files[0];
-        const ruta = "pistas/" + Date.now() + ".jpg";
-        urlImagen = await subirImagen(ruta, file);
-      }
-
-      if (!urlImagen && window.pistaEditando) {
+      if (window.pistaEditando) {
         const doc = await db.collection("pistas").doc(window.pistaEditando).get();
-        const dataActual = doc.data();
-        urlImagen = dataActual.imagen || "";
+        imagenAnterior = doc.exists ? ((doc.data() || {}).imagen || "") : "";
       }
 
       if (
@@ -172,19 +166,35 @@ if (btnGuardarPista) {
         creadaPor: auth.currentUser.uid
       };
 
-      if (urlImagen) datos.imagen = urlImagen;
+      if (archivoImagenPista) {
+        const ruta = "pistas/" + Date.now() + ".jpg";
+        datos.imagen = await subirImagen(ruta, archivoImagenPista);
+      }
 
       if (window.pistaEditando) {
-        await db.collection("pistas").doc(window.pistaEditando).update({
-          ...datos,
-          verificada: datos.verificada ?? true
-        });
+        try {
+          await db.collection("pistas").doc(window.pistaEditando).update({
+            ...datos,
+            verificada: datos.verificada ?? true
+          });
+        } catch (error) {
+          await borrarImagenStoragePistaSiProcede(datos.imagen || "");
+          throw error;
+        }
+        if (datos.imagen) {
+          await borrarImagenStoragePistaSiProcede(imagenAnterior);
+        }
         window.pistaEditando = null;
       } else {
-        await db.collection("pistas").add({
-          ...datos,
-          verificada: esAdmin === true
-        });
+        try {
+          await db.collection("pistas").add({
+            ...datos,
+            verificada: esAdmin === true
+          });
+        } catch (error) {
+          await borrarImagenStoragePistaSiProcede(datos.imagen || "");
+          throw error;
+        }
         await incrementarPistasCreadasLogro(auth.currentUser.uid);
       }
 
@@ -467,14 +477,15 @@ async function cargarPistas() {
 }
 
 async function borrarImagen(url) {
-  if (!url) return;
+  return borrarImagenStoragePistaSiProcede(url);
+}
 
-  try {
-    const ref = firebase.storage().refFromURL(url);
-    await ref.delete();
-  } catch (e) {
-    console.log("No se pudo borrar");
+async function borrarImagenStoragePistaSiProcede(url) {
+  if (typeof window.borrarImagenStorageSiProcede === "function") {
+    return window.borrarImagenStorageSiProcede(url, ["pistas/", "imagenesPistas/"]);
   }
+
+  return false;
 }
 
 window.verificarPista = async function(id) {
@@ -490,6 +501,24 @@ window.verificarPista = async function(id) {
     fechaVerificada: firebase.firestore.FieldValue.serverTimestamp()
   });
 
+  cargarPistas();
+};
+
+window.eliminarPista = async function(id) {
+  const user = auth.currentUser;
+  if (!user || !id) return;
+  if (!confirm("¿Eliminar esta pista?")) return;
+
+  const docUser = await db.collection("usuarios").doc(user.uid).get();
+  if (!docUser.exists || docUser.data().admin !== true) return;
+
+  const ref = db.collection("pistas").doc(id);
+  const doc = await ref.get();
+  const data = doc.exists ? (doc.data() || {}) : {};
+  const imagenActual = data.imagen || "";
+
+  await ref.delete();
+  await borrarImagenStoragePistaSiProcede(imagenActual);
   cargarPistas();
 };
 
@@ -535,7 +564,12 @@ if (btnActualizar) {
       return;
     }
 
-    await db.collection("pistas").doc(window.pistaEditando).update({
+    const pistaRef = db.collection("pistas").doc(window.pistaEditando);
+    const docAnterior = await pistaRef.get();
+    const datosAnteriores = docAnterior.exists ? (docAnterior.data() || {}) : {};
+    const inputFotoEditar = document.getElementById("editarInputFotoPista");
+    const archivoImagen = inputFotoEditar && inputFotoEditar.files.length > 0 ? inputFotoEditar.files[0] : null;
+    const datosUpdate = {
       nombre: document.getElementById("editarNombrePista").value,
       localidad: document.getElementById("editarLocalidadPista").value,
       direccion: document.getElementById("editarDireccionPista").value,
@@ -551,10 +585,26 @@ if (btnActualizar) {
       nota: nota,
       formaPago: document.getElementById("formaPagoEditar").value,
       verificada: true
-    });
+    };
+
+    if (archivoImagen) {
+      const ruta = "pistas/" + Date.now() + ".jpg";
+      datosUpdate.imagen = await subirImagen(ruta, archivoImagen);
+    }
+
+    try {
+      await pistaRef.update(datosUpdate);
+    } catch (error) {
+      await borrarImagenStoragePistaSiProcede(datosUpdate.imagen || "");
+      throw error;
+    }
+    if (datosUpdate.imagen) {
+      await borrarImagenStoragePistaSiProcede(datosAnteriores.imagen || "");
+      if (inputFotoEditar) inputFotoEditar.value = "";
+    }
 
     window.pistasCargadas = false;
-    mostrar("pistas");
+    abrirPistas();
   };
 }
 
