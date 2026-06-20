@@ -605,6 +605,52 @@ function marcarTodasNotificacionesLeidas() {
     });
 }
 
+async function usuarioAdminNotificaciones() {
+  const user = auth.currentUser;
+  if (!user) return false;
+
+  const doc = await db.collection("usuarios").doc(user.uid).get();
+  if (!doc.exists) return false;
+
+  const data = doc.data() || {};
+  return data.admin === true || data.rol === "admin";
+}
+
+async function limpiarNotificacionesAntiguasAdmin() {
+  const esAdmin = await usuarioAdminNotificaciones();
+  if (!esAdmin) {
+    alert("Herramienta disponible solo para admin.");
+    return 0;
+  }
+
+  const snap = await db.collection("notificaciones").get();
+  const refs = [];
+
+  snap.forEach(function(doc) {
+    const data = doc.data() || {};
+    if (data.leida === true || data.resuelta === true) refs.push(doc.ref);
+  });
+
+  if (refs.length === 0) {
+    alert("No hay notificaciones antiguas para eliminar.");
+    return 0;
+  }
+
+  const confirmar = confirm("Se eliminarán " + refs.length + " notificaciones antiguas. ¿Continuar?");
+  if (!confirmar) return 0;
+
+  for (let i = 0; i < refs.length; i += 450) {
+    const batch = db.batch();
+    refs.slice(i, i + 450).forEach(function(ref) {
+      batch.delete(ref);
+    });
+    await batch.commit();
+  }
+
+  alert("Eliminadas " + refs.length + " notificaciones antiguas");
+  return refs.length;
+}
+
 function abrirAccionNotificacion(id, n) {
   marcarNotificacionLeida(id).catch(function() {});
   cerrarPanelNotificaciones();
@@ -685,9 +731,17 @@ function initNotificacionesUI() {
   const btn = document.getElementById("notificacionesBtn");
   const btnBottom = document.getElementById("bottomNavNotificaciones");
   const cerrar = document.getElementById("notificacionesCerrar");
+  const btnLimpiarAdmin = document.getElementById("btnLimpiarNotificacionesAntiguas");
   if (btn) btn.onclick = togglePanelNotificaciones;
   if (btnBottom) btnBottom.onclick = togglePanelNotificaciones;
   if (cerrar) cerrar.onclick = cerrarPanelNotificaciones;
+  if (btnLimpiarAdmin) {
+    btnLimpiarAdmin.onclick = function() {
+      limpiarNotificacionesAntiguasAdmin().catch(function(error) {
+        alert("No se pudieron limpiar las notificaciones antiguas: " + error.message);
+      });
+    };
+  }
 }
 
 window.crearNotificacionInterna = crearNotificacionInterna;
@@ -701,5 +755,6 @@ window.escucharNotificaciones = escucharNotificaciones;
 window.detenerNotificacionesInternas = detenerNotificacionesInternas;
 window.marcarNotificacionLeida = marcarNotificacionLeida;
 window.marcarTodasNotificacionesLeidas = marcarTodasNotificacionesLeidas;
+window.limpiarNotificacionesAntiguasAdmin = limpiarNotificacionesAntiguasAdmin;
 
 document.addEventListener("DOMContentLoaded", initNotificacionesUI);
