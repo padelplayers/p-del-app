@@ -415,9 +415,32 @@ function crearOMantenerMensajeSistemaGeneral(config) {
 
   return db.runTransaction(function(transaction) {
     return transaction.get(msgRef).then(function(doc) {
-      if (doc.exists) return doc.id;
-
       const ahora = firebase.firestore.FieldValue.serverTimestamp();
+      if (doc.exists) {
+        const actual = doc.data() || {};
+        const esSistema = actual.system === true || actual.type === "system";
+        if (!esSistema) return null;
+
+        const actualizacion = {};
+        if (actual.t !== config.texto) actualizacion.t = config.texto;
+        if (actual.eventType !== (config.eventType || null)) actualizacion.eventType = config.eventType || null;
+        if (actual.action !== (config.action || "abrir_partida")) actualizacion.action = config.action || "abrir_partida";
+        if (actual.valid !== true) actualizacion.valid = true;
+
+        if (Object.keys(actualizacion).length > 0) {
+          transaction.update(msgRef, actualizacion);
+          transaction.set(generalRef, {
+            lastMessage: config.texto,
+            lastActivity: ahora,
+            lastSender: "sistema",
+            lastSenderName: "Sistema",
+            lastMessageType: "system"
+          }, { merge: true });
+        }
+
+        return doc.id;
+      }
+
       const payload = {
         u: "sistema",
         n: "Sistema",

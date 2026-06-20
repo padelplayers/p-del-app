@@ -129,8 +129,7 @@ function eventoProcedeAdminChat(eventType, partida) {
 
   if (eventType === "sustitucion_urgente") {
     return estado === "confirmada" &&
-      !tieneSustitucionPendienteAdminChat(partida) &&
-      (jugadores.length < 4 || solicitudSustitucionPublicaAdminChat(partida)) &&
+      solicitudSustitucionPublicaAdminChat(partida) &&
       !partidaPasadaAdminChat(partida);
   }
 

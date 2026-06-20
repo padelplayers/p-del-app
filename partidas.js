@@ -705,10 +705,6 @@ function emitirSistemaPlazaLibreConfirmadaSiProcede(partidaId, p) {
     return resolverSistemaPartida(partidaId, ["plaza_libre_confirmada", "sustitucion_urgente"]);
   }
 
-  if (partidaEnVentanaSustitucionUrgente(p)) {
-    return emitirSistemaSustitucionUrgente(partidaId, p);
-  }
-
   return resolverEstadosSistemaIncompatibles(partidaId, [
     "partida_creada",
     "falta_1",
@@ -722,7 +718,7 @@ function emitirSistemaPlazaLibreConfirmadaSiProcede(partidaId, p) {
       eventType: "plaza_libre_confirmada",
       dedupeKey: "system_plaza_libre_confirmada_" + partidaId,
       texto: function(datos) {
-        return "Hay una plaza libre en una partida confirmada en " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + ".";
+        return "Falta un jugador para completar una partida confirmada en " + datos.pista + ".";
       }
     });
   });
@@ -789,16 +785,6 @@ function partidaConfirmadaAccionableConPlazaLibre(p) {
   );
 }
 
-function partidaEnVentanaSustitucionUrgente(p) {
-  const fechaPartida = obtenerFechaHoraPartida(p);
-  if (!fechaPartida) return false;
-
-  const ahora = new Date();
-  const msHastaInicio = fechaPartida.getTime() - ahora.getTime();
-  return msHastaInicio > 5 * 60 * 60 * 1000 &&
-    msHastaInicio <= 8 * 60 * 60 * 1000;
-}
-
 function solicitudSustitucionPublicaPartida(p) {
   return !!(
     p &&
@@ -817,10 +803,7 @@ function partidaNecesitaSustitucionUrgente(p) {
     !partidaAlcanzoLimiteCancelacionClub(p) &&
     !p.resultado &&
     (!p.valoraciones || Object.keys(p.valoraciones).length === 0) &&
-    (
-      (partidaEnVentanaSustitucionUrgente(p) && partidaConfirmadaAccionableConPlazaLibre(p)) ||
-      solicitudSustitucionPublicaPartida(p)
-    )
+    solicitudSustitucionPublicaPartida(p)
   );
 }
 
