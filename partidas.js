@@ -856,6 +856,8 @@ function sincronizarMensajesSistemaPartida(partidaId, p) {
   ]);
 }
 
+window.sincronizarMensajesSistemaPartida = sincronizarMensajesSistemaPartida;
+
 function textoFechaAvisoPartida(p) {
   if (!p) return "";
   return ((p.fecha || "") + " " + (p.hora || "")).trim();

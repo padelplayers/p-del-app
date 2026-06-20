@@ -589,6 +589,72 @@ function configurarEventosEstadisticas() {
       cargarEstadisticas();
     });
   });
+
+  const btnResincronizar = document.getElementById("btnResincronizarAvisosSistema");
+  if (btnResincronizar) {
+    btnResincronizar.addEventListener("click", resincronizarAvisosSistemaAdmin);
+  }
+}
+
+function partidaActivaParaResincronizarSistema(partida) {
+  if (!partida) return false;
+  const estado = String(partida.estado || "").toLowerCase().trim();
+  return estado !== "finalizada" &&
+    estado !== "cancelada" &&
+    estado !== "cancelada_por_no_presentado";
+}
+
+async function resincronizarAvisosSistemaAdmin() {
+  const estadoEl = document.getElementById("adminChatSistemaEstado");
+  if (!usuarioEsAdminEstadisticas()) {
+    if (estadoEl) estadoEl.textContent = "Herramienta disponible solo para admin.";
+    return;
+  }
+
+  if (typeof window.sincronizarMensajesSistemaPartida !== "function") {
+    if (estadoEl) estadoEl.textContent = "No se pudo resincronizar: sincronizaciÃ³n no disponible.";
+    return;
+  }
+
+  const ok = confirm("Se revisarÃ¡n las partidas activas y se resincronizarÃ¡n sus avisos Sistema. Â¿Continuar?");
+  if (!ok) {
+    if (estadoEl) estadoEl.textContent = "ResincronizaciÃ³n cancelada.";
+    return;
+  }
+
+  if (estadoEl) estadoEl.textContent = "Resincronizando avisos Sistema...";
+
+  try {
+    const snapshot = await db.collection("partidas").get();
+    let revisadas = 0;
+    let sincronizadas = 0;
+    const errores = [];
+
+    for (const doc of snapshot.docs) {
+      const partida = doc.data() || {};
+      if (!partidaActivaParaResincronizarSistema(partida)) continue;
+
+      revisadas++;
+      try {
+        await window.sincronizarMensajesSistemaPartida(doc.id, partida);
+        sincronizadas++;
+      } catch (error) {
+        errores.push(doc.id + ": " + (error && error.message ? error.message : error));
+      }
+    }
+
+    if (estadoEl) {
+      estadoEl.textContent = "ResincronizaciÃ³n completada. Partidas revisadas: " +
+        revisadas + ". Avisos sincronizados: " + sincronizadas + ". Errores: " + errores.length + ".";
+    }
+
+    if (errores.length > 0) {
+      console.warn("Errores resincronizando avisos Sistema:", errores);
+    }
+  } catch (error) {
+    console.error("Error resincronizando avisos Sistema:", error);
+    if (estadoEl) estadoEl.textContent = "No se pudo resincronizar avisos Sistema.";
+  }
 }
 
 document.addEventListener("DOMContentLoaded", configurarEventosEstadisticas);
