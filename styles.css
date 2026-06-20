@@ -3356,6 +3356,8 @@ margin:0 auto;
     display:flex !important;
     flex-direction:row !important;
     flex-wrap:wrap !important;
+    justify-content:center !important;
+    gap:8px !important;
     overflow-x:visible !important;
     overflow-y:visible !important;
     white-space:normal !important;
@@ -3365,9 +3367,10 @@ margin:0 auto;
 
   #chat .chatTabs .chatTab,
   #chat.chatFullscreen .chatTabs .chatTab {
-    flex:0 1 46% !important;
-    max-width:46% !important;
-    min-width:0 !important;
+    flex:0 0 auto !important;
+    width:auto !important;
+    min-width:96px !important;
+    max-width:min(220px, 100%) !important;
     white-space:nowrap !important;
     overflow:hidden !important;
     text-overflow:ellipsis !important;
@@ -3384,6 +3387,8 @@ margin:0 auto;
     display:flex !important;
     flex-direction:row !important;
     flex-wrap:wrap !important;
+    justify-content:center !important;
+    gap:8px !important;
     overflow-x:visible !important;
     overflow-y:visible !important;
     white-space:normal !important;
@@ -3393,9 +3398,10 @@ margin:0 auto;
 
   body.chatAbierto #chat.chatFullscreen .chatMain > .chatTabs .chatTab,
   body.chatAbierto #chat.chatFullscreen .chatTabs .chatTab {
-    flex:0 1 46% !important;
-    max-width:46% !important;
-    min-width:0 !important;
+    flex:0 0 auto !important;
+    width:auto !important;
+    min-width:96px !important;
+    max-width:min(220px, 100%) !important;
     white-space:nowrap !important;
     overflow:hidden !important;
     text-overflow:ellipsis !important;
@@ -3408,22 +3414,11 @@ margin:0 auto;
   }
 
 @media (min-width:761px) {
-  #chat .chatTabs,
-  #chat.chatFullscreen .chatTabs,
-  body.chatAbierto #chat.chatFullscreen .chatMain > .chatTabs,
-  body.chatAbierto #chat.chatFullscreen .chatTabs {
-    justify-content:center !important;
-    gap:12px !important;
-  }
-
   #chat .chatTabs .chatTab,
   #chat.chatFullscreen .chatTabs .chatTab,
   body.chatAbierto #chat.chatFullscreen .chatMain > .chatTabs .chatTab,
   body.chatAbierto #chat.chatFullscreen .chatTabs .chatTab {
-    flex:0 0 auto !important;
-    width:auto !important;
     min-width:160px !important;
-    max-width:220px !important;
     padding-left:18px !important;
     padding-right:18px !important;
   }
