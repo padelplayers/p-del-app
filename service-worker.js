@@ -1,15 +1,15 @@
-const CACHE_NAME = "padel-players-morvedre-v66";
+const CACHE_NAME = "padel-players-morvedre-v68";
 const APP_SHELL = [
   "./styles.css?v=42",
   "./logros.js?v=5",
   "./perfil.js?v=29",
   "./jugadores.js?v=3",
-  "./chat.js?v=14",
-  "./partidas.js?v=26",
+  "./chat.js?v=16",
+  "./partidas.js?v=27",
   "./notifications.js?v=10",
   "./estadisticas.js?v=4",
   "./admin-chat-cleanup.js?v=2",
-  "./pwa.js?v=26",
+  "./pwa.js?v=28",
   "./app.js?v=19",
   "./logo.png"
 ];

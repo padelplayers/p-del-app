@@ -106,6 +106,10 @@ async function cambiarChatTab(chatId) {
 
   const mensajesRef = obtenerMensajesChatRef(chatId);
   if (mensajesRef) {
+    if (chatId === "general" || chatState.chats[chatId].tipo === "privado") {
+      await limpiarMensajesAntiguos(chatId);
+    }
+
     let query = mensajesRef.orderBy("at", "desc").limit(30);
     if (chatId === "general") {
       const user = auth.currentUser;
@@ -367,6 +371,9 @@ function asegurarTabChat(chatId) {
 }
 
 const chatNombresUsuarios = {};
+const CHAT_MAX_MENSAJES = 100;
+const CHAT_GENERAL_RETENCION_MS = 30 * 24 * 60 * 60 * 1000;
+const CHAT_PRIVADO_RETENCION_MS = 30 * 24 * 60 * 60 * 1000;
 
 function obtenerMensajesChatRef(chatId) {
   const chat = chatState.chats[chatId];
@@ -858,14 +865,30 @@ window.eliminarChatTotal = async function(chatId) {
   }
 
   // 2. Borrar subcolección en Firestore (Batch)
+  const partidaRef = db.collection("partidas").doc(chatId);
   try {
-    const snap = await db.collection("partidas").doc(chatId).collection("mensajes").get();
+    const snap = await partidaRef.collection("mensajes").get();
     const batch = db.batch();
     snap.forEach(doc => batch.delete(doc.ref));
     await batch.commit();
   } catch (e) {
-    console.warn("[CHAT] No se pudo borrar la subcolección:", e.message);
+    console.warn("[CHAT] No se pudo borrar la subcolecciÃ³n:", e.message);
     return false;
+  }
+
+  try {
+    const partidaSnap = await partidaRef.get();
+    if (partidaSnap.exists) {
+      await partidaRef.update({
+        lastMessage: firebase.firestore.FieldValue.delete(),
+        lastActivity: firebase.firestore.FieldValue.delete(),
+        lastSender: firebase.firestore.FieldValue.delete(),
+        lastSenderName: firebase.firestore.FieldValue.delete(),
+        lastMessageType: firebase.firestore.FieldValue.delete()
+      });
+    }
+  } catch (e) {
+    console.warn("[CHAT] No se pudo borrar la subcolección:", e.message);
   }
 
   // 3. Limpiar estado local
@@ -887,34 +910,65 @@ async function limpiarMensajesAntiguos(chatId) {
   try {
     const mensajesRef = obtenerMensajesChatRef(chatId);
     if (!mensajesRef) return;
+    const chat = chatState.chats[chatId];
+    if (!chat) return;
 
-    let quedanPorBorrar = true;
-    while (quedanPorBorrar) {
-      const snap = await mensajesRef.orderBy("at", "desc").get();
+    const retencionMs =
+      chat.tipo === "general" ? CHAT_GENERAL_RETENCION_MS :
+      chat.tipo === "privado" ? CHAT_PRIVADO_RETENCION_MS :
+      null;
+    const limiteAntiguedad = retencionMs ? Date.now() - retencionMs : null;
+    const snap = await mensajesRef.orderBy("at", "desc").get();
+    const borrarRefs = [];
+    let contador = 0;
 
-      if (snap.size <= 100) return;
+    snap.forEach(function(doc) {
+      contador++;
+      const data = doc.data() || {};
+      const fechaMs = obtenerFechaMensajeChatMs(data);
+      const esAntiguo = !!(limiteAntiguedad && fechaMs && fechaMs < limiteAntiguedad);
+      const excedeMaximo = contador > CHAT_MAX_MENSAJES;
 
-      const batch = db.batch();
-      let contador = 0;
-      let borrados = 0;
-
-      snap.forEach(function(doc) {
-        contador++;
-        if (contador > 100 && borrados < 450) {
-          batch.delete(doc.ref);
-          borrados++;
-        }
-      });
-
-      if (!borrados) {
-        quedanPorBorrar = false;
-      } else {
-        await batch.commit();
+      if (esAntiguo || excedeMaximo) {
+        borrarRefs.push(doc.ref);
       }
+    });
+
+    for (let i = 0; i < borrarRefs.length; i += 450) {
+      const batch = db.batch();
+      borrarRefs.slice(i, i + 450).forEach(function(ref) {
+        batch.delete(ref);
+      });
+      await batch.commit();
     }
   } catch (e) {
     console.warn("[CHAT] No se pudo limpiar mensajes antiguos:", e.message);
   }
+}
+
+function obtenerFechaMensajeChatMs(data) {
+  const camposFecha = ["at", "createdAt", "timestamp", "fecha", "enviadoAt"];
+
+  for (const campo of camposFecha) {
+    const valor = data && data[campo];
+    const ms = valorFechaMensajeChatMs(valor);
+    if (ms) return ms;
+  }
+
+  return null;
+}
+
+function valorFechaMensajeChatMs(valor) {
+  if (!valor) return null;
+  if (typeof valor.toMillis === "function") return valor.toMillis();
+  if (typeof valor.toDate === "function") return valor.toDate().getTime();
+  if (valor instanceof Date) return valor.getTime();
+  if (typeof valor === "number") return valor;
+  if (typeof valor === "string") {
+    const ms = new Date(valor).getTime();
+    return isNaN(ms) ? null : ms;
+  }
+  return null;
 }
 
 async function prepararEnvioChat() {

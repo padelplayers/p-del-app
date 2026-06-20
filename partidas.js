@@ -4101,6 +4101,12 @@ window.guardarPartidaFinalizada = function(p, idPartida) {
       guardadaEnHistorialAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true }).then(function() {
       const tareas = [limpiarMensajesSistemaPartida(idPartida)];
+      if (typeof window.eliminarChatTotal === "function") {
+        tareas.push(window.eliminarChatTotal(idPartida).catch(function(error) {
+          console.warn("No se pudo eliminar el chat de la partida finalizada:", error.message);
+          return false;
+        }));
+      }
       if (typeof window.resolverNotificacionesTemporalesPorPartidaId === "function") {
         tareas.push(window.resolverNotificacionesTemporalesPorPartidaId(idPartida).catch(function(error) {
           console.warn("No se pudieron resolver los avisos temporales de la partida finalizada:", error.message);
