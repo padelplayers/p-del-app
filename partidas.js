@@ -233,10 +233,12 @@ function notificarRestriccionFiabilidad(uid, tipo, restriccion) {
     mensaje: inicio
       ? textoRestriccionFiabilidad(restriccion)
       : "Tu restriccion por fiabilidad ha finalizado.",
+    accion: "ver_perfil",
     prioridad: "alta",
     emailCritico: inicio,
     dedupeKey: (inicio ? "restriccion_fiabilidad_inicio_" : "restriccion_fiabilidad_fin_") + restriccion.id,
     data: {
+      perfilUid: uid,
       restriccionId: restriccion.id,
       nivel: restriccion.nivel,
       hasta: restriccion.hasta || null

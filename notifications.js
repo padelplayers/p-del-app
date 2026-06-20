@@ -165,6 +165,15 @@ function esNotificacionPenalizacionPerfil(n) {
   );
 }
 
+function esNotificacionVerPerfil(n) {
+  return !!n && (
+    esNotificacionPenalizacionPerfil(n) ||
+    n.accion === "ver_perfil" ||
+    n.tipo === "restriccion_fiabilidad_inicio" ||
+    n.tipo === "restriccion_fiabilidad_fin"
+  );
+}
+
 function esNotificacionFinalCancelacionPartida(n) {
   return !!n && (
     n.tipo === "partida_cancelada" ||
@@ -341,7 +350,7 @@ function obtenerAccionVisibleNotificacion(n) {
     return { texto: cantidad === 1 ? "Ver jugador" : "Ver jugadores" };
   }
 
-  if (esNotificacionPenalizacionPerfil(n)) {
+  if (esNotificacionVerPerfil(n)) {
     return { texto: "Ver perfil" };
   }
 
@@ -676,13 +685,16 @@ function abrirAccionNotificacion(id, n) {
     return;
   }
 
-  if (esNotificacionPenalizacionPerfil(n)) {
-    const uidPerfil = n.uid || (auth.currentUser && auth.currentUser.uid);
+  if (esNotificacionVerPerfil(n)) {
+    const data = n && n.data ? n.data : {};
+    const uidPerfil = data.perfilUid || data.uid || n.uid || (auth.currentUser && auth.currentUser.uid);
     if (uidPerfil && typeof verPerfil === "function") verPerfil(uidPerfil);
     return;
   }
 
   if (n && n.partidaId && typeof mostrar === "function") {
+    window.partidaChatFiltroId = n.partidaId;
+    window.partidaPendienteDestacar = n.partidaId;
     mostrar("partidas");
     if (
       n.accion === "introducir_resultado" ||
@@ -694,6 +706,12 @@ function abrirAccionNotificacion(id, n) {
       } else {
         window.modoPartidas = "pendientes";
         if (typeof cargarPartidas === "function") cargarPartidas();
+      }
+      if (n.accion === "introducir_resultado" && typeof window.abrirFormularioResultado === "function") {
+        setTimeout(function() { window.abrirFormularioResultado(n.partidaId); }, 250);
+      }
+      if (n.accion === "valorar_jugadores" && typeof window.abrirValoracionesPostPartido === "function") {
+        setTimeout(function() { window.abrirValoracionesPostPartido(n.partidaId); }, 250);
       }
       return;
     }
