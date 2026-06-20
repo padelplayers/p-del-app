@@ -550,6 +550,83 @@ function resolverMensajesSistemaPorPartida(partidaId, opciones) {
     });
 }
 
+function resolverAvisosSistemaNecesidadJugadorPartida(partidaId, opciones) {
+  if (!partidaId) return Promise.resolve(0);
+  opciones = opciones || {};
+
+  const keepDedupeKey = opciones.keepDedupeKey || ("system_plaza_libre_confirmada_" + partidaId);
+  const keepDocId = crearDocIdMensajeSistema(keepDedupeKey);
+  const eventTypesDuplicados = [
+    "falta_1",
+    "falta_1_hombre",
+    "falta_1_mujer",
+    "sustitucion_urgente",
+    "plaza_libre_confirmada"
+  ];
+  const dedupeKeysAntiguas = [
+    "falta_1_" + partidaId,
+    "falta_1_hombre_" + partidaId,
+    "falta_1_mujer_" + partidaId,
+    "sustitucion_urgente_" + partidaId,
+    "plaza_libre_confirmada_" + partidaId,
+    "system_falta_1_" + partidaId,
+    "system_falta_1_hombre_" + partidaId,
+    "system_falta_1_mujer_" + partidaId,
+    "system_sustitucion_urgente_" + partidaId
+  ];
+  const refsDirectas = dedupeKeysAntiguas.map(function(dedupeKey) {
+    return obtenerMensajesGeneralRef().doc(crearDocIdMensajeSistema(dedupeKey));
+  });
+  const refsBorrar = {};
+
+  function debeBorrarMensajeSistema(doc, data) {
+    const esSistema = data && (data.system === true || data.type === "system");
+    if (!esSistema) return false;
+    if (doc.id === keepDocId || data.dedupeKey === keepDedupeKey) return false;
+
+    const mismoPartidaId = data.partidaId === partidaId;
+    const dedupeKey = String(data.dedupeKey || "");
+    const dedupeDePartida = dedupeKeysAntiguas.includes(dedupeKey) || dedupeKey.endsWith("_" + partidaId);
+
+    if (mismoPartidaId && eventTypesDuplicados.includes(data.eventType || "")) return true;
+    if (dedupeDePartida && eventTypesDuplicados.includes(data.eventType || "")) return true;
+    if (dedupeKeysAntiguas.includes(dedupeKey)) return true;
+
+    return false;
+  }
+
+  return Promise.all([
+    obtenerMensajesGeneralRef().where("partidaId", "==", partidaId).get(),
+    Promise.all(refsDirectas.map(function(ref) { return ref.get(); }))
+  ]).then(function(resultados) {
+    const snapshotPartida = resultados[0];
+    const docsDirectos = resultados[1];
+
+    snapshotPartida.forEach(function(doc) {
+      const data = doc.data() || {};
+      if (debeBorrarMensajeSistema(doc, data)) refsBorrar[doc.ref.path] = doc.ref;
+    });
+
+    docsDirectos.forEach(function(doc) {
+      if (!doc.exists) return;
+      const data = doc.data() || {};
+      if (debeBorrarMensajeSistema(doc, data)) refsBorrar[doc.ref.path] = doc.ref;
+    });
+
+    const refs = Object.keys(refsBorrar).map(function(path) { return refsBorrar[path]; });
+    if (refs.length === 0) return 0;
+
+    const batch = db.batch();
+    refs.forEach(function(ref) {
+      batch.delete(ref);
+    });
+    return batch.commit().then(function() { return refs.length; });
+  }).catch(function(error) {
+    console.warn("[CHAT] No se pudieron resolver avisos Sistema duplicados de necesidad de jugador:", error.message);
+    return 0;
+  });
+}
+
 function abrirPartidaDesdeChatGeneral(partidaId) {
   if (!partidaId) return;
 
@@ -1745,6 +1822,7 @@ window.crearDocIdMensajeSistema = crearDocIdMensajeSistema;
 window.crearOMantenerMensajeSistemaGeneral = crearOMantenerMensajeSistemaGeneral;
 window.resolverMensajeSistemaGeneral = resolverMensajeSistemaGeneral;
 window.resolverMensajesSistemaPorPartida = resolverMensajesSistemaPorPartida;
+window.resolverAvisosSistemaNecesidadJugadorPartida = resolverAvisosSistemaNecesidadJugadorPartida;
 window.abrirPartidaDesdeChatGeneral = abrirPartidaDesdeChatGeneral;
 window.chatPartidaTieneNoLeidos = function(chatId) {
   return !!(chatState.chats[chatId] && chatState.chats[chatId].noLeidos);

@@ -536,6 +536,21 @@ function resolverEstadosSistemaIncompatibles(partidaId, eventTypes) {
   return resolverSistemaPartida(partidaId, eventTypes);
 }
 
+function resolverAvisosNecesidadJugadorConfirmada(partidaId) {
+  if (typeof window.resolverAvisosSistemaNecesidadJugadorPartida === "function") {
+    return window.resolverAvisosSistemaNecesidadJugadorPartida(partidaId, {
+      keepDedupeKey: "system_plaza_libre_confirmada_" + partidaId
+    });
+  }
+
+  return resolverSistemaPartida(partidaId, [
+    "falta_1",
+    "falta_1_hombre",
+    "falta_1_mujer",
+    "sustitucion_urgente"
+  ]);
+}
+
 function obtenerEventosSistemaPartida() {
   return [
     "partida_creada",
@@ -707,13 +722,11 @@ function emitirSistemaPlazaLibreConfirmadaSiProcede(partidaId, p) {
 
   return resolverEstadosSistemaIncompatibles(partidaId, [
     "partida_creada",
-    "falta_1",
-    "falta_1_hombre",
-    "falta_1_mujer",
     "partida_completa",
-    "sustitucion_urgente",
     "reserva_pendiente"
   ]).then(function() {
+    return resolverAvisosNecesidadJugadorConfirmada(partidaId);
+  }).then(function() {
     return crearMensajeSistemaPartida(partidaId, p, {
       eventType: "plaza_libre_confirmada",
       dedupeKey: "system_plaza_libre_confirmada_" + partidaId,
