@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Padel Morvedre">
 <link rel="manifest" href="manifest.json?v=2">
 <link rel="apple-touch-icon" href="pwa-icon-192.png">
-<link rel="stylesheet" href="styles.css?v=42">
+<link rel="stylesheet" href="styles.css?v=43">
 </head>
 
 <body>
@@ -36,7 +36,10 @@
 
 <div id="pantallaCargaInicial" class="pantallaCargaInicial">
   <div class="pantallaCargaCaja">
-    <strong>Cargando...</strong>
+    <img src="logo.png" class="pantallaCargaLogo" alt="Padel Players Morvedre">
+    <div class="pantallaCargaTitulo">PÁDEL PLAYERS MORVEDRE</div>
+    <div class="pantallaCargaSubtitulo">Organiza tus partidas de pádel de forma sencilla</div>
+    <div class="pantallaCargaSpinner" aria-label="Cargando"></div>
   </div>
 </div>
 
@@ -1290,7 +1293,7 @@ const db = firebase.firestore();
 <script src="notifications.js?v=10"></script>
 <script src="estadisticas.js?v=4"></script>
 <script src="admin-chat-cleanup.js?v=4"></script>
-<script src="pwa.js?v=31"></script>
+<script src="pwa.js?v=32"></script>
 <script src="app.js?v=19"></script>
 <script src="testNivel.js"></script>
 
