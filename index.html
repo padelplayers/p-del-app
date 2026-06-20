@@ -489,7 +489,7 @@ Juego en red
     </div>
   </div>
 
-  <button class="menuButton" onclick="mostrar('pistas')">Pistas</button>
+  <button class="menuButton" onclick="abrirPistas()">Pistas</button>
 
   <button class="menuButton" onclick="mostrar('partidas')">Partidas</button>
 
@@ -630,7 +630,7 @@ Añadir pista
     
     <h3>Nueva pista</h3>
 
-    <button class="btnBlue" onclick="mostrar('pistas')">Volver</button>
+    <button class="btnBlue" onclick="abrirPistas()">Volver</button>
 
     <input type="text" id="nombrePista" placeholder="Nombre del club">
 
@@ -768,7 +768,7 @@ Añadir pista
     <input type="file" id="inputFotoPista" accept="image/*">
 
     <button id="guardarPista" class="btnYellow">Guardar</button>
-    <button id="cancelarPista" class="btnBlue" onclick="mostrar('pistas')">Cancelar</button>
+    <button id="cancelarPista" class="btnBlue" onclick="abrirPistas()">Cancelar</button>
 
 
   </div>
@@ -782,7 +782,7 @@ Añadir pista
     
     <h3>Editar pista</h3>
 
-    <button class="btnBlue" onclick="mostrar('pistas')">Volver</button>
+    <button class="btnBlue" onclick="abrirPistas()">Volver</button>
 
     <input type="text" id="editarNombrePista" placeholder="Nombre del club">
 
@@ -920,7 +920,7 @@ Añadir pista
     <input type="file" id="editarInputFotoPista" accept="image/*">
 
     <button id="btnActualizarPista" class="btnYellow">Guardar cambios</button>
-    <button class="btnBlue" onclick="mostrar('pistas')">Cancelar</button>
+    <button class="btnBlue" onclick="abrirPistas()">Cancelar</button>
 
   </div>
 
@@ -1188,7 +1188,7 @@ Añadir pista
   Ninguna pista seleccionada
 </div>
 
-  <button class="btnYellow" onclick="window.modoSeleccionPista = true; mostrar('pistas')">
+  <button class="btnYellow" onclick="window.modoSeleccionPista = true; abrirPistas()">
     Elegir pista
   </button>
 
@@ -1269,14 +1269,14 @@ const db = firebase.firestore();
 <script src="logros.js?v=5"></script>
 <script src="perfil.js?v=28"></script>
 <script src="jugadores.js?v=3"></script>
-<script src="pistas.js?v=11"></script>
+<script src="pistas.js?v=12"></script>
 <script src="chat.js?v=13"></script>
-<script src="partidas.js?v=23"></script>
+<script src="partidas.js?v=24"></script>
 <script src="nivel.js?v=4"></script>
 <script src="postpartido.js?v=19"></script>
 <script src="notifications.js?v=10"></script>
 <script src="estadisticas.js?v=4"></script>
-<script src="pwa.js?v=21"></script>
+<script src="pwa.js?v=22"></script>
 <script src="app.js?v=17"></script>
 <script src="testNivel.js"></script>
 

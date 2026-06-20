@@ -1,6 +1,8 @@
 const btnNuevaPista = document.getElementById("btnNuevaPista");
 const btnGuardarPista = document.getElementById("guardarPista");
 
+window.pistaUnicaDesdePartida = window.pistaUnicaDesdePartida || null;
+
 function incrementarPistasCreadasLogro(uid) {
   if (!uid) return Promise.resolve(false);
 
@@ -209,6 +211,52 @@ function crearBotonPista(texto, clase, onClick) {
   return boton;
 }
 
+function normalizarTextoPista(valor) {
+  return String(valor || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function pistaCoincideConModoUnico(doc, data, modo) {
+  if (!modo) return true;
+  if (modo.pistaId) return doc.id === modo.pistaId;
+
+  const nombreModo = normalizarTextoPista(modo.nombre);
+  const localidadModo = normalizarTextoPista(modo.localidad);
+  if (!nombreModo) return false;
+
+  const nombrePista = normalizarTextoPista(data && data.nombre);
+  const localidadPista = normalizarTextoPista(data && data.localidad);
+  if (nombrePista !== nombreModo) return false;
+  if (localidadModo && localidadPista !== localidadModo) return false;
+
+  return true;
+}
+
+window.abrirPistas = function() {
+  window.pistaUnicaDesdePartida = null;
+  localStorage.removeItem("pistaSeleccionada");
+  mostrar("pistas");
+};
+
+window.mostrarPistaUnicaDesdePartida = function(datos) {
+  datos = datos || {};
+  window.pistaUnicaDesdePartida = {
+    pistaId: datos.pistaId || null,
+    nombre: datos.nombre || null,
+    localidad: datos.localidad || null
+  };
+  window.filtrosActivos = false;
+
+  const filtros = document.getElementById("filtrosPistas");
+  if (filtros) filtros.style.display = "none";
+
+  localStorage.removeItem("pistaSeleccionada");
+  mostrar("pistas");
+};
+
 function esPistaPrivadaComunidad(data) {
   const tipo = String((data && data.tipo) || "").toLowerCase().trim();
   return tipo === "privada" || tipo === "privada comunidad";
@@ -235,8 +283,20 @@ async function cargarPistas() {
     .onSnapshot(snapshot => {
       lista.replaceChildren();
       let docs = snapshot.docs;
+      const modoPistaUnica = window.pistaUnicaDesdePartida || null;
 
-      if (window.filtrosActivos) {
+      if (modoPistaUnica) {
+        docs = docs.filter(function(doc) {
+          return pistaCoincideConModoUnico(doc, doc.data() || {}, modoPistaUnica);
+        });
+
+        if (docs.length === 0) {
+          lista.replaceChildren(crearTextoPista("No se ha encontrado la pista de esta partida"));
+          return;
+        }
+      }
+
+      if (!modoPistaUnica && window.filtrosActivos) {
         const ordenPrecio = document.getElementById("ordenPrecio").value;
 
         if (ordenPrecio) {
@@ -263,7 +323,7 @@ async function cargarPistas() {
       docs.forEach(doc => {
         const data = doc.data();
 
-        if (window.filtrosActivos) {
+        if (!modoPistaUnica && window.filtrosActivos) {
           const texto = document.getElementById("buscarTexto").value.toLowerCase();
           const localidadFiltro = document.getElementById("filtroLocalidad").value;
           const tipoFiltro = document.getElementById("filtroTipo").value;

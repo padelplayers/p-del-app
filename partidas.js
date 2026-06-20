@@ -1621,7 +1621,7 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
   const pistaFila = document.createElement("button");
   pistaFila.type = "button";
   pistaFila.className = "partidaPistaBtn";
-  pistaFila.onclick = function() { verPista(p.pistaId); };
+  pistaFila.onclick = function() { abrirPistaDesdePartida(p); };
 
   const pistaTexto = document.createElement("span");
   pistaTexto.id = "pista_" + id;
@@ -2606,9 +2606,22 @@ function limpiarFiltrosPartidas() {
 }
 
 function verPista(id) {
-  if (!id) return;
+  abrirPistaDesdePartida({ pistaId: id });
+}
 
-  localStorage.setItem("pistaSeleccionada", id);
+function abrirPistaDesdePartida(partida) {
+  partida = partida || {};
+  if (typeof window.mostrarPistaUnicaDesdePartida === "function") {
+    window.mostrarPistaUnicaDesdePartida({
+      pistaId: partida.pistaId || null,
+      nombre: partida.pistaNombre || partida.nombrePista || null,
+      localidad: partida.pistaLocalidad || partida.localidad || null
+    });
+    return;
+  }
+
+  if (!partida.pistaId) return;
+  localStorage.setItem("pistaSeleccionada", partida.pistaId);
   mostrar("pistas");
 }
 
