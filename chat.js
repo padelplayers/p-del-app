@@ -5,6 +5,7 @@ const chatState = {
   listenerActivo: null,
   chatListenerActivo: null,
   listenerResumenGeneral: null,
+  listenerResumenSistema: null,
   listenersResumenPartidas: [],
   listenerResumenPrivados: null,
   listenerUsuariosOnline: null,
@@ -20,6 +21,15 @@ const chatState = {
       estado: "Chat del club",
       noLeidos: false,
       oculto: false,
+      mensajes: []
+    },
+    sistema: {
+      titulo: "Sistema",
+      tipo: "sistema",
+      estado: "Avisos activos del sistema",
+      noLeidos: false,
+      oculto: false,
+      totalActivos: 0,
       mensajes: []
     },
     "partida-demo": {
@@ -101,7 +111,7 @@ async function cambiarChatTab(chatId) {
   if (!chatState.chats[chatId]) return;
 
   chatState.chatActivo = chatId;
-  chatState.chats[chatId].noLeidos = false;
+  chatState.chats[chatId].noLeidos = chatId === "sistema" ? chatState.chats[chatId].totalActivos > 0 : false;
   chatState.chats[chatId].oculto = false;
 
   const mensajesRef = obtenerMensajesChatRef(chatId);
@@ -110,13 +120,14 @@ async function cambiarChatTab(chatId) {
       await limpiarMensajesAntiguos(chatId);
     }
 
-    let query = mensajesRef.orderBy("at", "desc").limit(30);
+    const limiteMensajes = chatState.chats[chatId].tipo === "general" || chatState.chats[chatId].tipo === "sistema" ? 100 : 30;
+    let query = mensajesRef.orderBy("at", "desc").limit(limiteMensajes);
     if (chatId === "general") {
       const user = auth.currentUser;
       const fechaAlta = user ? await obtenerFechaAltaUsuarioChat(user.uid) : null;
       if (chatState.chatActivo !== chatId) return;
       if (fechaAlta) {
-        query = mensajesRef.where("at", ">=", fechaAlta).orderBy("at", "desc").limit(30);
+        query = mensajesRef.where("at", ">=", fechaAlta).orderBy("at", "desc").limit(limiteMensajes);
         chatState.chats.general.mensajes = [];
         if (chatState.chatActivo === "general") {
           const mensajes = document.getElementById("chatMensajes");
@@ -156,14 +167,16 @@ function actualizarTabsChat() {
     }
 
     const esGeneral = id === "general";
+    const esSistema = id === "sistema";
     const esActivo = id === chatState.chatActivo;
 
-    const visible = esGeneral || esActivo || chat.noLeidos || !chat.oculto;
+    const visible = esGeneral || esSistema || esActivo || chat.noLeidos || !chat.oculto;
 
     btn.style.display = visible ? "flex" : "none";
 
     if (visible && btn.classList.contains('chatTab')) {
-        const tituloTab = chat.tituloCorto || chat.titulo;
+        const totalSistema = esSistema ? (chat.totalActivos || 0) : 0;
+        const tituloTab = esSistema ? "Sistema (" + totalSistema + ")" : (chat.tituloCorto || chat.titulo);
         let textNode = Array.from(btn.childNodes).find(n => n.nodeType === 3);
         if (!textNode) {
             textNode = document.createTextNode(tituloTab);
@@ -175,7 +188,7 @@ function actualizarTabsChat() {
         }
 
         // Gestionar botón de cierre (X) sin destruir listeners
-        if (!esGeneral && !btn.querySelector('.chatTabClose')) {
+        if (!esGeneral && !esSistema && !btn.querySelector('.chatTabClose')) {
             const closeBtn = document.createElement('span');
             closeBtn.className = 'chatTabClose';
             closeBtn.textContent = '✕';
@@ -193,7 +206,7 @@ function actualizarTabsChat() {
 }
 
 function cerrarChatTab(chatId) {
-  if (chatId === "general") return;
+  if (chatId === "general" || chatId === "sistema") return;
   if (chatState.chats[chatId]) {
     chatState.chats[chatId].oculto = true;
     if (chatState.chatActivo === chatId) {
@@ -374,12 +387,20 @@ const chatNombresUsuarios = {};
 const CHAT_MAX_MENSAJES = 100;
 const CHAT_GENERAL_RETENCION_MS = 30 * 24 * 60 * 60 * 1000;
 const CHAT_PRIVADO_RETENCION_MS = 30 * 24 * 60 * 60 * 1000;
+const CHAT_SISTEMA_EVENTOS_PUBLICOS = [
+  "partida_creada",
+  "falta_1",
+  "falta_1_hombre",
+  "falta_1_mujer",
+  "plaza_libre_confirmada",
+  "sustitucion_urgente"
+];
 
 function obtenerMensajesChatRef(chatId) {
   const chat = chatState.chats[chatId];
   if (!chat) return null;
 
-  if (chat.tipo === "general" && chatId === "general") {
+  if ((chat.tipo === "general" && chatId === "general") || chat.tipo === "sistema") {
     return db.collection("chats").doc("general").collection("mensajes");
   }
 
@@ -666,8 +687,30 @@ function limpiarListenerUsuariosOnline() {
  * Crea un nodo de mensaje DOM sin inyectarlo.
  * Arquitectura atómica para permitir actualizaciones futuras (reacciones, edición).
  */
+function esMensajeSistemaChat(data) {
+  return !!data && (data.system === true || data.type === "system");
+}
+
+function esAvisoSistemaPublicoChat(data) {
+  return !!(
+    esMensajeSistemaChat(data) &&
+    data.valid !== false &&
+    CHAT_SISTEMA_EVENTOS_PUBLICOS.includes(data.eventType || "")
+  );
+}
+
+function mensajePerteneceAChatVisual(chatId, data) {
+  const chat = chatState.chats[chatId];
+  if (!chat) return false;
+
+  const esSistema = esMensajeSistemaChat(data);
+  if (chat.tipo === "general") return !esSistema;
+  if (chat.tipo === "sistema") return esAvisoSistemaPublicoChat(data);
+  return true;
+}
+
 function crearNodoMensaje(msg) {
-  const esSistema = msg && (msg.system === true || msg.type === "system");
+  const esSistema = esMensajeSistemaChat(msg);
   const div = document.createElement("div");
   div.className = "chatMessage" + (!esSistema && msg.propio ? " mine" : "") + (esSistema ? " chatMessageSistema" : "");
   div.dataset.msgId = msg.id; // Identificador persistente
@@ -754,10 +797,12 @@ function renderChatActivo() {
   const estado = document.getElementById("chatEstadoActivo");
   const tipo = document.getElementById("chatTipoActivo");
   const mensajes = document.getElementById("chatMensajes");
+  const form = document.getElementById("chatForm");
 
   if (titulo) titulo.innerText = chat.titulo;
   if (estado) estado.innerText = chat.estado;
   if (tipo) tipo.innerText = chat.tipo;
+  if (form) form.style.display = chat.tipo === "sistema" ? "none" : "";
 
   if (!mensajes) return;
 
@@ -772,7 +817,7 @@ function renderChatActivo() {
     if (!mensajes.querySelector('.chatEmpty')) {
       const empty = document.createElement("div");
       empty.className = "chatEmpty";
-      empty.textContent = "Sin mensajes todavía";
+      empty.textContent = chat.tipo === "sistema" ? "No hay avisos activos del sistema" : "Sin mensajes todavía";
       mensajes.replaceChildren(empty);
     }
     return;
@@ -829,14 +874,15 @@ function gestionarListenerChat(chatId, query) {
       const data = doc.data({ serverTimestamps: 'estimate' });
       const isPending = doc.metadata.hasPendingWrites;
       const atMillis = data.at ? data.at.toMillis() : Date.now();
+      const visibleEnChat = mensajePerteneceAChatVisual(chatId, data);
 
       const msgObj = {
         id: doc.id,
-        autor: (data.system === true || data.type === "system") ? "Sistema" : (data.n || "Jugador"),
+        autor: esMensajeSistemaChat(data) ? "Sistema" : (data.n || "Jugador"),
         texto: data.t || "",
         at_val: atMillis,
         hora: data.at ? new Date(atMillis).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "...",
-        propio: !(data.system === true || data.type === "system") && data.u === auth.currentUser?.uid,
+        propio: !esMensajeSistemaChat(data) && data.u === auth.currentUser?.uid,
         type: data.type || "text",
         system: data.system === true,
         partidaId: data.partidaId || null,
@@ -847,6 +893,13 @@ function gestionarListenerChat(chatId, query) {
       };
 
       if (change.type === "added" || change.type === "modified") {
+        if (!visibleEnChat) {
+          chat.mensajes = chat.mensajes.filter(m => m.id !== doc.id);
+          const el = document.querySelector(`[data-msg-id="${doc.id}"]`);
+          if (el) el.remove();
+          return;
+        }
+
         const idx = chat.mensajes.findIndex(m => m.id === doc.id);
         if (idx > -1) chat.mensajes[idx] = msgObj;
         else chat.mensajes.push(msgObj);
@@ -857,7 +910,7 @@ function gestionarListenerChat(chatId, query) {
         }
         
         // Solo marcar no leído si NO es un envío local pendiente y NO es el chat activo
-        if (!isPending && change.type === "added" && data.u !== auth.currentUser?.uid) {
+        if (!isPending && change.type === "added" && data.u !== auth.currentUser?.uid && chat.tipo !== "sistema") {
           if (chatId !== chatState.chatActivo) marcarChatNoLeido(chatId);
         }
       } else if (change.type === "removed") {
@@ -868,6 +921,7 @@ function gestionarListenerChat(chatId, query) {
     });
 
     chat.mensajes.sort((a, b) => a.at_val - b.at_val || a.id.localeCompare(b.id));
+    actualizarTabsChat();
 
     if (chatId === chatState.chatActivo) renderChatActivo();
   });
@@ -1005,6 +1059,7 @@ async function prepararEnvioChat() {
   const user = auth.currentUser;
   const chat = chatState.chats[chatId];
   if (!user || !chat) return;
+  if (chat.tipo === "sistema") return;
 
   if (
     chat.tipo !== "partida" &&
@@ -1095,12 +1150,13 @@ function actualizarIndicadorMenuChat() {
   const btn = document.getElementById("btnMenuChat");
 
   const hayNoLeidos = Object.keys(chatState.chats).some(function(chatId) {
-    return !!chatState.chats[chatId].noLeidos;
+    const chat = chatState.chats[chatId];
+    return !!(chat && chat.noLeidos && (chat.tipo === "partida" || chat.tipo === "privado" || chat.tipo === "sistema"));
   });
 
   const hayNoLeidosBarra = Object.keys(chatState.chats).some(function(chatId) {
     const chat = chatState.chats[chatId];
-    return !!(chat && chat.noLeidos && (chat.tipo === "partida" || chat.tipo === "privado"));
+    return !!(chat && chat.noLeidos && (chat.tipo === "partida" || chat.tipo === "privado" || chat.tipo === "sistema"));
   });
 
   if (btn) {
@@ -1164,6 +1220,7 @@ function timestampMayor(a, b) {
 
 async function evaluarResumenGeneral(data, uid) {
   if (!data || !data.lastActivity || data.lastSender === uid) return "procesado";
+  if (data.lastSender === "sistema" || data.lastMessageType === "system") return "procesado";
   if (chatState.chatActivo === "general" && estaPantallaChatVisible()) return "visible";
 
   const fechaAlta = await obtenerFechaAltaUsuarioChat(uid);
@@ -1199,6 +1256,36 @@ function iniciarListenerResumenGeneral(uid) {
           chatState.ultimoResumenGeneralAt = atMs;
         }
       });
+    });
+}
+
+function iniciarListenerResumenSistema() {
+  if (typeof chatState.listenerResumenSistema === "function") {
+    chatState.listenerResumenSistema();
+    chatState.listenerResumenSistema = null;
+  }
+
+  chatState.listenerResumenSistema = obtenerMensajesGeneralRef()
+    .orderBy("at", "desc")
+    .limit(100)
+    .onSnapshot(function(snapshot) {
+      const activos = [];
+      snapshot.forEach(function(doc) {
+        const data = doc.data({ serverTimestamps: "estimate" }) || {};
+        if (esAvisoSistemaPublicoChat(data)) activos.push(doc.id);
+      });
+
+      const sistema = chatState.chats.sistema;
+      if (!sistema) return;
+
+      sistema.totalActivos = activos.length;
+      sistema.noLeidos = activos.length > 0;
+      sistema.oculto = false;
+
+      actualizarTabsChat();
+      actualizarIndicadorMenuChat();
+    }, function(error) {
+      console.warn("Error listener resumen Sistema:", error);
     });
 }
 
@@ -1532,6 +1619,7 @@ window.abrirChatGeneral = function() {
 
 window.iniciarListenersChatsPartidas = function(uid) {
   iniciarListenerResumenGeneral(uid);
+  iniciarListenerResumenSistema();
   iniciarListenersResumenPartidas(uid);
   iniciarListenerResumenPrivados(uid);
   cargarUsuariosSidebar();
@@ -1549,13 +1637,18 @@ window.limpiarTodoChat = function() {
   if (typeof chatState.listenerResumenGeneral === "function") {
     chatState.listenerResumenGeneral();
   }
+  if (typeof chatState.listenerResumenSistema === "function") {
+    chatState.listenerResumenSistema();
+  }
 
   chatState.listenerResumenGeneral = null;
+  chatState.listenerResumenSistema = null;
   chatState.ultimoResumenGeneralAt = null;
   chatState.titulosPartidasCache = {};
   chatState.fechasAltaUsuariosCache = {};
   Object.keys(chatState.chats).forEach(function(chatId) {
     chatState.chats[chatId].noLeidos = false;
+    if (chatId === "sistema") chatState.chats[chatId].totalActivos = 0;
     actualizarBotonPartidaNoLeido(chatId);
   });
   actualizarTabsChat();
