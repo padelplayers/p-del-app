@@ -23,7 +23,7 @@ Fuentes oficiales: [precios Firestore](https://firebase.google.com/docs/firestor
 5. **Medio, corregido:** Perfil y Pistas dejaban listeners activos al cambiar de pantalla; editar Perfil creaba uno sin guardar `unsubscribe`.
 6. **Medio, corregido:** `eliminarChatTotal()` usaba un unico batch y podia superar el limite de 500 operaciones.
 7. **Alto a escala:** Jugadores y Clasificacion leen todos los usuarios por apertura, sin paginacion.
-8. **Alto a escala:** Estadisticas lee todo `historial_partidas` y todos los usuarios cada vez que se carga o cambia el filtro.
+8. **Alto a escala, mitigado:** Estadisticas lee todo `historial_partidas` y todos los usuarios en la primera carga; una cache de cinco minutos evita repetir ambas lecturas al cambiar el filtro.
 9. **Medio/alto a escala:** `cargarPartidas()` hace lecturas globales y despues lecturas por pista, creador y jugadores (patron N+1).
 10. **Condicion de publicacion:** Storage ya no puede funcionar en Spark desde 2026-02-03. Blaze conserva cuota sin coste, pero no garantiza coste cero duro.
 
@@ -80,7 +80,7 @@ Fuentes oficiales: [precios Firestore](https://firebase.google.com/docs/firestor
 | `notifications.js` / limpieza propia | `notificaciones.get()` | `uid == actual` | Login | Bajo/medio, max 400 borrados |
 | `notifications.js` / admin | `notificaciones.get()` | Global | Solo boton admin | Medio puntual; mantener en Mantenimiento |
 | `admin-chat-cleanup.js` / auditoria | todos mensajes General + partidas referidas | Sin limit en mensajes | Solo boton admin | Medio puntual; mantener |
-| `estadisticas.js` / `cargarEstadisticas` | historial + usuarios + pistas | Historial global | Abrir/cambiar filtro admin | Alto a largo plazo; filtrar en servidor/paginar |
+| `estadisticas.js` / `cargarEstadisticas` | historial + usuarios + pistas | Historial global, cache 5 min | Primera apertura admin; filtros reutilizan cache | Alto a largo plazo en la primera carga; filtrar en servidor/paginar |
 | `estadisticas.js` / resincronizar | `partidas.get()` | Global | Solo boton admin confirmado | Medio puntual; mantener |
 | `postpartido.js` / revision | partidas | `estado == confirmada` | Carga Partidas | Bajo/medio; sin intervalo activo |
 
@@ -160,11 +160,11 @@ El panel ya esta bajo administracion. No conviene eliminar estas herramientas; s
 
 Estimacion cualitativa: normalmente pocos KB por partida. Incluso 10.000 partidas deberian ocupar decenas de MB, lejos de 1 GiB, salvo valoraciones anormalmente grandes. El coste primero sera lecturas, no almacenamiento.
 
-Los filtros dia/semana/mes/ano/total filtran correctamente en cliente, pero todos descargan el historial completo. Recomendacion futura: guardar un timestamp consultable y aplicar `where` para periodos; reservar Total para uso manual paginado.
+Los filtros dia/semana/mes/ano/total filtran correctamente en cliente. La primera carga descarga el historial completo y los cambios de filtro lo reutilizan durante cinco minutos. Recomendacion futura: guardar un timestamp consultable y aplicar `where` para periodos; reservar Total para uso manual paginado.
 
 ## K. PWA y cache
 
-- Cache actual: `padel-players-morvedre-v97`; al activar elimina todos los nombres anteriores.
+- Cache actual: `padel-players-morvedre-v98`; al activar elimina todos los nombres anteriores.
 - Navegacion usa red y no conserva `index.html` viejo; offline responde 503.
 - JS/CSS usan network-first con `cache: reload`; las versiones de archivos modificados estan incrementadas.
 - Recursos externos no se guardan en Cache Storage por el service worker.
@@ -204,9 +204,10 @@ Lo que escala peor es `usuarios.get()` por cada apertura, historial global admin
 6. Chat de partida tambien se limpia al abrir.
 7. `eliminarChatTotal()` repite lecturas/batches de 450 hasta vaciar.
 8. Listeners Perfil/Pistas se cierran al abandonar la pantalla; editar Perfil usa `get()`.
-9. Versiones PWA/cache actualizadas a `v97`.
+9. Versiones PWA/cache actualizadas a `v98`.
 10. Fotos de perfil y pistas se convierten a JPEG, se redimensionan y tienen limites estrictos de 450/900 KB.
 11. Fotos en Jugadores, Clasificacion y Pistas usan carga diferida.
+12. Estadisticas reutiliza durante cinco minutos el historial y el resumen de usuarios, y comparte las cargas simultaneas.
 
 No se cambiaron reglas de negocio, reglas Firebase, esquemas, notificaciones, ranking, estadisticas ni permisos. No se anadieron Cloud Functions ni listeners.
 

@@ -1,8 +1,20 @@
 const estadisticasState = {
   periodo: "mes",
   pistasCache: {},
-  usuariosCache: {}
+  usuariosCache: {},
+  usuariosResumenCache: null,
+  usuariosResumenCacheAt: 0,
+  usuariosResumenCarga: null,
+  historialCache: null,
+  historialCacheAt: 0,
+  historialCarga: null
 };
+
+const ESTADISTICAS_CACHE_MS = 5 * 60 * 1000;
+
+function cacheEstadisticasVigente(cargadoAt) {
+  return cargadoAt > 0 && Date.now() - cargadoAt < ESTADISTICAS_CACHE_MS;
+}
 
 function usuarioEsAdminEstadisticas() {
   return typeof esAdmin !== "undefined" && esAdmin === true;
@@ -234,7 +246,20 @@ function cargarUsuarioEstadisticas(uid) {
 }
 
 function cargarUsuariosRegistradosEstadisticas() {
-  return db.collection("usuarios").get().then(function(snapshot) {
+  if (
+    estadisticasState.usuariosResumenCache &&
+    cacheEstadisticasVigente(estadisticasState.usuariosResumenCacheAt)
+  ) {
+    return Promise.resolve(Object.assign({}, estadisticasState.usuariosResumenCache));
+  }
+
+  if (estadisticasState.usuariosResumenCarga) {
+    return estadisticasState.usuariosResumenCarga.then(function(resumen) {
+      return Object.assign({}, resumen);
+    });
+  }
+
+  estadisticasState.usuariosResumenCarga = db.collection("usuarios").get().then(function(snapshot) {
     const resumen = {
       total: 0,
       hombres: 0,
@@ -253,7 +278,17 @@ function cargarUsuariosRegistradosEstadisticas() {
       if (sexo === "femenino") resumen.mujeres++;
     });
 
+    estadisticasState.usuariosResumenCache = resumen;
+    estadisticasState.usuariosResumenCacheAt = Date.now();
     return resumen;
+  });
+
+  return estadisticasState.usuariosResumenCarga.then(function(resumen) {
+    estadisticasState.usuariosResumenCarga = null;
+    return Object.assign({}, resumen);
+  }, function(error) {
+    estadisticasState.usuariosResumenCarga = null;
+    throw error;
   });
 }
 
@@ -367,10 +402,35 @@ function cargarPistaEstadisticas(pistaId) {
 }
 
 function cargarPartidasHistorialEstadisticas(periodo, inicio, fin) {
-  return db.collection("historial_partidas").get().then(function(snapshot) {
-    return snapshot.docs.map(function(doc) {
+  if (
+    Array.isArray(estadisticasState.historialCache) &&
+    cacheEstadisticasVigente(estadisticasState.historialCacheAt)
+  ) {
+    return Promise.resolve(estadisticasState.historialCache.slice());
+  }
+
+  if (estadisticasState.historialCarga) {
+    return estadisticasState.historialCarga.then(function(partidas) {
+      return partidas.slice();
+    });
+  }
+
+  estadisticasState.historialCarga = db.collection("historial_partidas").get().then(function(snapshot) {
+    const partidas = snapshot.docs.map(function(doc) {
       return Object.assign({ idPartida: doc.id }, doc.data() || {});
     });
+
+    estadisticasState.historialCache = partidas;
+    estadisticasState.historialCacheAt = Date.now();
+    return partidas;
+  });
+
+  return estadisticasState.historialCarga.then(function(partidas) {
+    estadisticasState.historialCarga = null;
+    return partidas.slice();
+  }, function(error) {
+    estadisticasState.historialCarga = null;
+    throw error;
   });
 }
 
