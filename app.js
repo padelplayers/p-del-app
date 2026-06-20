@@ -1,6 +1,10 @@
 window.modoSeleccionPista = false;
 window.partidaCreando = {};
 
+const APP_JS_DIAGNOSTICO_VERSION = "app.js?v=24-imagenes";
+window.APP_JS_DIAGNOSTICO_VERSION = APP_JS_DIAGNOSTICO_VERSION;
+console.info("[IMAGEN] Version cargada:", APP_JS_DIAGNOSTICO_VERSION, document.currentScript ? document.currentScript.src : "src desconocido");
+
 const IMAGEN_STORAGE_PERFIL = {
   maxDimension: 512,
   maxBytes: 450 * 1024,
@@ -96,17 +100,49 @@ async function optimizarImagenParaStorage(ruta, archivo) {
 
 window.optimizarImagenParaStorage = optimizarImagenParaStorage;
 
-window.subirImagen = async function(ruta, archivo) {
+window.subirImagen = async function(ruta, archivo, flujo) {
+  const config = configuracionImagenStorage(ruta);
+  const etiquetaFlujo = flujo || (config === IMAGEN_STORAGE_PERFIL ? "perfil" : "pista");
+
+  console.log("[IMAGEN] Flujo:", etiquetaFlujo);
+  console.log("[IMAGEN] Version JS:", APP_JS_DIAGNOSTICO_VERSION);
+  console.log("[IMAGEN] Original:", archivo ? archivo.size : null, archivo ? archivo.type : null);
+
   const imagenOptimizada = await optimizarImagenParaStorage(ruta, archivo);
+
+  console.log("[IMAGEN] Optimizada:", imagenOptimizada.size, imagenOptimizada.type);
+  console.log("[IMAGEN] Ruta Storage final:", ruta);
+  console.log("[IMAGEN] Se envia imagenOptimizada:", imagenOptimizada !== archivo);
+
+  if (config && imagenOptimizada === archivo) {
+    throw new Error("Seguridad de imagen: se intento subir el archivo original sin optimizar.");
+  }
+  if (config && imagenOptimizada.size > config.maxBytes) {
+    throw new Error("Seguridad de imagen: el archivo optimizado supera el limite final.");
+  }
+  if (config && imagenOptimizada.type !== "image/jpeg") {
+    throw new Error("Seguridad de imagen: el resultado optimizado no es JPEG.");
+  }
 
   const ref = firebase.storage().ref().child(ruta);
 
-  await ref.put(imagenOptimizada, {
+  console.log("[IMAGEN] Ejecutando ref.put con variable: imagenOptimizada");
+  const subida = await ref.put(imagenOptimizada, {
     contentType: imagenOptimizada.type || archivo.type || "image/jpeg",
     cacheControl: "public,max-age=31536000,immutable"
   });
 
+  const metadataSubida = subida && subida.metadata ? subida.metadata : {};
+  console.log("[IMAGEN] Storage confirma:", {
+    fullPath: metadataSubida.fullPath || ruta,
+    size: metadataSubida.size,
+    contentType: metadataSubida.contentType,
+    generation: metadataSubida.generation
+  });
+
   const url = await ref.getDownloadURL();
+
+  console.log("[IMAGEN] URL nueva guardable:", url);
 
   return url;
 }
@@ -464,7 +500,7 @@ async function guardarPerfilRegistro(){
   if (archivo) {
     const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
     try {
-      fotoURL = await subirImagen(ruta, archivo);
+      fotoURL = await subirImagen(ruta, archivo, "perfil-registro");
       fotoNuevaSubida = fotoURL;
     } catch (error) {
       document.getElementById("msgPerfil").innerText = error && error.message
@@ -698,7 +734,7 @@ if (inputFotoGlobal) {
       fotosAnteriores = obtenerFotosStorageUsuario(data);
 
       const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
-      const url = await subirImagen(ruta, file);
+      const url = await subirImagen(ruta, file, "perfil-edicion");
 
       try {
         await docRef.update({

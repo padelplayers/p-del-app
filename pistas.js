@@ -168,7 +168,11 @@ if (btnGuardarPista) {
 
       if (archivoImagenPista) {
         const ruta = "pistas/" + Date.now() + ".jpg";
-        datos.imagen = await subirImagen(ruta, archivoImagenPista);
+        datos.imagen = await subirImagen(
+          ruta,
+          archivoImagenPista,
+          window.pistaEditando ? "pista-edicion" : "pista-creacion"
+        );
         if (window.pistaEditando) datos.imagenUrl = firebase.firestore.FieldValue.delete();
       }
 
@@ -613,7 +617,7 @@ if (btnActualizar) {
     if (archivoImagen) {
       const ruta = "pistas/" + Date.now() + ".jpg";
       try {
-        datosUpdate.imagen = await subirImagen(ruta, archivoImagen);
+        datosUpdate.imagen = await subirImagen(ruta, archivoImagen, "pista-edicion");
         datosUpdate.imagenUrl = firebase.firestore.FieldValue.delete();
       } catch (error) {
         alert(error && error.message ? error.message : "No se pudo preparar la imagen.");
