@@ -79,7 +79,12 @@ html{
   display: block;
   margin: 0 auto 22px;
   object-fit: contain;
-  filter: drop-shadow(0 12px 22px rgba(0,0,0,0.22));
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  filter: none;
+  outline: 0;
 }
 
 .pantallaCargaTitulo {
