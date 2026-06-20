@@ -1,5 +1,6 @@
-const CACHE_NAME = "padel-players-morvedre-v70";
+const CACHE_NAME = "padel-players-morvedre-v71";
 const APP_SHELL = [
+  "./manifest.json?v=2",
   "./styles.css?v=42",
   "./logros.js?v=5",
   "./perfil.js?v=29",
@@ -9,9 +10,13 @@ const APP_SHELL = [
   "./notifications.js?v=10",
   "./estadisticas.js?v=4",
   "./admin-chat-cleanup.js?v=4",
-  "./pwa.js?v=30",
+  "./pwa.js?v=31",
   "./app.js?v=19",
-  "./logo.png"
+  "./logo.png",
+  "./pwa-icon-192.png",
+  "./pwa-icon-512.png",
+  "./pwa-icon-maskable-192.png",
+  "./pwa-icon-maskable-512.png"
 ];
 
 self.addEventListener("install", function(event) {
