@@ -1,6 +1,7 @@
 const estadisticasState = {
   periodo: "mes",
-  pistasCache: {}
+  pistasCache: {},
+  usuariosCache: {}
 };
 
 function usuarioEsAdminEstadisticas() {
@@ -51,6 +52,21 @@ function finPeriodoEstadisticas(periodo, inicio) {
   if (periodo === "ano") fin.setFullYear(fin.getFullYear() + 1);
 
   return fin;
+}
+
+function periodoAnteriorEstadisticas(periodo, inicio) {
+  if (!inicio || periodo === "total") return null;
+  const anteriorInicio = new Date(inicio.getTime());
+
+  if (periodo === "dia") anteriorInicio.setDate(anteriorInicio.getDate() - 1);
+  if (periodo === "semana") anteriorInicio.setDate(anteriorInicio.getDate() - 7);
+  if (periodo === "mes") anteriorInicio.setMonth(anteriorInicio.getMonth() - 1);
+  if (periodo === "ano") anteriorInicio.setFullYear(anteriorInicio.getFullYear() - 1);
+
+  return {
+    inicio: anteriorInicio,
+    fin: new Date(inicio.getTime())
+  };
 }
 
 function fechaPartidaEstadisticas(partida) {
@@ -152,6 +168,159 @@ function crearResumenItemEstadisticas(etiqueta, valor) {
   return item;
 }
 
+function normalizarSexoEstadisticas(valor) {
+  const sexo = String(valor || "").toLowerCase().trim();
+  if (sexo === "masculino" || sexo === "hombre") return "masculino";
+  if (sexo === "femenino" || sexo === "mujer") return "femenino";
+  return "";
+}
+
+function usuarioActivoEstadisticas(data) {
+  data = data || {};
+  return !(
+    data.eliminado === true ||
+    data.borrado === true ||
+    data.perfilEliminado === true ||
+    data.activo === false
+  );
+}
+
+function arrayUnicoEstadisticas(lista) {
+  return (Array.isArray(lista) ? lista : []).filter(Boolean).filter(function(uid, index, arr) {
+    return arr.indexOf(uid) === index;
+  });
+}
+
+function participantesPartidaEstadisticas(partida) {
+  if (!partida) return [];
+
+  const incidencia = partida.incidenciaPostPartido;
+  if (incidencia && incidencia.tipo === "no_presentado") {
+    if (incidencia.estado === "no_pudo_jugarse") return [];
+    if (incidencia.estado === "jugada_igualmente") {
+      return arrayUnicoEstadisticas(incidencia.participantesComputables);
+    }
+  }
+
+  const resultado = partida.resultado || {};
+  const equipo1 = Array.isArray(resultado.equipo1) ? resultado.equipo1 : [];
+  const equipo2 = Array.isArray(resultado.equipo2) ? resultado.equipo2 : [];
+  const participantesResultado = arrayUnicoEstadisticas(equipo1.concat(equipo2));
+  if (participantesResultado.length === equipo1.length + equipo2.length && participantesResultado.length > 0) {
+    return participantesResultado;
+  }
+
+  const participantesPostPartido = arrayUnicoEstadisticas(partida.participantesPostPartido);
+  if (participantesPostPartido.length > 0) return participantesPostPartido;
+
+  return arrayUnicoEstadisticas(partida.jugadores);
+}
+
+function cargarUsuarioEstadisticas(uid) {
+  if (!uid) return Promise.resolve(null);
+  if (Object.prototype.hasOwnProperty.call(estadisticasState.usuariosCache, uid)) {
+    return Promise.resolve(estadisticasState.usuariosCache[uid]);
+  }
+
+  return db.collection("usuarios").doc(uid).get().then(function(doc) {
+    const data = doc.exists ? (doc.data() || {}) : null;
+    estadisticasState.usuariosCache[uid] = data;
+    return data;
+  }).catch(function(error) {
+    console.warn("No se pudo cargar usuario para estadísticas:", error.message);
+    estadisticasState.usuariosCache[uid] = null;
+    return null;
+  });
+}
+
+function cargarUsuariosRegistradosEstadisticas() {
+  return db.collection("usuarios").get().then(function(snapshot) {
+    const resumen = {
+      total: 0,
+      hombres: 0,
+      mujeres: 0
+    };
+
+    snapshot.forEach(function(doc) {
+      const data = doc.data() || {};
+      estadisticasState.usuariosCache[doc.id] = data;
+      if (!usuarioActivoEstadisticas(data)) return;
+
+      const sexo = normalizarSexoEstadisticas(data.sexo);
+      resumen.total++;
+      if (sexo === "masculino") resumen.hombres++;
+      if (sexo === "femenino") resumen.mujeres++;
+    });
+
+    return resumen;
+  });
+}
+
+function calcularParticipacionGeneroEstadisticas(partidas) {
+  const uids = arrayUnicoEstadisticas(partidas.reduce(function(total, partida) {
+    return total.concat(participantesPartidaEstadisticas(partida));
+  }, []));
+
+  return Promise.all(uids.map(cargarUsuarioEstadisticas)).then(function() {
+    const resumen = {
+      total: 0,
+      hombres: 0,
+      mujeres: 0
+    };
+
+    partidas.forEach(function(partida) {
+      participantesPartidaEstadisticas(partida).forEach(function(uid) {
+        const usuario = estadisticasState.usuariosCache[uid] || {};
+        const sexo = normalizarSexoEstadisticas(usuario.sexo);
+
+        resumen.total++;
+        if (sexo === "masculino") resumen.hombres++;
+        if (sexo === "femenino") resumen.mujeres++;
+      });
+    });
+
+    return resumen;
+  });
+}
+
+function porcentajeParticipacionEstadisticas(valor, total) {
+  if (!total) return "0%";
+  return String(Math.round((valor * 10000) / total) / 100) + "%";
+}
+
+function textoParticipacionEstadisticas(valor, total) {
+  const etiqueta = valor === 1 ? " participación" : " participaciones";
+  return porcentajeParticipacionEstadisticas(valor, total) + " (" + valor + etiqueta + ")";
+}
+
+function textoVariacionEstadisticas(actual, anterior, periodo) {
+  if (periodo === "total") return "No aplicable";
+  if (anterior === 0 && actual > 0) return "Nuevo periodo con actividad";
+  if (anterior === 0 && actual === 0) return "Sin actividad";
+  if (actual === anterior) return "Sin cambios";
+
+  const porcentaje = Math.round(((actual - anterior) / anterior) * 100);
+  return (porcentaje > 0 ? "+" : "") + porcentaje + "%";
+}
+
+function tipoPistaDesdeDatosEstadisticas(partida, pistaData, tipo) {
+  const valorHistorial = partida && partida[tipo];
+  if (valorHistorial !== undefined && valorHistorial !== null && valorHistorial !== "") {
+    if (typeof valorHistorial === "boolean") return valorHistorial;
+    return Number(valorHistorial) > 0 || String(valorHistorial).toLowerCase().trim() === tipo;
+  }
+
+  const tipoTexto = String(
+    (partida && (partida.tipoPista || partida.pistaTipo)) ||
+    (pistaData && pistaData.tipo) ||
+    ""
+  ).toLowerCase();
+
+  if (tipoTexto.includes(tipo)) return true;
+  if (!pistaData) return false;
+  return Number(pistaData[tipo] || 0) > 0;
+}
+
 function normalizarPistaEstadisticas(partida, pistaData) {
   const nombre = partida.pistaNombre || partida.nombrePista || (pistaData && pistaData.nombre) || "Pista";
   const localidad = partida.pistaLocalidad || partida.localidad || (pistaData && pistaData.localidad) || "";
@@ -160,13 +329,17 @@ function normalizarPistaEstadisticas(partida, pistaData) {
   return {
     id: id,
     nombre: nombre,
-    localidad: localidad
+    localidad: localidad,
+    indoor: tipoPistaDesdeDatosEstadisticas(partida, pistaData, "indoor"),
+    outdoor: tipoPistaDesdeDatosEstadisticas(partida, pistaData, "outdoor")
   };
 }
 
 function cargarPistaEstadisticas(pistaId) {
   if (!pistaId) return Promise.resolve(null);
-  if (estadisticasState.pistasCache[pistaId]) return Promise.resolve(estadisticasState.pistasCache[pistaId]);
+  if (Object.prototype.hasOwnProperty.call(estadisticasState.pistasCache, pistaId)) {
+    return Promise.resolve(estadisticasState.pistasCache[pistaId]);
+  }
 
   return db.collection("pistas").doc(pistaId).get().then(function(doc) {
     const data = doc.exists ? (doc.data() || {}) : null;
@@ -207,6 +380,8 @@ function agruparPartidasPorPistaEstadisticas(partidas) {
           id: pista.id,
           nombre: pista.nombre,
           localidad: pista.localidad,
+          indoor: pista.indoor,
+          outdoor: pista.outdoor,
           total: 0,
           ultimaFecha: null
         };
@@ -227,6 +402,37 @@ function agruparPartidasPorPistaEstadisticas(partidas) {
   });
 }
 
+function obtenerPistaMasUsadaPorTipoEstadisticas(pistas, tipo) {
+  const candidatas = pistas.filter(function(pista) {
+    return pista && pista[tipo] === true;
+  });
+
+  return candidatas.length > 0 ? candidatas[0] : null;
+}
+
+function diaSemanaMasUsadoEstadisticas(partidas) {
+  const nombres = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const totales = {};
+
+  partidas.forEach(function(partida) {
+    const fecha = fechaPartidaEstadisticas(partida);
+    if (!fecha) return;
+    const dia = fecha.getDay();
+    totales[dia] = (totales[dia] || 0) + 1;
+  });
+
+  return Object.keys(totales).reduce(function(mejor, dia) {
+    const total = totales[dia];
+    if (!mejor || total > mejor.total) {
+      return {
+        dia: nombres[Number(dia)],
+        total: total
+      };
+    }
+    return mejor;
+  }, null);
+}
+
 function renderizarEstadisticas(resumen) {
   const resumenEl = document.getElementById("estadisticasResumen");
   const listaEl = document.getElementById("estadisticasLista");
@@ -234,15 +440,29 @@ function renderizarEstadisticas(resumen) {
 
   const total = resumen.total || 0;
   const pistaTop = resumen.pistas.length > 0 ? resumen.pistas[0] : null;
+  const indoorTop = resumen.indoorTop || null;
+  const outdoorTop = resumen.outdoorTop || null;
+  const diaTop = resumen.diaTop || null;
+  const participacion = resumen.participacionGenero || { total: 0, hombres: 0, mujeres: 0 };
+  const usuarios = resumen.usuarios || { total: 0, hombres: 0, mujeres: 0 };
 
   resumenEl.replaceChildren(
     crearResumenItemEstadisticas("Partidas finalizadas", String(total)),
     crearResumenItemEstadisticas("Pista más usada", pistaTop ? pistaTop.nombre : "-"),
-    crearResumenItemEstadisticas("Pistas activas", String(resumen.pistas.length))
+    crearResumenItemEstadisticas("Pistas activas", String(resumen.pistas.length)),
+    crearResumenItemEstadisticas("Variación periodo anterior", resumen.variacion || "No aplicable"),
+    crearResumenItemEstadisticas("Participantes hombres", textoParticipacionEstadisticas(participacion.hombres, participacion.total)),
+    crearResumenItemEstadisticas("Participantes mujeres", textoParticipacionEstadisticas(participacion.mujeres, participacion.total)),
+    crearResumenItemEstadisticas("Usuarios totales", String(usuarios.total)),
+    crearResumenItemEstadisticas("Usuarios hombres", String(usuarios.hombres)),
+    crearResumenItemEstadisticas("Usuarios mujeres", String(usuarios.mujeres)),
+    crearResumenItemEstadisticas("Indoor más usada", indoorTop ? indoorTop.nombre : "Sin datos"),
+    crearResumenItemEstadisticas("Outdoor más usada", outdoorTop ? outdoorTop.nombre : "Sin datos"),
+    crearResumenItemEstadisticas("Día más usado", diaTop ? diaTop.dia + " (" + diaTop.total + ")" : "Sin datos")
   );
 
   if (resumen.pistas.length === 0) {
-    listaEl.replaceChildren(crearTextoEstadisticas("No hay partidas finalizadas con resultado valido en este periodo"));
+    listaEl.replaceChildren(crearTextoEstadisticas("No hay partidas finalizadas con resultado válido en este periodo"));
     return;
   }
 
@@ -302,11 +522,31 @@ function cargarEstadisticas() {
       const validas = partidas.filter(function(partida) {
         return partidaValidaEstadisticas(partida, estadisticasState.periodo, inicio, fin);
       });
+      const anterior = periodoAnteriorEstadisticas(estadisticasState.periodo, inicio);
+      const validasAnterior = anterior
+        ? partidas.filter(function(partida) {
+            return partidaValidaEstadisticas(partida, estadisticasState.periodo, anterior.inicio, anterior.fin);
+          })
+        : [];
 
-      return agruparPartidasPorPistaEstadisticas(validas).then(function(pistas) {
-        renderizarEstadisticas({
-          total: validas.length,
-          pistas: pistas
+      return Promise.all([
+        agruparPartidasPorPistaEstadisticas(validas),
+        cargarUsuariosRegistradosEstadisticas()
+      ]).then(function(resultadosBase) {
+        const pistas = resultadosBase[0];
+        const usuarios = resultadosBase[1];
+
+        return calcularParticipacionGeneroEstadisticas(validas).then(function(participacionGenero) {
+          renderizarEstadisticas({
+            total: validas.length,
+            pistas: pistas,
+            usuarios: usuarios,
+            participacionGenero: participacionGenero,
+            variacion: textoVariacionEstadisticas(validas.length, validasAnterior.length, estadisticasState.periodo),
+            indoorTop: obtenerPistaMasUsadaPorTipoEstadisticas(pistas, "indoor"),
+            outdoorTop: obtenerPistaMasUsadaPorTipoEstadisticas(pistas, "outdoor"),
+            diaTop: diaSemanaMasUsadoEstadisticas(validas)
+          });
         });
       });
     })
