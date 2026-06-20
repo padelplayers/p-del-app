@@ -1,5 +1,15 @@
 let unsubscribePerfil = null;
 let unsubscribeUser = null;
+
+function limpiarListenersPerfil() {
+  if (typeof unsubscribePerfil === "function") unsubscribePerfil();
+  if (typeof unsubscribeUser === "function") unsubscribeUser();
+  unsubscribePerfil = null;
+  unsubscribeUser = null;
+}
+
+window.limpiarListenersPerfil = limpiarListenersPerfil;
+
 const perfilSocialState = {
   perfilUid: null,
   perfilNombre: "",
@@ -2101,27 +2111,11 @@ console.log("DATA:", data);
 
 function editarPerfil(){
 
-  if (typeof unsubscribePerfil === "function") unsubscribePerfil();
+  limpiarListenersPerfil();
 
 
   const user = auth.currentUser;
   if (!user) return;
-
-  const imgEditar = document.getElementById("fotoPerfilEditar");
-
-if (imgEditar && auth.currentUser) {
-  db.collection("usuarios").doc(auth.currentUser.uid).get().then(doc => {
-    if (doc.exists) {
-      const data = doc.data();
-
-      let defaultImg = data.sexo === "mujer"
-        ? "imagen/mujer.jpeg"
-        : "imagen/hombre.jpeg";
-
-      imgEditar.src = (data.fotoPerfil || defaultImg) + "?t=" + Date.now();
-    }
-  });
-}
 
   mostrar("perfilEditar");
 
@@ -2134,16 +2128,17 @@ if (imgEditar && auth.currentUser) {
   const btnFoto = document.getElementById("btnCambiarFoto");
   if (btnFoto) btnFoto.style.display = "block";
 
-  // ESCUCHA EN TIEMPO REAL (igual que perfil)
+  // La edicion solo necesita una lectura inicial; los cambios locales actualizan la vista.
   db.collection("usuarios").doc(user.uid)
-    .onSnapshot(doc => {
+    .get().then(doc => {
 
       if (!doc.exists) return;
 
       const data = doc.data();
 
       const foto = document.getElementById("fotoPerfilEditar");
-      if (foto) foto.src = data.fotoPerfil || "imagen/hombre.jpeg";
+      const fotoDefault = data.sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
+      if (foto) foto.src = (data.fotoPerfil || fotoDefault) + "?t=" + Date.now();
 
       if (manoEl) manoEl.value = data.mano || "";
       if (posicionEl) posicionEl.value = data.posicion || "";
@@ -2270,7 +2265,7 @@ function guardarPerfil(){
 
 function cargarPerfil(uid){
 
-  unsubscribePerfil && unsubscribePerfil();
+  limpiarListenersPerfil();
   registrarDelegacionSocialPerfil();
   configurarBotonChatPrivadoPerfil(uid);
 

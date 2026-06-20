@@ -272,6 +272,15 @@ function esPistaPrivadaComunidad(data) {
   return tipo === "privada" || tipo === "privada comunidad";
 }
 
+function limpiarListenerPistas() {
+  if (typeof window.unsubscribePistas === "function") {
+    window.unsubscribePistas();
+  }
+  window.unsubscribePistas = null;
+}
+
+window.limpiarListenerPistas = limpiarListenerPistas;
+
 async function cargarPistas() {
   esAdmin = false;
   const user = auth.currentUser;
@@ -285,9 +294,7 @@ async function cargarPistas() {
 
   const pistaSeleccionada = localStorage.getItem("pistaSeleccionada");
 
-  if (window.unsubscribePistas) {
-    window.unsubscribePistas();
-  }
+  limpiarListenerPistas();
 
   window.unsubscribePistas = db.collection("pistas")
     .onSnapshot(snapshot => {

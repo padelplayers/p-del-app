@@ -2221,17 +2221,9 @@ function revisarCancelacionesAntesDePostPartido() {
   });
 }
 
-function asegurarRevisionCancelacionClubPartidas() {
-  if (window.revisionCancelacionClubPartidasInterval) return;
-  window.revisionCancelacionClubPartidasInterval = setInterval(function() {
-    revisarCancelacionesAntesDePostPartido();
-  }, 60 * 1000);
-}
-
 function cargarPartidas() {
   if (!window.modoPartidas) window.modoPartidas = "proximas";
 
-  asegurarRevisionCancelacionClubPartidas();
   actualizarBotonesPartidas();
   cargarFiltroPistas();
 

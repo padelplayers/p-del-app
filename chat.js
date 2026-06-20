@@ -15,6 +15,7 @@ const chatState = {
   ultimosResumenPrivadosAt: {},
   titulosPartidasCache: {},
   fechasAltaUsuariosCache: {},
+  ultimasLimpiezasMensajes: {},
   chats: {
     general: {
       titulo: "General",
@@ -103,10 +104,8 @@ function initChat() {
   }
 
   chatState.inicializado = true;
-  cambiarChatTab(chatState.chatActivo);
-  if (auth.currentUser) {
-    cargarUsuariosSidebar();
-  }
+  actualizarTabsChat();
+  renderChatActivo();
 }
 
 async function cambiarChatTab(chatId) {
@@ -118,7 +117,7 @@ async function cambiarChatTab(chatId) {
 
   const mensajesRef = obtenerMensajesChatRef(chatId);
   if (mensajesRef) {
-    if (chatId === "general" || chatState.chats[chatId].tipo === "privado") {
+    if (chatId === "general" || chatState.chats[chatId].tipo === "privado" || chatState.chats[chatId].tipo === "partida") {
       await limpiarMensajesAntiguos(chatId);
     }
 
@@ -391,6 +390,7 @@ const chatNombresUsuarios = {};
 const CHAT_MAX_MENSAJES = 100;
 const CHAT_GENERAL_RETENCION_MS = 30 * 24 * 60 * 60 * 1000;
 const CHAT_PRIVADO_RETENCION_MS = 30 * 24 * 60 * 60 * 1000;
+const CHAT_LIMPIEZA_INTERVAL_MS = 5 * 60 * 1000;
 const CHAT_SISTEMA_EVENTOS_PUBLICOS = [
   "partida_creada",
   "falta_1",
@@ -692,7 +692,7 @@ async function obtenerNombreAutorChat(user) {
   return "Jugador";
 }
 
-const CHAT_PRESENCIA_MAX_AGE_MS = 120000;
+const CHAT_PRESENCIA_MAX_AGE_MS = 6 * 60 * 1000;
 
 function obtenerMillisLastSeenChat(valor) {
   if (!valor) return 0;
@@ -1025,10 +1025,16 @@ window.eliminarChatTotal = async function(chatId) {
   // 2. Borrar subcolección en Firestore (Batch)
   const partidaRef = db.collection("partidas").doc(chatId);
   try {
-    const snap = await partidaRef.collection("mensajes").get();
-    const batch = db.batch();
-    snap.forEach(doc => batch.delete(doc.ref));
-    await batch.commit();
+    while (true) {
+      const snap = await partidaRef.collection("mensajes").limit(450).get();
+      if (snap.empty) break;
+
+      const batch = db.batch();
+      snap.forEach(function(doc) {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+    }
   } catch (e) {
     console.warn("[CHAT] No se pudo borrar la subcolecciÃ³n:", e.message);
     return false;
@@ -1065,6 +1071,11 @@ window.eliminarChatTotal = async function(chatId) {
 };
 
 async function limpiarMensajesAntiguos(chatId) {
+  const ahoraMs = Date.now();
+  const ultimaLimpieza = Number(chatState.ultimasLimpiezasMensajes[chatId] || 0);
+  if (ultimaLimpieza && ahoraMs - ultimaLimpieza < CHAT_LIMPIEZA_INTERVAL_MS) return;
+  chatState.ultimasLimpiezasMensajes[chatId] = ahoraMs;
+
   try {
     const mensajesRef = obtenerMensajesChatRef(chatId);
     if (!mensajesRef) return;
@@ -1100,6 +1111,7 @@ async function limpiarMensajesAntiguos(chatId) {
       await batch.commit();
     }
   } catch (e) {
+    delete chatState.ultimasLimpiezasMensajes[chatId];
     console.warn("[CHAT] No se pudo limpiar mensajes antiguos:", e.message);
   }
 }
@@ -1744,9 +1756,11 @@ function limpiarListenersChat() {
 
   chatState.listenerActivo = null;
   chatState.chatListenerActivo = null;
+  limpiarListenerUsuariosOnline();
 }
 
 window.notificarEntradaSeccionChat = function() {
+  cargarUsuariosSidebar();
   const chatId = chatState.chatActivo || "general";
   if (chatState.chatListenerActivo !== chatId) {
     cambiarChatTab(chatId);
@@ -1775,10 +1789,6 @@ window.iniciarListenersChatsPartidas = function(uid) {
   iniciarListenerResumenSistema(uid);
   iniciarListenersResumenPartidas(uid);
   iniciarListenerResumenPrivados(uid);
-  cargarUsuariosSidebar();
-  if (chatState.chatActivo === "general") {
-    cambiarChatTab("general");
-  }
 };
 
 window.limpiarTodoChat = function() {
@@ -1800,6 +1810,7 @@ window.limpiarTodoChat = function() {
   chatState.ultimoSistemaVistoAt = null;
   chatState.titulosPartidasCache = {};
   chatState.fechasAltaUsuariosCache = {};
+  chatState.ultimasLimpiezasMensajes = {};
   Object.keys(chatState.chats).forEach(function(chatId) {
     chatState.chats[chatId].noLeidos = false;
     if (chatId === "sistema") {

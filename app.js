@@ -140,7 +140,7 @@ let presenciaUidActual = null;
 let presenciaEventosRegistrados = false;
 let revisionCancelaciones5hSesionUid = null;
 
-const PRESENCIA_HEARTBEAT_MS = 30000;
+const PRESENCIA_HEARTBEAT_MS = 5 * 60 * 1000;
 
 
 // FUNCIONES GLOBALES
@@ -209,12 +209,9 @@ function registrarEventosPresenciaAvanzada() {
 
   window.addEventListener("pagehide", function() {
     const user = auth.currentUser;
-    if (user) actualizarPresenciaUsuario(user.uid, false).catch(function() {});
-  });
-
-  window.addEventListener("beforeunload", function() {
-    const user = auth.currentUser;
-    if (user) actualizarPresenciaUsuario(user.uid, false).catch(function() {});
+    if (user && presenciaUidActual === user.uid) {
+      detenerPresenciaAvanzada(user.uid, true).catch(function() {});
+    }
   });
 
   document.addEventListener("visibilitychange", function() {
@@ -223,6 +220,8 @@ function registrarEventosPresenciaAvanzada() {
 
     if (document.visibilityState === "visible") {
       iniciarPresenciaAvanzada(user.uid);
+    } else if (presenciaUidActual === user.uid) {
+      detenerPresenciaAvanzada(user.uid, true).catch(function() {});
     }
   });
 }
@@ -527,14 +526,6 @@ auth.onAuthStateChanged(async user => {
 
       if (typeof window.escucharNotificaciones === "function") {
         window.escucharNotificaciones(user.uid);
-      }
-
-      if (
-        revisionCancelaciones5hSesionUid !== user.uid &&
-        typeof window.revisarLimitesCancelacionClubPartidas === "function"
-      ) {
-        revisionCancelaciones5hSesionUid = user.uid;
-        window.revisarLimitesCancelacionClubPartidas();
       }
 
       if (typeof window.mostrarAvisoPwaSiProcede === "function") {
@@ -950,6 +941,22 @@ function mostrar(seccion){
   console.log("MOSTRAR:", seccion);
   const cargaInicial = document.getElementById("pantallaCargaInicial");
   if (cargaInicial) cargaInicial.style.display = "none";
+
+  const perfilVisible = ["perfil", "perfilEditar", "perfilSocial"].some(function(id) {
+    const el = document.getElementById(id);
+    return el && el.style.display !== "none";
+  });
+  const destinoPerfil = seccion === "perfil" || seccion === "perfilEditar" || seccion === "perfilSocial";
+  if (perfilVisible && !destinoPerfil && typeof window.limpiarListenersPerfil === "function") {
+    window.limpiarListenersPerfil();
+  }
+
+  const pistasPantalla = document.getElementById("pistas");
+  const pistasVisible = pistasPantalla && pistasPantalla.style.display !== "none";
+  if (pistasVisible && seccion !== "pistas" && typeof window.limpiarListenerPistas === "function") {
+    window.limpiarListenerPistas();
+  }
+
   actualizarVisibilidadBottomNav(seccion);
   actualizarBottomNavActivo(seccion);
   const abriendoChat = seccion === "chat";
