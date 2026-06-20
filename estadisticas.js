@@ -571,6 +571,15 @@ function cargarEstadisticas() {
 }
 
 function configurarEventosEstadisticas() {
+  const selectPeriodo = document.getElementById("estadisticasPeriodoSelect");
+  if (selectPeriodo) {
+    selectPeriodo.value = estadisticasState.periodo;
+    selectPeriodo.addEventListener("change", function() {
+      estadisticasState.periodo = selectPeriodo.value || "mes";
+      cargarEstadisticas();
+    });
+  }
+
   document.querySelectorAll(".estadisticasFiltroBtn").forEach(function(btn) {
     btn.addEventListener("click", function() {
       estadisticasState.periodo = btn.dataset.periodo || "mes";

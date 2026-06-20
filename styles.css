@@ -181,25 +181,27 @@ button{
 
 .estadisticasFiltros {
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
+  justify-content: center;
   padding: 0 4px 4px;
 }
 
-.estadisticasFiltroBtn {
-  flex: 1 0 auto;
-  min-width: 72px;
+.estadisticasPeriodoSelect {
+  width: 100%;
+  max-width: 360px;
   border: 2px solid #1565C0;
   background: #fff;
   color: #1565C0;
   border-radius: 8px;
-  padding: 9px 10px;
+  padding: 11px 12px;
+  font-size: 16px;
   font-weight: 700;
+  font-family: Arial;
+  box-sizing: border-box;
+  cursor: pointer;
 }
 
-.estadisticasFiltroBtn.activo {
-  background: #1565C0;
-  color: #fff;
+.estadisticasPeriodoSelect:focus {
+  outline: none;
   box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.35);
 }
 

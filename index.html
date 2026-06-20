@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Padel Morvedre">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="logo.png">
-<link rel="stylesheet" href="styles.css?v=39">
+<link rel="stylesheet" href="styles.css?v=40">
 </head>
 
 <body>
@@ -135,7 +135,6 @@
       <button id="btnEditar" onclick="editarPerfil()">Editar perfil</button>
       <button id="btnSeguir" class="btnYellow" style="display:none;">Seguir</button>
       <button id="btnChatPrivadoPerfil" class="btnBlue" type="button" style="display:none;">Chat privado</button>
-      <button id="btnPerfilEstadisticas" class="btnBlue" type="button" onclick="abrirEstadisticas()" style="display:none;">Estadísticas</button>
       <button id="btnEliminar" class="rojo" onclick="eliminarPerfil()">Eliminar perfil</button>
     </div>
 
@@ -528,11 +527,13 @@ Juego en red
   <div class="estadisticasHeader">
     <h2>Estadísticas</h2>
     <div class="estadisticasFiltros" aria-label="Periodo">
-      <button type="button" class="estadisticasFiltroBtn" data-periodo="dia">Día</button>
-      <button type="button" class="estadisticasFiltroBtn" data-periodo="semana">Semana</button>
-      <button type="button" class="estadisticasFiltroBtn activo" data-periodo="mes">Mes</button>
-      <button type="button" class="estadisticasFiltroBtn" data-periodo="ano">Año</button>
-      <button type="button" class="estadisticasFiltroBtn" data-periodo="total">Total</button>
+      <select id="estadisticasPeriodoSelect" class="estadisticasPeriodoSelect" aria-label="Periodo de estadísticas">
+        <option value="dia">Día</option>
+        <option value="semana">Semana</option>
+        <option value="mes" selected>Mes</option>
+        <option value="ano">Año</option>
+        <option value="total">Total</option>
+      </select>
     </div>
   </div>
 
@@ -1274,8 +1275,8 @@ const db = firebase.firestore();
 <script src="nivel.js?v=4"></script>
 <script src="postpartido.js?v=19"></script>
 <script src="notifications.js?v=10"></script>
-<script src="estadisticas.js?v=3"></script>
-<script src="pwa.js?v=19"></script>
+<script src="estadisticas.js?v=4"></script>
+<script src="pwa.js?v=20"></script>
 <script src="app.js?v=16"></script>
 <script src="testNivel.js"></script>
 
