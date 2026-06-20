@@ -722,7 +722,7 @@ function emitirSistemaPlazaLibreConfirmadaSiProcede(partidaId, p) {
       eventType: "plaza_libre_confirmada",
       dedupeKey: "system_plaza_libre_confirmada_" + partidaId,
       texto: function(datos) {
-        return "Plaza libre en una partida confirmada en " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + ".";
+        return "Hay una plaza libre en una partida confirmada en " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + ".";
       }
     });
   });
@@ -799,23 +799,27 @@ function partidaEnVentanaSustitucionUrgente(p) {
     msHastaInicio <= 8 * 60 * 60 * 1000;
 }
 
-function partidaNecesitaSustitucionUrgente(p) {
-  const solicitudAbiertaSinReservaCompatible = !!(
-    p &&
-    p.estado === "confirmada" &&
-    tieneSolicitudSustitucionPartida(p) &&
-    arrayUnicoPartida(p.solicitudSustitucionReservasCompatibles).length === 0
-  );
-
+function solicitudSustitucionPublicaPartida(p) {
   return !!(
     p &&
     p.estado === "confirmada" &&
+    !tieneSustitucionPendientePartida(p) &&
+    tieneSolicitudSustitucionPartida(p) &&
+    arrayUnicoPartida(p.solicitudSustitucionReservasCompatibles).length === 0
+  );
+}
+
+function partidaNecesitaSustitucionUrgente(p) {
+  return !!(
+    p &&
+    p.estado === "confirmada" &&
+    !tieneSustitucionPendientePartida(p) &&
     !partidaAlcanzoLimiteCancelacionClub(p) &&
     !p.resultado &&
     (!p.valoraciones || Object.keys(p.valoraciones).length === 0) &&
     (
       (partidaEnVentanaSustitucionUrgente(p) && partidaConfirmadaAccionableConPlazaLibre(p)) ||
-      solicitudAbiertaSinReservaCompatible
+      solicitudSustitucionPublicaPartida(p)
     )
   );
 }

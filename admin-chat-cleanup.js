@@ -82,6 +82,9 @@ function tieneSolicitudSustitucionAdminChat(partida) {
 
 function solicitudSustitucionPublicaAdminChat(partida) {
   return !!(
+    partida &&
+    String(partida.estado || "").toLowerCase().trim() === "confirmada" &&
+    !tieneSustitucionPendienteAdminChat(partida) &&
     tieneSolicitudSustitucionAdminChat(partida) &&
     arrayUnicoAdminChat(partida && partida.solicitudSustitucionReservasCompatibles).length === 0
   );
