@@ -263,6 +263,39 @@ function formatearEntradaHabitualPerfil(entrada, singular, plural, campoNombre, 
   return nombre + " (" + entrada.veces + " " + etiqueta + ")";
 }
 
+function obtenerMejorCompaneroPerfil(mapa) {
+  if (!mapa || typeof mapa !== "object") return null;
+
+  return Object.keys(mapa).reduce(function(mejor, id) {
+    const entrada = mapa[id];
+    if (!entrada || typeof entrada !== "object") return mejor;
+
+    const jugadas = obtenerNumeroPerfil(entrada.jugadas, 0);
+    const victorias = obtenerNumeroPerfil(entrada.victorias, 0);
+    const porcentajeVictorias = obtenerNumeroPerfil(entrada.porcentajeVictorias, jugadas > 0 ? Math.round((victorias / jugadas) * 100) : 0);
+    const candidata = Object.assign({}, entrada, {
+      id: id,
+      jugadas: jugadas,
+      victorias: victorias,
+      porcentajeVictorias: porcentajeVictorias
+    });
+
+    if (!mejor) return candidata;
+    if (victorias !== mejor.victorias) return victorias > mejor.victorias ? candidata : mejor;
+    if (porcentajeVictorias !== mejor.porcentajeVictorias) return porcentajeVictorias > mejor.porcentajeVictorias ? candidata : mejor;
+    if (jugadas !== mejor.jugadas) return jugadas > mejor.jugadas ? candidata : mejor;
+    return mejor;
+  }, null);
+}
+
+function formatearMejorCompaneroPerfil(entrada) {
+  if (!entrada || entrada.victorias <= 0) return "Sin victorias con compañero todavía";
+
+  const nombre = entrada.nombre || entrada.uid || entrada.id || "Sin datos";
+  const etiqueta = entrada.victorias === 1 ? "victoria juntos" : "victorias juntos";
+  return nombre + " (" + entrada.victorias + " " + etiqueta + ", " + entrada.porcentajeVictorias + "%)";
+}
+
 function renderizarStatsAvanzadasPerfil(data) {
   const contenedor = document.getElementById("statsAvanzadasPerfil");
   if (!contenedor) return;
@@ -283,11 +316,13 @@ function renderizarStatsAvanzadasPerfil(data) {
     ? clasificacion.compromisoLogro
     : clasificacion.partidasCompletadasSinAbandono;
   const companeroHabitual = obtenerEntradaMasHabitualPerfil(clasificacion.companerosMap);
+  const mejorCompanero = obtenerMejorCompaneroPerfil(clasificacion.mejorCompaneroMap);
   const rivalHabitual = obtenerEntradaMasHabitualPerfil(clasificacion.rivalesMap);
   const pistaHabitual = obtenerEntradaMasHabitualPerfil(clasificacion.pistasJugadasMap);
 
   contenedor.replaceChildren(
     crearDatoStatsAvanzadasPerfil("Companero mas habitual", formatearEntradaHabitualPerfil(companeroHabitual, "partida", "partidas", "nombre", "uid")),
+    crearDatoStatsAvanzadasPerfil("Mejor compañero", formatearMejorCompaneroPerfil(mejorCompanero)),
     crearDatoStatsAvanzadasPerfil("Rival mas habitual", formatearEntradaHabitualPerfil(rivalHabitual, "partido", "partidos", "nombre", "uid")),
     crearDatoStatsAvanzadasPerfil("Pista mas jugada", formatearEntradaHabitualPerfil(pistaHabitual, "partida", "partidas", "nombre", "pistaId")),
     crearDatoStatsAvanzadasPerfil("Partidas ranking", String(rankingPartidos)),

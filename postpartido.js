@@ -320,6 +320,11 @@ function obtenerNombreUsuarioStatsPostPartido(docUsuario, uid) {
   return datos.nombre || datos.displayName || uid || "Jugador";
 }
 
+function obtenerFotoUsuarioStatsPostPartido(docUsuario) {
+  const datos = docUsuario && docUsuario.exists ? (docUsuario.data() || {}) : {};
+  return datos.fotoPerfil || datos.photoURL || datos.avatar || "";
+}
+
 function obtenerNombrePistaStatsPostPartido(p, docPista) {
   const datosPista = docPista && docPista.exists ? (docPista.data() || {}) : {};
   return (p && (p.nombrePista || p.pistaNombre)) ||
@@ -337,6 +342,25 @@ function incrementarMapaStatsPostPartido(mapa, id, datosBase) {
 
   siguiente[id] = Object.assign({}, anterior, datosBase, {
     veces: isNaN(veces) ? 1 : veces + 1
+  });
+
+  return siguiente;
+}
+
+function incrementarMejorCompaneroMapPostPartido(mapa, id, datosBase, gano) {
+  if (!id) return mapa && typeof mapa === "object" ? Object.assign({}, mapa) : {};
+
+  const siguiente = mapa && typeof mapa === "object" ? Object.assign({}, mapa) : {};
+  const anterior = siguiente[id] && typeof siguiente[id] === "object" ? siguiente[id] : {};
+  const jugadasAnteriores = Number(anterior.jugadas || 0);
+  const victoriasAnteriores = Number(anterior.victorias || 0);
+  const jugadas = (isNaN(jugadasAnteriores) ? 0 : jugadasAnteriores) + 1;
+  const victorias = (isNaN(victoriasAnteriores) ? 0 : victoriasAnteriores) + (gano ? 1 : 0);
+
+  siguiente[id] = Object.assign({}, anterior, datosBase, {
+    jugadas: jugadas,
+    victorias: victorias,
+    porcentajeVictorias: jugadas > 0 ? Math.round((victorias / jugadas) * 100) : 0
   });
 
   return siguiente;
@@ -389,6 +413,20 @@ function crearUpdateStatsHabitualesPostPartido(uid, contexto, docUsuario) {
     update["clasificacion.rivalesMap"] = rivalesMap;
   }
 
+  if (contexto && contexto.esRankingConResultado === true && companeroUid) {
+    const equipoGanador = contexto.equipoGanadorPorUid && contexto.equipoGanadorPorUid[uid] === true;
+    update["clasificacion.mejorCompaneroMap"] = incrementarMejorCompaneroMapPostPartido(
+      clasificacion.mejorCompaneroMap,
+      companeroUid,
+      {
+        uid: companeroUid,
+        nombre: (contexto.nombresPorUid && contexto.nombresPorUid[companeroUid]) || companeroUid,
+        fotoPerfil: (contexto.fotosPorUid && contexto.fotosPorUid[companeroUid]) || ""
+      },
+      equipoGanador
+    );
+  }
+
   return update;
 }
 
@@ -398,11 +436,16 @@ function crearContextoStatsRankingPostPartido(p, docsUsuarios, docPista) {
   const equipo2 = Array.isArray(resultado.equipo2) ? resultado.equipo2 : [];
   const jugadores = equipo1.concat(equipo2);
   const nombresPorUid = {};
+  const fotosPorUid = {};
   const companerosPorUid = {};
   const rivalesPorUid = {};
+  const equipoGanadorPorUid = {};
+  const equipoGanador = resultado.ganador === "A" ? equipo1 : resultado.ganador === "B" ? equipo2 : [];
 
   jugadores.forEach(function(uid, index) {
     nombresPorUid[uid] = obtenerNombreUsuarioStatsPostPartido(docsUsuarios[index], uid);
+    fotosPorUid[uid] = obtenerFotoUsuarioStatsPostPartido(docsUsuarios[index]);
+    equipoGanadorPorUid[uid] = equipoGanador.includes(uid);
   });
 
   equipo1.forEach(function(uid) {
@@ -419,8 +462,11 @@ function crearContextoStatsRankingPostPartido(p, docsUsuarios, docPista) {
     pistaId: p && p.pistaId,
     nombrePista: obtenerNombrePistaStatsPostPartido(p, docPista),
     nombresPorUid: nombresPorUid,
+    fotosPorUid: fotosPorUid,
     companerosPorUid: companerosPorUid,
-    rivalesPorUid: rivalesPorUid
+    rivalesPorUid: rivalesPorUid,
+    equipoGanadorPorUid: equipoGanadorPorUid,
+    esRankingConResultado: resultado.ganador === "A" || resultado.ganador === "B"
   };
 }
 
