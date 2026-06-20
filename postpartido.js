@@ -1145,6 +1145,12 @@ function finalizarPartidaRankingSiCompleta(idPartida) {
       return true;
     });
   }).then(function() {
+    if (typeof window.resolverMensajesSistemaPorPartida === "function") {
+      window.resolverMensajesSistemaPorPartida(idPartida).catch(function(error) {
+        console.warn("No se pudieron limpiar mensajes Sistema de la partida finalizada:", error.message);
+      });
+    }
+
     if (!debeGuardarHistorial) return null;
 
     return partidaRef.get().then(function(docFinalizada) {
@@ -2258,6 +2264,12 @@ function guardarValoracionesAmistosa(id, jugadoresValorados) {
         estado: partidaFinalizada.estado,
         finalizadaAt: partidaFinalizada.finalizadaAt
       }).then(function() {
+        if (typeof window.resolverMensajesSistemaPorPartida === "function") {
+          window.resolverMensajesSistemaPorPartida(id).catch(function(error) {
+            console.warn("No se pudieron limpiar mensajes Sistema de la partida finalizada:", error.message);
+          });
+        }
+
         if (typeof window.guardarPartidaFinalizada !== "function") {
           console.error("guardarPartidaFinalizada no disponible");
           return null;

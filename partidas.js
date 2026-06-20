@@ -524,6 +524,10 @@ function resolverSistemaPartida(partidaId, eventTypes) {
   });
 }
 
+function limpiarMensajesSistemaPartida(partidaId) {
+  return resolverSistemaPartida(partidaId, obtenerEventosSistemaPartida());
+}
+
 function resolverEstadosSistemaIncompatibles(partidaId, eventTypes) {
   return resolverSistemaPartida(partidaId, eventTypes);
 }
@@ -536,7 +540,6 @@ function obtenerEventosSistemaPartida() {
     "falta_1_mujer",
     "partida_completa",
     "partida_confirmada",
-    "partida_cancelada",
     "cambio_creador_pendiente",
     "nuevo_creador",
     "plaza_libre_confirmada",
@@ -659,7 +662,7 @@ function emitirSistemaPartidaConfirmada(partidaId, p) {
 }
 
 function emitirSistemaPartidaCancelada(partidaId, p) {
-  return resolverSistemaPartida(partidaId, obtenerEventosSistemaPartida());
+  return limpiarMensajesSistemaPartida(partidaId);
 }
 
 function emitirSistemaCambioCreadorPendiente(partidaId, p) {
@@ -830,6 +833,18 @@ function partidaNecesitaSustitucionUrgente(p) {
 
 function sincronizarMensajesSistemaPartida(partidaId, p) {
   if (!partidaId || !p) return Promise.resolve(null);
+
+  const fechaPartida = obtenerFechaHoraPartida(p);
+  const estado = String(p.estado || "").toLowerCase().trim();
+  if (
+    estado === "finalizada" ||
+    estado === "cancelada" ||
+    estado === "cancelada_por_no_presentado" ||
+    estado === "pendiente_cancelacion_club" ||
+    (fechaPartida && fechaPartida < new Date())
+  ) {
+    return limpiarMensajesSistemaPartida(partidaId);
+  }
 
   if (tieneSustitucionPendientePartida(p)) {
     return emitirSistemaReservaPendiente(partidaId, p);
@@ -1410,6 +1425,8 @@ function initCrearPartida() {
 }
 
 async function eliminarPartidaConChat(partidaId) {
+  await limpiarMensajesSistemaPartida(partidaId);
+
   if (typeof window.eliminarChatTotal === "function") {
     const ok = await window.eliminarChatTotal(partidaId);
     if (ok === false) return false;
@@ -1417,8 +1434,6 @@ async function eliminarPartidaConChat(partidaId) {
     console.warn("[PARTIDAS] No se elimina la partida porque no esta disponible la limpieza del chat.");
     return false;
   }
-
-  await resolverSistemaPartida(partidaId, obtenerEventosSistemaPartida());
 
   await db.collection("partidas").doc(partidaId).delete();
   if (typeof window.resolverNotificacionesTemporalesPorPartidaId === "function") {
@@ -1550,7 +1565,7 @@ async function cancelarPartidaPorFaltaDisponibilidad(partidaId) {
       });
     }
 
-    await emitirSistemaPartidaCancelada(partidaId, p);
+    await limpiarMensajesSistemaPartida(partidaId);
 
     const borrada = await eliminarPartidaConChat(partidaId);
     if (!borrada) {
@@ -2166,7 +2181,7 @@ function procesarLimiteCancelacionClubPartida(partidaId) {
         }
       }));
     }
-    avisos.push(emitirSistemaPartidaCancelada(partidaId, actualizada.partida));
+    avisos.push(limpiarMensajesSistemaPartida(partidaId));
 
     return Promise.all(avisos.map(function(aviso) {
       return aviso.catch(function(error) {
@@ -2321,7 +2336,7 @@ function cargarPartidas() {
       const ahora = new Date();
 
       if (p.estado === "cancelada") {
-        emitirSistemaPartidaCancelada(doc.id, p).then(function() {
+        limpiarMensajesSistemaPartida(doc.id).then(function() {
           return eliminarPartidaConChat(doc.id);
         }).then(function(ok) { if (ok) cargarPartidas(); });
         return;
@@ -3139,7 +3154,7 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
           prioridad: "alta",
           data: { motivo: titularesRestantes.length === 0 ? "sin_jugadores" : "menos_8h" }
         }).then(function() {
-          return emitirSistemaPartidaCancelada(partidaId, pInicial);
+          return limpiarMensajesSistemaPartida(partidaId);
         }).then(function() {
           return eliminarPartidaConChat(partidaId);
         }).then(function(borrada) {
@@ -4109,11 +4124,14 @@ window.guardarPartidaFinalizada = function(p, idPartida) {
       guardadaEnHistorial: true,
       guardadaEnHistorialAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true }).then(function() {
-      if (typeof window.resolverNotificacionesTemporalesPorPartidaId !== "function") return null;
-      return window.resolverNotificacionesTemporalesPorPartidaId(idPartida).catch(function(error) {
-        console.warn("No se pudieron resolver los avisos temporales de la partida finalizada:", error.message);
-        return null;
-      });
+      const tareas = [limpiarMensajesSistemaPartida(idPartida)];
+      if (typeof window.resolverNotificacionesTemporalesPorPartidaId === "function") {
+        tareas.push(window.resolverNotificacionesTemporalesPorPartidaId(idPartida).catch(function(error) {
+          console.warn("No se pudieron resolver los avisos temporales de la partida finalizada:", error.message);
+          return null;
+        }));
+      }
+      return Promise.all(tareas);
     });
   };
 
