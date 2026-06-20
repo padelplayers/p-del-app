@@ -42,6 +42,8 @@ function crearTarjetaJugador(jugador) {
   img.className = "jugadorFoto";
   img.src = jugador.foto;
   img.alt = jugador.nombre ? "Foto de " + jugador.nombre : "Foto de jugador";
+  img.loading = "lazy";
+  img.decoding = "async";
 
   const nombre = document.createElement("span");
   nombre.className = "jugadorNombre";

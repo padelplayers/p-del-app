@@ -1865,10 +1865,21 @@ async function eliminarStorageUsuario(uid, datosUsuario) {
 
   datosUsuario = datosUsuario || {};
   const storage = firebase.storage();
-  const fotoPerfil = datosUsuario.fotoPerfil || "";
+  const fotosPerfil = [
+    datosUsuario.fotoPerfil,
+    datosUsuario.fotoUrl,
+    datosUsuario.imagenUrl,
+    datosUsuario.photoURL,
+    datosUsuario.avatar,
+    datosUsuario.foto
+  ].filter(Boolean).filter(function(url, index, lista) {
+    return lista.indexOf(url) === index;
+  });
 
   if (typeof window.borrarImagenStorageSiProcede === "function") {
-    await window.borrarImagenStorageSiProcede(fotoPerfil, ["usuarios/", "fotosPerfil/"]);
+    for (let i = 0; i < fotosPerfil.length; i++) {
+      await window.borrarImagenStorageSiProcede(fotosPerfil[i], ["usuarios/", "fotosPerfil/"]);
+    }
   }
 
   const carpetaUsuario = storage.ref().child("usuarios/" + uid);

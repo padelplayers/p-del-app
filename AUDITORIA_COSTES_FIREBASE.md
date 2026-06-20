@@ -164,7 +164,7 @@ Los filtros dia/semana/mes/ano/total filtran correctamente en cliente, pero todo
 
 ## K. PWA y cache
 
-- Cache actual: `padel-players-morvedre-v95`; al activar elimina todos los nombres anteriores.
+- Cache actual: `padel-players-morvedre-v96`; al activar elimina todos los nombres anteriores.
 - Navegacion usa red y no conserva `index.html` viejo; offline responde 503.
 - JS/CSS usan network-first con `cache: reload`; las versiones de archivos modificados estan incrementadas.
 - Recursos externos no se guardan en Cache Storage por el service worker.
@@ -204,7 +204,9 @@ Lo que escala peor es `usuarios.get()` por cada apertura, historial global admin
 6. Chat de partida tambien se limpia al abrir.
 7. `eliminarChatTotal()` repite lecturas/batches de 450 hasta vaciar.
 8. Listeners Perfil/Pistas se cierran al abandonar la pantalla; editar Perfil usa `get()`.
-9. Versiones PWA/cache actualizadas a `v95`.
+9. Versiones PWA/cache actualizadas a `v96`.
+10. Fotos de perfil y pistas se convierten a JPEG, se redimensionan y tienen limites estrictos de 450/900 KB.
+11. Fotos en Jugadores, Clasificacion y Pistas usan carga diferida.
 
 No se cambiaron reglas de negocio, reglas Firebase, esquemas, notificaciones, ranking, estadisticas ni permisos. No se anadieron Cloud Functions ni listeners.
 

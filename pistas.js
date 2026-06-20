@@ -66,11 +66,11 @@ if (btnGuardarPista) {
       const nota = document.getElementById("notaPista").value.trim();
       const inputFotoPista = document.getElementById("inputFotoPista");
       const archivoImagenPista = inputFotoPista && inputFotoPista.files.length > 0 ? inputFotoPista.files[0] : null;
-      let imagenAnterior = "";
+      let imagenesAnteriores = [];
 
       if (window.pistaEditando) {
         const doc = await db.collection("pistas").doc(window.pistaEditando).get();
-        imagenAnterior = doc.exists ? ((doc.data() || {}).imagen || "") : "";
+        imagenesAnteriores = doc.exists ? obtenerImagenesStoragePista(doc.data() || {}) : [];
       }
 
       if (
@@ -169,6 +169,7 @@ if (btnGuardarPista) {
       if (archivoImagenPista) {
         const ruta = "pistas/" + Date.now() + ".jpg";
         datos.imagen = await subirImagen(ruta, archivoImagenPista);
+        if (window.pistaEditando) datos.imagenUrl = firebase.firestore.FieldValue.delete();
       }
 
       if (window.pistaEditando) {
@@ -182,7 +183,9 @@ if (btnGuardarPista) {
           throw error;
         }
         if (datos.imagen) {
-          await borrarImagenStoragePistaSiProcede(imagenAnterior);
+          for (let i = 0; i < imagenesAnteriores.length; i++) {
+            await borrarImagenStoragePistaSiProcede(imagenesAnteriores[i]);
+          }
         }
         window.pistaEditando = null;
       } else {
@@ -202,6 +205,7 @@ if (btnGuardarPista) {
       mostrar("pistas");
     } catch (error) {
       console.error("ERROR REAL:", error);
+      alert(error && error.message ? error.message : "No se pudo guardar la pista.");
     }
   };
 }
@@ -374,7 +378,10 @@ async function cargarPistas() {
         }
 
         const imagen = document.createElement("img");
-        imagen.src = data.imagen || "";
+        imagen.src = data.imagen || data.imagenUrl || "";
+        imagen.alt = data.nombre ? "Imagen de " + data.nombre : "Imagen de pista";
+        imagen.loading = "lazy";
+        imagen.decoding = "async";
         div.appendChild(imagen);
 
         const info = document.createElement("div");
@@ -495,6 +502,13 @@ async function borrarImagenStoragePistaSiProcede(url) {
   return false;
 }
 
+function obtenerImagenesStoragePista(data) {
+  data = data || {};
+  return [data.imagen, data.imagenUrl].filter(Boolean).filter(function(url, index, lista) {
+    return lista.indexOf(url) === index;
+  });
+}
+
 window.verificarPista = async function(id) {
   const user = auth.currentUser;
   if (!user) return;
@@ -522,10 +536,12 @@ window.eliminarPista = async function(id) {
   const ref = db.collection("pistas").doc(id);
   const doc = await ref.get();
   const data = doc.exists ? (doc.data() || {}) : {};
-  const imagenActual = data.imagen || "";
+  const imagenesActuales = obtenerImagenesStoragePista(data);
 
   await ref.delete();
-  await borrarImagenStoragePistaSiProcede(imagenActual);
+  for (let i = 0; i < imagenesActuales.length; i++) {
+    await borrarImagenStoragePistaSiProcede(imagenesActuales[i]);
+  }
   cargarPistas();
 };
 
@@ -596,7 +612,13 @@ if (btnActualizar) {
 
     if (archivoImagen) {
       const ruta = "pistas/" + Date.now() + ".jpg";
-      datosUpdate.imagen = await subirImagen(ruta, archivoImagen);
+      try {
+        datosUpdate.imagen = await subirImagen(ruta, archivoImagen);
+        datosUpdate.imagenUrl = firebase.firestore.FieldValue.delete();
+      } catch (error) {
+        alert(error && error.message ? error.message : "No se pudo preparar la imagen.");
+        return;
+      }
     }
 
     try {
@@ -606,7 +628,10 @@ if (btnActualizar) {
       throw error;
     }
     if (datosUpdate.imagen) {
-      await borrarImagenStoragePistaSiProcede(datosAnteriores.imagen || "");
+      const imagenesAnteriores = obtenerImagenesStoragePista(datosAnteriores);
+      for (let i = 0; i < imagenesAnteriores.length; i++) {
+        await borrarImagenStoragePistaSiProcede(imagenesAnteriores[i]);
+      }
       if (inputFotoEditar) inputFotoEditar.value = "";
     }
 

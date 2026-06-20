@@ -1,11 +1,110 @@
 window.modoSeleccionPista = false;
 window.partidaCreando = {};
 
+const IMAGEN_STORAGE_PERFIL = {
+  maxDimension: 512,
+  maxBytes: 450 * 1024,
+  maxOriginalBytes: 12 * 1024 * 1024
+};
+const IMAGEN_STORAGE_PISTA = {
+  maxDimension: 1200,
+  maxBytes: 900 * 1024,
+  maxOriginalBytes: 20 * 1024 * 1024
+};
+
+function configuracionImagenStorage(ruta) {
+  if (String(ruta || "").indexOf("usuarios/") === 0 || String(ruta || "").indexOf("fotosPerfil/") === 0) {
+    return IMAGEN_STORAGE_PERFIL;
+  }
+  if (String(ruta || "").indexOf("pistas/") === 0 || String(ruta || "").indexOf("imagenesPistas/") === 0) {
+    return IMAGEN_STORAGE_PISTA;
+  }
+  return null;
+}
+
+function cargarImagenLocal(archivo) {
+  return new Promise(function(resolve, reject) {
+    const url = URL.createObjectURL(archivo);
+    const imagen = new Image();
+
+    imagen.onload = function() {
+      URL.revokeObjectURL(url);
+      resolve(imagen);
+    };
+    imagen.onerror = function() {
+      URL.revokeObjectURL(url);
+      reject(new Error("No se pudo leer la imagen seleccionada."));
+    };
+    imagen.src = url;
+  });
+}
+
+function convertirCanvasJpeg(canvas, calidad) {
+  return new Promise(function(resolve, reject) {
+    canvas.toBlob(function(blob) {
+      if (blob) resolve(blob);
+      else reject(new Error("No se pudo optimizar la imagen."));
+    }, "image/jpeg", calidad);
+  });
+}
+
+async function optimizarImagenParaStorage(ruta, archivo) {
+  const config = configuracionImagenStorage(ruta);
+  if (!config) return archivo;
+  if (!archivo || !String(archivo.type || "").startsWith("image/")) {
+    throw new Error("Selecciona un archivo de imagen valido.");
+  }
+  if (archivo.size > config.maxOriginalBytes) {
+    const limiteMb = Math.round(config.maxOriginalBytes / (1024 * 1024));
+    throw new Error("La imagen original no puede superar " + limiteMb + " MB.");
+  }
+
+  const imagen = await cargarImagenLocal(archivo);
+  const anchoOriginal = Number(imagen.naturalWidth || imagen.width || 0);
+  const altoOriginal = Number(imagen.naturalHeight || imagen.height || 0);
+  if (!anchoOriginal || !altoOriginal || anchoOriginal * altoOriginal > 50000000) {
+    throw new Error("La resolucion de la imagen es demasiado grande.");
+  }
+
+  const escalaInicial = Math.min(1, config.maxDimension / Math.max(anchoOriginal, altoOriginal));
+  let ancho = Math.max(1, Math.round(anchoOriginal * escalaInicial));
+  let alto = Math.max(1, Math.round(altoOriginal * escalaInicial));
+  const calidades = [0.86, 0.78, 0.7, 0.62, 0.54, 0.46];
+
+  for (let intento = 0; intento < 6; intento++) {
+    const canvas = document.createElement("canvas");
+    canvas.width = ancho;
+    canvas.height = alto;
+    const contexto = canvas.getContext("2d", { alpha: false });
+    if (!contexto) throw new Error("El navegador no puede optimizar esta imagen.");
+
+    contexto.fillStyle = "#ffffff";
+    contexto.fillRect(0, 0, ancho, alto);
+    contexto.drawImage(imagen, 0, 0, ancho, alto);
+
+    for (let i = 0; i < calidades.length; i++) {
+      const blob = await convertirCanvasJpeg(canvas, calidades[i]);
+      if (blob.size <= config.maxBytes) return blob;
+    }
+
+    ancho = Math.max(1, Math.round(ancho * 0.82));
+    alto = Math.max(1, Math.round(alto * 0.82));
+  }
+
+  throw new Error("No se pudo reducir la imagen al tamano permitido.");
+}
+
+window.optimizarImagenParaStorage = optimizarImagenParaStorage;
+
 window.subirImagen = async function(ruta, archivo) {
+  const imagenOptimizada = await optimizarImagenParaStorage(ruta, archivo);
 
   const ref = firebase.storage().ref().child(ruta);
 
-  await ref.put(archivo);
+  await ref.put(imagenOptimizada, {
+    contentType: imagenOptimizada.type || archivo.type || "image/jpeg",
+    cacheControl: "public,max-age=31536000,immutable"
+  });
 
   const url = await ref.getDownloadURL();
 
@@ -14,6 +113,15 @@ window.subirImagen = async function(ruta, archivo) {
 
 const STORAGE_RUTAS_IMAGENES_APP = ["usuarios/", "fotosPerfil/", "pistas/", "imagenesPistas/"];
 const STORAGE_IMAGENES_DEFAULT_APP = ["imagen/hombre.jpeg", "imagen/mujer.jpeg"];
+
+function obtenerFotosStorageUsuario(data) {
+  data = data || {};
+  return [data.fotoPerfil, data.fotoUrl, data.imagenUrl, data.photoURL, data.avatar, data.foto]
+    .filter(Boolean)
+    .filter(function(url, index, lista) {
+      return lista.indexOf(url) === index;
+    });
+}
 
 function obtenerStoragePathDesdeUrl(url) {
   if (!url || typeof url !== "string") return "";
@@ -142,19 +250,6 @@ let revisionCancelaciones5hSesionUid = null;
 
 const PRESENCIA_HEARTBEAT_MS = 5 * 60 * 1000;
 
-
-// FUNCIONES GLOBALES
-
-window.subirImagen = async function(ruta, archivo) {
-
-  const ref = firebase.storage().ref().child(ruta);
-
-  await ref.put(archivo);
-
-  const url = await ref.getDownloadURL();
-
-  return url;
-}
 
 async function borrarImagen(url) {
 
@@ -362,14 +457,21 @@ async function guardarPerfilRegistro(){
   const userRef = db.collection("usuarios").doc(auth.currentUser.uid);
   const userDoc = await userRef.get();
   const datosUsuarioExistente = userDoc.exists ? (userDoc.data() || {}) : {};
-  const fotoAnterior = datosUsuarioExistente.fotoPerfil || "";
+  const fotosAnteriores = obtenerFotosStorageUsuario(datosUsuarioExistente);
   let fotoURL = sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
   let fotoNuevaSubida = "";
 
   if (archivo) {
     const ruta = "usuarios/" + auth.currentUser.uid + "/foto_" + Date.now() + ".jpg";
-    fotoURL = await subirImagen(ruta, archivo);
-    fotoNuevaSubida = fotoURL;
+    try {
+      fotoURL = await subirImagen(ruta, archivo);
+      fotoNuevaSubida = fotoURL;
+    } catch (error) {
+      document.getElementById("msgPerfil").innerText = error && error.message
+        ? error.message
+        : "No se pudo preparar la imagen.";
+      return;
+    }
   }
 
   const datosPerfil = {
@@ -402,7 +504,9 @@ async function guardarPerfilRegistro(){
     await borrarImagenStorageSiProcede(fotoNuevaSubida, ["usuarios/", "fotosPerfil/"]);
     throw error;
   }
-  await borrarImagenStorageSiProcede(fotoAnterior, ["usuarios/", "fotosPerfil/"]);
+  for (let i = 0; i < fotosAnteriores.length; i++) {
+    await borrarImagenStorageSiProcede(fotosAnteriores[i], ["usuarios/", "fotosPerfil/"]);
+  }
   await iniciarPresenciaAvanzada(auth.currentUser.uid);
 
   await userRef.collection("chatLeidos").doc("general").set({
@@ -584,11 +688,14 @@ if (inputFotoGlobal) {
     const imgPerfil = document.getElementById("fotoPerfil");
     if (imgPerfil) imgPerfil.src = previewURL;
 
+    let fotoAnterior = "";
+    let fotosAnteriores = [];
     try {
       const docRef = db.collection("usuarios").doc(user.uid);
       const doc = await docRef.get();
       const data = doc.exists ? (doc.data() || {}) : {};
-      const fotoAnterior = data.fotoPerfil || "";
+      fotoAnterior = data.fotoPerfil || "";
+      fotosAnteriores = obtenerFotosStorageUsuario(data);
 
       const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
       const url = await subirImagen(ruta, file);
@@ -601,7 +708,14 @@ if (inputFotoGlobal) {
         await borrarImagenStorageSiProcede(url, ["usuarios/", "fotosPerfil/"]);
         throw error;
       }
-      await borrarImagenStorageSiProcede(fotoAnterior, ["usuarios/", "fotosPerfil/"]);
+      for (let i = 0; i < fotosAnteriores.length; i++) {
+        await borrarImagenStorageSiProcede(fotosAnteriores[i], ["usuarios/", "fotosPerfil/"]);
+      }
+    } catch (error) {
+      const fotoRestaurada = fotoAnterior || "imagen/hombre.jpeg";
+      if (imgEditar) imgEditar.src = fotoRestaurada;
+      if (imgPerfil) imgPerfil.src = fotoRestaurada;
+      alert(error && error.message ? error.message : "No se pudo cambiar la foto.");
     } finally {
       URL.revokeObjectURL(previewURL);
     }
@@ -740,6 +854,8 @@ function crearCardClasificacion(jugador, posicion) {
   foto.className = "clasificacionFoto";
   foto.src = jugador.foto;
   foto.alt = jugador.nombre;
+  foto.loading = "lazy";
+  foto.decoding = "async";
 
   const info = document.createElement("div");
   info.className = "clasificacionInfo";
