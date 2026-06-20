@@ -120,6 +120,105 @@ button{
   text-align: center;
 }
 
+.adminChatSistemaPanel {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid #d7e4f5;
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+}
+
+.adminChatSistemaHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.adminChatSistemaHeader h3 {
+  margin: 0;
+  color: #1565C0;
+}
+
+.adminChatSistemaEstado {
+  margin: 12px 0;
+  color: #333;
+  font-weight: 700;
+}
+
+.adminChatSistemaResumenGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 12px 0 18px;
+}
+
+.adminChatSistemaDato {
+  border: 1px solid #e1ebf7;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fafcff;
+}
+
+.adminChatSistemaDatoLabel {
+  color: #555;
+  font-size: 13px;
+}
+
+.adminChatSistemaDatoValor {
+  margin-top: 5px;
+  color: #1565C0;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.adminChatSistemaResultados h4 {
+  margin: 12px 0 8px;
+  color: #1565C0;
+}
+
+.adminChatSistemaFila {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+  padding: 10px;
+  border: 1px solid #edf2f8;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.adminChatSistemaTexto {
+  font-weight: 700;
+  color: #111;
+}
+
+.adminChatSistemaMotivo {
+  color: #B71C1C;
+  font-weight: 700;
+}
+
+.adminChatSistemaVacio,
+.adminChatSistemaDetalle {
+  color: #555;
+  font-size: 14px;
+  margin: 10px 0;
+}
+
+@media (max-width: 600px) {
+  .adminChatSistemaHeader {
+    display: block;
+  }
+
+  .adminChatSistemaHeader button,
+  #btnEliminarChatSistemaObsoletos {
+    width: 100%;
+  }
+}
+
 .volverSticky .btnBlue {
   background: #1565C0;
   color: #fff;

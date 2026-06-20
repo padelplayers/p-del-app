@@ -518,11 +518,8 @@ function mensajeSistemaPuedeAbrirPartida(msg) {
     "falta_1_hombre",
     "falta_1_mujer",
     "partida_completa",
-    "cambio_creador_pendiente",
-    "nuevo_creador",
     "plaza_libre_confirmada",
-    "sustitucion_urgente",
-    "reserva_pendiente"
+    "sustitucion_urgente"
   ].includes(msg.eventType);
 }
 

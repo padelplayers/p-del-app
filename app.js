@@ -215,8 +215,10 @@ function iniciarPresenciaAvanzada(uid) {
 function actualizarBotonEstadisticasAdmin() {
   const btnMenu = document.getElementById("btnMenuEstadisticas");
   const btnPerfil = document.getElementById("btnPerfilEstadisticas");
+  const panelChatSistema = document.getElementById("adminChatSistemaPanel");
   if (btnMenu) btnMenu.style.display = esAdmin ? "flex" : "none";
   if (btnPerfil) btnPerfil.style.display = esAdmin ? "block" : "none";
+  if (panelChatSistema) panelChatSistema.style.display = esAdmin ? "block" : "none";
 }
 
 function recuperarPassword() {

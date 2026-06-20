@@ -671,28 +671,14 @@ function emitirSistemaCambioCreadorPendiente(partidaId, p) {
     "falta_1",
     "falta_1_hombre",
     "falta_1_mujer",
-    "partida_completa"
-  ]).then(function() {
-    return crearMensajeSistemaPartida(partidaId, p, {
-      eventType: "cambio_creador_pendiente",
-      dedupeKey: "system_cambio_creador_pendiente_" + partidaId,
-      texto: function(datos) {
-        return "Se necesita nuevo creador para una partida en " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + ".";
-      }
-    });
-  });
+    "partida_completa",
+    "cambio_creador_pendiente",
+    "nuevo_creador"
+  ]);
 }
 
 function emitirSistemaNuevoCreador(partidaId, p) {
-  return resolverSistemaPartida(partidaId, ["cambio_creador_pendiente"]).then(function() {
-    return crearMensajeSistemaPartida(partidaId, p, {
-      eventType: "nuevo_creador",
-      dedupeKey: "system_nuevo_creador_" + partidaId,
-      texto: function(datos) {
-        return "La partida de " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + " ya tiene nuevo creador.";
-      }
-    });
-  });
+  return resolverSistemaPartida(partidaId, ["cambio_creador_pendiente", "nuevo_creador"]);
 }
 
 function emitirSistemaReservaPendiente(partidaId, p) {
@@ -705,16 +691,9 @@ function emitirSistemaReservaPendiente(partidaId, p) {
     "falta_1_mujer",
     "partida_completa",
     "plaza_libre_confirmada",
-    "sustitucion_urgente"
-  ]).then(function() {
-    return crearMensajeSistemaPartida(partidaId, p, {
-      eventType: "reserva_pendiente",
-      dedupeKey: "system_reserva_pendiente_" + partidaId,
-      texto: function(datos) {
-        return "Una reserva debe aceptar una plaza para completar una partida en " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + ".";
-      }
-    });
-  });
+    "sustitucion_urgente",
+    "reserva_pendiente"
+  ]);
 }
 
 function emitirSistemaPlazaLibreConfirmadaSiProcede(partidaId, p) {
@@ -824,10 +803,7 @@ function partidaNecesitaSustitucionUrgente(p) {
     !partidaAlcanzoLimiteCancelacionClub(p) &&
     !p.resultado &&
     (!p.valoraciones || Object.keys(p.valoraciones).length === 0) &&
-    (
-      partidaConfirmadaAccionableConPlazaLibre(p) ||
-      tieneSolicitudSustitucionPartida(p)
-    )
+    partidaConfirmadaAccionableConPlazaLibre(p)
   );
 }
 
