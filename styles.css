@@ -3665,7 +3665,7 @@ margin:0 auto;
   position: fixed;
   top: 62px;
   right: 12px;
-  z-index: 1190;
+  z-index: 10040;
   width: min(360px, calc(100vw - 24px));
   max-height: min(560px, calc(100vh - 84px));
   display: none;
