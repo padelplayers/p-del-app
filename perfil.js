@@ -1646,10 +1646,6 @@ function crearUpdateNotificacionUsuarioEliminadoPerfil(n, uid, uidAnonimo, nombr
   }
 
   if (debeResolver) {
-    update.resuelta = true;
-    update.resueltaAt = firebase.firestore.FieldValue.serverTimestamp();
-    update.leida = true;
-    update.leidaAt = firebase.firestore.FieldValue.serverTimestamp();
     update.accion = null;
   } else if (mencionaUid && n.accion === "abrir_perfil") {
     update.accion = null;

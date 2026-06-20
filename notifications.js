@@ -180,22 +180,46 @@ function esNotificacionConAccionPartidaActiva(n) {
   return !!n.accion || n.accion === undefined;
 }
 
+function notificacionPerteneceAUsuario(n, uid) {
+  if (!n || !uid) return false;
+  return n.uid === uid || n.paraUid === uid;
+}
+
+function quitarNotificacionLocal(id) {
+  window.notificacionesState.items = (window.notificacionesState.items || []).filter(function(item) {
+    return item.id !== id;
+  });
+  renderizarCampanaNotificaciones(window.notificacionesState.items);
+}
+
+async function borrarNotificacionPropiaPorRef(ref, uid) {
+  if (!ref || !uid) return false;
+
+  const doc = await ref.get();
+  if (!doc.exists) return false;
+
+  const data = doc.data() || {};
+  if (!notificacionPerteneceAUsuario(data, uid)) return false;
+
+  await ref.delete();
+  return true;
+}
+
 function resolverNotificacionPorDedupe(uid, dedupeKey) {
   if (!uid || !dedupeKey) return Promise.resolve(false);
 
+  const user = auth.currentUser;
+  if (!user || user.uid !== uid) return Promise.resolve(false);
+
   const docId = crearDocIdNotificacion(uid + "_" + dedupeKey);
-  return db.collection("notificaciones").doc(docId).set({
-    resuelta: true,
-    resueltaAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true }).then(function() {
-    return true;
-  });
+  return borrarNotificacionPropiaPorRef(db.collection("notificaciones").doc(docId), uid);
 }
 
 function resolverNotificacionesTemporalesPorPartidaId(partidaId, opciones) {
   if (!partidaId) return Promise.resolve(0);
   opciones = opciones || {};
-  const marcarLeida = opciones.marcarLeida !== false;
+  const user = auth.currentUser;
+  if (!user) return Promise.resolve(0);
 
   return db.collection("notificaciones").where("partidaId", "==", partidaId).get()
     .then(function(snapshot) {
@@ -205,19 +229,9 @@ function resolverNotificacionesTemporalesPorPartidaId(partidaId, opciones) {
       snapshot.forEach(function(doc) {
         const notificacion = doc.data() || {};
         if (!esNotificacionConAccionPartidaActiva(notificacion)) return;
+        if (!notificacionPerteneceAUsuario(notificacion, user.uid)) return;
 
-        const update = {
-          resuelta: true,
-          resueltaAt: firebase.firestore.FieldValue.serverTimestamp(),
-          accion: null
-        };
-
-        if (marcarLeida) {
-          update.leida = true;
-          update.leidaAt = firebase.firestore.FieldValue.serverTimestamp();
-        }
-
-        batch.set(doc.ref, update, { merge: true });
+        batch.delete(doc.ref);
         contador++;
       });
 
@@ -236,19 +250,16 @@ async function limpiarNotificacionesAntiguas(uid) {
   if (!uid) return;
 
   const ahora = new Date();
-  const limiteLeidas = new Date(ahora.getTime() - 7 * 24 * 60 * 60 * 1000);
   const snap = await db.collection("notificaciones").where("uid", "==", uid).get();
   const batch = db.batch();
   let contador = 0;
 
   snap.forEach(function(doc) {
     const n = doc.data() || {};
-    const createdAt = fechaNotificacionToDate(n.createdAt);
     const caducaAt = fechaNotificacionToDate(n.caducaAt);
     const caducada = caducaAt && caducaAt <= ahora;
-    const leidaAntigua = n.leida === true && createdAt && createdAt <= limiteLeidas;
 
-    if ((caducada || leidaAntigua || n.resuelta === true) && contador < 400) {
+    if ((caducada || n.leida === true || n.resuelta === true) && contador < 400) {
       batch.delete(doc.ref);
       contador++;
     }
@@ -259,7 +270,7 @@ async function limpiarNotificacionesAntiguas(uid) {
 
 function obtenerNotificacionesNoLeidas(notificaciones) {
   return (notificaciones || []).filter(function(item) {
-    return item.data.leida !== true;
+    return item.data.leida !== true && item.data.resuelta !== true;
   });
 }
 
@@ -441,7 +452,7 @@ function crearTextoNotificacion(texto) {
 
 function mostrarPopupNotificacion(id, n) {
   const contenedor = document.getElementById("notificacionesPopup");
-  if (!contenedor || !n || n.leida === true || n.popupMostrado === true) return;
+  if (!contenedor || !n || n.leida === true || n.resuelta === true || n.popupMostrado === true) return;
   const textoVisible = obtenerTextoVisibleNotificacion(n);
 
   const popup = document.createElement("div");
@@ -562,18 +573,36 @@ function detenerNotificacionesInternas() {
 
 function marcarNotificacionLeida(id) {
   if (!id) return Promise.resolve();
-  window.notificacionesState.items = (window.notificacionesState.items || []).map(function(item) {
-    if (item.id !== id) return item;
-    return Object.assign({}, item, {
-      data: Object.assign({}, item.data, { leida: true })
-    });
-  });
-  renderizarCampanaNotificaciones(window.notificacionesState.items);
+  const user = auth.currentUser;
+  if (!user) return Promise.resolve();
 
-  return db.collection("notificaciones").doc(id).set({
-    leida: true,
-    leidaAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true });
+  quitarNotificacionLocal(id);
+
+  return borrarNotificacionPropiaPorRef(db.collection("notificaciones").doc(id), user.uid);
+}
+
+function marcarTodasNotificacionesLeidas() {
+  const user = auth.currentUser;
+  if (!user) return Promise.resolve(0);
+
+  window.notificacionesState.items = [];
+  renderizarCampanaNotificaciones([]);
+
+  return db.collection("notificaciones").where("uid", "==", user.uid).get()
+    .then(function(snapshot) {
+      const batch = db.batch();
+      let contador = 0;
+
+      snapshot.forEach(function(doc) {
+        const data = doc.data() || {};
+        if (!notificacionPerteneceAUsuario(data, user.uid)) return;
+        batch.delete(doc.ref);
+        contador++;
+      });
+
+      if (contador === 0) return 0;
+      return batch.commit().then(function() { return contador; });
+    });
 }
 
 function abrirAccionNotificacion(id, n) {
@@ -671,5 +700,6 @@ window.limpiarNotificacionesAntiguas = limpiarNotificacionesAntiguas;
 window.escucharNotificaciones = escucharNotificaciones;
 window.detenerNotificacionesInternas = detenerNotificacionesInternas;
 window.marcarNotificacionLeida = marcarNotificacionLeida;
+window.marcarTodasNotificacionesLeidas = marcarTodasNotificacionesLeidas;
 
 document.addEventListener("DOMContentLoaded", initNotificacionesUI);
