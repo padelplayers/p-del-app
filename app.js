@@ -372,6 +372,8 @@ auth.signInWithEmailAndPassword(email, pass)
 }
 
 async function logout(){
+  actualizarVisibilidadBottomNav("login");
+
   if (typeof window.limpiarTodoChat === "function") {
     window.limpiarTodoChat();
   }
@@ -739,6 +741,21 @@ function actualizarBottomNavActivo(seccion) {
 
 window.actualizarBottomNavActivo = actualizarBottomNavActivo;
 
+function seccionSinSesionBottomNav(seccion) {
+  return seccion === "login" || seccion === "perfilCompletar" || seccion === "cargaInicial";
+}
+
+function actualizarVisibilidadBottomNav(seccion) {
+  const nav = document.getElementById("bottomNav");
+  if (!nav) return;
+
+  const usuarioAutenticado = typeof auth !== "undefined" && !!auth.currentUser;
+  const visible = usuarioAutenticado && !seccionSinSesionBottomNav(seccion);
+  nav.classList.toggle("bottomNavVisible", visible);
+}
+
+window.actualizarVisibilidadBottomNav = actualizarVisibilidadBottomNav;
+
 function cargarClasificacionComunitaria() {
   const contenedor = document.getElementById("listaClasificacion");
   if (!contenedor) return;
@@ -827,6 +844,7 @@ function mostrar(seccion){
   console.log("MOSTRAR:", seccion);
   const cargaInicial = document.getElementById("pantallaCargaInicial");
   if (cargaInicial) cargaInicial.style.display = "none";
+  actualizarVisibilidadBottomNav(seccion);
   actualizarBottomNavActivo(seccion);
   const abriendoChat = seccion === "chat";
   const chatPantalla = document.getElementById("chat");
