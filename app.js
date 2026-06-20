@@ -75,6 +75,60 @@ function mostrarAvisoNivel(){
   return false;
 }
 
+function asegurarAvisoNivelAceptado(callback) {
+  if (!avisoNivelMostrado) mostrarAvisoNivel();
+  if (typeof callback === "function") callback();
+}
+
+function obtenerNivelesRegistro() {
+  return [
+    "0.5", "0.75", "1", "1.25", "1.5", "1.75", "2", "2.25", "2.5", "2.75",
+    "3", "3.25", "3.5", "3.75", "4", "4.25", "4.5", "4.75", "5", "5.25",
+    "5.5", "5.75", "6", "6.25", "6.5", "6.75", "7"
+  ];
+}
+
+function abrirSelectorNivelManualRegistro() {
+  const contenedor = document.getElementById("nivelManualOpciones");
+  if (!contenedor) return;
+
+  if (contenedor.childElementCount === 0) {
+    const fragment = document.createDocumentFragment();
+    obtenerNivelesRegistro().forEach(function(nivel) {
+      const boton = document.createElement("button");
+      boton.type = "button";
+      boton.className = "btnBlue";
+      boton.style.margin = "4px";
+      boton.textContent = nivel;
+      boton.onclick = function() {
+        seleccionarNivelManualRegistro(nivel);
+      };
+      fragment.appendChild(boton);
+    });
+    contenedor.appendChild(fragment);
+  }
+
+  contenedor.style.display = "block";
+}
+
+function iniciarNivelManualRegistro() {
+  asegurarAvisoNivelAceptado(abrirSelectorNivelManualRegistro);
+}
+
+function seleccionarNivelManualRegistro(nivel) {
+  const input = document.getElementById("nivelManual");
+  const boton = document.getElementById("btnNivelManual");
+  const contenedor = document.getElementById("nivelManualOpciones");
+  if (input) input.value = nivel || "";
+  if (boton) boton.textContent = nivel ? "Nivel " + nivel : "Elegir nivel";
+  if (contenedor) contenedor.style.display = "none";
+}
+
+function iniciarTestNivelRegistro() {
+  mostrar("testNivel");
+  asegurarAvisoNivelAceptado();
+}
+
 let archivo = null;
 let otroUid = null;
 

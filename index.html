@@ -342,38 +342,11 @@ html, body {
 
 <label>Nivel <span class="req">*</span></label>
 
-<select id="nivelManual" onchange="if(mostrarAvisoNivel()){ this.selectedIndex=0; return; }">
-<option value="">Elegir</option>
-<option>0.5</option>
-<option>0.75</option>
-<option>1</option>
-<option>1.25</option>
-<option>1.5</option>
-<option>1.75</option>
-<option>2</option>
-<option>2.25</option>
-<option>2.5</option>
-<option>2.75</option>
-<option>3</option>
-<option>3.25</option>
-<option>3.5</option>
-<option>3.75</option>
-<option>4</option>
-<option>4.25</option>
-<option>4.5</option>
-<option>4.75</option>
-<option>5</option>
-<option>5.25</option>
-<option>5.5</option>
-<option>5.75</option>
-<option>6</option>
-<option>6.25</option>
-<option>6.5</option>
-<option>6.75</option>
-<option>7</option>
-</select>
+<input type="hidden" id="nivelManual" value="">
+<button class="btnBlue" type="button" id="btnNivelManual" onclick="iniciarNivelManualRegistro()">Elegir nivel</button>
+<div id="nivelManualOpciones" class="nivelManualOpciones" style="display:none;"></div>
 
-<button class="btnYellow" id="btnTestNivel" onclick="if(mostrarAvisoNivel()) return; abrirTest()">Descubrir mi nivel</button>
+<button class="btnYellow" id="btnTestNivel" onclick="iniciarTestNivelRegistro()">Descubrir mi nivel</button>
 
 <div id="nivelResultado" class="ok"></div>
 
@@ -1378,8 +1351,8 @@ const db = firebase.firestore();
 <script src="notifications.js?v=13"></script>
 <script src="estadisticas.js?v=5"></script>
 <script src="admin-chat-cleanup.js?v=6"></script>
-<script src="pwa.js?v=51"></script>
-<script src="app.js?v=19"></script>
+<script src="pwa.js?v=53"></script>
+<script src="app.js?v=21"></script>
 <script src="testNivel.js"></script>
 
 <nav id="bottomNav" class="bottomNav" aria-label="Navegacion principal">
