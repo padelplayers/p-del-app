@@ -474,6 +474,141 @@ function crearTarjetaPenalizacionPerfil(penalizacion, activa) {
   return card;
 }
 
+function restriccionNoPresentadoActivaPerfil(restriccion) {
+  if (!restriccion || restriccion.activa !== true) return false;
+
+  const hasta = fechaPerfilToDate(restriccion.hasta);
+  if (!hasta) return false;
+  return hasta.getTime() > Date.now();
+}
+
+function crearItemRestriccionPerfil(texto, hasta) {
+  const item = document.createElement("li");
+  item.className = "perfilRestriccionActivaItem";
+
+  const descripcion = crearTextoPerfil("strong", texto);
+  item.appendChild(descripcion);
+
+  if (hasta) {
+    item.appendChild(crearTextoPerfil("span", "Hasta " + formatearFechaPerfil(hasta)));
+  }
+
+  return item;
+}
+
+function obtenerRestriccionesFiabilidadPerfil(fiabilidad, restriccion) {
+  const restricciones = [];
+  const activa = restriccionFiabilidadActivaPerfil(restriccion);
+  const hasta = activa ? restriccion.hasta : null;
+  const valor = Number(fiabilidad);
+
+  if (activa) {
+    if (restriccion.bloqueaCrear === true) restricciones.push({ texto: "No puede crear partidas.", hasta: hasta });
+    if (restriccion.bloqueaUnirse === true) restricciones.push({ texto: "No puede apuntarse a partidas.", hasta: hasta });
+    if (restriccion.bloqueaChat === true) {
+      restricciones.push({ texto: "No puede usar Chat General.", hasta: hasta });
+      restricciones.push({ texto: "No puede usar Chat Privado.", hasta: hasta });
+    }
+    return restricciones;
+  }
+
+  if (isNaN(valor) || valor >= 70) return restricciones;
+
+  restricciones.push({ texto: "No puede crear partidas.", hasta: hasta });
+  if (valor < 60) restricciones.push({ texto: "No puede apuntarse a partidas.", hasta: hasta });
+  if (valor < 40) {
+    restricciones.push({ texto: "No puede usar Chat General.", hasta: hasta });
+    restricciones.push({ texto: "No puede usar Chat Privado.", hasta: hasta });
+  }
+
+  return restricciones;
+}
+
+function obtenerRestriccionesActivasPerfil(data, fiabilidad) {
+  const restricciones = obtenerRestriccionesFiabilidadPerfil(fiabilidad, data && data.restriccionFiabilidad);
+
+  if (restriccionNoPresentadoActivaPerfil(data && data.restriccionNoPresentado)) {
+    restricciones.push({
+      texto: "No puede apuntarse a partidas.",
+      hasta: data.restriccionNoPresentado.hasta
+    });
+  }
+
+  return restricciones;
+}
+
+function obtenerProximaRestriccionPerfil(fiabilidad) {
+  const valor = Number(fiabilidad);
+  if (isNaN(valor)) return null;
+
+  if (valor >= 70) return { umbral: 70, diferencia: Math.max(0, valor - 70) };
+  if (valor >= 60) return { umbral: 60, diferencia: Math.max(0, valor - 60) };
+  if (valor >= 40) return { umbral: 40, diferencia: Math.max(0, valor - 40) };
+  return null;
+}
+
+function crearFilaEscalaFiabilidadPerfil(rango, efecto) {
+  const fila = document.createElement("div");
+  fila.className = "perfilEscalaFiabilidadFila";
+  fila.appendChild(crearTextoPerfil("span", rango));
+  fila.appendChild(crearTextoPerfil("strong", efecto));
+  return fila;
+}
+
+function renderizarConsecuenciasFiabilidadPerfil(data, fiabilidad) {
+  const contenedor = document.getElementById("fiabilidadConsecuenciasPerfil");
+  if (!contenedor) return;
+
+  contenedor.replaceChildren();
+  contenedor.className = "perfilConsecuenciasFiabilidad";
+
+  const restriccionesBox = document.createElement("div");
+  restriccionesBox.className = "perfilConsecuenciaBloque";
+  restriccionesBox.appendChild(crearTextoPerfil("h5", "Restricciones activas"));
+
+  const restricciones = obtenerRestriccionesActivasPerfil(data, fiabilidad);
+  if (restricciones.length) {
+    const lista = document.createElement("ul");
+    lista.className = "perfilRestriccionesActivasLista";
+    restricciones.forEach(function(restriccion) {
+      lista.appendChild(crearItemRestriccionPerfil(restriccion.texto, restriccion.hasta));
+    });
+    restriccionesBox.appendChild(lista);
+  } else {
+    restriccionesBox.appendChild(crearTextoPerfil("p", "Sin restricciones activas.", "perfilConsecuenciaTexto"));
+  }
+
+  const proximaBox = document.createElement("div");
+  proximaBox.className = "perfilConsecuenciaBloque perfilProximaRestriccion";
+  proximaBox.appendChild(crearTextoPerfil("h5", "Proxima restriccion"));
+
+  const proxima = obtenerProximaRestriccionPerfil(fiabilidad);
+  if (proxima) {
+    proximaBox.appendChild(crearTextoPerfil("p", "Fiabilidad actual: " + fiabilidad + "%", "perfilConsecuenciaTexto"));
+    proximaBox.appendChild(crearTextoPerfil("p", "Proxima restriccion: " + proxima.umbral + "%", "perfilConsecuenciaTexto"));
+    proximaBox.appendChild(crearTextoPerfil("p", "Te faltan " + proxima.diferencia + " puntos de fiabilidad.", "perfilConsecuenciaTexto destacado"));
+  } else {
+    proximaBox.appendChild(crearTextoPerfil("p", "Fiabilidad actual: " + fiabilidad + "%", "perfilConsecuenciaTexto"));
+    proximaBox.appendChild(crearTextoPerfil("p", "Ya esta en el tramo de restriccion maxima.", "perfilConsecuenciaTexto destacado"));
+  }
+
+  const escalaBox = document.createElement("div");
+  escalaBox.className = "perfilConsecuenciaBloque";
+  escalaBox.appendChild(crearTextoPerfil("h5", "Escala de Fiabilidad"));
+
+  const tabla = document.createElement("div");
+  tabla.className = "perfilEscalaFiabilidadTabla";
+  tabla.appendChild(crearFilaEscalaFiabilidadPerfil("100%-70%", "Sin restricciones"));
+  tabla.appendChild(crearFilaEscalaFiabilidadPerfil("<70%", "7 dias sin crear partidas"));
+  tabla.appendChild(crearFilaEscalaFiabilidadPerfil("<60%", "7 dias sin crear ni apuntarse a partidas"));
+  tabla.appendChild(crearFilaEscalaFiabilidadPerfil("<40%", "30 dias sin crear partidas, apuntarse ni usar Chat General o Privado"));
+  escalaBox.appendChild(tabla);
+
+  contenedor.appendChild(restriccionesBox);
+  contenedor.appendChild(proximaBox);
+  contenedor.appendChild(escalaBox);
+}
+
 function renderizarListaPenalizacionesPerfil(id, lista, mensajeVacio, activa) {
   const contenedor = document.getElementById(id);
   if (!contenedor) return;
@@ -531,6 +666,8 @@ function renderizarFiabilidadPenalizacionesPerfil(data) {
     "Sin penalizaciones activas",
     true
   );
+
+  renderizarConsecuenciasFiabilidadPerfil(data, fiabilidad);
 
   renderizarListaPenalizacionesPerfil(
     "penalizacionesHistoricasPerfil",
