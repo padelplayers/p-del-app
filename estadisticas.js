@@ -238,7 +238,8 @@ function cargarUsuariosRegistradosEstadisticas() {
     const resumen = {
       total: 0,
       hombres: 0,
-      mujeres: 0
+      mujeres: 0,
+      sinSexo: 0
     };
 
     snapshot.forEach(function(doc) {
@@ -273,11 +274,24 @@ function calcularParticipacionGeneroEstadisticas(partidas) {
         const usuario = estadisticasState.usuariosCache[uid] || {};
         const sexo = normalizarSexoEstadisticas(usuario.sexo);
 
-        resumen.total++;
-        if (sexo === "masculino") resumen.hombres++;
-        if (sexo === "femenino") resumen.mujeres++;
+        if (sexo === "masculino") {
+          resumen.hombres++;
+          return;
+        }
+
+        if (sexo === "femenino") {
+          resumen.mujeres++;
+          return;
+        }
+
+        resumen.sinSexo++;
       });
     });
+
+    resumen.total = resumen.hombres + resumen.mujeres;
+    if (resumen.sinSexo > 0) {
+      console.warn("Participaciones sin sexo resuelto en estadísticas:", resumen.sinSexo);
+    }
 
     return resumen;
   });
