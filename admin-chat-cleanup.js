@@ -15,9 +15,17 @@ const ADMIN_CHAT_EVENTOS_CONDICIONALES = [
 ];
 
 const ADMIN_CHAT_EVENTOS_NO_PERMITIDOS = [
+  "partida_confirmada",
+  "partida_cancelada",
   "cambio_creador_pendiente",
   "nuevo_creador",
-  "reserva_pendiente"
+  "reserva_pendiente",
+  "reserva_aceptada",
+  "reserva_rechazada",
+  "resultado_pendiente",
+  "resultado_validado",
+  "valoraciones_pendientes",
+  "penalizaciones"
 ];
 
 function crearTextoAdminChatSistema(texto, clase) {
@@ -141,6 +149,10 @@ function clasificarMensajeAdminChat(item, partida) {
 
   if (eventType === "partida_cancelada" || dedupeKey.indexOf("partida_cancelada") !== -1) {
     return { eliminable: true, motivo: "Mensaje Sistema de partida cancelada" };
+  }
+
+  if (eventType === "partida_confirmada" || dedupeKey.indexOf("partida_confirmada") !== -1) {
+    return { eliminable: true, motivo: "Mensaje Sistema de partida confirmada no permitido en Chat General" };
   }
 
   if (ADMIN_CHAT_EVENTOS_NO_PERMITIDOS.includes(eventType)) {
