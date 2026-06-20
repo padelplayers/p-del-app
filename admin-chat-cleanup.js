@@ -80,6 +80,13 @@ function tieneSolicitudSustitucionAdminChat(partida) {
   return !!(partida && partida.solicitudSustitucionEstado === "solicitud_sustitucion_pendiente");
 }
 
+function solicitudSustitucionPublicaAdminChat(partida) {
+  return !!(
+    tieneSolicitudSustitucionAdminChat(partida) &&
+    arrayUnicoAdminChat(partida && partida.solicitudSustitucionReservasCompatibles).length === 0
+  );
+}
+
 function esEstadoFinalAdminChat(estado) {
   const valor = String(estado || "").toLowerCase().trim();
   return valor === "finalizada" ||
@@ -119,9 +126,8 @@ function eventoProcedeAdminChat(eventType, partida) {
 
   if (eventType === "sustitucion_urgente") {
     return estado === "confirmada" &&
-      jugadores.length < 4 &&
       !tieneSustitucionPendienteAdminChat(partida) &&
-      !tieneSolicitudSustitucionAdminChat(partida) &&
+      (jugadores.length < 4 || solicitudSustitucionPublicaAdminChat(partida)) &&
       !partidaPasadaAdminChat(partida);
   }
 

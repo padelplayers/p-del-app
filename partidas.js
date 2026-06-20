@@ -506,8 +506,12 @@ function crearMensajeSistemaPartida(partidaId, p, config) {
   }
 
   return datosTextoSistemaPartida(p).then(function(datos) {
+    const texto = config.eventType === "sustitucion_urgente"
+      ? "Se necesita sustituto para una partida confirmada en " + datos.pista + " el " + datos.fecha + " a las " + datos.hora + "."
+      : config.texto(datos);
+
     return window.crearOMantenerMensajeSistemaGeneral({
-      texto: config.texto(datos),
+      texto: texto,
       partidaId: partidaId,
       eventType: config.eventType,
       dedupeKey: config.dedupeKey,
@@ -796,14 +800,23 @@ function partidaEnVentanaSustitucionUrgente(p) {
 }
 
 function partidaNecesitaSustitucionUrgente(p) {
+  const solicitudAbiertaSinReservaCompatible = !!(
+    p &&
+    p.estado === "confirmada" &&
+    tieneSolicitudSustitucionPartida(p) &&
+    arrayUnicoPartida(p.solicitudSustitucionReservasCompatibles).length === 0
+  );
+
   return !!(
     p &&
     p.estado === "confirmada" &&
-    partidaEnVentanaSustitucionUrgente(p) &&
     !partidaAlcanzoLimiteCancelacionClub(p) &&
     !p.resultado &&
     (!p.valoraciones || Object.keys(p.valoraciones).length === 0) &&
-    partidaConfirmadaAccionableConPlazaLibre(p)
+    (
+      (partidaEnVentanaSustitucionUrgente(p) && partidaConfirmadaAccionableConPlazaLibre(p)) ||
+      solicitudAbiertaSinReservaCompatible
+    )
   );
 }
 
