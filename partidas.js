@@ -2860,6 +2860,22 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
             creador: actualizada.creador
           });
         }
+
+        const titularesAviso = arrayUnicoPartida(actualizada.jugadores).filter(function(uid) {
+          return uid !== creadorAviso;
+        });
+        if (titularesAviso.length > 0) {
+          avisos.push(notificarPartida(titularesAviso, {
+            tipo: "partida_completa",
+            titulo: "Partida completa",
+            mensaje: "La partida ya está completa.",
+            partidaId: partidaId,
+            accion: "abrir_partida",
+            dedupeKey: "partida_completa_jugadores_" + partidaId,
+            prioridad: "normal",
+            data: { jugadores: actualizada.jugadores }
+          }));
+        }
       }
       if (actualizada.partidaConfirmadaCompletada) {
         avisos.push(notificarPartida(actualizada.jugadores.concat(actualizada.reservas || []), {
