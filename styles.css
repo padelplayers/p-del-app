@@ -69,6 +69,14 @@ html{
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  outline: 0 !important;
   color: #fff;
   line-height: 1.25;
 }
@@ -79,12 +87,16 @@ html{
   display: block;
   margin: 0 auto 22px;
   object-fit: contain;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  filter: none;
-  outline: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  outline: 0 !important;
+  padding: 0 !important;
 }
 
 .pantallaCargaTitulo {

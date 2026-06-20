@@ -33,6 +33,14 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  outline: 0 !important;
   color: #fff;
   line-height: 1.25;
 }
@@ -42,12 +50,16 @@ html, body {
   display: block;
   margin: 0 auto 22px;
   object-fit: contain;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  filter: none;
-  outline: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  outline: 0 !important;
+  padding: 0 !important;
 }
 #pantallaCargaInicial .pantallaCargaTitulo {
   font: 800 clamp(22px, 5vw, 34px)/1.25 Arial, sans-serif;
@@ -77,7 +89,7 @@ html, body {
 </style>
 <link rel="manifest" href="manifest.json?v=3">
 <link rel="apple-touch-icon" href="icon-192-v2.png">
-<link rel="stylesheet" href="styles.css?v=48">
+<link rel="stylesheet" href="styles.css?v=49">
 </head>
 
 <body>
@@ -1365,7 +1377,7 @@ const db = firebase.firestore();
 <script src="notifications.js?v=12"></script>
 <script src="estadisticas.js?v=5"></script>
 <script src="admin-chat-cleanup.js?v=6"></script>
-<script src="pwa.js?v=46"></script>
+<script src="pwa.js?v=47"></script>
 <script src="app.js?v=19"></script>
 <script src="testNivel.js"></script>
 
