@@ -107,7 +107,7 @@ html, body {
 </style>
 <link rel="manifest" href="manifest.json?v=3">
 <link rel="apple-touch-icon" href="icon-192-v2.png">
-<link rel="stylesheet" href="styles.css?v=54">
+<link rel="stylesheet" href="styles.css?v=55">
 </head>
 
 <body>
@@ -642,6 +642,11 @@ Juego en red
       <h3>Contador de jugadores</h3>
       <button id="btnRecalcularTotalJugadores" class="btnYellow" type="button" onclick="recalcularTotalJugadoresGlobalAdmin()">Recalcular total</button>
     </div>
+    <div class="adminChatSistemaHeader">
+      <h3>Registros incompletos</h3>
+      <button id="btnAuditarRegistrosIncompletos" class="btnYellow" type="button" onclick="auditarRegistrosIncompletosAdmin()">Auditar registros</button>
+    </div>
+    <div id="auditoriaRegistrosIncompletos" class="auditoriaRegistrosIncompletos"></div>
     <div id="adminChatSistemaEstado" class="adminChatSistemaEstado"></div>
     <div id="adminChatSistemaResumen" class="adminChatSistemaResumen"></div>
     <div id="adminChatSistemaLista" class="adminChatSistemaLista"></div>
@@ -1388,8 +1393,8 @@ const db = firebase.firestore();
 <script src="notifications.js?v=13"></script>
 <script src="estadisticas.js?v=6"></script>
 <script src="admin-chat-cleanup.js?v=6"></script>
-<script src="pwa.js?v=68"></script>
-<script src="app.js?v=30"></script>
+<script src="pwa.js?v=69"></script>
+<script src="app.js?v=31"></script>
 <script src="testNivel.js?v=2"></script>
 
 <nav id="bottomNav" class="bottomNav" aria-label="Navegacion principal">
