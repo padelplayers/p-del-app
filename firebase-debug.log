@@ -21,3 +21,15 @@
     at async C:\Users\USER\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\command.js:278:17
 [error] 
 [error] Error: Failed to authenticate, have you run firebase login?
+[debug] [2026-06-21T19:10:25.245Z] ----------------------------------------------------------------------
+[debug] [2026-06-21T19:10:25.247Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\USER\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\bin\firebase.js login --no-localhost
+[debug] [2026-06-21T19:10:25.248Z] CLI Version:   15.22.0
+[debug] [2026-06-21T19:10:25.248Z] Platform:      win32
+[debug] [2026-06-21T19:10:25.248Z] Node Version:  v24.15.0
+[debug] [2026-06-21T19:10:25.248Z] Detected Agent: codex_cli
+[debug] [2026-06-21T19:10:25.248Z] Time:          Sun Jun 21 2026 21:10:25 GMT+0200 (hora de verano de Europa central)
+[debug] [2026-06-21T19:10:25.248Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-06-21T19:10:25.250Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[error] 
+[error] Error: Cannot run login in non-interactive mode. See login:ci to generate a token for use in non-interactive environments.
