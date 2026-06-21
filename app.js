@@ -1,9 +1,244 @@
 window.modoSeleccionPista = false;
 window.partidaCreando = {};
 
-const APP_JS_DIAGNOSTICO_VERSION = "app.js?v=24-imagenes";
+const APP_JS_DIAGNOSTICO_VERSION = "app.js?v=28-contador-global";
 window.APP_JS_DIAGNOSTICO_VERSION = APP_JS_DIAGNOSTICO_VERSION;
 console.info("[IMAGEN] Version cargada:", APP_JS_DIAGNOSTICO_VERSION, document.currentScript ? document.currentScript.src : "src desconocido");
+
+const CONTADOR_JUGADORES_HEADER_CACHE_MS = 60 * 1000;
+const contadorJugadoresHeaderState = {
+  total: null,
+  cargadoAt: 0,
+  promise: null
+};
+
+function renderizarContadorJugadoresHeader(total) {
+  const elemento = document.getElementById("totalJugadoresHeader");
+  if (!elemento) return;
+  elemento.textContent = Number.isFinite(total) ? String(total) : "-";
+}
+
+function referenciaTotalJugadoresGlobal() {
+  return db.collection("estadisticas_globales").doc("resumen");
+}
+
+function actualizarCacheTotalJugadores(total) {
+  contadorJugadoresHeaderState.total = total;
+  contadorJugadoresHeaderState.cargadoAt = Date.now();
+  renderizarContadorJugadoresHeader(total);
+}
+
+async function obtenerTotalJugadoresGlobal() {
+  const resumenRef = referenciaTotalJugadoresGlobal();
+  return db.runTransaction(function(transaction) {
+    return transaction.get(resumenRef).then(function(resumenDoc) {
+      if (!resumenDoc.exists) {
+        transaction.set(resumenRef, {
+          totalJugadores: 0,
+          contadorVersion: 0,
+          requiereRecalculo: true,
+          actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        return 0;
+      }
+
+      const total = Number((resumenDoc.data() || {}).totalJugadores);
+      return Number.isFinite(total) ? Math.max(0, Math.floor(total)) : 0;
+    });
+  });
+}
+
+async function incrementarTotalJugadoresSiProcede(uid, datosPerfil) {
+  if (!uid) return false;
+  const userRef = db.collection("usuarios").doc(uid);
+  const resumenRef = referenciaTotalJugadoresGlobal();
+
+  const incrementado = await db.runTransaction(function(transaction) {
+    return Promise.all([
+      transaction.get(userRef),
+      transaction.get(resumenRef)
+    ]).then(function(documentos) {
+      const userDoc = documentos[0];
+      const resumenDoc = documentos[1];
+      const datosActuales = userDoc.exists ? (userDoc.data() || {}) : {};
+      const datosNuevos = Object.assign({}, datosActuales, datosPerfil || {}, { perfilCompleto: true });
+
+      if (!camposObligatoriosPerfilCompletos(datosNuevos)) {
+        throw new Error("No se puede contabilizar un perfil incompleto.");
+      }
+
+      const yaCompleto = datosActuales.perfilCompleto === true;
+      transaction.set(userRef, Object.assign({}, datosPerfil || {}, {
+        perfilCompleto: true
+      }), { merge: true });
+
+      if (!yaCompleto) {
+        if (resumenDoc.exists) {
+          transaction.set(resumenRef, {
+            totalJugadores: firebase.firestore.FieldValue.increment(1),
+            contadorVersion: firebase.firestore.FieldValue.increment(1),
+            actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+        } else {
+          transaction.set(resumenRef, {
+            totalJugadores: 1,
+            contadorVersion: 1,
+            requiereRecalculo: true,
+            actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      }
+
+      return !yaCompleto;
+    });
+  });
+
+  contadorJugadoresHeaderState.cargadoAt = 0;
+  return incrementado;
+}
+
+async function decrementarTotalJugadoresSiProcede(uid) {
+  if (!uid) return false;
+  const userRef = db.collection("usuarios").doc(uid);
+  const resumenRef = referenciaTotalJugadoresGlobal();
+
+  const decrementado = await db.runTransaction(function(transaction) {
+    return Promise.all([
+      transaction.get(userRef),
+      transaction.get(resumenRef)
+    ]).then(function(documentos) {
+      const userDoc = documentos[0];
+      const resumenDoc = documentos[1];
+      if (!userDoc.exists) return false;
+
+      const perfilCompleto = (userDoc.data() || {}).perfilCompleto === true;
+      if (perfilCompleto) {
+        const totalActual = resumenDoc.exists
+          ? Number((resumenDoc.data() || {}).totalJugadores)
+          : 0;
+
+        if (Number.isFinite(totalActual) && totalActual > 0) {
+          transaction.set(resumenRef, {
+            totalJugadores: firebase.firestore.FieldValue.increment(-1),
+            contadorVersion: firebase.firestore.FieldValue.increment(1),
+            actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+        } else {
+          transaction.set(resumenRef, {
+            totalJugadores: 0,
+            contadorVersion: firebase.firestore.FieldValue.increment(1),
+            requiereRecalculo: true,
+            actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+        }
+      }
+
+      transaction.delete(userRef);
+      return perfilCompleto;
+    });
+  });
+
+  contadorJugadoresHeaderState.cargadoAt = 0;
+  return decrementado;
+}
+
+async function recalcularTotalJugadoresGlobalAdmin() {
+  const user = auth.currentUser;
+  if (!user) return null;
+
+  const adminDoc = await db.collection("usuarios").doc(user.uid).get();
+  const datosAdmin = adminDoc.exists ? (adminDoc.data() || {}) : {};
+  if (datosAdmin.admin !== true && datosAdmin.rol !== "admin") {
+    alert("Herramienta disponible solo para admin.");
+    return null;
+  }
+
+  if (!confirm("Se leeran una vez los perfiles completos para recalcular el contador. Continuar?")) return null;
+  const boton = document.getElementById("btnRecalcularTotalJugadores");
+  if (boton) boton.disabled = true;
+
+  try {
+    const resumenRef = referenciaTotalJugadoresGlobal();
+
+    for (let intento = 0; intento < 3; intento++) {
+      const resumenAntes = await resumenRef.get();
+      const versionAntes = resumenAntes.exists
+        ? Number((resumenAntes.data() || {}).contadorVersion || 0)
+        : 0;
+      const snapshot = await db.collection("usuarios")
+        .where("perfilCompleto", "==", true)
+        .get();
+      const total = snapshot.size;
+
+      try {
+        await db.runTransaction(function(transaction) {
+          return transaction.get(resumenRef).then(function(resumenActual) {
+            const versionActual = resumenActual.exists
+              ? Number((resumenActual.data() || {}).contadorVersion || 0)
+              : 0;
+            if (versionActual !== versionAntes) {
+              const error = new Error("El contador cambio durante el recalculo.");
+              error.code = "contador/recalculo-concurrente";
+              throw error;
+            }
+
+            transaction.set(resumenRef, {
+              totalJugadores: total,
+              contadorVersion: firebase.firestore.FieldValue.increment(1),
+              requiereRecalculo: false,
+              recalculadoPor: user.uid,
+              actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+          });
+        });
+
+        actualizarCacheTotalJugadores(total);
+        alert("Total de jugadores recalculado: " + total);
+        return total;
+      } catch (error) {
+        if (!error || error.code !== "contador/recalculo-concurrente" || intento === 2) throw error;
+      }
+    }
+
+    return null;
+  } finally {
+    if (boton) boton.disabled = false;
+  }
+}
+
+window.obtenerTotalJugadoresGlobal = obtenerTotalJugadoresGlobal;
+window.incrementarTotalJugadoresSiProcede = incrementarTotalJugadoresSiProcede;
+window.decrementarTotalJugadoresSiProcede = decrementarTotalJugadoresSiProcede;
+window.recalcularTotalJugadoresGlobalAdmin = recalcularTotalJugadoresGlobalAdmin;
+
+function cargarContadorJugadoresHeader() {
+  const ahora = Date.now();
+  if (
+    Number.isFinite(contadorJugadoresHeaderState.total) &&
+    ahora - contadorJugadoresHeaderState.cargadoAt < CONTADOR_JUGADORES_HEADER_CACHE_MS
+  ) {
+    renderizarContadorJugadoresHeader(contadorJugadoresHeaderState.total);
+    return Promise.resolve(contadorJugadoresHeaderState.total);
+  }
+
+  if (contadorJugadoresHeaderState.promise) return contadorJugadoresHeaderState.promise;
+
+  contadorJugadoresHeaderState.promise = obtenerTotalJugadoresGlobal()
+    .then(function(total) {
+      actualizarCacheTotalJugadores(total);
+      return total;
+    })
+    .catch(function(error) {
+      console.warn("No se pudo cargar el total de jugadores:", error.message);
+      renderizarContadorJugadoresHeader(contadorJugadoresHeaderState.total);
+      return contadorJugadoresHeaderState.total;
+    })
+    .finally(function() {
+      contadorJugadoresHeaderState.promise = null;
+    });
+
+  return contadorJugadoresHeaderState.promise;
+}
 
 const IMAGEN_STORAGE_PERFIL = {
   maxDimension: 512,
@@ -591,7 +826,7 @@ async function guardarPerfilRegistro(){
   }
 
   try {
-    await userRef.set(datosPerfil, { merge: true });
+    await incrementarTotalJugadoresSiProcede(auth.currentUser.uid, datosPerfil);
   } catch (error) {
     await borrarImagenStorageSiProcede(fotoNuevaSubida, ["usuarios/", "fotosPerfil/"]);
     throw error;
@@ -701,7 +936,7 @@ auth.onAuthStateChanged(async user => {
 
       window.perfilSesionCompleto = true;
       if (data.perfilCompleto !== true) {
-        doc.ref.set({ perfilCompleto: true }, { merge: true }).catch(function(error) {
+        await incrementarTotalJugadoresSiProcede(user.uid).catch(function(error) {
           console.warn("No se pudo migrar la marca de perfil completo:", error.message);
         });
       }
@@ -1238,6 +1473,10 @@ function mostrar(seccion){
   const actual = document.getElementById(seccion);
   if (actual){
     actual.style.display = "block";
+  }
+
+  if (seccion === "menu") {
+    cargarContadorJugadoresHeader();
   }
 
   if (abriendoChat && chatPantalla) {

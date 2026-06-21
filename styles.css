@@ -3598,6 +3598,46 @@ margin:0 auto;
   justify-content: flex-end;
 }
 
+.saludoZonaIzquierda {
+  justify-content: flex-start;
+}
+
+.contadorJugadoresHeader {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #1565C0;
+  line-height: 1;
+}
+
+.contadorJugadoresIcono {
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+  fill: currentColor;
+}
+
+.contadorJugadoresDatos {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.contadorJugadoresNumero {
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.contadorJugadoresTexto {
+  margin-top: 2px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .saludoNotificaciones h3 {
   margin: 0;
   min-width: 0;
@@ -3668,6 +3708,23 @@ margin:0 auto;
 
   .notificacionesIcono {
     font-size: 16px;
+  }
+
+  .contadorJugadoresHeader {
+    gap: 3px;
+  }
+
+  .contadorJugadoresIcono {
+    width: 21px;
+    height: 21px;
+  }
+
+  .contadorJugadoresNumero {
+    font-size: 17px;
+  }
+
+  .contadorJugadoresTexto {
+    font-size: 8px;
   }
 }
 

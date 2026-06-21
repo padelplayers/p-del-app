@@ -2185,7 +2185,10 @@ async function reautenticarUsuarioParaEliminarPerfil(user) {
 
 async function borrarUsuarioFirestoreYAuthPerfil(userRef, user) {
   try {
-    await userRef.delete();
+    if (typeof window.decrementarTotalJugadoresSiProcede !== "function") {
+      throw new Error("No esta disponible la actualizacion del contador global de jugadores.");
+    }
+    await window.decrementarTotalJugadoresSiProcede(user.uid);
   } catch (errorFirestore) {
     console.error(errorFirestore);
     const error = new Error("No se pudo borrar el documento del usuario. No se ha borrado la cuenta de Auth.");
