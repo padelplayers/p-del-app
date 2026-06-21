@@ -1319,6 +1319,10 @@ body.chatAbierto{
   border:3px solid #FFC107;
 }
 
+#fotoPerfilEditar{
+  object-fit:cover;
+}
+
 .perfil-info{
   display:flex;
   flex-direction:column;
@@ -2721,7 +2725,8 @@ button[onclick*="mostrar('menu')"]{
 .cardPista img {
   width: 100%;
   height: 220px;
-  object-fit: cover;
+  object-fit: contain;
+  background: #f2f4f7;
   display: block;
 }
 
