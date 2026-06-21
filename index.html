@@ -107,7 +107,7 @@ html, body {
 </style>
 <link rel="manifest" href="manifest.json?v=3">
 <link rel="apple-touch-icon" href="icon-192-v2.png">
-<link rel="stylesheet" href="styles.css?v=55">
+<link rel="stylesheet" href="styles.css?v=56">
 </head>
 
 <body>
@@ -519,9 +519,14 @@ Juego en red
 
   <img id="fotoPerfilEditar" style="width:100px; height:100px; border-radius:50%; margin-bottom:10px;">
 
-<button id="btnCambiarFoto" class="btnYellow" onclick="document.getElementById('inputFotoEditar').click()">
-  Cambiar foto
-</button>
+<div class="perfilFotoAcciones">
+  <button id="btnCambiarFoto" class="btnYellow" type="button" onclick="cambiarFoto()">
+    Cambiar foto
+  </button>
+  <button id="btnEliminarFoto" class="btnEliminarFoto" type="button" onclick="eliminarFotoPerfil()">
+    Eliminar foto
+  </button>
+</div>
 
 <input type="file" id="inputFotoEditar" accept="image/*" style="display:none;">
 
@@ -553,13 +558,7 @@ Juego en red
   <div class="saludoNotificaciones">
     <div class="saludoZona saludoZonaIzquierda">
       <div class="contadorJugadoresHeader" aria-label="Jugadores registrados">
-        <svg class="contadorJugadoresIcono" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-          <ellipse cx="15" cy="12" rx="9" ry="10.5"></ellipse>
-          <path d="M12.5 22 9 29h5l4-7"></path>
-          <circle cx="12" cy="8.5" r="1"></circle>
-          <circle cx="18" cy="10.5" r="1"></circle>
-          <circle cx="14.5" cy="15" r="1"></circle>
-        </svg>
+        <img class="contadorJugadoresIcono" src="imagenes app/icono-pala-padel.png?v=1" alt="" aria-hidden="true">
         <span class="contadorJugadoresDatos">
           <strong id="totalJugadoresHeader" class="contadorJugadoresNumero" aria-live="polite">0</strong>
           <span class="contadorJugadoresTexto">Jugadores</span>
@@ -1383,7 +1382,7 @@ const db = firebase.firestore();
 </script>
 
 <script src="logros.js?v=5"></script>
-<script src="perfil.js?v=40"></script>
+<script src="perfil.js?v=41"></script>
 <script src="jugadores.js?v=5"></script>
 <script src="pistas.js?v=18"></script>
 <script src="chat.js?v=23"></script>
@@ -1393,8 +1392,8 @@ const db = firebase.firestore();
 <script src="notifications.js?v=13"></script>
 <script src="estadisticas.js?v=6"></script>
 <script src="admin-chat-cleanup.js?v=6"></script>
-<script src="pwa.js?v=69"></script>
-<script src="app.js?v=31"></script>
+<script src="pwa.js?v=70"></script>
+<script src="app.js?v=32"></script>
 <script src="testNivel.js?v=2"></script>
 
 <nav id="bottomNav" class="bottomNav" aria-label="Navegacion principal">

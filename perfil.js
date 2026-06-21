@@ -2517,6 +2517,8 @@ function editarPerfil(){
 
   const btnFoto = document.getElementById("btnCambiarFoto");
   if (btnFoto) btnFoto.style.display = "block";
+  const btnEliminarFoto = document.getElementById("btnEliminarFoto");
+  if (btnEliminarFoto) btnEliminarFoto.style.display = "block";
 
   // La edicion solo necesita una lectura inicial; los cambios locales actualizan la vista.
   db.collection("usuarios").doc(user.uid)
@@ -2527,7 +2529,9 @@ function editarPerfil(){
       const data = doc.data();
 
       const foto = document.getElementById("fotoPerfilEditar");
-      const fotoDefault = data.sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
+      const fotoDefault = typeof window.obtenerImagenPerfilPorDefecto === "function"
+        ? window.obtenerImagenPerfilPorDefecto(data)
+        : (data.sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg");
       if (foto) foto.src = (data.fotoPerfil || fotoDefault) + "?t=" + Date.now();
 
       if (manoEl) manoEl.value = data.mano || "";

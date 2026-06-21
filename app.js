@@ -1,7 +1,7 @@
 window.modoSeleccionPista = false;
 window.partidaCreando = {};
 
-const APP_JS_DIAGNOSTICO_VERSION = "app.js?v=31-permisos-presencia";
+const APP_JS_DIAGNOSTICO_VERSION = "app.js?v=32-eliminar-foto";
 window.APP_JS_DIAGNOSTICO_VERSION = APP_JS_DIAGNOSTICO_VERSION;
 console.info("[IMAGEN] Version cargada:", APP_JS_DIAGNOSTICO_VERSION, document.currentScript ? document.currentScript.src : "src desconocido");
 
@@ -545,6 +545,14 @@ function obtenerFotosStorageUsuario(data) {
     });
 }
 
+function obtenerImagenPerfilPorDefecto(data) {
+  data = data || {};
+  const sexo = normalizarTexto(String(data.sexo || data.genero || data.gender || ""));
+  return sexo === "mujer" || sexo === "femenino" || sexo === "female"
+    ? "imagen/mujer.jpeg"
+    : "imagen/hombre.jpeg";
+}
+
 function obtenerStoragePathDesdeUrl(url) {
   if (!url || typeof url !== "string") return "";
   const valor = url.trim();
@@ -591,6 +599,7 @@ async function borrarImagenStorageSiProcede(url, rutasPermitidas) {
 window.obtenerStoragePathDesdeUrl = obtenerStoragePathDesdeUrl;
 window.esImagenStorageApp = esImagenStorageApp;
 window.borrarImagenStorageSiProcede = borrarImagenStorageSiProcede;
+window.obtenerImagenPerfilPorDefecto = obtenerImagenPerfilPorDefecto;
 
 let avisoNivelMostrado = false;
 
@@ -1230,6 +1239,53 @@ function cambiarFoto(){
   document.getElementById("inputFotoEditar").click();
 }
 
+function establecerBotonesFotoOcupados(ocupados) {
+  const btnCambiar = document.getElementById("btnCambiarFoto");
+  const btnEliminar = document.getElementById("btnEliminarFoto");
+  if (btnCambiar) btnCambiar.disabled = ocupados;
+  if (btnEliminar) btnEliminar.disabled = ocupados;
+}
+
+async function eliminarFotoPerfil() {
+  const user = auth.currentUser;
+  if (!user) return false;
+
+  establecerBotonesFotoOcupados(true);
+  try {
+    const docRef = db.collection("usuarios").doc(user.uid);
+    const doc = await docRef.get();
+    if (!doc.exists) throw new Error("No se encontro el perfil del usuario.");
+
+    const data = doc.data() || {};
+    const fotoDefault = obtenerImagenPerfilPorDefecto(data);
+    const fotosAnteriores = obtenerFotosStorageUsuario(data);
+
+    await docRef.update({
+      fotoPerfil: fotoDefault,
+      fotoUrl: firebase.firestore.FieldValue.delete(),
+      photoURL: firebase.firestore.FieldValue.delete()
+    });
+
+    const imgEditar = document.getElementById("fotoPerfilEditar");
+    const imgPerfil = document.getElementById("fotoPerfil");
+    if (imgEditar) imgEditar.src = fotoDefault;
+    if (imgPerfil) imgPerfil.src = fotoDefault;
+
+    for (let i = 0; i < fotosAnteriores.length; i++) {
+      await borrarImagenStorageSiProcede(fotosAnteriores[i], ["usuarios/", "fotosPerfil/"]);
+    }
+    return true;
+  } catch (error) {
+    console.error("No se pudo eliminar la foto de perfil:", error);
+    alert(error && error.message ? error.message : "No se pudo eliminar la foto.");
+    return false;
+  } finally {
+    establecerBotonesFotoOcupados(false);
+  }
+}
+
+window.eliminarFotoPerfil = eliminarFotoPerfil;
+
 const inputFotoGlobal = document.getElementById("inputFotoEditar");
 
 if (inputFotoGlobal) {
@@ -1250,12 +1306,15 @@ if (inputFotoGlobal) {
     if (imgPerfil) imgPerfil.src = previewURL;
 
     let fotoAnterior = "";
+    let fotoDefault = "imagen/hombre.jpeg";
     let fotosAnteriores = [];
     try {
+      establecerBotonesFotoOcupados(true);
       const docRef = db.collection("usuarios").doc(user.uid);
       const doc = await docRef.get();
       const data = doc.exists ? (doc.data() || {}) : {};
       fotoAnterior = data.fotoPerfil || "";
+      fotoDefault = obtenerImagenPerfilPorDefecto(data);
       fotosAnteriores = obtenerFotosStorageUsuario(data);
 
       const ruta = "usuarios/" + user.uid + "/foto_" + Date.now() + ".jpg";
@@ -1263,7 +1322,9 @@ if (inputFotoGlobal) {
 
       try {
         await docRef.update({
-          fotoPerfil: url
+          fotoPerfil: url,
+          fotoUrl: firebase.firestore.FieldValue.delete(),
+          photoURL: firebase.firestore.FieldValue.delete()
         });
       } catch (error) {
         await borrarImagenStorageSiProcede(url, ["usuarios/", "fotosPerfil/"]);
@@ -1273,12 +1334,14 @@ if (inputFotoGlobal) {
         await borrarImagenStorageSiProcede(fotosAnteriores[i], ["usuarios/", "fotosPerfil/"]);
       }
     } catch (error) {
-      const fotoRestaurada = fotoAnterior || "imagen/hombre.jpeg";
+      const fotoRestaurada = fotoAnterior || fotoDefault;
       if (imgEditar) imgEditar.src = fotoRestaurada;
       if (imgPerfil) imgPerfil.src = fotoRestaurada;
       alert(error && error.message ? error.message : "No se pudo cambiar la foto.");
     } finally {
       URL.revokeObjectURL(previewURL);
+      e.target.value = "";
+      establecerBotonesFotoOcupados(false);
     }
 
   });
