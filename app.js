@@ -1,7 +1,7 @@
 window.modoSeleccionPista = false;
 window.partidaCreando = {};
 
-const APP_JS_DIAGNOSTICO_VERSION = "app.js?v=28-contador-global";
+const APP_JS_DIAGNOSTICO_VERSION = "app.js?v=29-registro-resiliente";
 window.APP_JS_DIAGNOSTICO_VERSION = APP_JS_DIAGNOSTICO_VERSION;
 console.info("[IMAGEN] Version cargada:", APP_JS_DIAGNOSTICO_VERSION, document.currentScript ? document.currentScript.src : "src desconocido");
 
@@ -60,36 +60,36 @@ async function incrementarTotalJugadoresSiProcede(uid, datosPerfil) {
     ]).then(function(documentos) {
       const userDoc = documentos[0];
       const resumenDoc = documentos[1];
-      const datosActuales = userDoc.exists ? (userDoc.data() || {}) : {};
-      const datosNuevos = Object.assign({}, datosActuales, datosPerfil || {}, { perfilCompleto: true });
+      if (!userDoc.exists) return false;
 
-      if (!camposObligatoriosPerfilCompletos(datosNuevos)) {
-        throw new Error("No se puede contabilizar un perfil incompleto.");
+      const datosActuales = userDoc.data() || {};
+      if (
+        datosActuales.perfilCompleto !== true ||
+        datosActuales.contadorGlobalJugadoresAplicado === true
+      ) {
+        return false;
       }
 
-      const yaCompleto = datosActuales.perfilCompleto === true;
-      transaction.set(userRef, Object.assign({}, datosPerfil || {}, {
-        perfilCompleto: true
-      }), { merge: true });
+      transaction.set(userRef, {
+        contadorGlobalJugadoresAplicado: true
+      }, { merge: true });
 
-      if (!yaCompleto) {
-        if (resumenDoc.exists) {
-          transaction.set(resumenRef, {
-            totalJugadores: firebase.firestore.FieldValue.increment(1),
-            contadorVersion: firebase.firestore.FieldValue.increment(1),
-            actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
-          }, { merge: true });
-        } else {
-          transaction.set(resumenRef, {
-            totalJugadores: 1,
-            contadorVersion: 1,
-            requiereRecalculo: true,
-            actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        }
+      if (resumenDoc.exists) {
+        transaction.set(resumenRef, {
+          totalJugadores: firebase.firestore.FieldValue.increment(1),
+          contadorVersion: firebase.firestore.FieldValue.increment(1),
+          actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      } else {
+        transaction.set(resumenRef, {
+          totalJugadores: 1,
+          contadorVersion: 1,
+          requiereRecalculo: true,
+          actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
       }
 
-      return !yaCompleto;
+      return true;
     });
   });
 
@@ -97,44 +97,48 @@ async function incrementarTotalJugadoresSiProcede(uid, datosPerfil) {
   return incrementado;
 }
 
-async function decrementarTotalJugadoresSiProcede(uid) {
-  if (!uid) return false;
-  const userRef = db.collection("usuarios").doc(uid);
+async function marcarTotalJugadoresPendienteRecalculo(motivo) {
+  try {
+    await referenciaTotalJugadoresGlobal().set({
+      requiereRecalculo: true,
+      motivoRecalculo: motivo || "desincronizacion",
+      actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    contadorJugadoresHeaderState.cargadoAt = 0;
+    return true;
+  } catch (error) {
+    console.warn("No se pudo marcar el contador para recalculo:", error.message);
+    return false;
+  }
+}
+
+async function decrementarTotalJugadoresSiProcede(uid, opciones) {
+  opciones = opciones || {};
+  if (!uid || opciones.perfilCompleto !== true) return false;
   const resumenRef = referenciaTotalJugadoresGlobal();
 
   const decrementado = await db.runTransaction(function(transaction) {
-    return Promise.all([
-      transaction.get(userRef),
-      transaction.get(resumenRef)
-    ]).then(function(documentos) {
-      const userDoc = documentos[0];
-      const resumenDoc = documentos[1];
-      if (!userDoc.exists) return false;
+    return transaction.get(resumenRef).then(function(resumenDoc) {
+      const datosResumen = resumenDoc.exists ? (resumenDoc.data() || {}) : {};
+      const totalActual = Number(datosResumen.totalJugadores);
+      const estabaContabilizado = opciones.contadorAplicado === true || datosResumen.requiereRecalculo === false;
 
-      const perfilCompleto = (userDoc.data() || {}).perfilCompleto === true;
-      if (perfilCompleto) {
-        const totalActual = resumenDoc.exists
-          ? Number((resumenDoc.data() || {}).totalJugadores)
-          : 0;
-
-        if (Number.isFinite(totalActual) && totalActual > 0) {
-          transaction.set(resumenRef, {
-            totalJugadores: firebase.firestore.FieldValue.increment(-1),
-            contadorVersion: firebase.firestore.FieldValue.increment(1),
-            actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
-          }, { merge: true });
-        } else {
-          transaction.set(resumenRef, {
-            totalJugadores: 0,
-            contadorVersion: firebase.firestore.FieldValue.increment(1),
-            requiereRecalculo: true,
-            actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
-          }, { merge: true });
-        }
+      if (estabaContabilizado && Number.isFinite(totalActual) && totalActual > 0) {
+        transaction.set(resumenRef, {
+          totalJugadores: firebase.firestore.FieldValue.increment(-1),
+          contadorVersion: firebase.firestore.FieldValue.increment(1),
+          actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      } else {
+        transaction.set(resumenRef, {
+          totalJugadores: Number.isFinite(totalActual) ? Math.max(0, totalActual) : 0,
+          contadorVersion: firebase.firestore.FieldValue.increment(1),
+          requiereRecalculo: true,
+          actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
       }
 
-      transaction.delete(userRef);
-      return perfilCompleto;
+      return estabaContabilizado;
     });
   });
 
@@ -209,6 +213,7 @@ async function recalcularTotalJugadoresGlobalAdmin() {
 window.obtenerTotalJugadoresGlobal = obtenerTotalJugadoresGlobal;
 window.incrementarTotalJugadoresSiProcede = incrementarTotalJugadoresSiProcede;
 window.decrementarTotalJugadoresSiProcede = decrementarTotalJugadoresSiProcede;
+window.marcarTotalJugadoresPendienteRecalculo = marcarTotalJugadoresPendienteRecalculo;
 window.recalcularTotalJugadoresGlobalAdmin = recalcularTotalJugadoresGlobalAdmin;
 
 function cargarContadorJugadoresHeader() {
@@ -746,7 +751,7 @@ auth.createUserWithEmailAndPassword(email, pass)
 
 // REGISTRO PERFIL
 
-async function guardarPerfilRegistro(){
+async function guardarPerfilRegistroInterno(){
 
   const nombre = document.getElementById("nombre").value.trim();
   const sexo = document.getElementById("sexo").value;
@@ -824,12 +829,26 @@ async function guardarPerfilRegistro(){
   if (!datosUsuarioExistente.fechaAlta) {
     datosPerfil.fechaAlta = firebase.firestore.FieldValue.serverTimestamp();
   }
+  if (datosUsuarioExistente.perfilCompleto !== true) {
+    datosPerfil.contadorGlobalJugadoresAplicado = false;
+  }
 
   try {
-    await incrementarTotalJugadoresSiProcede(auth.currentUser.uid, datosPerfil);
+    await userRef.set(datosPerfil, { merge: true });
   } catch (error) {
     await borrarImagenStorageSiProcede(fotoNuevaSubida, ["usuarios/", "fotosPerfil/"]);
-    throw error;
+    console.error("No se pudo guardar el perfil:", error);
+    document.getElementById("msgPerfil").innerText = error && error.message
+      ? error.message
+      : "No se pudo guardar el perfil.";
+    return;
+  }
+
+  try {
+    await incrementarTotalJugadoresSiProcede(auth.currentUser.uid);
+  } catch (error) {
+    console.warn("Perfil guardado; contador global pendiente de recalculo:", error.message);
+    await marcarTotalJugadoresPendienteRecalculo("alta_usuario");
   }
   window.perfilSesionCompleto = true;
   for (let i = 0; i < fotosAnteriores.length; i++) {
@@ -845,6 +864,22 @@ async function guardarPerfilRegistro(){
   }, { merge: true });
 
   await mostrarPantallaInicialUsuario(auth.currentUser.uid, datosPerfil);
+}
+
+async function guardarPerfilRegistro() {
+  const mensaje = document.getElementById("msgPerfil");
+  if (mensaje) mensaje.innerText = "";
+
+  try {
+    await guardarPerfilRegistroInterno();
+  } catch (error) {
+    console.error("No se pudo completar el registro:", error);
+    if (mensaje) {
+      mensaje.innerText = error && error.message
+        ? error.message
+        : "No se pudo completar el registro.";
+    }
+  }
 }
 
 
@@ -936,9 +971,16 @@ auth.onAuthStateChanged(async user => {
 
       window.perfilSesionCompleto = true;
       if (data.perfilCompleto !== true) {
-        await incrementarTotalJugadoresSiProcede(user.uid).catch(function(error) {
-          console.warn("No se pudo migrar la marca de perfil completo:", error.message);
-        });
+        try {
+          await doc.ref.set({
+            perfilCompleto: true,
+            contadorGlobalJugadoresAplicado: false
+          }, { merge: true });
+          await incrementarTotalJugadoresSiProcede(user.uid);
+        } catch (error) {
+          console.warn("Perfil migrado; contador global pendiente de recalculo:", error.message);
+          await marcarTotalJugadoresPendienteRecalculo("migracion_usuario");
+        }
       }
       esAdmin = data && (data.admin === true || data.rol === "admin");
       actualizarBotonEstadisticasAdmin();

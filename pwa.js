@@ -2,7 +2,7 @@ window.pwaState = window.pwaState || {
   deferredPrompt: null
 };
 
-const PWA_APP_VERSION = "v107";
+const PWA_APP_VERSION = "v108";
 const PWA_INSTALADA_KEY = "pwaInstalada";
 const PWA_SW_UPDATE_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -125,6 +125,7 @@ function initPwaBasica() {
     event.preventDefault();
     window.pwaState.deferredPrompt = event;
     actualizarBotonInstalarPwa();
+    mostrarAvisoPwaSiProcede();
   });
 
   window.addEventListener("appinstalled", function() {
@@ -143,6 +144,7 @@ function initPwaBasica() {
   if (ahoraNo) ahoraNo.onclick = cerrarAvisoPwa;
 
   actualizarBotonInstalarPwa();
+  mostrarAvisoPwaSiProcede();
 }
 
 window.initPwaBasica = initPwaBasica;

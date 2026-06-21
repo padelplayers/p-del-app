@@ -2082,15 +2082,19 @@ async function borrarStorageFolderUsuarioPerfil(ref, uid) {
   }
 }
 
+function esUrlFirebaseStoragePerfil(url) {
+  return !!(
+    typeof url === "string" &&
+    (
+      url.indexOf("firebasestorage.googleapis.com") !== -1 ||
+      url.indexOf("storage.googleapis.com") !== -1 ||
+      url.indexOf("gs://") === 0
+    )
+  );
+}
+
 async function borrarStorageUrlUsuarioPerfil(storage, url, uid) {
-  if (!url || typeof url !== "string") return false;
-  if (
-    url.indexOf("firebasestorage.googleapis.com") === -1 &&
-    url.indexOf("storage.googleapis.com") === -1 &&
-    url.indexOf("gs://") !== 0
-  ) {
-    return false;
-  }
+  if (!esUrlFirebaseStoragePerfil(url)) return false;
 
   let ref;
   try {
@@ -2113,17 +2117,10 @@ async function borrarStorageUrlUsuarioPerfil(storage, url, uid) {
   return borrarStorageRefUsuarioPerfil(ref, uid);
 }
 
-async function eliminarStorageUsuario(uid, datosUsuario) {
+async function eliminarStorageUsuario(uid, datosUsuario, opciones) {
   if (!uid) return;
-  if (!firebase.storage) {
-    throw crearErrorStoragePerfil(
-      "perfil/storage-list-failed",
-      "No esta disponible Firebase Storage para comprobar las imagenes personales."
-    );
-  }
-
+  opciones = opciones || {};
   datosUsuario = datosUsuario || {};
-  const storage = firebase.storage();
   const fotosPerfil = [
     datosUsuario.fotoPerfil,
     datosUsuario.fotoUrl,
@@ -2133,18 +2130,34 @@ async function eliminarStorageUsuario(uid, datosUsuario) {
     datosUsuario.foto
   ].filter(Boolean).filter(function(url, index, lista) {
     return lista.indexOf(url) === index;
-  });
+  }).filter(esUrlFirebaseStoragePerfil);
+
+  if (fotosPerfil.length === 0) return;
+  if (!firebase.storage) {
+    throw crearErrorStoragePerfil(
+      "perfil/storage-list-failed",
+      "No esta disponible Firebase Storage para borrar la imagen personal."
+    );
+  }
+
+  const storage = firebase.storage();
 
   for (let i = 0; i < fotosPerfil.length; i++) {
     await borrarStorageUrlUsuarioPerfil(storage, fotosPerfil[i], uid);
   }
+
+  if (opciones.listarCarpetas !== true) return;
 
   const carpetasUsuario = [
     storage.ref().child("usuarios/" + uid),
     storage.ref().child("fotosPerfil/" + uid)
   ];
   for (let j = 0; j < carpetasUsuario.length; j++) {
-    await borrarStorageFolderUsuarioPerfil(carpetasUsuario[j], uid);
+    try {
+      await borrarStorageFolderUsuarioPerfil(carpetasUsuario[j], uid);
+    } catch (error) {
+      console.warn("No se pudo completar el barrido defensivo de Storage:", error.message);
+    }
   }
 }
 
@@ -2183,18 +2196,33 @@ async function reautenticarUsuarioParaEliminarPerfil(user) {
   }
 }
 
-async function borrarUsuarioFirestoreYAuthPerfil(userRef, user) {
+async function borrarUsuarioFirestoreYAuthPerfil(userRef, user, opciones) {
+  opciones = opciones || {};
   try {
-    if (typeof window.decrementarTotalJugadoresSiProcede !== "function") {
-      throw new Error("No esta disponible la actualizacion del contador global de jugadores.");
-    }
-    await window.decrementarTotalJugadoresSiProcede(user.uid);
+    await userRef.delete();
   } catch (errorFirestore) {
     console.error(errorFirestore);
     const error = new Error("No se pudo borrar el documento del usuario. No se ha borrado la cuenta de Auth.");
     error.code = "perfil/firestore-delete-failed";
     error.originalError = errorFirestore;
     throw error;
+  }
+
+  if (opciones.perfilCompleto === true) {
+    try {
+      if (typeof window.decrementarTotalJugadoresSiProcede !== "function") {
+        throw new Error("No esta disponible la actualizacion del contador global de jugadores.");
+      }
+      await window.decrementarTotalJugadoresSiProcede(user.uid, {
+        perfilCompleto: true,
+        contadorAplicado: opciones.contadorAplicado === true
+      });
+    } catch (errorContador) {
+      console.warn("Cuenta borrada; contador global pendiente de recalculo:", errorContador.message);
+      if (typeof window.marcarTotalJugadoresPendienteRecalculo === "function") {
+        await window.marcarTotalJugadoresPendienteRecalculo("baja_usuario");
+      }
+    }
   }
 
   try {
@@ -2237,11 +2265,11 @@ async function cancelarRegistroIncompleto() {
     const reautenticado = await reautenticarUsuarioParaEliminarPerfil(user);
     if (!reautenticado) return;
 
-    await eliminarStorageUsuario(user.uid, datosPerfil);
+    await eliminarStorageUsuario(user.uid, datosPerfil, { listarCarpetas: false });
     await borrarSubcoleccionesUsuario(user.uid);
     const notificaciones = await db.collection("notificaciones").where("uid", "==", user.uid).get();
     await borrarSnapshotEnBatchesPerfil(notificaciones);
-    await borrarUsuarioFirestoreYAuthPerfil(userRef, user);
+    await borrarUsuarioFirestoreYAuthPerfil(userRef, user, { perfilCompleto: false });
 
     alert("Registro cancelado y cuenta eliminada");
     await auth.signOut();
@@ -2313,11 +2341,14 @@ async function eliminarPerfil() {
 
     await limpiarNotificacionesUsuarioEliminado(uid, uidAnonimo, nombreUsuarioEliminado);
 
-    await eliminarStorageUsuario(uid, datosPerfil);
+    await eliminarStorageUsuario(uid, datosPerfil, { listarCarpetas: true });
 
     await borrarSubcoleccionesUsuario(uid);
 
-    await borrarUsuarioFirestoreYAuthPerfil(userRef, user);
+    await borrarUsuarioFirestoreYAuthPerfil(userRef, user, {
+      perfilCompleto: datosPerfil.perfilCompleto === true,
+      contadorAplicado: datosPerfil.contadorGlobalJugadoresAplicado === true
+    });
 
     alert("Cuenta eliminada");
     await auth.signOut();
