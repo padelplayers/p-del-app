@@ -206,7 +206,7 @@ if (btnGuardarPista) {
       cargarPistas();
       mostrar("pistas");
     } catch (error) {
-      console.error("ERROR REAL:", error);
+      console.error("No se pudo guardar la pista:", error && error.code ? error.code : "error");
       alert(error && error.message ? error.message : "No se pudo guardar la pista.");
     }
   };

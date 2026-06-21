@@ -1,10 +1,6 @@
 window.modoSeleccionPista = false;
 window.partidaCreando = {};
 
-const APP_JS_DIAGNOSTICO_VERSION = "app.js?v=32-eliminar-foto";
-window.APP_JS_DIAGNOSTICO_VERSION = APP_JS_DIAGNOSTICO_VERSION;
-console.info("[IMAGEN] Version cargada:", APP_JS_DIAGNOSTICO_VERSION, document.currentScript ? document.currentScript.src : "src desconocido");
-
 const CONTADOR_JUGADORES_HEADER_CACHE_MS = 60 * 1000;
 const contadorJugadoresHeaderState = {
   total: null,
@@ -26,10 +22,7 @@ function esErrorPermisosContadorGlobal(error) {
 
 function registrarPermisoDenegadoContadorGlobal(error) {
   contadorJugadoresHeaderState.permisosGlobalesDenegados = true;
-  if (!contadorJugadoresHeaderState.permisoDenegadoNotificado) {
-    contadorJugadoresHeaderState.permisoDenegadoNotificado = true;
-    console.warn("[CONTADOR] Sin permiso para estadisticas_globales/resumen; se usara el recuento de respaldo durante esta sesion.", error && error.code ? error.code : "permission-denied");
-  }
+  contadorJugadoresHeaderState.permisoDenegadoNotificado = true;
 }
 
 function restablecerPermisoContadorGlobal() {
@@ -248,7 +241,7 @@ async function recalcularTotalJugadoresGlobalAdmin() {
     alert("Total de jugadores recalculado: " + total);
     return total;
   } catch (error) {
-    console.error("No se pudo recalcular el contador global:", error);
+    console.error("No se pudo recalcular el contador global:", error && error.code ? error.code : "error");
     if (esErrorPermisosContadorGlobal(error)) registrarPermisoDenegadoContadorGlobal(error);
     if (Number.isFinite(totalCalculado)) actualizarCacheTotalJugadores(totalCalculado);
     alert((Number.isFinite(totalCalculado) ? "Total calculado: " + totalCalculado + ". " : "") + "No se pudo guardar el total global (" + (error.code || error.message || "error desconocido") + "). Revisa los permisos de estadisticas_globales/resumen.");
@@ -297,7 +290,6 @@ async function auditarRegistrosIncompletosAdmin() {
         : null;
       pendientes.push({
         uid: doc.id,
-        email: datos.email || "Sin email en Firestore",
         estado: datos.perfilCompleto === false ? "Registro incompleto" : "Sin marca perfilCompleto",
         antiguedadDias: antiguedadDias,
         revisable: Number.isFinite(antiguedadDias) && antiguedadDias >= diasMinimos
@@ -319,14 +311,14 @@ async function auditarRegistrosIncompletosAdmin() {
       const fila = document.createElement("div");
       fila.className = "auditoriaRegistroFila" + (item.revisable ? " auditoriaRegistroAntiguo" : "");
       const antiguedad = item.antiguedadDias === null ? "Antiguedad desconocida" : item.antiguedadDias + " dias";
-      fila.textContent = item.estado + " | " + antiguedad + " | " + item.email + " | UID: " + item.uid;
+      fila.textContent = item.estado + " | " + antiguedad + " | UID: " + item.uid;
       salida.appendChild(fila);
     });
 
     if (pendientes.length === 0) resumen.textContent = "No hay documentos de usuario incompletos.";
     return pendientes;
   } catch (error) {
-    console.error("No se pudo auditar registros incompletos:", error);
+    console.error("No se pudo auditar registros incompletos:", error && error.code ? error.code : "error");
     salida.textContent = error.message || "No se pudo completar la auditoria.";
     return [];
   } finally {
@@ -488,17 +480,8 @@ window.optimizarImagenParaStorage = optimizarImagenParaStorage;
 
 window.subirImagen = async function(ruta, archivo, flujo) {
   const config = configuracionImagenStorage(ruta);
-  const etiquetaFlujo = flujo || (config === IMAGEN_STORAGE_PERFIL ? "perfil" : "pista");
-
-  console.log("[IMAGEN] Flujo:", etiquetaFlujo);
-  console.log("[IMAGEN] Version JS:", APP_JS_DIAGNOSTICO_VERSION);
-  console.log("[IMAGEN] Original:", archivo ? archivo.size : null, archivo ? archivo.type : null);
 
   const imagenOptimizada = await optimizarImagenParaStorage(ruta, archivo);
-
-  console.log("[IMAGEN] Optimizada:", imagenOptimizada.size, imagenOptimizada.type);
-  console.log("[IMAGEN] Ruta Storage final:", ruta);
-  console.log("[IMAGEN] Se envia imagenOptimizada:", imagenOptimizada !== archivo);
 
   if (config && imagenOptimizada === archivo) {
     throw new Error("Seguridad de imagen: se intento subir el archivo original sin optimizar.");
@@ -512,23 +495,12 @@ window.subirImagen = async function(ruta, archivo, flujo) {
 
   const ref = firebase.storage().ref().child(ruta);
 
-  console.log("[IMAGEN] Ejecutando ref.put con variable: imagenOptimizada");
-  const subida = await ref.put(imagenOptimizada, {
+  await ref.put(imagenOptimizada, {
     contentType: imagenOptimizada.type || archivo.type || "image/jpeg",
     cacheControl: "public,max-age=31536000,immutable"
   });
 
-  const metadataSubida = subida && subida.metadata ? subida.metadata : {};
-  console.log("[IMAGEN] Storage confirma:", {
-    fullPath: metadataSubida.fullPath || ruta,
-    size: metadataSubida.size,
-    contentType: metadataSubida.contentType,
-    generation: metadataSubida.generation
-  });
-
   const url = await ref.getDownloadURL();
-
-  console.log("[IMAGEN] URL nueva guardable:", url);
 
   return url;
 }
@@ -873,7 +845,7 @@ function recuperarPassword() {
       alert("Te hemos enviado un correo para restablecer la contraseña. Revisa tu bandeja de entrada o spam");
     })
     .catch((error) => {
-      console.log(error);
+      console.warn("No se pudo enviar el email de recuperacion:", error && error.code ? error.code : "error");
       alert(error.code);
     });
 }
@@ -902,7 +874,6 @@ auth.createUserWithEmailAndPassword(email, pass)
   .then(async cred => {
     const user = cred.user;
     await db.collection("usuarios").doc(user.uid).set({
-      email: user.email || email,
       perfilCompleto: false,
       terminosAceptados: true,
       terminosAceptadosAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -910,10 +881,9 @@ auth.createUserWithEmailAndPassword(email, pass)
     }, { merge: true });
     window.perfilSesionCompleto = false;
     mostrar("perfilCompletar");
-    console.log("REGISTRO OK", cred);
   })
   .catch(e => {
-    console.log("ERROR REGISTRO", e);
+    console.warn("No se pudo crear la cuenta:", e && e.code ? e.code : "error");
     alert(e.message);
   });
 
@@ -923,13 +893,6 @@ auth.createUserWithEmailAndPassword(email, pass)
 // REGISTRO PERFIL
 
 async function guardarPerfilRegistroInterno(){
-  let marcaTiempoRegistro = performance.now();
-  const registrarTiempo = function(fase) {
-    const ahora = performance.now();
-    console.info("[REGISTRO] " + fase + ": " + Math.round(ahora - marcaTiempoRegistro) + " ms");
-    marcaTiempoRegistro = ahora;
-  };
-
   const nombre = document.getElementById("nombre").value.trim();
   const sexo = document.getElementById("sexo").value;
   const nivel = document.getElementById("nivelManual").value;
@@ -955,8 +918,6 @@ async function guardarPerfilRegistroInterno(){
   const snapshot = await db.collection("usuarios")
     .where("nombreNormalizado", "==", nombreNormalizado)
     .get();
-  registrarTiempo("comprobar nombre");
-
   if (!snapshot.empty) {
     document.getElementById("msgPerfil").innerText = "Nombre ya en uso";
     return;
@@ -964,7 +925,6 @@ async function guardarPerfilRegistroInterno(){
 
   const userRef = db.collection("usuarios").doc(auth.currentUser.uid);
   const userDoc = await userRef.get();
-  registrarTiempo("leer perfil previo");
   const datosUsuarioExistente = userDoc.exists ? (userDoc.data() || {}) : {};
   const fotosAnteriores = obtenerFotosStorageUsuario(datosUsuarioExistente);
   let fotoURL = sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
@@ -975,7 +935,6 @@ async function guardarPerfilRegistroInterno(){
     try {
       fotoURL = await subirImagen(ruta, archivo, "perfil-registro");
       fotoNuevaSubida = fotoURL;
-      registrarTiempo("preparar y subir foto");
     } catch (error) {
       document.getElementById("msgPerfil").innerText = error && error.message
         ? error.message
@@ -987,7 +946,6 @@ async function guardarPerfilRegistroInterno(){
   const datosPerfil = {
     nombre: nombre,
     nombreNormalizado: nombreNormalizado,
-    email: auth.currentUser.email,
     sexo: sexo,
     nivel: nivel,
     mano: mano,
@@ -1015,10 +973,9 @@ async function guardarPerfilRegistroInterno(){
 
   try {
     await userRef.set(datosPerfil, { merge: true });
-    registrarTiempo("guardar perfil completo");
   } catch (error) {
     await borrarImagenStorageSiProcede(fotoNuevaSubida, ["usuarios/", "fotosPerfil/"]);
-    console.error("No se pudo guardar el perfil:", error);
+    console.error("No se pudo guardar el perfil:", error && error.code ? error.code : "error");
     document.getElementById("msgPerfil").innerText = error && error.message
       ? error.message
       : "No se pudo guardar el perfil.";
@@ -1035,7 +992,6 @@ async function guardarPerfilRegistroInterno(){
 }
 
 function ejecutarTareasAuxiliaresRegistro(uid, userRef, fotosAnteriores) {
-  const inicio = performance.now();
   const tareas = [
     incrementarTotalJugadoresSiProcede(uid).catch(function(error) {
       console.warn("Perfil guardado; contador global pendiente de recalculo:", error.message);
@@ -1059,9 +1015,7 @@ function ejecutarTareasAuxiliaresRegistro(uid, userRef, fotosAnteriores) {
       console.warn("Tarea auxiliar de registro pendiente:", error.message);
       return null;
     });
-  })).then(function() {
-    console.info("[REGISTRO] tareas auxiliares: " + Math.round(performance.now() - inicio) + " ms");
-  }).catch(function() {});
+  })).catch(function() {});
 }
 
 async function guardarPerfilRegistro() {
@@ -1071,7 +1025,7 @@ async function guardarPerfilRegistro() {
   try {
     await guardarPerfilRegistroInterno();
   } catch (error) {
-    console.error("No se pudo completar el registro:", error);
+    console.error("No se pudo completar el registro:", error && error.code ? error.code : "error");
     if (mensaje) {
       mensaje.innerText = error && error.message
         ? error.message
@@ -1121,11 +1075,8 @@ let email = emailInput.value;
 let pass = passInput.value;
 
 auth.signInWithEmailAndPassword(email, pass)
-  .then(cred => {
-    console.log("LOGIN OK", cred);
-  })
   .catch(e => {
-    console.log("ERROR LOGIN", e);
+    console.warn("No se pudo iniciar sesion:", e && e.code ? e.code : "error");
     alert(e.message);
   });
 
@@ -1157,6 +1108,17 @@ auth.onAuthStateChanged(async user => {
 
     const doc = await db.collection("usuarios").doc(user.uid).get();
     const data = doc.exists ? (doc.data() || {}) : {};
+
+    if (doc.exists && Object.prototype.hasOwnProperty.call(data, "email")) {
+      try {
+        await doc.ref.update({
+          email: firebase.firestore.FieldValue.delete()
+        });
+        delete data.email;
+      } catch (error) {
+        console.warn("No se pudo retirar el email legacy del perfil:", error && error.code ? error.code : "error");
+      }
+    }
 
     if (doc.exists && perfilUsuarioCompleto(data)) {
 
@@ -1276,7 +1238,7 @@ async function eliminarFotoPerfil() {
     }
     return true;
   } catch (error) {
-    console.error("No se pudo eliminar la foto de perfil:", error);
+    console.error("No se pudo eliminar la foto de perfil:", error && error.code ? error.code : "error");
     alert(error && error.message ? error.message : "No se pudo eliminar la foto.");
     return false;
   } finally {
@@ -1673,7 +1635,7 @@ function cargarClasificacionComunitaria() {
       contenedor.replaceChildren(fragment);
     })
     .catch(function(error) {
-      console.error("Error cargando clasificación:", error);
+      console.error("Error cargando clasificación:", error && error.code ? error.code : "error");
       contenedor.replaceChildren(crearTextoClasificacion("No se pudo cargar la clasificación"));
     });
 }
@@ -1686,7 +1648,6 @@ function mostrar(seccion){
   ) {
     seccion = "perfilCompletar";
   }
-  console.log("MOSTRAR:", seccion);
   const cargaInicial = document.getElementById("pantallaCargaInicial");
   if (cargaInicial) cargaInicial.style.display = "none";
 
@@ -1847,9 +1808,7 @@ if (!window.vieneDeBusqueda) {
 
 window.vieneDeBusqueda = false;
 
-console.log("ENTRANDO EN PARTIDAS");
 cambiarModoPartidas("proximas");
-console.log("CAMBIAR MODO EJECUTADO");
 }
 
 if (seccion === "buscarPartida") {
@@ -2000,7 +1959,7 @@ function cargarGuiaUso() {
       }
     })
     .catch(function(error) {
-      console.error("Error cargando Guía de Uso:", error);
+      console.error("Error cargando Guía de Uso:", error && error.code ? error.code : "error");
       contenedor.textContent = "No se pudo cargar la Guía de Uso.";
     });
 }

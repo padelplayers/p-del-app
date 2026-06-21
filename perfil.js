@@ -153,11 +153,6 @@ function configurarContadorSocialPerfil(elemento, tipo, data) {
   const uid = perfilEl && perfilEl.dataset ? perfilEl.dataset.uid : null;
 
   if (!stat || !uid) {
-    console.warn("[PERFIL SOCIAL] No se pudo preparar contador social", {
-      existeStat: !!stat,
-      uid: uid || null,
-      tipo: tipo || null
-    });
     return;
   }
 
@@ -184,15 +179,10 @@ function manejarAccionSocialPerfil(elemento) {
   const tipo = elemento.dataset.tipoSocial;
 
   if (!uid || !tipo) {
-    console.warn("[PERFIL SOCIAL] Falta uid o tipo en contador social", {
-      uid: uid || null,
-      tipo: tipo || null
-    });
     return;
   }
 
   if (typeof abrirPerfilSocial !== "function") {
-    console.warn("[PERFIL SOCIAL] abrirPerfilSocial no esta disponible");
     return;
   }
 
@@ -2189,7 +2179,7 @@ async function reautenticarUsuarioParaEliminarPerfil(user) {
     await user.reauthenticateWithCredential(credential);
     return true;
   } catch (errorReauth) {
-    console.error(errorReauth);
+    console.error("No se pudo reautenticar para eliminar el perfil:", errorReauth && errorReauth.code ? errorReauth.code : "error");
     alert("No se pudo confirmar tu identidad. No se ha borrado nada.");
     return false;
   }
@@ -2200,7 +2190,7 @@ async function borrarUsuarioFirestoreYAuthPerfil(userRef, user, opciones) {
   try {
     await userRef.delete();
   } catch (errorFirestore) {
-    console.error(errorFirestore);
+    console.error("No se pudo borrar el documento de perfil:", errorFirestore && errorFirestore.code ? errorFirestore.code : "error");
     const error = new Error("No se pudo borrar el documento del usuario. No se ha borrado la cuenta de Auth.");
     error.code = "perfil/firestore-delete-failed";
     error.originalError = errorFirestore;
@@ -2227,7 +2217,7 @@ async function borrarUsuarioFirestoreYAuthPerfil(userRef, user, opciones) {
   try {
     await user.delete();
   } catch (errorAuth) {
-    console.error(errorAuth);
+    console.error("No se pudo borrar la cuenta de Auth:", errorAuth && errorAuth.code ? errorAuth.code : "error");
     errorAuth.perfilFirestoreBorrado = true;
     try {
       await userRef.set({
@@ -2237,7 +2227,7 @@ async function borrarUsuarioFirestoreYAuthPerfil(userRef, user, opciones) {
       }, { merge: true });
       errorAuth.perfilRecuperado = true;
     } catch (errorRecuperacion) {
-      console.error("No se pudo restaurar un estado recuperable del perfil:", errorRecuperacion);
+      console.error("No se pudo restaurar un estado recuperable del perfil:", errorRecuperacion && errorRecuperacion.code ? errorRecuperacion.code : "error");
       errorAuth.perfilRecuperado = false;
     }
     throw errorAuth;
@@ -2323,12 +2313,7 @@ async function eliminarPerfil() {
     const nombreUsuarioEliminado = datosPerfil.nombre || user.displayName || "";
 
     const medir = async function(nombre, tarea) {
-      const inicio = performance.now();
-      try {
-        return await tarea();
-      } finally {
-        console.info("[ELIMINAR PERFIL] " + nombre + ": " + Math.round(performance.now() - inicio) + " ms");
-      }
+      return tarea();
     };
 
     await medir("partidas activas y mensajes", async function() {
@@ -2374,7 +2359,7 @@ async function eliminarPerfil() {
 
   } catch (error) {
 
-    console.error(error);
+    console.error("No se pudo eliminar el perfil:", error && error.code ? error.code : "error");
 
     if (error && error.perfilFirestoreBorrado === true) {
       window.perfilSesionCompleto = false;
@@ -2459,15 +2444,12 @@ if (typeof unsubscribeUser === "function") unsubscribeUser();
   unsubscribePerfil = db.collection("usuarios").doc(uid).onSnapshot(doc => {
 
 if (!doc.exists) {
-  console.log("NO EXISTE DOC");
   return;
 }
 
 const data = doc.data();
-console.log("DATA:", data);
 
     renderizarDatosVisualesPerfil(data, { usarFallbackSexo: true });
-    console.log("FOTO PERFIL:", data.fotoPerfil);
 
   });
 
@@ -2562,7 +2544,7 @@ function toggleSeguir(){
     const misDatos = miDoc.data() || {};
     const siguiendo = misDatos.siguiendo || [];
     const sigo = siguiendo.includes(uid);
-    const nombreActor = misDatos.nombre || user.displayName || (user.email ? user.email.split("@")[0] : "");
+    const nombreActor = misDatos.nombre || user.displayName || "Jugador";
 
     if (btnSeguir) {
   if (!sigo) {
@@ -2626,8 +2608,6 @@ function toggleSeguir(){
 
 function guardarPerfil(){
 
-  console.log("CLICK GUARDAR");
-
   const user = auth.currentUser;
   if (!user) return;
 
@@ -2651,7 +2631,7 @@ function guardarPerfil(){
 
   })
   .catch(err => {
-    console.error(err);
+    console.error("No se pudo guardar el perfil:", err && err.code ? err.code : "error");
   });
 
 }

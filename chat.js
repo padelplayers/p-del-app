@@ -494,13 +494,7 @@ function crearOMantenerMensajeSistemaGeneral(config) {
       return docId;
     });
   }).catch(function(error) {
-    console.warn("[CHAT] No se pudo crear mensaje Sistema:", {
-      dedupeKey: config.dedupeKey,
-      partidaId: config.partidaId || null,
-      eventType: config.eventType || null,
-      code: error && error.code,
-      message: error && error.message
-    });
+    console.warn("[CHAT] No se pudo crear mensaje Sistema:", error && error.code ? error.code : "error");
     return null;
   });
 }
@@ -669,26 +663,11 @@ async function obtenerNombreAutorChat(user) {
       }
     }
 
-    if (user.email) {
-      const snap = await db.collection("usuarios")
-        .where("email", "==", user.email)
-        .limit(1)
-        .get();
-
-      if (!snap.empty) {
-        const data = snap.docs[0].data() || {};
-        if (data.nombre) {
-          chatNombresUsuarios[user.uid] = data.nombre;
-          return data.nombre;
-        }
-      }
-    }
   } catch (e) {
     console.warn("[CHAT] No se pudo leer el nombre del usuario:", e.message);
   }
 
   if (user.displayName) return user.displayName;
-  if (user.email) return user.email.split("@")[0];
   return "Jugador";
 }
 
@@ -1228,7 +1207,7 @@ async function prepararEnvioChat() {
       await limpiarMensajesAntiguos(chatId);
       input.value = "";
     } catch (e) {
-      console.error("[CHAT] Error enviando mensaje:", e);
+      console.error("[CHAT] Error enviando mensaje:", e && e.code ? e.code : "error");
       alert("No se pudo enviar el mensaje. Intentalo de nuevo.");
     }
   }
@@ -1422,7 +1401,7 @@ async function iniciarListenerResumenSistema(uid) {
 
       aplicarResumenSistema(activos, pendientes);
     }, function(error) {
-      console.warn("Error listener resumen Sistema:", error);
+      console.warn("Error listener resumen Sistema:", error && error.code ? error.code : "error");
     });
 }
 
@@ -1463,7 +1442,7 @@ function iniciarListenersResumenPartidas(uid) {
         procesarCambioResumenPartida(change, uid);
       });
     }, function(error) {
-      console.warn("Error listener resumen partidas:", error);
+      console.warn("Error listener resumen partidas:", error && error.code ? error.code : "error");
     });
   });
 }
@@ -1502,7 +1481,7 @@ function iniciarListenerResumenPrivados(uid) {
         procesarCambioResumenPrivado(change, uid);
       });
     }, function(error) {
-      console.warn("Error listener resumen privados:", error);
+      console.warn("Error listener resumen privados:", error && error.code ? error.code : "error");
     });
 }
 
@@ -1699,7 +1678,7 @@ window.abrirChatPartida = async function(id, fecha, titulo) {
     }
     partida = doc.data() || {};
   } catch (e) {
-    console.error("[CHAT] Error comprobando acceso a partida:", e);
+    console.error("[CHAT] Error comprobando acceso a partida:", e && e.code ? e.code : "error");
     alert("No se pudo abrir el chat de la partida");
     return;
   }
@@ -1748,7 +1727,7 @@ window.abrirChatPrivado = async function(otroUid, nombre) {
   try {
     await asegurarDocumentoChatPrivado(chatState.chats[chatId]);
   } catch (e) {
-    console.error("[CHAT] No se pudo preparar el chat privado:", e);
+    console.error("[CHAT] No se pudo preparar el chat privado:", e && e.code ? e.code : "error");
   }
 
   cambiarChatTab(chatId);

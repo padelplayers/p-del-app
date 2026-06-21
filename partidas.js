@@ -2318,13 +2318,6 @@ function cargarPartidas() {
           parseInt(h[0]),
           parseInt(h[1])
         );
-        console.log("[cargarPartidas] datos", {
-          id: doc.id,
-          fecha: p.fecha,
-          hora: p.hora,
-          fechaPartida,
-          ahoraGlobal
-        });
       }
 
       const ahora = new Date();
@@ -2437,7 +2430,6 @@ function cargarPartidas() {
       const limiteResultado = new Date(fechaPartida.getTime() + 80 * 60 * 1000);
 
       if (p.estado === "confirmada" && limiteResultado <= ahoraGlobal) {
-        console.log("[cargarPartidas] PENDIENTE", doc.id);
         pendientes.push(item);
       } else if (
         p.estado === "pendiente_cancelacion_club" ||
@@ -2449,7 +2441,6 @@ function cargarPartidas() {
           p.estado === "confirmada" ||
           p.estado === "pendiente_cancelacion_club"
         ) {
-          console.log("[cargarPartidas] PROXIMA", doc.id);
           proximas.push(item);
         }
       }
@@ -2843,7 +2834,6 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
     });
   }).then(function(actualizada) {
     if (actualizada) {
-      console.log("[unirse] UPDATE OK");
       const avisos = [];
       if (!actualizada.entroComoReserva && actualizada.jugadoresAntes < 4 && actualizada.jugadores.length === 4 && actualizada.estado === "abierta") {
         const creadorAviso = actualizada.creadaPor || actualizada.creador || null;
@@ -2861,11 +2851,7 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
             data: { jugadores: actualizada.jugadores }
           }));
         } else {
-          console.warn("[partida_completa] No se pudo crear aviso: partida sin creador fiable", {
-            partidaId: partidaId,
-            creadaPor: actualizada.creadaPor,
-            creador: actualizada.creador
-          });
+          console.warn("No se pudo crear el aviso de partida completa: falta un creador valido.");
         }
 
         const titularesAviso = arrayUnicoPartida(actualizada.jugadores).filter(function(uid) {
@@ -3916,20 +3902,15 @@ function rechazarSustitucionPartida(idPartida) {
 
 function unirseAPartida(slotId) {
   const user = firebase.auth().currentUser;
-  console.log("[unirse] uid actual:", user ? user.uid : null);
   if (!user) return;
 
   const partidaId = slotId.split("_")[1];
-  console.log("[unirse] slotId:", slotId);
-  console.log("[unirse] partidaId:", partidaId);
   const esReserva = slotId.startsWith("r");
   const ref = db.collection("partidas").doc(partidaId);
   return ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user);
 
   ref.get().then(function(doc) {
     if (!doc.exists) return;
-    console.log("[unirse] documento encontrado:", doc.id);
-
     const p = doc.data();
 
     db.collection("usuarios").doc(user.uid).get().then(function(docUser) {
@@ -3940,15 +3921,10 @@ function unirseAPartida(slotId) {
       const nivelUsuario = parseFloat(datosUsuario.nivel);
       const generoPartida = p.genero;
 
-      console.log("VALIDACION GENERO");
-      console.log("sexoUsuario=", sexoUsuario);
-      console.log("generoPartida=", generoPartida);
-
       if (
         (generoPartida === "masculino" && sexoUsuario !== "masculino") ||
         (generoPartida === "femenino" && sexoUsuario !== "femenino")
       ) {
-        console.log("BLOQUEADO POR GENERO");
         alert("No puedes unirte a esta partida por restricción de género");
         return;
       }
@@ -3968,9 +3944,6 @@ function unirseAPartida(slotId) {
         return !jugadores.includes(uidReserva);
       });
       const entraComoReserva = esReserva || jugadores.length >= 4;
-      console.log("[unirse] jugadores antes:", jugadores);
-      console.log("[unirse] reservas antes:", reservas);
-
       if (jugadores.includes(user.uid) || reservas.includes(user.uid)) return;
 
       const completarEntrada = function() {
@@ -3999,7 +3972,6 @@ function unirseAPartida(slotId) {
         }
 
         ref.update(datosUpdate).then(function() {
-          console.log("[unirse] UPDATE OK");
           cargarPartidas();
         });
       };

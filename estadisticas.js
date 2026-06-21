@@ -189,12 +189,18 @@ function normalizarSexoEstadisticas(valor) {
 
 function usuarioActivoEstadisticas(data) {
   data = data || {};
-  return !(
+  const noEliminado = !(
     data.eliminado === true ||
     data.borrado === true ||
     data.perfilEliminado === true ||
     data.activo === false
   );
+
+  if (!noEliminado || data.perfilCompleto === false) return false;
+  if (data.perfilCompleto === true) return true;
+
+  return typeof window.perfilUsuarioCompleto === "function" &&
+    window.perfilUsuarioCompleto(data);
 }
 
 function arrayUnicoEstadisticas(lista) {
@@ -625,7 +631,7 @@ function cargarEstadisticas() {
       });
     })
     .catch(function(error) {
-      console.error("Error cargando estadísticas:", error);
+      console.error("Error cargando estadísticas:", error && error.code ? error.code : "error");
       if (listaEl) listaEl.replaceChildren(crearTextoEstadisticas("No se pudieron cargar las estadísticas"));
     });
 }
@@ -709,10 +715,10 @@ async function resincronizarAvisosSistemaAdmin() {
     }
 
     if (errores.length > 0) {
-      console.warn("Errores resincronizando avisos Sistema:", errores);
+      console.warn("Errores resincronizando avisos Sistema:", errores.length);
     }
   } catch (error) {
-    console.error("Error resincronizando avisos Sistema:", error);
+    console.error("Error resincronizando avisos Sistema:", error && error.code ? error.code : "error");
     if (estadoEl) estadoEl.textContent = "No se pudo resincronizar avisos Sistema.";
   }
 }
