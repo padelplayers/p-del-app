@@ -1,4 +1,4 @@
-const CACHE_NAME = "padel-players-morvedre-v98";
+const CACHE_NAME = "padel-players-morvedre-v99";
 const APP_SHELL = [
   "./manifest.json?v=3",
   "./styles.css?v=50",
@@ -10,7 +10,7 @@ const APP_SHELL = [
   "./notifications.js?v=13",
   "./estadisticas.js?v=6",
   "./admin-chat-cleanup.js?v=6",
-  "./pwa.js?v=57",
+  "./pwa.js?v=58",
   "./app.js?v=24",
   "./logo.png",
   "./icon-192-v2.png",
@@ -25,7 +25,6 @@ self.addEventListener("install", function(event) {
       return cache.addAll(APP_SHELL);
     }).catch(function() {})
   );
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", function(event) {
@@ -124,9 +123,4 @@ self.addEventListener("fetch", function(event) {
       });
     })
   );
-});
-
-self.addEventListener("message", function(event) {
-  if (!event.data || event.data.type !== "SKIP_WAITING") return;
-  self.skipWaiting();
 });

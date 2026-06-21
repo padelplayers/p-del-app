@@ -2,7 +2,7 @@ window.pwaState = window.pwaState || {
   deferredPrompt: null
 };
 
-const PWA_APP_VERSION = "v98";
+const PWA_APP_VERSION = "v99";
 const PWA_INSTALADA_KEY = "pwaInstalada";
 const PWA_SW_UPDATE_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -28,30 +28,6 @@ function esDispositivoMovilPwa() {
 function cerrarAvisoPwa() {
   const aviso = document.getElementById("pwaAviso");
   if (aviso) aviso.style.display = "none";
-}
-
-function activarNuevoServiceWorker(worker) {
-  if (!worker) return;
-  worker.postMessage({ type: "SKIP_WAITING" });
-}
-
-function registrarActualizacionesServiceWorker(registration) {
-  if (!registration) return;
-
-  if (registration.waiting && navigator.serviceWorker.controller) {
-    activarNuevoServiceWorker(registration.waiting);
-  }
-
-  registration.addEventListener("updatefound", function() {
-    const nuevoWorker = registration.installing;
-    if (!nuevoWorker) return;
-
-    nuevoWorker.addEventListener("statechange", function() {
-      if (nuevoWorker.state === "installed" && navigator.serviceWorker.controller) {
-        activarNuevoServiceWorker(nuevoWorker);
-      }
-    });
-  });
 }
 
 function comprobarActualizacionServiceWorker(registration) {
@@ -137,20 +113,12 @@ function initPwaBasica() {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js", { updateViaCache: "none" })
       .then(function(registration) {
-        registrarActualizacionesServiceWorker(registration);
         programarComprobacionesServiceWorker(registration);
         return comprobarActualizacionServiceWorker(registration);
       })
       .catch(function(error) {
         console.warn("No se pudo registrar service worker:", error.message);
       });
-
-    let recargaPorServiceWorker = false;
-    navigator.serviceWorker.addEventListener("controllerchange", function() {
-      if (recargaPorServiceWorker) return;
-      recargaPorServiceWorker = true;
-      window.location.reload();
-    });
   }
 
   window.addEventListener("beforeinstallprompt", function(event) {
