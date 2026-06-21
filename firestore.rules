@@ -1,0 +1,203 @@
+rules_version = '2';
+
+// BASE COMPATIBLE PROPUESTA. NO CONSTA COMO COPIA DE LAS REGLAS DESPLEGADAS.
+// Comparar con Firebase Console y probar en Emulator antes de publicar.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function currentUserData() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return signedIn() && (
+        currentUserData().get('admin', false) == true ||
+        currentUserData().get('rol', '') == 'admin'
+      );
+    }
+
+    function privilegesUnchanged() {
+      return request.resource.data.get('admin', false) == resource.data.get('admin', false) &&
+        request.resource.data.get('rol', '') == resource.data.get('rol', '');
+    }
+
+    function compatibleCrossUserUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'seguidores',
+        'siguiendo',
+        'seguidos',
+        'clasificacion',
+        'penalizaciones',
+        'incidenciasPostPartido',
+        'restriccionFiabilidad',
+        'restriccionNoPresentado',
+        'nivel',
+        'nivelInicial',
+        'nivelDelta',
+        'rankingPartidos'
+      ]);
+    }
+
+    function partidaData(partidaId) {
+      return get(/databases/$(database)/documents/partidas/$(partidaId)).data;
+    }
+
+    function isPartidaParticipant(partidaId) {
+      return signedIn() && (
+        request.auth.uid in partidaData(partidaId).get('jugadores', []) ||
+        request.auth.uid in partidaData(partidaId).get('reservas', [])
+      );
+    }
+
+    function privateChatData(chatId) {
+      return get(/databases/$(database)/documents/chatsPrivados/$(chatId)).data;
+    }
+
+    function isPrivateParticipant(data) {
+      return signedIn() && (
+        request.auth.uid in data.get('participantes', []) ||
+        data.get('participantesMap', {}).get(request.auth.uid, false) == true
+      );
+    }
+
+    function validPrivateParticipants(data) {
+      return data.get('participantes', []) is list &&
+        data.get('participantes', []).size() == 2 &&
+        request.auth.uid in data.get('participantes', []) &&
+        data.get('participantesMap', {}).get(data.get('participantes', [])[0], false) == true &&
+        data.get('participantesMap', {}).get(data.get('participantes', [])[1], false) == true;
+    }
+
+    function messageAuthorIsRequester() {
+      return !request.resource.data.keys().hasAny(['u']) ||
+        request.resource.data.u == request.auth.uid;
+    }
+
+    match /usuarios/{uid} {
+      // Jugadores, clasificacion, presencia y estadisticas necesitan listar perfiles.
+      allow read: if signedIn();
+
+      allow create: if isOwner(uid) &&
+        !request.resource.data.keys().hasAny(['admin', 'rol']);
+
+      // Excepcion temporal: postpartido, ranking, seguimiento y borrado de perfil
+      // actualizan campos concretos de otros usuarios desde el cliente.
+      allow update: if signedIn() && privilegesUnchanged() &&
+        (isOwner(uid) || compatibleCrossUserUpdate());
+
+      allow delete: if isOwner(uid);
+
+      match /chatLeidos/{chatId} {
+        allow read, create, update, delete: if isOwner(uid);
+      }
+    }
+
+    match /pistas/{pistaId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn() &&
+        request.resource.data.get('creadaPor', '') == request.auth.uid &&
+        (request.resource.data.get('verificada', false) == false || isAdmin());
+
+      // El creador solo conserva la anonimizacion que usa eliminar perfil.
+      allow update: if isAdmin() || (
+        signedIn() &&
+        (
+          resource.data.get('creadaPor', '') == request.auth.uid ||
+          resource.data.get('creador', '') == request.auth.uid ||
+          resource.data.get('creadorUid', '') == request.auth.uid ||
+          resource.data.get('creadaPorUid', '') == request.auth.uid
+        ) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'creadaPor', 'creador', 'creadorUid', 'creadaPorUid',
+          'creadorNombre', 'nombreCreador'
+        ])
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    match /partidas/{partidaId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn() &&
+        request.resource.data.get('creadaPor', '') == request.auth.uid &&
+        request.resource.data.get('creador', '') == request.auth.uid &&
+        request.auth.uid in request.resource.data.get('jugadores', []);
+
+      // Temporalmente amplio: unirse, salir, sustituciones, confirmacion,
+      // postpartido y limpieza automatica siguen ejecutandose en cliente.
+      allow update, delete: if signedIn();
+
+      match /mensajes/{mensajeId} {
+        allow read: if isPartidaParticipant(partidaId);
+        allow create: if isPartidaParticipant(partidaId) && messageAuthorIsRequester();
+        allow delete: if isPartidaParticipant(partidaId);
+        allow update: if false;
+      }
+    }
+
+    match /chats/general {
+      allow read, create, update: if signedIn();
+      allow delete: if isAdmin();
+
+      match /mensajes/{mensajeId} {
+        allow read: if signedIn();
+        allow create: if signedIn() && (
+          messageAuthorIsRequester() ||
+          request.resource.data.get('system', false) == true ||
+          request.resource.data.get('type', '') == 'system'
+        );
+
+        // Retencion, resolucion de mensajes Sistema y borrado de perfil
+        // necesitan modificar/borrar mensajes desde clientes participantes.
+        allow update, delete: if signedIn();
+      }
+    }
+
+    match /chatsPrivados/{chatId} {
+      allow read: if isPrivateParticipant(resource.data);
+
+      allow create: if signedIn() && validPrivateParticipants(request.resource.data);
+
+      allow update: if isPrivateParticipant(resource.data) &&
+        validPrivateParticipants(request.resource.data) &&
+        (
+          request.resource.data.participantes == resource.data.get('participantes', []) ||
+          resource.data.get('participantes', []).size() == 0
+        );
+
+      // Eliminar perfil borra las conversaciones en las que participa.
+      allow delete: if isPrivateParticipant(resource.data);
+
+      match /mensajes/{mensajeId} {
+        allow read: if isPrivateParticipant(privateChatData(chatId));
+        allow create: if isPrivateParticipant(privateChatData(chatId)) &&
+          messageAuthorIsRequester();
+        allow delete: if isPrivateParticipant(privateChatData(chatId));
+        allow update: if false;
+      }
+    }
+
+    match /historial_partidas/{partidaId} {
+      // Temporal: estadisticas admin, cierre de partida y anonimizacion de perfil.
+      allow read, create, update, delete: if signedIn();
+    }
+
+    match /notificaciones/{notificacionId} {
+      // Temporal: clientes crean avisos para terceros y la baja anonimiza avisos ajenos.
+      allow read, create, update, delete: if signedIn();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
