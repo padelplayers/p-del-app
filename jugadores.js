@@ -69,6 +69,12 @@ function crearTarjetaJugador(jugador) {
 
 function crearJugadorListaDesdeDoc(doc) {
   const data = doc && typeof doc.data === "function" ? (doc.data() || {}) : {};
+  if (
+    typeof window.perfilUsuarioCompleto !== "function" ||
+    !window.perfilUsuarioCompleto(data)
+  ) {
+    return null;
+  }
   const nombre = data.nombre || "";
   const sexoNormalizado = normalizarSexoJugador(data.sexo);
 
@@ -127,7 +133,8 @@ function cargarJugadores() {
     jugadoresCache = [];
 
     snapshot.forEach(function(doc) {
-      jugadoresCache.push(crearJugadorListaDesdeDoc(doc));
+      const jugador = crearJugadorListaDesdeDoc(doc);
+      if (jugador) jugadoresCache.push(jugador);
     });
 
     jugadoresCache.sort(function(a, b) {

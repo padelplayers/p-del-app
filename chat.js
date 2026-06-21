@@ -726,6 +726,12 @@ function cargarUsuariosSidebar() {
 
     snapshot.forEach(doc => {
       const u = doc.data();
+      if (
+        typeof window.perfilUsuarioCompleto !== "function" ||
+        !window.perfilUsuarioCompleto(u)
+      ) {
+        return;
+      }
       if (doc.id === auth.currentUser?.uid) {
         return;
       } // No mostrarse a sí mismo

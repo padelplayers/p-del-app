@@ -311,9 +311,18 @@ async function validarAccionPorFiabilidad(accion, opciones) {
   if (!user) return true;
 
   const doc = await db.collection("usuarios").doc(user.uid).get();
-  if (!doc.exists) return true;
+  if (!doc.exists) return false;
 
   const datosUsuario = doc.data() || {};
+  if (
+    typeof window.perfilUsuarioCompleto !== "function" ||
+    !window.perfilUsuarioCompleto(datosUsuario)
+  ) {
+    if (opciones.silencioso !== true) {
+      alert("Completa tu perfil antes de usar esta función.");
+    }
+    return false;
+  }
   const restriccion = await asegurarRestriccionFiabilidadUsuario(user.uid, datosUsuario);
   const restriccionNoPresentado = obtenerRestriccionNoPresentadoActiva(datosUsuario);
   const mensajes = [];
@@ -2680,6 +2689,12 @@ function ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user) {
     if (!docUser.exists) return false;
 
     const datosUsuario = docUser.data() || {};
+    if (
+      typeof window.perfilUsuarioCompleto !== "function" ||
+      !window.perfilUsuarioCompleto(datosUsuario)
+    ) {
+      throw new Error("Completa tu perfil antes de unirte a una partida.");
+    }
     if (typeof window.asegurarRestriccionFiabilidadUsuario === "function") {
       const restriccion = await window.asegurarRestriccionFiabilidadUsuario(user.uid, datosUsuario);
       if (restriccionBloqueaAccion(restriccion, "unirse")) {

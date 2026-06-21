@@ -310,12 +310,39 @@ async function borrarImagen(url) {
 
 }
 
+function camposObligatoriosPerfilCompletos(data) {
+  data = data || {};
+  return !!(
+    String(data.nombre || "").trim() &&
+    String(data.sexo || "").trim() &&
+    String(data.nivel || "").trim() &&
+    String(data.mano || "").trim() &&
+    String(data.posicion || "").trim()
+  );
+}
+
+function perfilUsuarioCompleto(data) {
+  data = data || {};
+  if (data.perfilCompleto === true) return true;
+  if (data.perfilCompleto === false) return false;
+  return camposObligatoriosPerfilCompletos(data);
+}
+
+window.camposObligatoriosPerfilCompletos = camposObligatoriosPerfilCompletos;
+window.perfilUsuarioCompleto = perfilUsuarioCompleto;
+window.perfilSesionCompleto = false;
+
 
 auth.onAuthStateChanged(async user => {
   if (user) {
 
     const doc = await db.collection("usuarios").doc(user.uid).get();
-    const data = doc.data();
+    const data = doc.exists ? (doc.data() || {}) : {};
+
+    if (!perfilUsuarioCompleto(data)) {
+      esAdmin = false;
+      return;
+    }
 
     esAdmin = data && (data.admin === true || data.rol === "admin");
 
@@ -461,8 +488,18 @@ if (!checkEdad || !checkEdad.checked) {
 }
 
 auth.createUserWithEmailAndPassword(email, pass)
-  .then(user => {
-    console.log("REGISTRO OK", user);
+  .then(async cred => {
+    const user = cred.user;
+    await db.collection("usuarios").doc(user.uid).set({
+      email: user.email || email,
+      perfilCompleto: false,
+      terminosAceptados: true,
+      terminosAceptadosAt: firebase.firestore.FieldValue.serverTimestamp(),
+      registroIniciadoAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    window.perfilSesionCompleto = false;
+    mostrar("perfilCompletar");
+    console.log("REGISTRO OK", cred);
   })
   .catch(e => {
     console.log("ERROR REGISTRO", e);
@@ -485,7 +522,7 @@ async function guardarPerfilRegistro(){
   const inputFoto = document.getElementById("inputFotoRegistro");
   const archivo = inputFoto ? inputFoto.files[0] : null;
 
-  if (!nombre || !mano || !posicion) {
+  if (!nombre || !sexo || !mano || !posicion) {
     document.getElementById("msgPerfil").innerText = "Completa los campos";
     return;
   }
@@ -536,6 +573,8 @@ async function guardarPerfilRegistro(){
     mano: mano,
     posicion: posicion,
     fotoPerfil: fotoURL,
+    perfilCompleto: true,
+    terminosAceptados: true,
 
     // estructura base obligatoria
     partidos: 0,
@@ -557,6 +596,7 @@ async function guardarPerfilRegistro(){
     await borrarImagenStorageSiProcede(fotoNuevaSubida, ["usuarios/", "fotosPerfil/"]);
     throw error;
   }
+  window.perfilSesionCompleto = true;
   for (let i = 0; i < fotosAnteriores.length; i++) {
     await borrarImagenStorageSiProcede(fotosAnteriores[i], ["usuarios/", "fotosPerfil/"]);
   }
@@ -655,10 +695,16 @@ auth.onAuthStateChanged(async user => {
   if (user) {
 
     const doc = await db.collection("usuarios").doc(user.uid).get();
+    const data = doc.exists ? (doc.data() || {}) : {};
 
-    if (doc.exists) {
+    if (doc.exists && perfilUsuarioCompleto(data)) {
 
-      const data = doc.data();
+      window.perfilSesionCompleto = true;
+      if (data.perfilCompleto !== true) {
+        doc.ref.set({ perfilCompleto: true }, { merge: true }).catch(function(error) {
+          console.warn("No se pudo migrar la marca de perfil completo:", error.message);
+        });
+      }
       esAdmin = data && (data.admin === true || data.rol === "admin");
       actualizarBotonEstadisticasAdmin();
 
@@ -692,6 +738,7 @@ auth.onAuthStateChanged(async user => {
       await mostrarPantallaInicialUsuario(user.uid, data);
 
     } else {
+      window.perfilSesionCompleto = false;
       esAdmin = false;
       actualizarBotonEstadisticasAdmin();
       avisoNivelMostrado = false;
@@ -702,6 +749,7 @@ auth.onAuthStateChanged(async user => {
   }
 
   esAdmin = false;
+  window.perfilSesionCompleto = false;
   actualizarBotonEstadisticasAdmin();
   revisionCancelaciones5hSesionUid = null;
   detenerPresenciaAvanzada(null, false);
@@ -1035,6 +1083,7 @@ function cargarClasificacionComunitaria() {
 
       snapshot.forEach(function(doc) {
         const data = doc.data() || {};
+        if (!perfilUsuarioCompleto(data)) return;
         const c = data.clasificacion || {};
         const puntos = Number(c.puntos || 0);
         const partidos = Number(c.partidos || 0);
@@ -1107,6 +1156,13 @@ function cargarClasificacionComunitaria() {
 }
 
 function mostrar(seccion){
+  if (
+    auth.currentUser &&
+    window.perfilSesionCompleto !== true &&
+    !["perfilCompletar", "testNivel", "login"].includes(seccion)
+  ) {
+    seccion = "perfilCompletar";
+  }
   console.log("MOSTRAR:", seccion);
   const cargaInicial = document.getElementById("pantallaCargaInicial");
   if (cargaInicial) cargaInicial.style.display = "none";
