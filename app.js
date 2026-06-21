@@ -1,7 +1,7 @@
 window.modoSeleccionPista = false;
 window.partidaCreando = {};
 
-const APP_JS_DIAGNOSTICO_VERSION = "app.js?v=29-registro-resiliente";
+const APP_JS_DIAGNOSTICO_VERSION = "app.js?v=30-rendimiento-contador";
 window.APP_JS_DIAGNOSTICO_VERSION = APP_JS_DIAGNOSTICO_VERSION;
 console.info("[IMAGEN] Version cargada:", APP_JS_DIAGNOSTICO_VERSION, document.currentScript ? document.currentScript.src : "src desconocido");
 
@@ -29,23 +29,34 @@ function actualizarCacheTotalJugadores(total) {
 }
 
 async function obtenerTotalJugadoresGlobal() {
-  const resumenRef = referenciaTotalJugadoresGlobal();
-  return db.runTransaction(function(transaction) {
-    return transaction.get(resumenRef).then(function(resumenDoc) {
-      if (!resumenDoc.exists) {
-        transaction.set(resumenRef, {
-          totalJugadores: 0,
-          contadorVersion: 0,
-          requiereRecalculo: true,
-          actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        return 0;
-      }
+  const resumenDoc = await referenciaTotalJugadoresGlobal().get();
+  if (!resumenDoc.exists) {
+    const error = new Error("No existe el resumen global de jugadores.");
+    error.code = "contador/resumen-no-existe";
+    throw error;
+  }
 
-      const total = Number((resumenDoc.data() || {}).totalJugadores);
-      return Number.isFinite(total) ? Math.max(0, Math.floor(total)) : 0;
-    });
-  });
+  const datosResumen = resumenDoc.data() || {};
+  if (datosResumen.requiereRecalculo === true) {
+    const error = new Error("El resumen global esta pendiente de recalculo.");
+    error.code = "contador/recalculo-pendiente";
+    throw error;
+  }
+
+  const total = Number(datosResumen.totalJugadores);
+  if (!Number.isFinite(total)) {
+    const error = new Error("El total global de jugadores no es valido.");
+    error.code = "contador/total-invalido";
+    throw error;
+  }
+  return Math.max(0, Math.floor(total));
+}
+
+async function obtenerTotalJugadoresRespaldo() {
+  const snapshot = await db.collection("usuarios")
+    .where("perfilCompleto", "==", true)
+    .get();
+  return snapshot.size;
 }
 
 async function incrementarTotalJugadoresSiProcede(uid, datosPerfil) {
@@ -149,61 +160,37 @@ async function decrementarTotalJugadoresSiProcede(uid, opciones) {
 async function recalcularTotalJugadoresGlobalAdmin() {
   const user = auth.currentUser;
   if (!user) return null;
-
-  const adminDoc = await db.collection("usuarios").doc(user.uid).get();
-  const datosAdmin = adminDoc.exists ? (adminDoc.data() || {}) : {};
-  if (datosAdmin.admin !== true && datosAdmin.rol !== "admin") {
-    alert("Herramienta disponible solo para admin.");
-    return null;
-  }
-
-  if (!confirm("Se leeran una vez los perfiles completos para recalcular el contador. Continuar?")) return null;
   const boton = document.getElementById("btnRecalcularTotalJugadores");
-  if (boton) boton.disabled = true;
+  let totalCalculado = null;
 
   try {
-    const resumenRef = referenciaTotalJugadoresGlobal();
-
-    for (let intento = 0; intento < 3; intento++) {
-      const resumenAntes = await resumenRef.get();
-      const versionAntes = resumenAntes.exists
-        ? Number((resumenAntes.data() || {}).contadorVersion || 0)
-        : 0;
-      const snapshot = await db.collection("usuarios")
-        .where("perfilCompleto", "==", true)
-        .get();
-      const total = snapshot.size;
-
-      try {
-        await db.runTransaction(function(transaction) {
-          return transaction.get(resumenRef).then(function(resumenActual) {
-            const versionActual = resumenActual.exists
-              ? Number((resumenActual.data() || {}).contadorVersion || 0)
-              : 0;
-            if (versionActual !== versionAntes) {
-              const error = new Error("El contador cambio durante el recalculo.");
-              error.code = "contador/recalculo-concurrente";
-              throw error;
-            }
-
-            transaction.set(resumenRef, {
-              totalJugadores: total,
-              contadorVersion: firebase.firestore.FieldValue.increment(1),
-              requiereRecalculo: false,
-              recalculadoPor: user.uid,
-              actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-          });
-        });
-
-        actualizarCacheTotalJugadores(total);
-        alert("Total de jugadores recalculado: " + total);
-        return total;
-      } catch (error) {
-        if (!error || error.code !== "contador/recalculo-concurrente" || intento === 2) throw error;
-      }
+    const adminDoc = await db.collection("usuarios").doc(user.uid).get();
+    const datosAdmin = adminDoc.exists ? (adminDoc.data() || {}) : {};
+    if (datosAdmin.admin !== true && datosAdmin.rol !== "admin") {
+      alert("Herramienta disponible solo para admin.");
+      return null;
     }
 
+    if (!confirm("Se leeran una vez los perfiles completos para recalcular el contador. Continuar?")) return null;
+    if (boton) boton.disabled = true;
+
+    const total = await obtenerTotalJugadoresRespaldo();
+    totalCalculado = total;
+    await referenciaTotalJugadoresGlobal().set({
+      totalJugadores: total,
+      contadorVersion: firebase.firestore.FieldValue.increment(1),
+      requiereRecalculo: false,
+      recalculadoPor: user.uid,
+      actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    actualizarCacheTotalJugadores(total);
+    alert("Total de jugadores recalculado: " + total);
+    return total;
+  } catch (error) {
+    console.error("No se pudo recalcular el contador global:", error);
+    if (Number.isFinite(totalCalculado)) actualizarCacheTotalJugadores(totalCalculado);
+    alert((Number.isFinite(totalCalculado) ? "Total calculado: " + totalCalculado + ". " : "") + "No se pudo guardar el total global (" + (error.code || error.message || "error desconocido") + "). Revisa los permisos de estadisticas_globales/resumen.");
     return null;
   } finally {
     if (boton) boton.disabled = false;
@@ -234,9 +221,15 @@ function cargarContadorJugadoresHeader() {
       return total;
     })
     .catch(function(error) {
-      console.warn("No se pudo cargar el total de jugadores:", error.message);
-      renderizarContadorJugadoresHeader(contadorJugadoresHeaderState.total);
-      return contadorJugadoresHeaderState.total;
+      console.warn("No se pudo leer el resumen global; se usa el recuento de respaldo:", error.message);
+      return obtenerTotalJugadoresRespaldo().then(function(total) {
+        actualizarCacheTotalJugadores(total);
+        return total;
+      }).catch(function(errorRespaldo) {
+        console.warn("No se pudo cargar el total de jugadores:", errorRespaldo.message);
+        renderizarContadorJugadoresHeader(null);
+        return null;
+      });
     })
     .finally(function() {
       contadorJugadoresHeaderState.promise = null;
@@ -752,6 +745,12 @@ auth.createUserWithEmailAndPassword(email, pass)
 // REGISTRO PERFIL
 
 async function guardarPerfilRegistroInterno(){
+  let marcaTiempoRegistro = performance.now();
+  const registrarTiempo = function(fase) {
+    const ahora = performance.now();
+    console.info("[REGISTRO] " + fase + ": " + Math.round(ahora - marcaTiempoRegistro) + " ms");
+    marcaTiempoRegistro = ahora;
+  };
 
   const nombre = document.getElementById("nombre").value.trim();
   const sexo = document.getElementById("sexo").value;
@@ -778,6 +777,7 @@ async function guardarPerfilRegistroInterno(){
   const snapshot = await db.collection("usuarios")
     .where("nombreNormalizado", "==", nombreNormalizado)
     .get();
+  registrarTiempo("comprobar nombre");
 
   if (!snapshot.empty) {
     document.getElementById("msgPerfil").innerText = "Nombre ya en uso";
@@ -786,6 +786,7 @@ async function guardarPerfilRegistroInterno(){
 
   const userRef = db.collection("usuarios").doc(auth.currentUser.uid);
   const userDoc = await userRef.get();
+  registrarTiempo("leer perfil previo");
   const datosUsuarioExistente = userDoc.exists ? (userDoc.data() || {}) : {};
   const fotosAnteriores = obtenerFotosStorageUsuario(datosUsuarioExistente);
   let fotoURL = sexo === "mujer" ? "imagen/mujer.jpeg" : "imagen/hombre.jpeg";
@@ -796,6 +797,7 @@ async function guardarPerfilRegistroInterno(){
     try {
       fotoURL = await subirImagen(ruta, archivo, "perfil-registro");
       fotoNuevaSubida = fotoURL;
+      registrarTiempo("preparar y subir foto");
     } catch (error) {
       document.getElementById("msgPerfil").innerText = error && error.message
         ? error.message
@@ -835,6 +837,7 @@ async function guardarPerfilRegistroInterno(){
 
   try {
     await userRef.set(datosPerfil, { merge: true });
+    registrarTiempo("guardar perfil completo");
   } catch (error) {
     await borrarImagenStorageSiProcede(fotoNuevaSubida, ["usuarios/", "fotosPerfil/"]);
     console.error("No se pudo guardar el perfil:", error);
@@ -844,26 +847,43 @@ async function guardarPerfilRegistroInterno(){
     return;
   }
 
-  try {
-    await incrementarTotalJugadoresSiProcede(auth.currentUser.uid);
-  } catch (error) {
-    console.warn("Perfil guardado; contador global pendiente de recalculo:", error.message);
-    await marcarTotalJugadoresPendienteRecalculo("alta_usuario");
-  }
   window.perfilSesionCompleto = true;
-  for (let i = 0; i < fotosAnteriores.length; i++) {
-    await borrarImagenStorageSiProcede(fotosAnteriores[i], ["usuarios/", "fotosPerfil/"]);
-  }
-  await iniciarPresenciaAvanzada(auth.currentUser.uid);
+  const uid = auth.currentUser.uid;
+  mostrarPantallaInicialUsuario(uid, datosPerfil).catch(function(error) {
+    console.warn("No se pudo guardar el estado de la guia inicial:", error.message);
+  });
 
-  await userRef.collection("chatLeidos").doc("general").set({
-    lastReadAt: firebase.firestore.FieldValue.serverTimestamp(),
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-    tipo: "general",
-    titulo: "General"
-  }, { merge: true });
+  ejecutarTareasAuxiliaresRegistro(uid, userRef, fotosAnteriores);
+}
 
-  await mostrarPantallaInicialUsuario(auth.currentUser.uid, datosPerfil);
+function ejecutarTareasAuxiliaresRegistro(uid, userRef, fotosAnteriores) {
+  const inicio = performance.now();
+  const tareas = [
+    incrementarTotalJugadoresSiProcede(uid).catch(function(error) {
+      console.warn("Perfil guardado; contador global pendiente de recalculo:", error.message);
+      return marcarTotalJugadoresPendienteRecalculo("alta_usuario");
+    }),
+    iniciarPresenciaAvanzada(uid),
+    userRef.collection("chatLeidos").doc("general").set({
+      lastReadAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      tipo: "general",
+      titulo: "General"
+    }, { merge: true })
+  ];
+
+  (fotosAnteriores || []).forEach(function(url) {
+    tareas.push(borrarImagenStorageSiProcede(url, ["usuarios/", "fotosPerfil/"]));
+  });
+
+  Promise.all(tareas.map(function(tarea) {
+    return Promise.resolve(tarea).catch(function(error) {
+      console.warn("Tarea auxiliar de registro pendiente:", error.message);
+      return null;
+    });
+  })).then(function() {
+    console.info("[REGISTRO] tareas auxiliares: " + Math.round(performance.now() - inicio) + " ms");
+  }).catch(function() {});
 }
 
 async function guardarPerfilRegistro() {

@@ -1201,8 +1201,7 @@ async function eliminarChatsPrivadosUsuarioPerfil(uid) {
     return chats[id];
   });
 
-  for (let i = 0; i < docs.length; i++) {
-    const chatDoc = docs[i];
+  await Promise.all(docs.map(async function(chatDoc) {
     const privadoRef = chatDoc.ref;
     const chat = chatDoc.data() || {};
     const otroUid = obtenerOtroParticipanteChatPrivadoPerfil(chat, uid);
@@ -1212,7 +1211,7 @@ async function eliminarChatsPrivadosUsuarioPerfil(uid) {
     await privadoRef.delete();
 
     await notificarChatPrivadoEliminadoPerfil(chatDoc.id, otroUid, uid);
-  }
+  }));
 }
 
 async function obtenerPartidasCandidatasMensajesUsuarioPerfil(uid) {
@@ -2323,31 +2322,50 @@ async function eliminarPerfil() {
     const uidAnonimo = generarUidAnonimoUsuarioEliminado(uid);
     const nombreUsuarioEliminado = datosPerfil.nombre || user.displayName || "";
 
-    const partidasRefsUsuario = await obtenerPartidasCandidatasMensajesUsuarioPerfil(uid);
-    await eliminarMensajesPartidasUsuarioPerfil(uid, partidasRefsUsuario);
-    await resolverPartidasActivasAntesDeEliminarPerfil(uid);
+    const medir = async function(nombre, tarea) {
+      const inicio = performance.now();
+      try {
+        return await tarea();
+      } finally {
+        console.info("[ELIMINAR PERFIL] " + nombre + ": " + Math.round(performance.now() - inicio) + " ms");
+      }
+    };
 
-    // 2. limpiar referencias sociales
-    await limpiarRelacionesSocialesUsuario(uid, nombreUsuarioEliminado);
+    await medir("partidas activas y mensajes", async function() {
+      const partidasRefsUsuario = await obtenerPartidasCandidatasMensajesUsuarioPerfil(uid);
+      await Promise.all([
+        eliminarMensajesPartidasUsuarioPerfil(uid, partidasRefsUsuario),
+        resolverPartidasActivasAntesDeEliminarPerfil(uid)
+      ]);
+    });
 
-    await eliminarMensajesGeneralUsuarioPerfil(uid);
-    await eliminarChatsPrivadosUsuarioPerfil(uid);
+    const limpiezaSocial = medir("relaciones sociales", function() {
+      return limpiarRelacionesSocialesUsuario(uid, nombreUsuarioEliminado);
+    });
+    const limpiezaChatsPrivados = medir("chats privados", function() {
+      return eliminarChatsPrivadosUsuarioPerfil(uid);
+    });
+    const limpiezaNotificaciones = Promise.all([limpiezaSocial, limpiezaChatsPrivados]).then(function() {
+      return medir("notificaciones", function() {
+        return limpiarNotificacionesUsuarioEliminado(uid, uidAnonimo, nombreUsuarioEliminado);
+      });
+    });
 
-    await anonimizarPistasCreadasUsuario(uid);
+    await Promise.all([
+      limpiezaNotificaciones,
+      medir("chat general", function() { return eliminarMensajesGeneralUsuarioPerfil(uid); }),
+      medir("pistas", function() { return anonimizarPistasCreadasUsuario(uid); }),
+      medir("partidas vivas", function() { return anonimizarPartidasVivasUsuarioEliminado(uid, uidAnonimo); }),
+      medir("historial", function() { return anonimizarHistorialUsuarioEliminado(uid); }),
+      medir("storage", function() { return eliminarStorageUsuario(uid, datosPerfil, { listarCarpetas: true }); }),
+      medir("subcolecciones", function() { return borrarSubcoleccionesUsuario(uid); })
+    ]);
 
-    await anonimizarPartidasVivasUsuarioEliminado(uid, uidAnonimo);
-
-    await anonimizarHistorialUsuarioEliminado(uid);
-
-    await limpiarNotificacionesUsuarioEliminado(uid, uidAnonimo, nombreUsuarioEliminado);
-
-    await eliminarStorageUsuario(uid, datosPerfil, { listarCarpetas: true });
-
-    await borrarSubcoleccionesUsuario(uid);
-
-    await borrarUsuarioFirestoreYAuthPerfil(userRef, user, {
-      perfilCompleto: datosPerfil.perfilCompleto === true,
-      contadorAplicado: datosPerfil.contadorGlobalJugadoresAplicado === true
+    await medir("Firestore, contador y Auth", function() {
+      return borrarUsuarioFirestoreYAuthPerfil(userRef, user, {
+        perfilCompleto: datosPerfil.perfilCompleto === true,
+        contadorAplicado: datosPerfil.contadorGlobalJugadoresAplicado === true
+      });
     });
 
     alert("Cuenta eliminada");
