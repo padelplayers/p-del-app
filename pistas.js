@@ -2,6 +2,34 @@ const btnNuevaPista = document.getElementById("btnNuevaPista");
 const btnGuardarPista = document.getElementById("guardarPista");
 
 window.pistaUnicaDesdePartida = window.pistaUnicaDesdePartida || null;
+window.pistaEditando = window.pistaEditando || null;
+window.modoCrearPista = false;
+window.modoEditarPista = false;
+
+function limpiarFormularioPistaNueva() {
+  const formulario = document.getElementById("formPista");
+  if (formulario) {
+    formulario.querySelectorAll("input, select, textarea").forEach(function(campo) {
+      if (campo.type === "checkbox" || campo.type === "radio") campo.checked = false;
+      else campo.value = "";
+    });
+
+    formulario.querySelectorAll("#previewFotoPista, #previewImagenPista, [data-preview-pista]").forEach(function(preview) {
+      preview.removeAttribute("src");
+      preview.style.display = "none";
+    });
+  }
+
+  window.pistaEditando = null;
+  window.modoCrearPista = true;
+  window.modoEditarPista = false;
+}
+
+window.abrirNuevaPista = function() {
+  if (window.modoSeleccionPista) return;
+  limpiarFormularioPistaNueva();
+  mostrar("crearPista");
+};
 
 function incrementarPistasCreadasLogro(uid) {
   if (!uid) return Promise.resolve(false);
@@ -66,12 +94,6 @@ if (btnGuardarPista) {
       const nota = document.getElementById("notaPista").value.trim();
       const inputFotoPista = document.getElementById("inputFotoPista");
       const archivoImagenPista = inputFotoPista && inputFotoPista.files.length > 0 ? inputFotoPista.files[0] : null;
-      let imagenesAnteriores = [];
-
-      if (window.pistaEditando) {
-        const doc = await db.collection("pistas").doc(window.pistaEditando).get();
-        imagenesAnteriores = doc.exists ? obtenerImagenesStoragePista(doc.data() || {}) : [];
-      }
 
       if (
         !nombre.trim() ||
@@ -126,7 +148,7 @@ if (btnGuardarPista) {
         }
       });
 
-      if (existe && !window.pistaEditando) {
+      if (existe) {
         alert(mensajeDuplicado);
         return;
       }
@@ -136,15 +158,8 @@ if (btnGuardarPista) {
         return;
       }
 
-      const fpEditar = document.getElementById("formaPagoEditar");
       const fpCrear = document.getElementById("formaPago");
-      let formaPago = "";
-
-      if (window.pistaEditando) {
-        if (fpEditar) formaPago = fpEditar.value;
-      } else {
-        if (fpCrear) formaPago = fpCrear.value;
-      }
+      const formaPago = fpCrear ? fpCrear.value : "";
 
       const datos = {
         nombre: nombre,
@@ -171,40 +186,23 @@ if (btnGuardarPista) {
         datos.imagen = await subirImagen(
           ruta,
           archivoImagenPista,
-          window.pistaEditando ? "pista-edicion" : "pista-creacion"
+          "pista-creacion"
         );
-        if (window.pistaEditando) datos.imagenUrl = firebase.firestore.FieldValue.delete();
       }
 
-      if (window.pistaEditando) {
-        try {
-          await db.collection("pistas").doc(window.pistaEditando).update({
-            ...datos,
-            verificada: datos.verificada ?? true
-          });
-        } catch (error) {
-          await borrarImagenStoragePistaSiProcede(datos.imagen || "");
-          throw error;
-        }
-        if (datos.imagen) {
-          for (let i = 0; i < imagenesAnteriores.length; i++) {
-            await borrarImagenStoragePistaSiProcede(imagenesAnteriores[i]);
-          }
-        }
-        window.pistaEditando = null;
-      } else {
-        try {
-          await db.collection("pistas").add({
-            ...datos,
-            verificada: esAdmin === true
-          });
-        } catch (error) {
-          await borrarImagenStoragePistaSiProcede(datos.imagen || "");
-          throw error;
-        }
-        await incrementarPistasCreadasLogro(auth.currentUser.uid);
+      try {
+        await db.collection("pistas").add({
+          ...datos,
+          verificada: esAdmin === true
+        });
+      } catch (error) {
+        await borrarImagenStoragePistaSiProcede(datos.imagen || "");
+        throw error;
       }
+      await incrementarPistasCreadasLogro(auth.currentUser.uid);
 
+      limpiarFormularioPistaNueva();
+      window.modoCrearPista = false;
       cargarPistas();
       mostrar("pistas");
     } catch (error) {
@@ -254,6 +252,11 @@ function pistaCoincideConModoUnico(doc, data, modo) {
 }
 
 window.abrirPistas = function() {
+  limpiarFormularioPistaNueva();
+  const inputFotoEditar = document.getElementById("editarInputFotoPista");
+  if (inputFotoEditar) inputFotoEditar.value = "";
+  window.modoCrearPista = false;
+  window.modoEditarPista = false;
   window.pistaUnicaDesdePartida = null;
   localStorage.removeItem("pistaSeleccionada");
   mostrar("pistas");
@@ -577,6 +580,8 @@ window.abrirEditarPista = async function(id) {
   document.getElementById("editarPrecioFestivo").value = data.precioFestivo || "";
 
   window.pistaEditando = id;
+  window.modoCrearPista = false;
+  window.modoEditarPista = true;
   mostrar("editarPista");
 };
 
