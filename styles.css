@@ -1295,6 +1295,11 @@ body.chatAbierto{
   text-align:left;
 }
 
+.nivelManualOpciones .nivelManualOpcionSeleccionada{
+  background:#FFC107;
+  color:#0D47A1;
+}
+
 /* PERFIL */
 
 .perfil-header{

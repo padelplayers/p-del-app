@@ -232,6 +232,15 @@ function obtenerNivelesRegistro() {
   ];
 }
 
+function marcarOpcionNivelManualRegistro(contenedor, nivelSeleccionado) {
+  if (!contenedor) return;
+  contenedor.querySelectorAll("button[data-nivel]").forEach(function(opcion) {
+    const activa = opcion.dataset.nivel === nivelSeleccionado;
+    opcion.classList.toggle("nivelManualOpcionSeleccionada", activa);
+    opcion.setAttribute("aria-pressed", activa ? "true" : "false");
+  });
+}
+
 function abrirSelectorNivelManualRegistro() {
   const contenedor = document.getElementById("nivelManualOpciones");
   if (!contenedor) return;
@@ -244,6 +253,8 @@ function abrirSelectorNivelManualRegistro() {
       boton.className = "btnBlue";
       boton.style.margin = "4px";
       boton.textContent = nivel;
+      boton.dataset.nivel = nivel;
+      boton.setAttribute("aria-pressed", "false");
       boton.onclick = function() {
         seleccionarNivelManualRegistro(nivel);
       };
@@ -252,6 +263,8 @@ function abrirSelectorNivelManualRegistro() {
     contenedor.appendChild(fragment);
   }
 
+  const input = document.getElementById("nivelManual");
+  marcarOpcionNivelManualRegistro(contenedor, input ? input.value : "");
   contenedor.style.display = "block";
 }
 
@@ -263,9 +276,13 @@ function seleccionarNivelManualRegistro(nivel) {
   const input = document.getElementById("nivelManual");
   const boton = document.getElementById("btnNivelManual");
   const contenedor = document.getElementById("nivelManualOpciones");
-  if (input) input.value = nivel || "";
-  if (boton) boton.textContent = nivel ? "Nivel " + nivel : "Elegir nivel";
-  if (contenedor) contenedor.style.display = "none";
+  const nivelSeleccionado = nivel ? String(nivel) : "";
+  if (input) input.value = nivelSeleccionado;
+  if (boton) boton.textContent = nivelSeleccionado ? "Nivel " + nivelSeleccionado : "Elegir nivel";
+  if (contenedor) {
+    marcarOpcionNivelManualRegistro(contenedor, nivelSeleccionado);
+    contenedor.style.display = "none";
+  }
 }
 
 function iniciarTestNivelRegistro() {

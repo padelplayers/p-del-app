@@ -16,7 +16,7 @@ parseInt(p8.value);
 let nivel = (puntos/32)*7;
 nivel = parseFloat(nivel.toFixed(2));
 
-const niveles = [0.5,0.75,1,1.25,1.5,1.75,2,2.25,2.5,2.75,3,3.25,3.5,3.75,4,4.25,4.5];
+const niveles = obtenerNivelesRegistro().map(Number);
 
 let masCercano = niveles[0];
 let diferencia = Math.abs(nivel - masCercano);
@@ -29,7 +29,7 @@ for (let i = 1; i < niveles.length; i++) {
   }
 }
 
-document.getElementById("nivelManual").value = masCercano;
+seleccionarNivelManualRegistro(String(masCercano));
 document.getElementById("nivelResultado").innerText="Nivel sugerido: "+nivel;
 
 mostrar("perfilCompletar");
