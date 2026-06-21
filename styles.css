@@ -3590,7 +3590,7 @@ margin:0 auto;
 
 .saludoNotificaciones {
   display: grid;
-  grid-template-columns: minmax(110px, 1fr) minmax(0, auto) minmax(110px, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
   align-items: center;
   width: 100%;
   max-width: 480px;
@@ -3605,67 +3605,20 @@ margin:0 auto;
   align-items: center;
 }
 
-.saludoZonaIzquierda,
 .saludoZonaDerecha {
   min-width: 0;
 }
 
 .saludoZonaCentro {
+  grid-column: 2;
   flex: 0 1 auto;
   justify-content: center;
   text-align: center;
 }
 
 .saludoZonaDerecha {
+  grid-column: 3;
   justify-content: flex-end;
-}
-
-.saludoZonaIzquierda {
-  justify-content: flex-start;
-}
-
-.contadorJugadoresHeader {
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: #1565C0;
-  line-height: 1;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  cursor: default;
-  box-sizing: border-box;
-}
-
-.contadorJugadoresIcono {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  display: block;
-  object-fit: contain;
-}
-
-.contadorJugadoresDatos {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.contadorJugadoresNumero {
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.contadorJugadoresTexto {
-  margin-top: 2px;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
 }
 
 .saludoNotificaciones h3 {
@@ -3723,7 +3676,7 @@ margin:0 auto;
 
 @media (max-width:760px) {
   .saludoNotificaciones {
-    grid-template-columns: minmax(96px, 1fr) minmax(0, auto) minmax(96px, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
     column-gap: 6px;
     max-width: 480px;
     width: 100%;
@@ -3742,23 +3695,6 @@ margin:0 auto;
     font-size: 16px;
   }
 
-  .contadorJugadoresHeader {
-    gap: 5px;
-    padding: 0;
-  }
-
-  .contadorJugadoresIcono {
-    width: 30px;
-    height: 30px;
-  }
-
-  .contadorJugadoresNumero {
-    font-size: 20px;
-  }
-
-  .contadorJugadoresTexto {
-    font-size: 9px;
-  }
 }
 
 .auditoriaRegistrosIncompletos {

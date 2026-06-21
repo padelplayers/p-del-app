@@ -2185,8 +2185,7 @@ async function reautenticarUsuarioParaEliminarPerfil(user) {
   }
 }
 
-async function borrarUsuarioFirestoreYAuthPerfil(userRef, user, opciones) {
-  opciones = opciones || {};
+async function borrarUsuarioFirestoreYAuthPerfil(userRef, user) {
   try {
     await userRef.delete();
   } catch (errorFirestore) {
@@ -2195,23 +2194,6 @@ async function borrarUsuarioFirestoreYAuthPerfil(userRef, user, opciones) {
     error.code = "perfil/firestore-delete-failed";
     error.originalError = errorFirestore;
     throw error;
-  }
-
-  if (opciones.perfilCompleto === true) {
-    try {
-      if (typeof window.decrementarTotalJugadoresSiProcede !== "function") {
-        throw new Error("No esta disponible la actualizacion del contador global de jugadores.");
-      }
-      await window.decrementarTotalJugadoresSiProcede(user.uid, {
-        perfilCompleto: true,
-        contadorAplicado: opciones.contadorAplicado === true
-      });
-    } catch (errorContador) {
-      console.warn("Cuenta borrada; contador global pendiente de recalculo:", errorContador.message);
-      if (typeof window.marcarTotalJugadoresPendienteRecalculo === "function") {
-        await window.marcarTotalJugadoresPendienteRecalculo("baja_usuario");
-      }
-    }
   }
 
   try {
@@ -2258,7 +2240,7 @@ async function cancelarRegistroIncompleto() {
     await borrarSubcoleccionesUsuario(user.uid);
     const notificaciones = await db.collection("notificaciones").where("uid", "==", user.uid).get();
     await borrarSnapshotEnBatchesPerfil(notificaciones);
-    await borrarUsuarioFirestoreYAuthPerfil(userRef, user, { perfilCompleto: false });
+    await borrarUsuarioFirestoreYAuthPerfil(userRef, user);
 
     alert("Registro cancelado y cuenta eliminada");
     await auth.signOut();
@@ -2346,11 +2328,8 @@ async function eliminarPerfil() {
       medir("subcolecciones", function() { return borrarSubcoleccionesUsuario(uid); })
     ]);
 
-    await medir("Firestore, contador y Auth", function() {
-      return borrarUsuarioFirestoreYAuthPerfil(userRef, user, {
-        perfilCompleto: datosPerfil.perfilCompleto === true,
-        contadorAplicado: datosPerfil.contadorGlobalJugadoresAplicado === true
-      });
+    await medir("Firestore y Auth", function() {
+      return borrarUsuarioFirestoreYAuthPerfil(userRef, user);
     });
 
     alert("Cuenta eliminada");

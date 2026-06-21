@@ -1,256 +1,6 @@
 window.modoSeleccionPista = false;
 window.partidaCreando = {};
 
-const CONTADOR_JUGADORES_HEADER_CACHE_MS = 60 * 1000;
-const contadorJugadoresHeaderState = {
-  total: null,
-  cargadoAt: 0,
-  promise: null,
-  permisosGlobalesDenegados: false,
-  permisoDenegadoNotificado: false,
-  respaldoSesionCargado: false
-};
-
-function esErrorPermisosContadorGlobal(error) {
-  const codigo = String(error && error.code || "").toLowerCase();
-  const mensaje = String(error && error.message || "").toLowerCase();
-  return codigo.indexOf("permission-denied") !== -1 ||
-    codigo.indexOf("403") !== -1 ||
-    mensaje.indexOf("missing or insufficient permissions") !== -1 ||
-    mensaje.indexOf("403") !== -1;
-}
-
-function registrarPermisoDenegadoContadorGlobal(error) {
-  contadorJugadoresHeaderState.permisosGlobalesDenegados = true;
-  contadorJugadoresHeaderState.permisoDenegadoNotificado = true;
-}
-
-function restablecerPermisoContadorGlobal() {
-  contadorJugadoresHeaderState.permisosGlobalesDenegados = false;
-  contadorJugadoresHeaderState.permisoDenegadoNotificado = false;
-  contadorJugadoresHeaderState.respaldoSesionCargado = false;
-}
-
-function sesionPuedeEscribirContadorGlobal() {
-  return typeof esAdmin !== "undefined" && esAdmin === true;
-}
-
-function renderizarContadorJugadoresHeader(total) {
-  const elemento = document.getElementById("totalJugadoresHeader");
-  if (!elemento) return;
-  elemento.textContent = Number.isFinite(total) ? String(total) : "-";
-}
-
-function referenciaTotalJugadoresGlobal() {
-  return db.collection("estadisticas_globales").doc("resumen");
-}
-
-function actualizarCacheTotalJugadores(total) {
-  contadorJugadoresHeaderState.total = total;
-  contadorJugadoresHeaderState.cargadoAt = Date.now();
-  renderizarContadorJugadoresHeader(total);
-}
-
-async function obtenerTotalJugadoresGlobal() {
-  if (contadorJugadoresHeaderState.permisosGlobalesDenegados) {
-    const error = new Error("Acceso global desactivado durante esta sesion.");
-    error.code = "contador/permisos-bloqueados-sesion";
-    throw error;
-  }
-  const resumenDoc = await referenciaTotalJugadoresGlobal().get();
-  if (!resumenDoc.exists) {
-    const error = new Error("No existe el resumen global de jugadores.");
-    error.code = "contador/resumen-no-existe";
-    throw error;
-  }
-
-  const datosResumen = resumenDoc.data() || {};
-  if (datosResumen.requiereRecalculo === true) {
-    const error = new Error("El resumen global esta pendiente de recalculo.");
-    error.code = "contador/recalculo-pendiente";
-    throw error;
-  }
-
-  const total = Number(datosResumen.totalJugadores);
-  if (!Number.isFinite(total)) {
-    const error = new Error("El total global de jugadores no es valido.");
-    error.code = "contador/total-invalido";
-    throw error;
-  }
-  return Math.max(0, Math.floor(total));
-}
-
-async function obtenerTotalJugadoresRespaldo() {
-  const snapshot = await db.collection("usuarios")
-    .where("perfilCompleto", "==", true)
-    .get();
-  return snapshot.size;
-}
-
-async function incrementarTotalJugadoresSiProcede(uid, datosPerfil) {
-  if (!uid) return false;
-  contadorJugadoresHeaderState.cargadoAt = 0;
-  contadorJugadoresHeaderState.respaldoSesionCargado = false;
-  if (!sesionPuedeEscribirContadorGlobal()) return false;
-  if (contadorJugadoresHeaderState.permisosGlobalesDenegados) return false;
-  const userRef = db.collection("usuarios").doc(uid);
-  const resumenRef = referenciaTotalJugadoresGlobal();
-
-  try {
-    return await db.runTransaction(function(transaction) {
-      return Promise.all([
-        transaction.get(userRef),
-        transaction.get(resumenRef)
-      ]).then(function(documentos) {
-        const userDoc = documentos[0];
-        const resumenDoc = documentos[1];
-        if (!userDoc.exists) return false;
-
-        const datosActuales = userDoc.data() || {};
-        if (
-          datosActuales.perfilCompleto !== true ||
-          datosActuales.contadorGlobalJugadoresAplicado === true
-        ) {
-          return false;
-        }
-
-        transaction.set(userRef, {
-          contadorGlobalJugadoresAplicado: true
-        }, { merge: true });
-
-        if (resumenDoc.exists) {
-          transaction.set(resumenRef, {
-            totalJugadores: firebase.firestore.FieldValue.increment(1),
-            contadorVersion: firebase.firestore.FieldValue.increment(1),
-            actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
-          }, { merge: true });
-        } else {
-          transaction.set(resumenRef, {
-            totalJugadores: 1,
-            contadorVersion: 1,
-            requiereRecalculo: true,
-            actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        }
-
-        return true;
-      });
-    });
-  } catch (error) {
-    if (esErrorPermisosContadorGlobal(error)) {
-      registrarPermisoDenegadoContadorGlobal(error);
-      return false;
-    }
-    throw error;
-  }
-}
-
-async function marcarTotalJugadoresPendienteRecalculo(motivo) {
-  if (!sesionPuedeEscribirContadorGlobal()) return false;
-  if (contadorJugadoresHeaderState.permisosGlobalesDenegados) return false;
-  try {
-    await referenciaTotalJugadoresGlobal().set({
-      requiereRecalculo: true,
-      motivoRecalculo: motivo || "desincronizacion",
-      actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-    contadorJugadoresHeaderState.cargadoAt = 0;
-    return true;
-  } catch (error) {
-    if (esErrorPermisosContadorGlobal(error)) {
-      registrarPermisoDenegadoContadorGlobal(error);
-      return false;
-    }
-    console.warn("No se pudo marcar el contador para recalculo:", error.message);
-    return false;
-  }
-}
-
-async function decrementarTotalJugadoresSiProcede(uid, opciones) {
-  opciones = opciones || {};
-  if (!uid || opciones.perfilCompleto !== true) return false;
-  contadorJugadoresHeaderState.cargadoAt = 0;
-  contadorJugadoresHeaderState.respaldoSesionCargado = false;
-  if (!sesionPuedeEscribirContadorGlobal()) return false;
-  if (contadorJugadoresHeaderState.permisosGlobalesDenegados) return false;
-  const resumenRef = referenciaTotalJugadoresGlobal();
-
-  try {
-    return await db.runTransaction(function(transaction) {
-      return transaction.get(resumenRef).then(function(resumenDoc) {
-        const datosResumen = resumenDoc.exists ? (resumenDoc.data() || {}) : {};
-        const totalActual = Number(datosResumen.totalJugadores);
-        const estabaContabilizado = opciones.contadorAplicado === true || datosResumen.requiereRecalculo === false;
-
-        if (estabaContabilizado && Number.isFinite(totalActual) && totalActual > 0) {
-          transaction.set(resumenRef, {
-            totalJugadores: firebase.firestore.FieldValue.increment(-1),
-            contadorVersion: firebase.firestore.FieldValue.increment(1),
-            actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
-          }, { merge: true });
-        } else {
-          transaction.set(resumenRef, {
-            totalJugadores: Number.isFinite(totalActual) ? Math.max(0, totalActual) : 0,
-            contadorVersion: firebase.firestore.FieldValue.increment(1),
-            requiereRecalculo: true,
-            actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
-          }, { merge: true });
-        }
-
-        return estabaContabilizado;
-      });
-    });
-  } catch (error) {
-    if (esErrorPermisosContadorGlobal(error)) {
-      registrarPermisoDenegadoContadorGlobal(error);
-      return false;
-    }
-    throw error;
-  }
-}
-
-async function recalcularTotalJugadoresGlobalAdmin() {
-  const user = auth.currentUser;
-  if (!user) return null;
-  const boton = document.getElementById("btnRecalcularTotalJugadores");
-  let totalCalculado = null;
-
-  try {
-    const adminDoc = await db.collection("usuarios").doc(user.uid).get();
-    const datosAdmin = adminDoc.exists ? (adminDoc.data() || {}) : {};
-    if (datosAdmin.admin !== true && datosAdmin.rol !== "admin") {
-      alert("Herramienta disponible solo para admin.");
-      return null;
-    }
-
-    if (!confirm("Se leeran una vez los perfiles completos para recalcular el contador. Continuar?")) return null;
-    if (boton) boton.disabled = true;
-
-    const total = await obtenerTotalJugadoresRespaldo();
-    totalCalculado = total;
-    await referenciaTotalJugadoresGlobal().set({
-      totalJugadores: total,
-      contadorVersion: firebase.firestore.FieldValue.increment(1),
-      requiereRecalculo: false,
-      recalculadoPor: user.uid,
-      actualizadoAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-
-    restablecerPermisoContadorGlobal();
-    actualizarCacheTotalJugadores(total);
-    alert("Total de jugadores recalculado: " + total);
-    return total;
-  } catch (error) {
-    console.error("No se pudo recalcular el contador global:", error && error.code ? error.code : "error");
-    if (esErrorPermisosContadorGlobal(error)) registrarPermisoDenegadoContadorGlobal(error);
-    if (Number.isFinite(totalCalculado)) actualizarCacheTotalJugadores(totalCalculado);
-    alert((Number.isFinite(totalCalculado) ? "Total calculado: " + totalCalculado + ". " : "") + "No se pudo guardar el total global (" + (error.code || error.message || "error desconocido") + "). Revisa los permisos de estadisticas_globales/resumen.");
-    return null;
-  } finally {
-    if (boton) boton.disabled = false;
-  }
-}
-
 function obtenerMillisRegistroIncompletoAdmin(datos) {
   const valor = datos && (datos.registroIniciadoAt || datos.fechaAlta || datos.createdAt);
   if (!valor) return null;
@@ -326,62 +76,7 @@ async function auditarRegistrosIncompletosAdmin() {
   }
 }
 
-window.obtenerTotalJugadoresGlobal = obtenerTotalJugadoresGlobal;
-window.incrementarTotalJugadoresSiProcede = incrementarTotalJugadoresSiProcede;
-window.decrementarTotalJugadoresSiProcede = decrementarTotalJugadoresSiProcede;
-window.marcarTotalJugadoresPendienteRecalculo = marcarTotalJugadoresPendienteRecalculo;
-window.recalcularTotalJugadoresGlobalAdmin = recalcularTotalJugadoresGlobalAdmin;
 window.auditarRegistrosIncompletosAdmin = auditarRegistrosIncompletosAdmin;
-
-function cargarContadorJugadoresHeader() {
-  const ahora = Date.now();
-  if (
-    Number.isFinite(contadorJugadoresHeaderState.total) &&
-    (
-      contadorJugadoresHeaderState.respaldoSesionCargado ||
-      ahora - contadorJugadoresHeaderState.cargadoAt < CONTADOR_JUGADORES_HEADER_CACHE_MS
-    )
-  ) {
-    renderizarContadorJugadoresHeader(contadorJugadoresHeaderState.total);
-    return Promise.resolve(contadorJugadoresHeaderState.total);
-  }
-
-  if (contadorJugadoresHeaderState.promise) return contadorJugadoresHeaderState.promise;
-
-  // Hasta disponer de un backend que mantenga el agregado, el encabezado usa
-  // una lectura filtrada para no mostrar un resumen manual desactualizado.
-  const lecturaGlobal = Promise.reject(Object.assign(
-    new Error("El encabezado usa el recuento seguro de perfiles completos."),
-    { code: "contador/respaldo-seguro" }
-  ));
-
-  contadorJugadoresHeaderState.promise = lecturaGlobal
-    .then(function(total) {
-      actualizarCacheTotalJugadores(total);
-      return total;
-    })
-    .catch(function(error) {
-      if (esErrorPermisosContadorGlobal(error)) {
-        registrarPermisoDenegadoContadorGlobal(error);
-      } else if (error.code !== "contador/permisos-bloqueados-sesion" && error.code !== "contador/respaldo-seguro") {
-        console.warn("No se pudo leer el resumen global; se usa el recuento de respaldo:", error.message);
-      }
-      return obtenerTotalJugadoresRespaldo().then(function(total) {
-        contadorJugadoresHeaderState.respaldoSesionCargado = true;
-        actualizarCacheTotalJugadores(total);
-        return total;
-      }).catch(function(errorRespaldo) {
-        console.warn("No se pudo cargar el total de jugadores:", errorRespaldo.message);
-        renderizarContadorJugadoresHeader(null);
-        return null;
-      });
-    })
-    .finally(function() {
-      contadorJugadoresHeaderState.promise = null;
-    });
-
-  return contadorJugadoresHeaderState.promise;
-}
 
 const IMAGEN_STORAGE_PERFIL = {
   maxDimension: 512,
@@ -967,9 +662,6 @@ async function guardarPerfilRegistroInterno(){
   if (!datosUsuarioExistente.fechaAlta) {
     datosPerfil.fechaAlta = firebase.firestore.FieldValue.serverTimestamp();
   }
-  if (datosUsuarioExistente.perfilCompleto !== true) {
-    datosPerfil.contadorGlobalJugadoresAplicado = false;
-  }
 
   try {
     await userRef.set(datosPerfil, { merge: true });
@@ -993,10 +685,6 @@ async function guardarPerfilRegistroInterno(){
 
 function ejecutarTareasAuxiliaresRegistro(uid, userRef, fotosAnteriores) {
   const tareas = [
-    incrementarTotalJugadoresSiProcede(uid).catch(function(error) {
-      console.warn("Perfil guardado; contador global pendiente de recalculo:", error.message);
-      return marcarTotalJugadoresPendienteRecalculo("alta_usuario");
-    }),
     iniciarPresenciaAvanzada(uid),
     userRef.collection("chatLeidos").doc("general").set({
       lastReadAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1126,13 +814,10 @@ auth.onAuthStateChanged(async user => {
       if (data.perfilCompleto !== true) {
         try {
           await doc.ref.set({
-            perfilCompleto: true,
-            contadorGlobalJugadoresAplicado: false
+            perfilCompleto: true
           }, { merge: true });
-          await incrementarTotalJugadoresSiProcede(user.uid);
         } catch (error) {
-          console.warn("Perfil migrado; contador global pendiente de recalculo:", error.message);
-          await marcarTotalJugadoresPendienteRecalculo("migracion_usuario");
+          console.warn("No se pudo marcar el perfil legacy como completo:", error.message);
         }
       }
       esAdmin = data && (data.admin === true || data.rol === "admin");
@@ -1722,10 +1407,6 @@ function mostrar(seccion){
   const actual = document.getElementById(seccion);
   if (actual){
     actual.style.display = "block";
-  }
-
-  if (seccion === "menu") {
-    cargarContadorJugadoresHeader();
   }
 
   if (abriendoChat && chatPantalla) {
