@@ -2326,8 +2326,19 @@ async function eliminarPerfil() {
     const nombreUsuarioEliminado = datosPerfil.nombre || user.displayName || "";
 
     const medir = async function(nombre, tarea) {
-      return tarea();
-    };
+  try {
+    console.log("[ELIMINAR PERFIL] Iniciando:", nombre);
+    const resultado = await tarea();
+    console.log("[ELIMINAR PERFIL] Correcto:", nombre);
+    return resultado;
+  } catch (error) {
+    console.error("[ELIMINAR PERFIL] FALLA EN:", nombre);
+    console.error(error);
+    console.error(error && error.code);
+    console.error(error && error.message);
+    throw error;
+  }
+};
 
     await medir("partidas activas y mensajes", async function() {
       const partidasRefsUsuario = await obtenerPartidasCandidatasMensajesUsuarioPerfil(uid);
