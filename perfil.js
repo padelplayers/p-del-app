@@ -2367,9 +2367,11 @@ async function eliminarPerfil() {
     await auth.signOut();
     mostrar("login");
 
-  } catch (error) {
-
-    console.error("No se pudo eliminar el perfil:", error && error.code ? error.code : "error");
+  catch (error) {
+    console.error("No se pudo eliminar el perfil:");
+    console.error(error);
+    console.error(error?.code);
+    console.error(error?.message);
 
     if (error && error.perfilFirestoreBorrado === true) {
       window.perfilSesionCompleto = false;
