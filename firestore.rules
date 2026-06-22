@@ -258,9 +258,11 @@ service cloud.firestore {
       allow update, delete: if signedIn();
 
       match /mensajes/{mensajeId} {
-        allow read: if isPartidaParticipant(partidaId);
+        allow read: if isPartidaParticipant(partidaId) ||
+          (signedIn() && resource.data.get('u', '') == request.auth.uid);
         allow create: if isPartidaParticipant(partidaId) && validUserMessage();
-        allow delete: if isPartidaParticipant(partidaId);
+        allow delete: if isPartidaParticipant(partidaId) ||
+          (signedIn() && resource.data.get('u', '') == request.auth.uid);
         allow update: if false;
       }
     }
@@ -277,7 +279,10 @@ service cloud.firestore {
           (validUserMessage() || validSystemMessage());
 
         allow update: if hasCompleteProfile() &&
-          resource.data.get('system', false) == true &&
+          (
+            resource.data.get('system', false) == true ||
+            resource.data.get('type', '') == 'system'
+          ) &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             't', 'eventType', 'action', 'valid'
           ]);
