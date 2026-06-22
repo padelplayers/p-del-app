@@ -95,6 +95,11 @@ if (btnGuardarPista) {
       const inputFotoPista = document.getElementById("inputFotoPista");
       const archivoImagenPista = inputFotoPista && inputFotoPista.files.length > 0 ? inputFotoPista.files[0] : null;
 
+      if (!archivoImagenPista) {
+        alert("La foto de la pista es obligatoria");
+        return;
+      }
+
       if (
         !nombre.trim() ||
         !localidad ||

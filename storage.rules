@@ -1,6 +1,7 @@
 rules_version = '2';
 
-// PROPUESTA COMPATIBLE. COMPARAR CON LAS REGLAS DE FIREBASE CONSOLE.
+// Reglas compatibles con rutas actuales. pistas/{timestamp}.jpg no contiene
+// UID y no permite demostrar quien creo el objeto.
 service firebase.storage {
   match /b/{bucket}/o {
     function signedIn() {
@@ -29,6 +30,7 @@ service firebase.storage {
     match /usuarios/{uid}/{fileName} {
       allow read: if true;
       allow create, update: if signedIn() && request.auth.uid == uid &&
+        fileName.matches('foto_[A-Za-z0-9._-]+[.]jpg') &&
         validProfileImage();
       allow delete: if signedIn() && request.auth.uid == uid;
     }
@@ -53,8 +55,11 @@ service firebase.storage {
     // solo admin puede sobrescribir o borrar. Migrar a pistas/{uid}/{archivo}.
     match /pistas/{fileName} {
       allow read: if true;
-      allow create: if signedIn() && validCourtImage();
-      allow update, delete: if isAdmin();
+      allow create: if signedIn() &&
+        fileName.matches('[0-9]+[.]jpg') &&
+        validCourtImage();
+      allow update: if isAdmin() && validCourtImage();
+      allow delete: if isAdmin();
     }
 
     match /imagenesPistas/{allPaths=**} {

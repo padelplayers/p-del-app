@@ -1,7 +1,8 @@
 rules_version = '2';
 
-// BASE COMPATIBLE PROPUESTA. NO CONSTA COMO COPIA DE LAS REGLAS DESPLEGADAS.
-// Comparar con Firebase Console y probar en Emulator antes de publicar.
+// Reglas compatibles con la arquitectura cliente actual.
+// Los permisos temporales amplios estan documentados en
+// AUDITORIA_COMPATIBILIDAD_REGLAS_DEFINITIVAS.md.
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() {
@@ -16,11 +17,52 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
     }
 
+    function currentUserExists() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
+    }
+
+    function hasCompleteProfile() {
+      return currentUserExists() &&
+        currentUserData().get('perfilCompleto', false) == true;
+    }
+
     function isAdmin() {
-      return signedIn() && (
+      return currentUserExists() && (
         currentUserData().get('admin', false) == true ||
         currentUserData().get('rol', '') == 'admin'
       );
+    }
+
+    function clientPrivilegesValidOnCreate() {
+      return !request.resource.data.keys().hasAny(['rol', 'email']) &&
+        request.resource.data.get('admin', false) == false;
+    }
+
+    function validIncompleteUserCreate() {
+      return request.resource.data.get('perfilCompleto', false) == false &&
+        request.resource.data.keys().hasOnly([
+          'perfilCompleto',
+          'terminosAceptados',
+          'terminosAceptadosAt',
+          'registroIniciadoAt',
+          'eliminacionPendienteAuth',
+          'eliminacionPendienteAt'
+        ]);
+    }
+
+    function validCompleteUserCreate() {
+      return request.resource.data.get('perfilCompleto', false) == true &&
+        request.resource.data.get('nombre', '') is string &&
+        request.resource.data.get('nombre', '').size() > 0 &&
+        request.resource.data.get('sexo', '') is string &&
+        request.resource.data.get('sexo', '').size() > 0 &&
+        request.resource.data.get('nivel', '') is string &&
+        request.resource.data.get('nivel', '').size() > 0 &&
+        request.resource.data.get('mano', '') is string &&
+        request.resource.data.get('mano', '').size() > 0 &&
+        request.resource.data.get('posicion', '') is string &&
+        request.resource.data.get('posicion', '').size() > 0;
     }
 
     function privilegesUnchanged() {
@@ -28,11 +70,9 @@ service cloud.firestore {
         request.resource.data.get('rol', '') == resource.data.get('rol', '');
     }
 
-    function validPresenceUpdate() {
-      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-        'online',
-        'lastSeen'
-      ]) || request.resource.data.get('perfilCompleto', false) == true;
+    function validPresenceState() {
+      return request.resource.data.get('online', false) != true ||
+        request.resource.data.get('perfilCompleto', false) == true;
     }
 
     function compatibleCrossUserUpdate() {
@@ -77,14 +117,71 @@ service cloud.firestore {
     function validPrivateParticipants(data) {
       return data.get('participantes', []) is list &&
         data.get('participantes', []).size() == 2 &&
+        data.get('participantes', [])[0] != data.get('participantes', [])[1] &&
+        data.get('participantesMap', {}) is map &&
+        data.get('participantesMap', {}).size() == 2 &&
         request.auth.uid in data.get('participantes', []) &&
         data.get('participantesMap', {}).get(data.get('participantes', [])[0], false) == true &&
         data.get('participantesMap', {}).get(data.get('participantes', [])[1], false) == true;
     }
 
-    function messageAuthorIsRequester() {
-      return !request.resource.data.keys().hasAny(['u']) ||
-        request.resource.data.u == request.auth.uid;
+    function validUserMessage() {
+      return request.resource.data.get('u', '') == request.auth.uid &&
+        request.resource.data.get('type', '') == 'text' &&
+        request.resource.data.get('t', '') is string;
+    }
+
+    function validSystemMessage() {
+      return request.resource.data.get('u', '') == 'sistema' &&
+        request.resource.data.get('type', '') == 'system' &&
+        request.resource.data.get('system', false) == true &&
+        request.resource.data.get('t', '') is string;
+    }
+
+    function validGeneralChatCreate() {
+      return request.resource.data.keys().hasOnly([
+        'lastMessage',
+        'lastActivity',
+        'lastSender',
+        'lastSenderName',
+        'lastMessageType'
+      ]);
+    }
+
+    function validGeneralChatUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'lastMessage',
+        'lastActivity',
+        'lastSender',
+        'lastSenderName',
+        'lastMessageType'
+      ]);
+    }
+
+    function validPrivateChatFields() {
+      return request.resource.data.keys().hasOnly([
+        'participantes',
+        'participantesMap',
+        'actualizadoAt',
+        'lastMessage',
+        'lastActivity',
+        'lastSender',
+        'lastSenderName',
+        'lastMessageType'
+      ]);
+    }
+
+    function validPrivateChatUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'participantes',
+        'participantesMap',
+        'actualizadoAt',
+        'lastMessage',
+        'lastActivity',
+        'lastSender',
+        'lastSenderName',
+        'lastMessageType'
+      ]);
     }
 
     match /usuarios/{uid} {
@@ -92,13 +189,19 @@ service cloud.firestore {
       allow read: if signedIn();
 
       allow create: if isOwner(uid) &&
-        !request.resource.data.keys().hasAny(['admin', 'rol', 'online', 'lastSeen']) &&
-        request.resource.data.get('perfilCompleto', false) == false;
+        clientPrivilegesValidOnCreate() &&
+        (validIncompleteUserCreate() || validCompleteUserCreate());
 
       // Excepcion temporal: postpartido, ranking, seguimiento y borrado de perfil
       // actualizan campos concretos de otros usuarios desde el cliente.
-      allow update: if signedIn() && privilegesUnchanged() &&
-        ((isOwner(uid) && validPresenceUpdate()) || compatibleCrossUserUpdate());
+      allow update: if signedIn() && privilegesUnchanged() && (
+        (
+          isOwner(uid) &&
+          !request.resource.data.keys().hasAny(['email']) &&
+          validPresenceState()
+        ) ||
+        compatibleCrossUserUpdate()
+      );
 
       allow delete: if isOwner(uid);
 
@@ -107,11 +210,19 @@ service cloud.firestore {
       }
     }
 
+    match /estadisticas_globales/{documento} {
+      allow read: if signedIn() && documento == 'resumen';
+      allow create, update: if documento == 'resumen' && isAdmin();
+      allow delete: if false;
+    }
+
     match /pistas/{pistaId} {
       allow read: if signedIn();
 
       allow create: if signedIn() &&
         request.resource.data.get('creadaPor', '') == request.auth.uid &&
+        request.resource.data.get('imagen', '') is string &&
+        request.resource.data.get('imagen', '').size() > 0 &&
         (request.resource.data.get('verificada', false) == false || isAdmin());
 
       // El creador solo conserva la anonimizacion que usa eliminar perfil.
@@ -135,10 +246,12 @@ service cloud.firestore {
     match /partidas/{partidaId} {
       allow read: if signedIn();
 
-      allow create: if signedIn() &&
+      allow create: if hasCompleteProfile() &&
         request.resource.data.get('creadaPor', '') == request.auth.uid &&
         request.resource.data.get('creador', '') == request.auth.uid &&
-        request.auth.uid in request.resource.data.get('jugadores', []);
+        request.resource.data.get('jugadores', []) == [request.auth.uid] &&
+        request.resource.data.get('reservas', []).size() == 0 &&
+        request.resource.data.get('estado', '') == 'abierta';
 
       // Temporalmente amplio: unirse, salir, sustituciones, confirmacion,
       // postpartido y limpieza automatica siguen ejecutandose en cliente.
@@ -146,37 +259,44 @@ service cloud.firestore {
 
       match /mensajes/{mensajeId} {
         allow read: if isPartidaParticipant(partidaId);
-        allow create: if isPartidaParticipant(partidaId) && messageAuthorIsRequester();
+        allow create: if isPartidaParticipant(partidaId) && validUserMessage();
         allow delete: if isPartidaParticipant(partidaId);
         allow update: if false;
       }
     }
 
     match /chats/general {
-      allow read, create, update: if signedIn();
+      allow read: if hasCompleteProfile();
+      allow create: if hasCompleteProfile() && validGeneralChatCreate();
+      allow update: if hasCompleteProfile() && validGeneralChatUpdate();
       allow delete: if isAdmin();
 
       match /mensajes/{mensajeId} {
-        allow read: if signedIn();
-        allow create: if signedIn() && (
-          messageAuthorIsRequester() ||
-          request.resource.data.get('system', false) == true ||
-          request.resource.data.get('type', '') == 'system'
-        );
+        allow read: if hasCompleteProfile();
+        allow create: if hasCompleteProfile() &&
+          (validUserMessage() || validSystemMessage());
 
-        // Retencion, resolucion de mensajes Sistema y borrado de perfil
-        // necesitan modificar/borrar mensajes desde clientes participantes.
-        allow update, delete: if signedIn();
+        allow update: if hasCompleteProfile() &&
+          resource.data.get('system', false) == true &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            't', 'eventType', 'action', 'valid'
+          ]);
+
+        // TEMPORAL: retencion y eliminacion de perfil borran mensajes ajenos.
+        allow delete: if hasCompleteProfile();
       }
     }
 
     match /chatsPrivados/{chatId} {
       allow read: if isPrivateParticipant(resource.data);
 
-      allow create: if signedIn() && validPrivateParticipants(request.resource.data);
+      allow create: if hasCompleteProfile() &&
+        validPrivateParticipants(request.resource.data) &&
+        validPrivateChatFields();
 
       allow update: if isPrivateParticipant(resource.data) &&
         validPrivateParticipants(request.resource.data) &&
+        validPrivateChatUpdate() &&
         (
           request.resource.data.participantes == resource.data.get('participantes', []) ||
           resource.data.get('participantes', []).size() == 0
@@ -188,20 +308,23 @@ service cloud.firestore {
       match /mensajes/{mensajeId} {
         allow read: if isPrivateParticipant(privateChatData(chatId));
         allow create: if isPrivateParticipant(privateChatData(chatId)) &&
-          messageAuthorIsRequester();
+          validUserMessage();
         allow delete: if isPrivateParticipant(privateChatData(chatId));
         allow update: if false;
       }
     }
 
     match /historial_partidas/{partidaId} {
-      // Temporal: estadisticas admin, cierre de partida y anonimizacion de perfil.
+      // TEMPORAL: estadisticas admin, cierre y anonimizacion viven en cliente.
       allow read, create, update, delete: if signedIn();
     }
 
     match /notificaciones/{notificacionId} {
-      // Temporal: clientes crean avisos para terceros y la baja anonimiza avisos ajenos.
-      allow read, create, update, delete: if signedIn();
+      // TEMPORAL: avisos a terceros, agrupacion y limpieza viven en cliente.
+      allow read, update, delete: if signedIn();
+      allow create: if signedIn() &&
+        request.resource.data.get('uid', '') is string &&
+        request.resource.data.get('uid', '').size() > 0;
     }
 
     match /{document=**} {
