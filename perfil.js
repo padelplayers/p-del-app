@@ -2390,12 +2390,22 @@ async function eliminarPerfil() {
       return;
     }
 
-    if (error && error.code === "auth/requires-recent-login") {
-      alert("Vuelve a iniciar sesión para eliminar la cuenta");
-      await auth.signOut();
-    } else {
-      alert("No se pudo eliminar la cuenta. No se ha completado el borrado.");
-    }
+    if (
+  error &&
+  typeof error.message === "string" &&
+  (
+    error.message.includes("resultado o valoraciones iniciadas") ||
+    error.message.includes("fase de valoraciones") ||
+    error.message.includes("partida ya ha comenzado")
+  )
+) {
+  alert("No puedes eliminar tu cuenta porque participas en una partida pendiente de resultado, validación o valoraciones. Debes completar ese proceso antes de eliminar tu perfil.");
+} else if (error && error.code === "auth/requires-recent-login") {
+  alert("Vuelve a iniciar sesión para eliminar la cuenta");
+  await auth.signOut();
+} else {
+  alert("No se pudo eliminar la cuenta. No se ha completado el borrado.");
+}
 
   }
 }
