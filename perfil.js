@@ -233,7 +233,7 @@ function obtenerTextoCampoPerfil(data, rutas) {
     if (actual !== undefined && actual !== null && actual !== "") return String(actual);
   }
 
-  return "Sin datos todavia";
+  return "Sin datos todavía";
 }
 
 function obtenerEntradaMasHabitualPerfil(mapa) {
@@ -256,7 +256,7 @@ function obtenerEntradaMasHabitualPerfil(mapa) {
 }
 
 function formatearEntradaHabitualPerfil(entrada, singular, plural, campoNombre, fallbackIdCampo) {
-  if (!entrada || !entrada.veces) return "Sin datos todavia";
+  if (!entrada || !entrada.veces) return "Sin datos todavía";
 
   const nombre = entrada[campoNombre || "nombre"] || entrada[fallbackIdCampo || "uid"] || entrada.id || "Sin datos";
   const etiqueta = entrada.veces === 1 ? singular : plural;
@@ -289,7 +289,7 @@ function obtenerMejorCompaneroPerfil(mapa) {
 }
 
 function formatearMejorCompaneroPerfil(entrada) {
-  if (!entrada || entrada.victorias <= 0) return "Sin victorias con compañero todavía";
+  if (!entrada || entrada.victorias <= 0) return "Sin victorias con este compañero todavía";
 
   const nombre = entrada.nombre || entrada.uid || entrada.id || "Sin datos";
   const etiqueta = entrada.victorias === 1 ? "victoria juntos" : "victorias juntos";
@@ -308,7 +308,7 @@ function renderizarStatsAvanzadasPerfil(data) {
   const derrotasRanking = rankingPartidos > 0 ? Math.max(0, rankingPartidos - victoriasRanking) : 0;
   const porcentajeVictoria = rankingPartidos > 0
     ? Math.round((victoriasRanking / rankingPartidos) * 100) + "%"
-    : "Sin datos todavia";
+    : "Sin datos todavía";
   const partidasAmistosas = partidosTotales > 0
     ? Math.max(0, partidosTotales - rankingPartidos)
     : 0;
@@ -321,10 +321,10 @@ function renderizarStatsAvanzadasPerfil(data) {
   const pistaHabitual = obtenerEntradaMasHabitualPerfil(clasificacion.pistasJugadasMap);
 
   contenedor.replaceChildren(
-    crearDatoStatsAvanzadasPerfil("Companero mas habitual", formatearEntradaHabitualPerfil(companeroHabitual, "partida", "partidas", "nombre", "uid")),
+    crearDatoStatsAvanzadasPerfil("Compañero más habitual", formatearEntradaHabitualPerfil(companeroHabitual, "partida", "partidas", "nombre", "uid")),
     crearDatoStatsAvanzadasPerfil("Mejor compañero", formatearMejorCompaneroPerfil(mejorCompanero)),
-    crearDatoStatsAvanzadasPerfil("Rival mas habitual", formatearEntradaHabitualPerfil(rivalHabitual, "partido", "partidos", "nombre", "uid")),
-    crearDatoStatsAvanzadasPerfil("Pista mas jugada", formatearEntradaHabitualPerfil(pistaHabitual, "partida", "partidas", "nombre", "pistaId")),
+    crearDatoStatsAvanzadasPerfil("Rival más habitual", formatearEntradaHabitualPerfil(rivalHabitual, "partido", "partidos", "nombre", "uid")),
+    crearDatoStatsAvanzadasPerfil("Pista más jugada", formatearEntradaHabitualPerfil(pistaHabitual, "partida", "partidas", "nombre", "pistaId")),
     crearDatoStatsAvanzadasPerfil("Partidas ranking", String(rankingPartidos)),
     crearDatoStatsAvanzadasPerfil("Partidas amistosas", String(partidasAmistosas)),
     crearDatoStatsAvanzadasPerfil("Victorias ranking", String(victoriasRanking)),
