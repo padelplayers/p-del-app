@@ -361,7 +361,6 @@ let unsubscribePistas = null;
 let presenciaInterval = null;
 let presenciaUidActual = null;
 let presenciaEventosRegistrados = false;
-let presenciaUidPerfilValidado = null;
 let revisionCancelaciones5hSesionUid = null;
 
 const PRESENCIA_HEARTBEAT_MS = 5 * 60 * 1000;
@@ -428,28 +427,18 @@ function normalizarTexto(texto){
     .trim();
 }
 
-async function validarPerfilParaPresencia(uid, datosConocidos) {
-  if (!uid) return false;
-  if (presenciaUidPerfilValidado === uid) return true;
+async function actualizarPresenciaUsuario(uid, online) {
+  const user = auth.currentUser;
+  if (!uid || !user || user.uid !== uid) return false;
 
-  let datos = datosConocidos || null;
-  if (!datos) {
-    const doc = await db.collection("usuarios").doc(uid).get();
-    if (!doc.exists) return false;
-    datos = doc.data() || {};
-  }
+  const userRef = db.collection("usuarios").doc(uid);
+  const userDoc = await userRef.get();
+  if (!userDoc.exists) return false;
 
-  if (!perfilUsuarioCompleto(datos)) return false;
-  presenciaUidPerfilValidado = uid;
-  return true;
-}
+  const datos = userDoc.data() || {};
+  if (datos.perfilCompleto !== true) return false;
 
-async function actualizarPresenciaUsuario(uid, online, datosConocidos) {
-  if (!uid) return false;
-  const perfilValido = await validarPerfilParaPresencia(uid, datosConocidos);
-  if (!perfilValido) return false;
-
-  await db.collection("usuarios").doc(uid).update({
+  await userRef.update({
     online: online,
     lastSeen: firebase.firestore.FieldValue.serverTimestamp()
   });
@@ -463,7 +452,9 @@ function registrarEventosPresenciaAvanzada() {
   window.addEventListener("pagehide", function() {
     const user = auth.currentUser;
     if (user && presenciaUidActual === user.uid) {
-      detenerPresenciaAvanzada(user.uid, true).catch(function() {});
+      detenerPresenciaAvanzada(user.uid, true).catch(function(error) {
+        console.warn("[PRESENCIA] No se pudo marcar offline al salir:", error && error.code ? error.code : error.message);
+      });
     }
   });
 
@@ -472,9 +463,13 @@ function registrarEventosPresenciaAvanzada() {
     if (!user) return;
 
     if (document.visibilityState === "visible") {
-      iniciarPresenciaAvanzada(user.uid);
+      iniciarPresenciaAvanzada(user.uid).catch(function(error) {
+        console.warn("[PRESENCIA] No se pudo reactivar:", error && error.code ? error.code : error.message);
+      });
     } else if (presenciaUidActual === user.uid) {
-      detenerPresenciaAvanzada(user.uid, true).catch(function() {});
+      detenerPresenciaAvanzada(user.uid, true).catch(function(error) {
+        console.warn("[PRESENCIA] No se pudo marcar offline al ocultar:", error && error.code ? error.code : error.message);
+      });
     }
   });
 }
@@ -495,13 +490,21 @@ function detenerPresenciaAvanzada(uid, marcarOffline) {
   return Promise.resolve();
 }
 
-function iniciarPresenciaAvanzada(uid, datosConocidos) {
-  if (!uid) return Promise.resolve();
+async function iniciarPresenciaAvanzada(uid) {
+  const user = auth.currentUser;
+  if (!uid || !user || user.uid !== uid) return false;
 
   registrarEventosPresenciaAvanzada();
-  presenciaUidActual = uid;
-
   if (presenciaInterval) clearInterval(presenciaInterval);
+
+  const presenciaActivada = await actualizarPresenciaUsuario(uid, true);
+  if (!presenciaActivada) {
+    presenciaInterval = null;
+    presenciaUidActual = null;
+    return false;
+  }
+
+  presenciaUidActual = uid;
 
   presenciaInterval = setInterval(function() {
     const user = auth.currentUser;
@@ -510,12 +513,14 @@ function iniciarPresenciaAvanzada(uid, datosConocidos) {
       return;
     }
 
-    actualizarPresenciaUsuario(uid, true).catch(function(error) {
-      console.warn("No se pudo renovar presencia:", error.message);
+    actualizarPresenciaUsuario(uid, true).then(function(actualizada) {
+      if (!actualizada) detenerPresenciaAvanzada(uid, false);
+    }).catch(function(error) {
+      console.warn("[PRESENCIA] No se pudo renovar:", error && error.code ? error.code : error.message);
     });
   }, PRESENCIA_HEARTBEAT_MS);
 
-  return actualizarPresenciaUsuario(uid, true, datosConocidos);
+  return true;
 }
 
 function actualizarBotonEstadisticasAdmin() {
@@ -824,9 +829,9 @@ auth.onAuthStateChanged(async user => {
       actualizarBotonEstadisticasAdmin();
 
       try {
-        await iniciarPresenciaAvanzada(user.uid, data);
+        await iniciarPresenciaAvanzada(user.uid);
       } catch (error) {
-        throw error;
+        console.error("[PRESENCIA] Fallo al activar presencia:", error && error.code ? error.code : error.message);
       }
 
       document.getElementById("saludo").innerText =
@@ -865,7 +870,6 @@ auth.onAuthStateChanged(async user => {
 
   esAdmin = false;
   window.perfilSesionCompleto = false;
-  presenciaUidPerfilValidado = null;
   actualizarBotonEstadisticasAdmin();
   revisionCancelaciones5hSesionUid = null;
   detenerPresenciaAvanzada(null, false);

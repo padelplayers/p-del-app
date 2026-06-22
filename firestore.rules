@@ -28,6 +28,13 @@ service cloud.firestore {
         request.resource.data.get('rol', '') == resource.data.get('rol', '');
     }
 
+    function validPresenceUpdate() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+        'online',
+        'lastSeen'
+      ]) || request.resource.data.get('perfilCompleto', false) == true;
+    }
+
     function compatibleCrossUserUpdate() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
         'seguidores',
@@ -85,12 +92,13 @@ service cloud.firestore {
       allow read: if signedIn();
 
       allow create: if isOwner(uid) &&
-        !request.resource.data.keys().hasAny(['admin', 'rol']);
+        !request.resource.data.keys().hasAny(['admin', 'rol', 'online', 'lastSeen']) &&
+        request.resource.data.get('perfilCompleto', false) == false;
 
       // Excepcion temporal: postpartido, ranking, seguimiento y borrado de perfil
       // actualizan campos concretos de otros usuarios desde el cliente.
       allow update: if signedIn() && privilegesUnchanged() &&
-        (isOwner(uid) || compatibleCrossUserUpdate());
+        ((isOwner(uid) && validPresenceUpdate()) || compatibleCrossUserUpdate());
 
       allow delete: if isOwner(uid);
 

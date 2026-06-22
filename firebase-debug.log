@@ -33,3 +33,45 @@
 [debug] [2026-06-21T19:10:25.250Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
 [error] 
 [error] Error: Cannot run login in non-interactive mode. See login:ci to generate a token for use in non-interactive environments.
+[debug] [2026-06-22T05:09:05.827Z] ----------------------------------------------------------------------
+[debug] [2026-06-22T05:09:05.836Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\USER\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\bin\firebase.js deploy --dry-run --only firestore:rules,storage --project demo-padel-rules-audit --non-interactive
+[debug] [2026-06-22T05:09:05.837Z] CLI Version:   15.22.0
+[debug] [2026-06-22T05:09:05.837Z] Platform:      win32
+[debug] [2026-06-22T05:09:05.838Z] Node Version:  v24.15.0
+[debug] [2026-06-22T05:09:05.838Z] Detected Agent: codex_cli
+[debug] [2026-06-22T05:09:05.838Z] Time:          Mon Jun 22 2026 07:09:05 GMT+0200 (hora de verano de Europa central)
+[debug] [2026-06-22T05:09:05.839Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-06-22T05:09:05.844Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-06-22T05:09:16.297Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-06-22T05:09:16.422Z] Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+    at GoogleAuth.getApplicationDefaultAsync (C:\Users\USER\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\google-auth-library\build\src\auth\googleauth.js:287:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async GoogleAuth._GoogleAuth_determineClient (C:\Users\USER\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\google-auth-library\build\src\auth\googleauth.js:834:32)
+    at async GoogleAuth.getClient (C:\Users\USER\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\google-auth-library\build\src\auth\googleauth.js:698:20)
+    at async GoogleAuth.getAccessToken (C:\Users\USER\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\google-auth-library\build\src\auth\googleauth.js:722:24)
+    at async autoAuth (C:\Users\USER\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\requireAuth.js:28:19)
+    at async requireAuth (C:\Users\USER\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\requireAuth.js:90:20)
+    at async requirePermissions (C:\Users\USER\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\requirePermissions.js:17:5)
+    at async C:\Users\USER\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\command.js:278:17
+[error] 
+[error] Error: Failed to authenticate, have you run firebase login?
+[debug] [2026-06-22T05:09:39.605Z] ----------------------------------------------------------------------
+[debug] [2026-06-22T05:09:39.607Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\USER\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\bin\firebase.js emulators:exec --only firestore --project demo-padel-rules-audit node --check app.js
+[debug] [2026-06-22T05:09:39.608Z] CLI Version:   15.22.0
+[debug] [2026-06-22T05:09:39.608Z] Platform:      win32
+[debug] [2026-06-22T05:09:39.608Z] Node Version:  v24.15.0
+[debug] [2026-06-22T05:09:39.608Z] Detected Agent: codex_cli
+[debug] [2026-06-22T05:09:39.608Z] Time:          Mon Jun 22 2026 07:09:39 GMT+0200 (hora de verano de Europa central)
+[debug] [2026-06-22T05:09:39.608Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-06-22T05:09:39.610Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-06-22T05:09:41.641Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase SQL Connect VSCode extension, this is expected and not an issue.
+[info] i  emulators: Shutting down emulators. {"metadata":{"emulator":{"name":"hub"},"message":"Shutting down emulators."}}
+[debug] [2026-06-22T05:09:41.645Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase SQL Connect VSCode extension, this is expected and not an issue.
+[debug] [2026-06-22T05:09:41.649Z] Error: spawn java ENOENT
+    at ChildProcess._handle.onexit (node:internal/child_process:287:19)
+    at onErrorNT (node:internal/child_process:508:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+[error] 
+[error] Error: Could not spawn `java -version`. Please make sure Java is installed and on your system PATH.
