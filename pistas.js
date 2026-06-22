@@ -79,6 +79,12 @@ function resetScrollPistas() {
 if (btnGuardarPista) {
   btnGuardarPista.onclick = async () => {
     try {
+      const user = auth.currentUser;
+      if (!user) {
+        alert("Debes iniciar sesión para crear una pista.");
+        return;
+      }
+
       const nombre = document.getElementById("nombrePista").value;
       const localidad = document.getElementById("localidadPista").value;
       const tipo = document.getElementById("tipoPista").value;
@@ -183,11 +189,11 @@ if (btnGuardarPista) {
         reserva: reserva,
         nota: nota,
         formaPago: formaPago,
-        creadaPor: auth.currentUser.uid
+        creadaPor: user.uid
       };
 
       if (archivoImagenPista) {
-        const ruta = "pistas/" + Date.now() + ".jpg";
+        const ruta = "pistas/" + user.uid + "/pista_" + Date.now() + ".jpg";
         datos.imagen = await subirImagen(
           ruta,
           archivoImagenPista,
@@ -204,7 +210,7 @@ if (btnGuardarPista) {
         await borrarImagenStoragePistaSiProcede(datos.imagen || "");
         throw error;
       }
-      await incrementarPistasCreadasLogro(auth.currentUser.uid);
+      await incrementarPistasCreadasLogro(user.uid);
 
       limpiarFormularioPistaNueva();
       window.modoCrearPista = false;
@@ -288,6 +294,24 @@ function esPistaPrivadaComunidad(data) {
   return tipo === "privada" || tipo === "privada comunidad";
 }
 
+function pistaPrivadaPerteneceAUsuario(data, uid) {
+  return !esPistaPrivadaComunidad(data) || (!!uid && data && data.creadaPor === uid);
+}
+
+function esPropietarioPistaPrivada(data, uid) {
+  return !!uid && !!data && data.tipo === "privada" && data.creadaPor === uid;
+}
+
+async function usuarioEsAdminPistas(user) {
+  if (!user) return false;
+
+  const docUser = await db.collection("usuarios").doc(user.uid).get();
+  if (!docUser.exists) return false;
+
+  const data = docUser.data() || {};
+  return data.admin === true || data.rol === "admin";
+}
+
 function limpiarListenerPistas() {
   if (typeof window.unsubscribePistas === "function") {
     window.unsubscribePistas();
@@ -302,7 +326,10 @@ async function cargarPistas() {
   const user = auth.currentUser;
   if (user) {
     const docUser = await db.collection("usuarios").doc(user.uid).get();
-    if (docUser.exists && docUser.data().admin === true) esAdmin = true;
+    if (docUser.exists) {
+      const dataUsuario = docUser.data() || {};
+      esAdmin = dataUsuario.admin === true || dataUsuario.rol === "admin";
+    }
   }
 
   const lista = document.getElementById("listaPistas");
@@ -355,6 +382,13 @@ async function cargarPistas() {
 
       docs.forEach(doc => {
         const data = doc.data();
+
+        if (
+          window.modoSeleccionPista &&
+          !pistaPrivadaPerteneceAUsuario(data, user && user.uid)
+        ) {
+          return;
+        }
 
         if (!modoPistaUnica && window.filtrosActivos) {
           const texto = document.getElementById("buscarTexto").value.toLowerCase();
@@ -462,7 +496,8 @@ async function cargarPistas() {
           info.appendChild(mapaWrap);
         }
 
-        if (esAdmin) {
+        const propietarioPrivada = esPropietarioPistaPrivada(data, user && user.uid);
+        if (esAdmin || propietarioPrivada) {
           const adminWrap = document.createElement("div");
           adminWrap.style.marginTop = "10px";
           adminWrap.appendChild(crearBotonPista("Editar", "btnEditar", function() {
@@ -472,7 +507,7 @@ async function cargarPistas() {
             if (typeof window.eliminarPista === "function") window.eliminarPista(doc.id);
           }));
 
-          if (!data.verificada) {
+          if (esAdmin && !data.verificada) {
             adminWrap.appendChild(crearBotonPista("Verificar", "btnVerificar", function() {
               verificarPista(doc.id);
             }));
@@ -526,7 +561,9 @@ window.verificarPista = async function(id) {
   if (!user) return;
 
   const docUser = await db.collection("usuarios").doc(user.uid).get();
-  if (!docUser.exists || docUser.data().admin !== true) return;
+  if (!docUser.exists) return;
+  const dataUsuario = docUser.data() || {};
+  if (dataUsuario.admin !== true && dataUsuario.rol !== "admin") return;
 
   await db.collection("pistas").doc(id).update({
     verificada: true,
@@ -540,19 +577,28 @@ window.verificarPista = async function(id) {
 window.eliminarPista = async function(id) {
   const user = auth.currentUser;
   if (!user || !id) return;
-  if (!confirm("¿Eliminar esta pista?")) return;
-
-  const docUser = await db.collection("usuarios").doc(user.uid).get();
-  if (!docUser.exists || docUser.data().admin !== true) return;
 
   const ref = db.collection("pistas").doc(id);
-  const doc = await ref.get();
-  const data = doc.exists ? (doc.data() || {}) : {};
+  const resultados = await Promise.all([ref.get(), usuarioEsAdminPistas(user)]);
+  const doc = resultados[0];
+  const admin = resultados[1];
+  if (!doc.exists) return;
+
+  const data = doc.data() || {};
+  if (!admin && !esPropietarioPistaPrivada(data, user.uid)) {
+    alert("Solo el creador puede eliminar esta pista privada.");
+    return;
+  }
+  if (!confirm("¿Eliminar esta pista?")) return;
+
   const imagenesActuales = obtenerImagenesStoragePista(data);
 
   await ref.delete();
   for (let i = 0; i < imagenesActuales.length; i++) {
-    await borrarImagenStoragePistaSiProcede(imagenesActuales[i]);
+    const borrada = await borrarImagenStoragePistaSiProcede(imagenesActuales[i]);
+    if (!borrada) {
+      console.warn("La pista se eliminó, pero su imagen no se pudo borrar de Storage.");
+    }
   }
   cargarPistas();
 };
@@ -563,8 +609,17 @@ window.abrirMapa = function(lat, lng) {
 };
 
 window.abrirEditarPista = async function(id) {
+  const user = auth.currentUser;
+  if (!user || !id) return;
+
   const doc = await db.collection("pistas").doc(id).get();
+  if (!doc.exists) return;
   const data = doc.data();
+  const admin = await usuarioEsAdminPistas(user);
+  if (!admin && !esPropietarioPistaPrivada(data, user.uid)) {
+    alert("Solo el creador puede editar esta pista privada.");
+    return;
+  }
 
   document.getElementById("editarNombrePista").value = data.nombre || "";
   document.getElementById("editarDireccionPista").value = data.direccion || "";
@@ -594,6 +649,9 @@ const btnActualizar = document.getElementById("btnActualizarPista");
 
 if (btnActualizar) {
   btnActualizar.onclick = async () => {
+    const user = auth.currentUser;
+    if (!user || !window.pistaEditando) return;
+
     const nota = document.getElementById("editarNotaPista").value.trim();
 
     if (nota.length > 120) {
@@ -603,7 +661,13 @@ if (btnActualizar) {
 
     const pistaRef = db.collection("pistas").doc(window.pistaEditando);
     const docAnterior = await pistaRef.get();
+    if (!docAnterior.exists) return;
     const datosAnteriores = docAnterior.exists ? (docAnterior.data() || {}) : {};
+    const admin = await usuarioEsAdminPistas(user);
+    if (!admin && !esPropietarioPistaPrivada(datosAnteriores, user.uid)) {
+      alert("Solo el creador puede editar esta pista privada.");
+      return;
+    }
     const inputFotoEditar = document.getElementById("editarInputFotoPista");
     const archivoImagen = inputFotoEditar && inputFotoEditar.files.length > 0 ? inputFotoEditar.files[0] : null;
     const datosUpdate = {
@@ -620,12 +684,18 @@ if (btnActualizar) {
       lng: document.getElementById("editarLng").value,
       reserva: document.getElementById("editarReserva").value,
       nota: nota,
-      formaPago: document.getElementById("formaPagoEditar").value,
-      verificada: true
+      formaPago: document.getElementById("formaPagoEditar").value
     };
 
+    if (!admin && datosUpdate.tipo !== "privada") {
+      alert("Una pista privada debe seguir siendo privada.");
+      return;
+    }
+
+    if (admin) datosUpdate.verificada = true;
+
     if (archivoImagen) {
-      const ruta = "pistas/" + Date.now() + ".jpg";
+      const ruta = "pistas/" + user.uid + "/pista_" + Date.now() + ".jpg";
       try {
         datosUpdate.imagen = await subirImagen(ruta, archivoImagen, "pista-edicion");
         datosUpdate.imagenUrl = firebase.firestore.FieldValue.delete();

@@ -1074,7 +1074,8 @@ async function resolverPartidasActivasAntesDeEliminarPerfil(uid) {
       confirmarCreador: false,
       refrescar: false,
       silencioso: true,
-      propagarError: true
+      propagarError: true,
+      limpiezaBajaPerfil: true
     });
   }
 }
@@ -1374,10 +1375,27 @@ async function anonimizarPistasCreadasUsuario(uid) {
   let batch = db.batch();
   let contador = 0;
   const commits = [];
+  const imagenesPistasPrivadas = [];
 
   Object.keys(pistas).forEach(function(id) {
     const doc = pistas[id];
     const data = doc.data() || {};
+
+    if (data.tipo === "privada" && data.creadaPor === uid) {
+      [data.imagen, data.imagenUrl].filter(Boolean).forEach(function(url) {
+        if (imagenesPistasPrivadas.indexOf(url) === -1) imagenesPistasPrivadas.push(url);
+      });
+      batch.delete(doc.ref);
+      contador++;
+
+      if (contador >= 450) {
+        commits.push(batch.commit());
+        batch = db.batch();
+        contador = 0;
+      }
+      return;
+    }
+
     const update = {};
 
     camposUidCreador.forEach(function(campo) {
@@ -1404,6 +1422,19 @@ async function anonimizarPistasCreadasUsuario(uid) {
 
   if (contador > 0) commits.push(batch.commit());
   await Promise.all(commits);
+
+  for (let i = 0; i < imagenesPistasPrivadas.length; i++) {
+    let borrada = false;
+    if (typeof window.borrarImagenStorageSiProcede === "function") {
+      borrada = await window.borrarImagenStorageSiProcede(
+        imagenesPistasPrivadas[i],
+        ["pistas/", "imagenesPistas/"]
+      );
+    }
+    if (!borrada) {
+      console.warn("La pista privada se eliminó, pero su imagen no se pudo borrar de Storage.");
+    }
+  }
 }
 
 function generarUidAnonimoUsuarioEliminado(uid) {

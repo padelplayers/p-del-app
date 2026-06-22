@@ -454,6 +454,119 @@ function obtenerCaducidadCambioCreadorPartida(p) {
   return new Date(fechaPartida.getTime() - 8 * 60 * 60 * 1000);
 }
 
+const AVISO_PARTIDA_PROXIMA_MS = 2 * 60 * 60 * 1000;
+const REVISION_AVISO_PARTIDA_PROXIMA_MS = 60 * 1000;
+
+function esPistaPrivadaParaPartida(pista) {
+  const tipo = String((pista && pista.tipo) || "").toLowerCase().trim();
+  return tipo === "privada" || tipo === "privada comunidad";
+}
+
+function partidaYaIniciadaOPostPartido(p, ahora) {
+  if (!p) return true;
+
+  const estado = String(p.estado || "").toLowerCase().trim();
+  if (
+    estado === "finalizada" ||
+    estado === "cerrada" ||
+    estado === "cancelada" ||
+    estado === "cancelada_por_no_presentado" ||
+    estado === "historial"
+  ) {
+    return true;
+  }
+
+  if (p.resultado || (p.valoraciones && Object.keys(p.valoraciones).length > 0)) {
+    return true;
+  }
+
+  const fechaPartida = obtenerFechaHoraPartida(p);
+  return !fechaPartida || fechaPartida <= (ahora || new Date());
+}
+
+function partidaAdmiteAvisoProxima(p, ahora) {
+  if (!p || p.estado !== "confirmada" || p.avisoPartidaProximaGeneradoAt) return false;
+
+  const fechaPartida = obtenerFechaHoraPartida(p);
+  if (!fechaPartida) return false;
+
+  const diferencia = fechaPartida.getTime() - (ahora || new Date()).getTime();
+  return diferencia > 0 && diferencia <= AVISO_PARTIDA_PROXIMA_MS;
+}
+
+function generarAvisoPartidaProxima(partidaId) {
+  const ref = db.collection("partidas").doc(partidaId);
+
+  return db.runTransaction(function(transaction) {
+    return transaction.get(ref).then(function(doc) {
+      if (!doc.exists) return null;
+
+      const p = doc.data() || {};
+      if (!partidaAdmiteAvisoProxima(p)) return null;
+
+      const destinatarios = arrayUnicoPartida(
+        (p.jugadores || []).concat(p.reservas || [])
+      );
+      if (destinatarios.length === 0) return null;
+
+      transaction.update(ref, {
+        avisoPartidaProximaGeneradoAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      return {
+        destinatarios: destinatarios,
+        partida: p
+      };
+    });
+  }).then(function(aviso) {
+    if (!aviso) return false;
+
+    return notificarPartida(aviso.destinatarios, {
+      tipo: "partida_proxima",
+      titulo: "Partida próxima",
+      mensaje: "Tu partida empieza en menos de 2 horas: " + textoFechaAvisoPartida(aviso.partida) + ".",
+      partidaId: partidaId,
+      accion: "abrir_partida",
+      dedupeKey: "partida_proxima_2h_" + partidaId,
+      prioridad: "alta",
+      caducaAt: obtenerFechaHoraPartida(aviso.partida)
+    }).then(function() {
+      return true;
+    });
+  });
+}
+
+function revisarAvisosPartidasProximas() {
+  if (!firebase.auth().currentUser) return Promise.resolve([]);
+
+  return db.collection("partidas").where("estado", "==", "confirmada").get()
+    .then(function(snapshot) {
+      const tareas = [];
+      snapshot.forEach(function(doc) {
+        if (partidaAdmiteAvisoProxima(doc.data() || {})) {
+          tareas.push(generarAvisoPartidaProxima(doc.id));
+        }
+      });
+      return Promise.all(tareas);
+    })
+    .catch(function(error) {
+      console.warn("No se pudieron revisar los avisos de partidas próximas:", error.message);
+      return [];
+    });
+}
+
+function asegurarRevisionAvisosPartidasProximas() {
+  if (window.revisionAvisosPartidasProximasInterval) return;
+
+  revisarAvisosPartidasProximas();
+  window.revisionAvisosPartidasProximasInterval = setInterval(function() {
+    revisarAvisosPartidasProximas();
+  }, REVISION_AVISO_PARTIDA_PROXIMA_MS);
+}
+
+window.revisarAvisosPartidasProximas = revisarAvisosPartidasProximas;
+window.asegurarRevisionAvisosPartidasProximas = asegurarRevisionAvisosPartidasProximas;
+
 function caducidadNotificacionPartida(dias) {
   return new Date(Date.now() + (dias || 30) * 24 * 60 * 60 * 1000);
 }
@@ -1305,6 +1418,26 @@ async function crearPartida() {
   }
 
   const user = firebase.auth().currentUser;
+
+  if (!user) return;
+
+  try {
+    const pistaDoc = await db.collection("pistas").doc(pistaId).get();
+    if (!pistaDoc.exists) {
+      alert("La pista seleccionada ya no existe.");
+      return;
+    }
+
+    const pista = pistaDoc.data() || {};
+    if (esPistaPrivadaParaPartida(pista) && pista.creadaPor !== user.uid) {
+      alert("Esta pista privada solo puede ser usada por su creador.");
+      return;
+    }
+  } catch (error) {
+    console.error("No se pudo validar la pista seleccionada:", error);
+    alert("No se pudo validar la pista seleccionada.");
+    return;
+  }
 
   db.collection("usuarios").doc(user.uid).get().then(function(docUser) {
     if (!docUser.exists) return;
@@ -2410,12 +2543,8 @@ function cargarPartidas() {
 
       const uid = firebase.auth().currentUser.uid;
       const puedeSalirPartida =
-        p.estado === "abierta" ||
-        (
-          p.estado === "confirmada" &&
-          !p.resultado &&
-          (!p.valoraciones || Object.keys(p.valoraciones).length === 0)
-        );
+        !partidaYaIniciadaOPostPartido(p, ahoraGlobal) &&
+        (p.estado === "abierta" || p.estado === "confirmada");
       const mostrarSalir =
         puedeSalirPartida &&
         p.cambioCreadorPendiente !== true &&
@@ -3080,12 +3209,19 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
   const refrescar = opciones.refrescar !== false;
   const silencioso = opciones.silencioso === true;
   const propagarError = opciones.propagarError === true;
+  const limpiezaBajaPerfil = opciones.limpiezaBajaPerfil === true;
   let penalizacionAbandono = null;
 
   return ref.get().then(function(docInicial) {
     if (!docInicial.exists) return;
 
     const pInicial = docInicial.data() || {};
+    if (!limpiezaBajaPerfil && partidaYaIniciadaOPostPartido(pInicial)) {
+      const mensaje = "La partida ya ha comenzado o está en fase de valoraciones. Ya no puedes salir.";
+      if (!silencioso) alert(mensaje);
+      if (propagarError) throw new Error(mensaje);
+      return;
+    }
     if (partidaAlcanzoLimiteCancelacionClub(pInicial)) {
       throw crearErrorLimiteCancelacionClubPartida();
     }
@@ -3202,6 +3338,9 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
         if (!doc.exists) return false;
 
         const p = doc.data() || {};
+        if (!limpiezaBajaPerfil && partidaYaIniciadaOPostPartido(p)) {
+          throw new Error("La partida ya ha comenzado o está en fase de valoraciones. Ya no puedes salir.");
+        }
         if (partidaAlcanzoLimiteCancelacionClub(p)) {
           throw crearErrorLimiteCancelacionClubPartida();
         }
@@ -4062,6 +4201,10 @@ async function salirDePartida(partidaId) {
     const doc = await ref.get();
     if (!doc.exists) return;
     const p = doc.data() || {};
+    if (partidaYaIniciadaOPostPartido(p)) {
+      alert("La partida ya ha comenzado o está en fase de valoraciones. Ya no puedes salir.");
+      return;
+    }
     const esTitularNoCreador =
       p.estado === "confirmada" &&
       p.creadaPor !== uid &&

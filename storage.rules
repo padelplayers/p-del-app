@@ -1,7 +1,6 @@
 rules_version = '2';
 
-// Reglas compatibles con rutas actuales. pistas/{timestamp}.jpg no contiene
-// UID y no permite demostrar quien creo el objeto.
+// Las nuevas imagenes de pista incluyen el UID propietario en la ruta.
 service firebase.storage {
   match /b/{bucket}/o {
     function signedIn() {
@@ -51,20 +50,25 @@ service firebase.storage {
         (fileName == request.auth.uid || fileName.matches(request.auth.uid + '[.].+'));
     }
 
-    // La ruta actual no incluye UID. Se permite crear a un autenticado, pero
-    // solo admin puede sobrescribir o borrar. Migrar a pistas/{uid}/{archivo}.
+    match /pistas/{uid}/{fileName} {
+      allow read: if true;
+      allow create, update: if signedIn() && request.auth.uid == uid &&
+        fileName.matches('pista_[0-9]+[.]jpg') &&
+        validCourtImage();
+      allow update: if isAdmin() && validCourtImage();
+      allow delete: if (signedIn() && request.auth.uid == uid) || isAdmin();
+    }
+
+    // Compatibilidad legacy: lectura publica y mantenimiento exclusivo de admin.
     match /pistas/{fileName} {
       allow read: if true;
-      allow create: if signedIn() &&
-        fileName.matches('[0-9]+[.]jpg') &&
-        validCourtImage();
       allow update: if isAdmin() && validCourtImage();
       allow delete: if isAdmin();
     }
 
     match /imagenesPistas/{allPaths=**} {
       allow read: if true;
-      allow create, update: if isAdmin() && validCourtImage();
+      allow update: if isAdmin() && validCourtImage();
       allow delete: if isAdmin();
     }
 

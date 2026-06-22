@@ -851,6 +851,10 @@ auth.onAuthStateChanged(async user => {
         window.escucharNotificaciones(user.uid);
       }
 
+      if (typeof window.asegurarRevisionAvisosPartidasProximas === "function") {
+        window.asegurarRevisionAvisosPartidasProximas();
+      }
+
       if (typeof window.mostrarAvisoPwaSiProcede === "function") {
         window.mostrarAvisoPwaSiProcede();
       }

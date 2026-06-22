@@ -879,14 +879,15 @@ function registrarNoPresentadoPostPartido(idPartida, infractorUid, estadoInciden
     transaction.update(partidaRef, updatePartida);
     if (updateUsuario) transaction.update(usuarioRef, updateUsuario);
 
-    return {
-      yaRegistrada: false,
-      incidencia: incidencia,
-      estadoIncidencia: estadoIncidencia,
-      infractorUid: infractorUid,
-      participantesComputables: participantesComputables,
-      penalizacionAplicada: !!updateUsuario
-    };
+      return {
+        yaRegistrada: false,
+        incidencia: incidencia,
+        estadoIncidencia: estadoIncidencia,
+        infractorUid: infractorUid,
+        participantesComputables: participantesComputables,
+        eraAmistosa: esPartidaAmistosaPostPartido(p),
+        penalizacionAplicada: !!updateUsuario
+      };
   }).then(function(resultado) {
     if (!resultado || resultado.yaRegistrada) return resultado;
 
@@ -922,7 +923,11 @@ function registrarNoPresentadoPostPartido(idPartida, infractorUid, estadoInciden
         tipo: "incidencia_no_presentado_participante",
         titulo: "Incidencia de no presentado",
         mensaje: resultado.estadoIncidencia === "jugada_igualmente"
-          ? "Se ha registrado un no presentado. La partida pasa a amistosa y solo valoran los participantes reales."
+          ? (
+              resultado.eraAmistosa
+                ? "Se ha registrado un no presentado. Solo valoran los participantes reales."
+                : "Se ha registrado un no presentado. La partida pasa a amistosa y solo valoran los participantes reales."
+            )
           : "Se ha registrado un no presentado. La partida queda cerrada sin resultado ni valoraciones.",
         partidaId: idPartida,
         accion: resultado.estadoIncidencia === "jugada_igualmente" ? "valorar_jugadores" : null,
@@ -1489,7 +1494,12 @@ function resolverGateAsistenciaPostPartido(id, modo, continuar) {
       }
 
       if (incidencia.estado === "jugada_igualmente" && modo === "resultado") {
-        alert("La partida se convirtio en amistosa por no presentado. No hay resultado ranking.");
+        const tipoOriginal = String(p.tipoOriginal || "").toLowerCase().trim();
+        alert(
+          tipoOriginal === "amistosa"
+            ? "La partida es amistosa y no tiene resultado ranking."
+            : "La partida se convirtio en amistosa por no presentado. No hay resultado ranking."
+        );
         abrirFormularioValoracionesAmistosa(id);
         return;
       }

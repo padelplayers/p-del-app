@@ -225,8 +225,18 @@ service cloud.firestore {
         request.resource.data.get('imagen', '').size() > 0 &&
         (request.resource.data.get('verificada', false) == false || isAdmin());
 
-      // El creador solo conserva la anonimizacion que usa eliminar perfil.
+      // El propietario puede editar su pista privada sin alterar propiedad,
+      // verificacion ni privilegios. La segunda rama conserva la anonimizacion.
       allow update: if isAdmin() || (
+        signedIn() &&
+        resource.data.get('tipo', '') == 'privada' &&
+        resource.data.get('creadaPor', '') == request.auth.uid &&
+        request.resource.data.get('tipo', '') == 'privada' &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'creadaPor', 'creador', 'creadorUid', 'creadaPorUid',
+          'verificada', 'verificadaPor', 'fechaVerificada', 'admin', 'rol'
+        ])
+      ) || (
         signedIn() &&
         (
           resource.data.get('creadaPor', '') == request.auth.uid ||
@@ -240,7 +250,11 @@ service cloud.firestore {
         ])
       );
 
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || (
+        signedIn() &&
+        resource.data.get('tipo', '') == 'privada' &&
+        resource.data.get('creadaPor', '') == request.auth.uid
+      );
     }
 
     match /partidas/{partidaId} {
