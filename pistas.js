@@ -77,7 +77,9 @@ function resetScrollPistas() {
 }
 
 if (btnGuardarPista) {
-  btnGuardarPista.onclick = async () => {
+  btnGuardarPista.onclick = async (event) => {
+    const estadoBoton = bloquearBotonAccion(event, "Creando...");
+    if (estadoBoton.bloqueado) return;
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -219,6 +221,8 @@ if (btnGuardarPista) {
     } catch (error) {
       console.error("No se pudo guardar la pista:", error && error.code ? error.code : "error");
       alert(error && error.message ? error.message : "No se pudo guardar la pista.");
+    } finally {
+      restaurarBotonAccion(estadoBoton);
     }
   };
 }
@@ -234,7 +238,7 @@ function crearBotonPista(texto, clase, onClick) {
   boton.type = "button";
   boton.className = clase;
   boton.textContent = texto;
-  boton.onclick = onClick;
+  boton.onclick = function(event) { return onClick(event, boton); };
   return boton;
 }
 
@@ -503,8 +507,8 @@ async function cargarPistas() {
           adminWrap.appendChild(crearBotonPista("Editar", "btnEditar", function() {
             abrirEditarPista(doc.id);
           }));
-          adminWrap.appendChild(crearBotonPista("Eliminar", "btnEliminar", function() {
-            if (typeof window.eliminarPista === "function") window.eliminarPista(doc.id);
+          adminWrap.appendChild(crearBotonPista("Eliminar", "btnEliminar", function(event, boton) {
+            if (typeof window.eliminarPista === "function") window.eliminarPista(doc.id, boton);
           }));
 
           if (esAdmin && !data.verificada) {
@@ -574,7 +578,10 @@ window.verificarPista = async function(id) {
   cargarPistas();
 };
 
-window.eliminarPista = async function(id) {
+window.eliminarPista = async function(id, boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Eliminando...");
+  if (estadoBoton.bloqueado) return;
+  try {
   const user = auth.currentUser;
   if (!user || !id) return;
 
@@ -601,6 +608,12 @@ window.eliminarPista = async function(id) {
     }
   }
   cargarPistas();
+  } catch (error) {
+    console.error("No se pudo eliminar la pista:", error && error.code ? error.code : "error");
+    alert(error && error.message ? error.message : "No se pudo eliminar la pista.");
+  } finally {
+    restaurarBotonAccion(estadoBoton);
+  }
 };
 
 window.abrirMapa = function(lat, lng) {
@@ -648,7 +661,10 @@ window.abrirEditarPista = async function(id) {
 const btnActualizar = document.getElementById("btnActualizarPista");
 
 if (btnActualizar) {
-  btnActualizar.onclick = async () => {
+  btnActualizar.onclick = async (event) => {
+    const estadoBoton = bloquearBotonAccion(event, "Guardando...");
+    if (estadoBoton.bloqueado) return;
+    try {
     const user = auth.currentUser;
     if (!user || !window.pistaEditando) return;
 
@@ -721,6 +737,12 @@ if (btnActualizar) {
 
     window.pistasCargadas = false;
     abrirPistas();
+    } catch (error) {
+      console.error("No se pudo actualizar la pista:", error && error.code ? error.code : "error");
+      alert(error && error.message ? error.message : "No se pudo guardar la pista.");
+    } finally {
+      restaurarBotonAccion(estadoBoton);
+    }
   };
 }
 

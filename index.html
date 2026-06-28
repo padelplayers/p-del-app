@@ -234,7 +234,7 @@ html, body {
       <button id="btnEditar" onclick="editarPerfil()">Editar perfil</button>
       <button id="btnSeguir" class="btnYellow" style="display:none;">Seguir</button>
       <button id="btnChatPrivadoPerfil" class="btnBlue" type="button" style="display:none;">Chat privado</button>
-      <button id="btnEliminar" class="rojo" onclick="eliminarPerfil()">Eliminar perfil</button>
+      <button id="btnEliminar" class="rojo" onclick="eliminarPerfil(this)">Eliminar perfil</button>
     </div>
 
   </div>
@@ -386,8 +386,8 @@ html, body {
 
 <p id="msgPerfil" style="color:red;"></p>
 
-<button class="btnBlue" onclick="guardarPerfilRegistro()">Guardar perfil</button>
-<button class="rojo" type="button" onclick="cancelarRegistroIncompleto()">Cancelar registro y eliminar cuenta</button>
+<button class="btnBlue" onclick="guardarPerfilRegistro(this)">Guardar perfil</button>
+<button class="rojo" type="button" onclick="cancelarRegistroIncompleto(this)">Cancelar registro y eliminar cuenta</button>
 
 </div>
 
@@ -524,7 +524,7 @@ Juego en red
   <button id="btnCambiarFoto" class="btnYellow" type="button" onclick="cambiarFoto()">
     Cambiar foto
   </button>
-  <button id="btnEliminarFoto" class="btnEliminarFoto" type="button" onclick="eliminarFotoPerfil()">
+  <button id="btnEliminarFoto" class="btnEliminarFoto" type="button" onclick="eliminarFotoPerfil(this)">
     Eliminar foto
   </button>
 </div>
@@ -1485,7 +1485,7 @@ Añadir pista
   <select id="nivelHasta"></select>
 </div>
 
- <button class="btnBlue" onclick="crearPartida()">Crear partida</button>
+ <button class="btnBlue" onclick="crearPartida(this)">Crear partida</button>
   <button class="btnBlue" onclick="mostrar('partidas')">Volver</button>
 
 </div>
@@ -1526,18 +1526,18 @@ const db = firebase.firestore();
 </script>
 
 <script src="logros.js?v=5"></script>
-<script src="perfil.js?v=45"></script>
+<script src="perfil.js?v=48"></script>
 <script src="jugadores.js?v=5"></script>
-<script src="pistas.js?v=22"></script>
-<script src="chat.js?v=25"></script>
-<script src="partidas.js?v=42"></script>
+<script src="pistas.js?v=23"></script>
+<script src="chat.js?v=26"></script>
+<script src="partidas.js?v=43"></script>
 <script src="nivel.js?v=4"></script>
-<script src="postpartido.js?v=22"></script>
-<script src="notifications.js?v=13"></script>
+<script src="postpartido.js?v=23"></script>
+<script src="notifications.js?v=14"></script>
 <script src="estadisticas.js?v=7"></script>
 <script src="admin-chat-cleanup.js?v=6"></script>
 <script src="pwa.js?v=76"></script>
-<script src="app.js?v=36"></script>
+<script src="app.js?v=37"></script>
 <script src="testNivel.js?v=2"></script>
 
 <nav id="bottomNav" class="bottomNav" aria-label="Navegacion principal">

@@ -99,7 +99,7 @@ function initChat() {
   if (form) {
     form.addEventListener("submit", function(e) {
       e.preventDefault();
-      prepararEnvioChat();
+      prepararEnvioChat(e.submitter || form.querySelector('button[type="submit"]'));
     });
   }
 
@@ -1121,13 +1121,17 @@ function valorFechaMensajeChatMs(valor) {
   return null;
 }
 
-async function prepararEnvioChat() {
+async function prepararEnvioChat(boton) {
   const input = document.getElementById("chatInput");
   if (!input) return;
 
   const texto = input.value.trim();
   if (!texto) return;
 
+  const estadoBoton = bloquearBotonAccion(boton, "Enviando...");
+  if (estadoBoton.bloqueado) return;
+
+  try {
   const chatId = chatState.chatActivo;
   const user = auth.currentUser;
   const chat = chatState.chats[chatId];
@@ -1205,6 +1209,9 @@ async function prepararEnvioChat() {
       console.error("[CHAT] Error enviando mensaje:", e && e.code ? e.code : "error");
       alert("No se pudo enviar el mensaje. Intentalo de nuevo.");
     }
+  }
+  } finally {
+    restaurarBotonAccion(estadoBoton);
   }
 }
 

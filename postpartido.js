@@ -1314,7 +1314,7 @@ function crearBotonPostPartido(texto, accion) {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.textContent = texto;
-  btn.onclick = accion;
+  btn.onclick = function(event) { return accion(event, btn); };
   return btn;
 }
 
@@ -1802,22 +1802,26 @@ function crearResumenResultadoPendiente(resultado, jugadores) {
   return resumen;
 }
 
-function guardarResultadoPropuesto(id) {
+function guardarResultadoPropuesto(id, boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Guardando...");
+  if (estadoBoton.bloqueado) return;
   const user = firebase.auth().currentUser;
   if (!user) {
     alert("Debes iniciar sesión");
+    restaurarBotonAccion(estadoBoton);
     return;
   }
 
   const validacion = leerYValidarSetsResultado();
   if (validacion.error) {
     alert(validacion.error);
+    restaurarBotonAccion(estadoBoton);
     return;
   }
 
   const ref = db.collection("partidas").doc(id);
 
-  ref.get().then(function(doc) {
+  return ref.get().then(function(doc) {
     if (!doc.exists) {
       alert("La partida ya no existe");
       return;
@@ -1961,6 +1965,8 @@ function guardarResultadoPropuesto(id) {
   }).catch(function(error) {
     console.error("Error guardando resultado:", error);
     alert("No se pudo guardar el resultado");
+  }).finally(function() {
+    restaurarBotonAccion(estadoBoton);
   });
 }
 
@@ -2068,8 +2074,8 @@ function construirFormularioResultado(id, jugadoresDatos, p) {
   acciones.className = "postPartidoModalAcciones";
 
   const cancelar = crearBotonSecundarioPostPartido("Cancelar", cerrarFormularioResultado);
-  const guardar = crearBotonPrimarioPostPartido("Guardar resultado", function() {
-    guardarResultadoPropuesto(id);
+  const guardar = crearBotonPrimarioPostPartido("Guardar resultado", function(event, boton) {
+    return guardarResultadoPropuesto(id, boton);
   });
   guardar.style.background = "#2E7D32";
 
@@ -2125,7 +2131,7 @@ function construirFormularioResultado(id, jugadoresDatos, p) {
 function crearFormularioResultado(id) {
   const ref = db.collection("partidas").doc(id);
 
-  ref.get().then(function(doc) {
+  return ref.get().then(function(doc) {
     if (!doc.exists) {
       alert("La partida ya no existe");
       return;
@@ -2229,22 +2235,26 @@ function leerValoracionesFormulario(jugadoresValorados) {
   return { valoraciones: valoraciones };
 }
 
-function guardarValoracionesAmistosa(id, jugadoresValorados) {
+function guardarValoracionesAmistosa(id, jugadoresValorados, boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Guardando...");
+  if (estadoBoton.bloqueado) return;
   const user = firebase.auth().currentUser;
   if (!user) {
     alert("Debes iniciar sesión");
+    restaurarBotonAccion(estadoBoton);
     return;
   }
 
   const datosFormulario = leerValoracionesFormulario(jugadoresValorados);
   if (datosFormulario.error) {
     alert(datosFormulario.error);
+    restaurarBotonAccion(estadoBoton);
     return;
   }
 
   const ref = db.collection("partidas").doc(id);
 
-  ref.get().then(function(doc) {
+  return ref.get().then(function(doc) {
     if (!doc.exists) {
       alert("La partida ya no existe");
       return;
@@ -2342,6 +2352,8 @@ function guardarValoracionesAmistosa(id, jugadoresValorados) {
   }).catch(function(error) {
     console.error("Error guardando valoraciones:", error);
     alert("No se pudieron guardar las valoraciones");
+  }).finally(function() {
+    restaurarBotonAccion(estadoBoton);
   });
 }
 
@@ -2455,8 +2467,8 @@ function crearFormularioValoraciones(id, jugadoresValorados, tipoValoracion) {
   acciones.className = "postPartidoModalAcciones";
 
   const cancelar = crearBotonSecundarioPostPartido("Cancelar", cerrarFormularioValoraciones);
-  const guardar = crearBotonPrimarioPostPartido("Guardar valoraciones", function() {
-    guardarValoracionesAmistosa(id, jugadoresValorados);
+  const guardar = crearBotonPrimarioPostPartido("Guardar valoraciones", function(event, boton) {
+    return guardarValoracionesAmistosa(id, jugadoresValorados, boton);
   });
 
   modal.appendChild(titulo);
@@ -2637,11 +2649,11 @@ window.crearAccionesPostPartido = function(id, p, uidActual) {
 
     const accionesPendiente = document.createElement("div");
     accionesPendiente.className = "postPartidoAcciones";
-    accionesPendiente.appendChild(crearBotonPrimarioPostPartido("Confirmar resultado", function() {
-      window.confirmarResultadoPartida(id);
+    accionesPendiente.appendChild(crearBotonPrimarioPostPartido("Confirmar resultado", function(event, boton) {
+      return window.confirmarResultadoPartida(id, boton);
     }));
-    accionesPendiente.appendChild(crearBotonPostPartido("Rechazar resultado", function() {
-      window.rechazarResultadoPartida(id);
+    accionesPendiente.appendChild(crearBotonPostPartido("Rechazar resultado", function(event, boton) {
+      return window.rechazarResultadoPartida(id, boton);
     }));
     box.appendChild(accionesPendiente);
     return box;
@@ -2738,16 +2750,19 @@ function validarContextoResultadoPendiente(p, uid) {
   return { jugadores: jugadoresResultado, resultado: p.resultado };
 }
 
-window.confirmarResultadoPartida = function(id) {
+window.confirmarResultadoPartida = function(id, boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Confirmando...");
+  if (estadoBoton.bloqueado) return;
   const user = firebase.auth().currentUser;
   if (!user) {
     alert("Debes iniciar sesion");
+    restaurarBotonAccion(estadoBoton);
     return;
   }
 
   const ref = db.collection("partidas").doc(id);
 
-  db.runTransaction(function(transaction) {
+  return db.runTransaction(function(transaction) {
     return transaction.get(ref).then(function(doc) {
       if (!doc.exists) throw new Error("La partida ya no existe");
 
@@ -2814,19 +2829,24 @@ window.confirmarResultadoPartida = function(id) {
   }).catch(function(error) {
     console.error("Error confirmando resultado:", error);
     alert(error && error.message ? error.message : "No se pudo confirmar el resultado");
+  }).finally(function() {
+    restaurarBotonAccion(estadoBoton);
   });
 };
 
-window.rechazarResultadoPartida = function(id) {
+window.rechazarResultadoPartida = function(id, boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Enviando...");
+  if (estadoBoton.bloqueado) return;
   const user = firebase.auth().currentUser;
   if (!user) {
     alert("Debes iniciar sesion");
+    restaurarBotonAccion(estadoBoton);
     return;
   }
 
   const ref = db.collection("partidas").doc(id);
 
-  db.runTransaction(function(transaction) {
+  return db.runTransaction(function(transaction) {
     return transaction.get(ref).then(function(doc) {
       if (!doc.exists) throw new Error("La partida ya no existe");
 
@@ -2884,5 +2904,7 @@ window.rechazarResultadoPartida = function(id) {
   }).catch(function(error) {
     console.error("Error rechazando resultado:", error);
     alert(error && error.message ? error.message : "No se pudo rechazar el resultado");
+  }).finally(function() {
+    restaurarBotonAccion(estadoBoton);
   });
 };

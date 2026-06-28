@@ -2247,9 +2247,14 @@ async function borrarUsuarioFirestoreYAuthPerfil(userRef, user) {
   }
 }
 
-async function cancelarRegistroIncompleto() {
+async function cancelarRegistroIncompleto(boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Eliminando...");
+  if (estadoBoton.bloqueado) return;
   const user = auth.currentUser;
-  if (!user) return;
+  if (!user) {
+    restaurarBotonAccion(estadoBoton);
+    return;
+  }
 
   try {
     const userRef = db.collection("usuarios").doc(user.uid);
@@ -2260,12 +2265,19 @@ async function cancelarRegistroIncompleto() {
       window.perfilUsuarioCompleto(datosPerfil)
     ) {
       alert("Este perfil ya esta completo. Eliminalo desde tu perfil.");
+      restaurarBotonAccion(estadoBoton);
       return;
     }
 
-    if (!confirm("Se eliminara la cuenta y se cancelara el registro. Esta accion no se puede deshacer.")) return;
+    if (!confirm("Se eliminara la cuenta y se cancelara el registro. Esta accion no se puede deshacer.")) {
+      restaurarBotonAccion(estadoBoton);
+      return;
+    }
     const reautenticado = await reautenticarUsuarioParaEliminarPerfil(user);
-    if (!reautenticado) return;
+    if (!reautenticado) {
+      restaurarBotonAccion(estadoBoton);
+      return;
+    }
 
     await eliminarStorageUsuario(user.uid, datosPerfil, { listarCarpetas: false });
     await borrarSubcoleccionesUsuario(user.uid);
@@ -2284,20 +2296,28 @@ async function cancelarRegistroIncompleto() {
         ? "Los datos del perfil se borraron, pero la cuenta de acceso sigue activa. Puedes volver a intentar eliminarla."
         : "Los datos del perfil se borraron, pero no se pudo eliminar la cuenta de acceso.");
       mostrar("perfilCompletar");
+      restaurarBotonAccion(estadoBoton);
       return;
     }
     if (error && (error.code === "perfil/storage-list-failed" || error.code === "perfil/storage-delete-failed")) {
       alert("No se pudo limpiar completamente el Storage personal. La cuenta no se ha eliminado.");
+      restaurarBotonAccion(estadoBoton);
       return;
     }
     alert("No se pudo cancelar completamente el registro.");
+    restaurarBotonAccion(estadoBoton);
   }
 }
 
-async function eliminarPerfil() {
+async function eliminarPerfil(boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Eliminando...");
+  if (estadoBoton.bloqueado) return;
 
   const user = auth.currentUser;
-  if (!user) return;
+  if (!user) {
+    restaurarBotonAccion(estadoBoton);
+    return;
+  }
 
   const uid = user.uid;
 
@@ -2307,15 +2327,20 @@ async function eliminarPerfil() {
     const confirmacion = prompt("Escribe ELIMINAR para confirmar el borrado definitivo de tu cuenta");
     if (confirmacion !== "ELIMINAR") {
       alert("Eliminacion cancelada");
+      restaurarBotonAccion(estadoBoton);
       return;
     }
 
     const reautenticado = await reautenticarUsuarioParaEliminarPerfil(user);
-    if (!reautenticado) return;
+    if (!reautenticado) {
+      restaurarBotonAccion(estadoBoton);
+      return;
+    }
 
     const tienePartidasActivasComoCreador = await usuarioTienePartidasActivasComoCreadorPerfil(uid);
     if (tienePartidasActivasComoCreador) {
       alert("Tienes una partida activa como creador. Debes cancelarla o resolverla antes de eliminar tu cuenta.");
+      restaurarBotonAccion(estadoBoton);
       return;
     }
 
@@ -2406,7 +2431,8 @@ async function eliminarPerfil() {
 } else {
   alert("No se pudo eliminar la cuenta. No se ha completado el borrado.");
 }
-
+  } finally {
+    restaurarBotonAccion(estadoBoton);
   }
 }
 
@@ -2641,11 +2667,19 @@ function guardarPerfil(){
 
   if (!mano || !posicion) return;
 
-  db.collection("usuarios").doc(user.uid).update({
+  const userRef = db.collection("usuarios").doc(user.uid);
+
+  userRef.update({
     mano: mano,
     posicion: posicion
   })
   .then(() => {
+    return userRef.get();
+  })
+  .then(doc => {
+    if (doc.exists) {
+      renderizarDatosVisualesPerfil(doc.data() || {});
+    }
 
     mostrar("perfil");
 

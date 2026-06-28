@@ -1,6 +1,44 @@
 window.modoSeleccionPista = false;
 window.partidaCreando = {};
 
+function resolverBotonAccion(boton) {
+  if (!boton) return null;
+  if (boton.currentTarget) boton = boton.currentTarget;
+  if (boton.target && !boton.tagName) boton = boton.target;
+  if (!boton || !boton.tagName) return null;
+  if (String(boton.tagName).toLowerCase() !== "button") return null;
+  return boton;
+}
+
+function bloquearBotonAccion(boton, textoProcesando) {
+  boton = resolverBotonAccion(boton);
+  if (!boton) return { boton: null, bloqueado: false };
+  if (boton.dataset.procesandoAccion === "true") {
+    return { boton: boton, bloqueado: true };
+  }
+
+  const estado = {
+    boton: boton,
+    texto: boton.textContent,
+    disabled: boton.disabled,
+    bloqueado: false
+  };
+  boton.dataset.procesandoAccion = "true";
+  boton.disabled = true;
+  if (textoProcesando) boton.textContent = textoProcesando;
+  return estado;
+}
+
+function restaurarBotonAccion(estado) {
+  if (!estado || !estado.boton) return;
+  estado.boton.disabled = estado.disabled;
+  estado.boton.textContent = estado.texto;
+  delete estado.boton.dataset.procesandoAccion;
+}
+
+window.bloquearBotonAccion = bloquearBotonAccion;
+window.restaurarBotonAccion = restaurarBotonAccion;
+
 function obtenerMillisRegistroIncompletoAdmin(datos) {
   const valor = datos && (datos.registroIniciadoAt || datos.fechaAlta || datos.createdAt);
   if (!valor) return null;
@@ -711,12 +749,15 @@ function ejecutarTareasAuxiliaresRegistro(uid, userRef, fotosAnteriores) {
   })).catch(function() {});
 }
 
-async function guardarPerfilRegistro() {
+async function guardarPerfilRegistro(boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Guardando...");
+  if (estadoBoton.bloqueado) return;
   const mensaje = document.getElementById("msgPerfil");
   if (mensaje) mensaje.innerText = "";
 
   try {
     await guardarPerfilRegistroInterno();
+    if (!window.perfilSesionCompleto) restaurarBotonAccion(estadoBoton);
   } catch (error) {
     console.error("No se pudo completar el registro:", error && error.code ? error.code : "error");
     if (mensaje) {
@@ -724,6 +765,7 @@ async function guardarPerfilRegistro() {
         ? error.message
         : "No se pudo completar el registro.";
     }
+    restaurarBotonAccion(estadoBoton);
   }
 }
 
@@ -901,9 +943,14 @@ function establecerBotonesFotoOcupados(ocupados) {
   if (btnEliminar) btnEliminar.disabled = ocupados;
 }
 
-async function eliminarFotoPerfil() {
+async function eliminarFotoPerfil(boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Eliminando...");
+  if (estadoBoton.bloqueado) return false;
   const user = auth.currentUser;
-  if (!user) return false;
+  if (!user) {
+    restaurarBotonAccion(estadoBoton);
+    return false;
+  }
 
   establecerBotonesFotoOcupados(true);
   try {
@@ -936,6 +983,7 @@ async function eliminarFotoPerfil() {
     return false;
   } finally {
     establecerBotonesFotoOcupados(false);
+    restaurarBotonAccion(estadoBoton);
   }
 }
 

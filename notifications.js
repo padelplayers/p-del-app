@@ -430,7 +430,13 @@ function renderizarCampanaNotificaciones(notificaciones) {
       const abrir = document.createElement("button");
       abrir.type = "button";
       abrir.textContent = accionVisible.texto;
-      abrir.onclick = function() { abrirAccionNotificacion(item.id, n); };
+      abrir.onclick = function(event) {
+        const estadoBoton = bloquearBotonAccion(event, "Enviando...");
+        if (estadoBoton.bloqueado) return;
+        Promise.resolve(abrirAccionNotificacion(item.id, n)).finally(function() {
+          restaurarBotonAccion(estadoBoton);
+        });
+      };
       acciones.appendChild(abrir);
     }
 
@@ -438,7 +444,15 @@ function renderizarCampanaNotificaciones(notificaciones) {
       const marcar = document.createElement("button");
       marcar.type = "button";
       marcar.textContent = "Marcar leído";
-      marcar.onclick = function() { marcarNotificacionLeida(item.id); };
+      marcar.onclick = function(event) {
+        const estadoBoton = bloquearBotonAccion(event, "Guardando...");
+        if (estadoBoton.bloqueado) return;
+        marcarNotificacionLeida(item.id).catch(function(error) {
+          console.error("No se pudo marcar la notificacion como leida:", error);
+        }).finally(function() {
+          restaurarBotonAccion(estadoBoton);
+        });
+      };
       acciones.appendChild(marcar);
     }
 
@@ -754,9 +768,13 @@ function initNotificacionesUI() {
   if (btnBottom) btnBottom.onclick = togglePanelNotificaciones;
   if (cerrar) cerrar.onclick = cerrarPanelNotificaciones;
   if (btnLimpiarAdmin) {
-    btnLimpiarAdmin.onclick = function() {
+    btnLimpiarAdmin.onclick = function(event) {
+      const estadoBoton = bloquearBotonAccion(event, "Eliminando...");
+      if (estadoBoton.bloqueado) return;
       limpiarNotificacionesAntiguasAdmin().catch(function(error) {
         alert("No se pudieron limpiar las notificaciones antiguas: " + error.message);
+      }).finally(function() {
+        restaurarBotonAccion(estadoBoton);
       });
     };
   }

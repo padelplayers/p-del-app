@@ -1377,7 +1377,9 @@ function pintarJugador(uid, slotId) {
   }
 
   db.collection("usuarios").doc(uid).get().then(doc => {
-    if (!doc.exists) return;
+    if (!doc.exists) {
+      return;
+    }
 
     const raw = doc.data() || {};
     const u = {
@@ -1434,11 +1436,15 @@ function pintarJugador(uid, slotId) {
   });
 }
 
-async function crearPartida() {
+async function crearPartida(boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Creando...");
+  if (estadoBoton.bloqueado) return;
+  try {
   if (
     typeof window.validarAccionPorFiabilidad === "function" &&
     !(await window.validarAccionPorFiabilidad("crear"))
   ) {
+    restaurarBotonAccion(estadoBoton);
     return;
   }
 
@@ -1532,7 +1538,7 @@ async function crearPartida() {
     if (!crearRapida) return;
   }
 
-  db.collection("usuarios").doc(user.uid).get().then(function(docUser) {
+  await db.collection("usuarios").doc(user.uid).get().then(function(docUser) {
     if (!docUser.exists) return;
 
     const datosUsuario = docUser.data() || {};
@@ -1578,7 +1584,7 @@ async function crearPartida() {
     if (esPartidaRapida) datosNuevaPartida.partidaRapida = true;
     let nuevaPartidaId = null;
 
-    db.collection("partidas").add(datosNuevaPartida)
+    return db.collection("partidas").add(datosNuevaPartida)
     .then((docRef) => {
       nuevaPartidaId = docRef.id;
       return db.collection("usuarios").doc(user.uid).set({
@@ -1598,6 +1604,9 @@ async function crearPartida() {
       cargarPartidas();
     });
   });
+  } finally {
+    restaurarBotonAccion(estadoBoton);
+  }
 }
 
 window.recalcularPartidasCreadasUsuarioActual = async function() {
@@ -1718,16 +1727,19 @@ function procesarPartidaRapidaVencida(partidaId, p) {
   });
 }
 
-function confirmarPartida(partidaId) {
+function confirmarPartida(partidaId, boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Confirmando...");
+  if (estadoBoton.bloqueado) return;
   const user = firebase.auth().currentUser;
   if (!user) {
     alert("Debes iniciar sesion");
+    restaurarBotonAccion(estadoBoton);
     return;
   }
 
   const ref = db.collection("partidas").doc(partidaId);
 
-  db.runTransaction(function(transaction) {
+  return db.runTransaction(function(transaction) {
     return transaction.get(ref).then(function(doc) {
       if (!doc.exists) throw new Error("La partida ya no existe");
 
@@ -1797,18 +1809,26 @@ function confirmarPartida(partidaId) {
     }
     alert(error && error.message ? error.message : "No se pudo confirmar la partida");
     cargarPartidas();
+  }).finally(function() {
+    restaurarBotonAccion(estadoBoton);
   });
 }
 
-async function cancelarPartidaPorFaltaDisponibilidad(partidaId) {
+async function cancelarPartidaPorFaltaDisponibilidad(partidaId, boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Eliminando...");
+  if (estadoBoton.bloqueado) return;
   const user = firebase.auth().currentUser;
   if (!user) {
     alert("Debes iniciar sesion");
+    restaurarBotonAccion(estadoBoton);
     return;
   }
 
   const ok = confirm("Vas a cancelar esta partida para todos los jugadores porque no puede realizarse. ¿Continuar?");
-  if (!ok) return;
+  if (!ok) {
+    restaurarBotonAccion(estadoBoton);
+    return;
+  }
 
   try {
     const ref = db.collection("partidas").doc(partidaId);
@@ -1860,6 +1880,8 @@ async function cancelarPartidaPorFaltaDisponibilidad(partidaId) {
   } catch (error) {
     console.error("[cancelarPartidaPorFaltaDisponibilidad]", error);
     alert(error && error.message ? error.message : "No se pudo cancelar la partida");
+  } finally {
+    restaurarBotonAccion(estadoBoton);
   }
 }
 
@@ -2026,7 +2048,7 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
       aceptarCambio.type = "button";
       aceptarCambio.textContent = "Aceptar ser creador";
       aceptarCambio.style.cssText = "background:#1565C0; color:#fff;";
-      aceptarCambio.onclick = function() { aceptarCambioCreadorPartida(id); };
+      aceptarCambio.onclick = function() { aceptarCambioCreadorPartida(id, aceptarCambio); };
       cambioCreadorBox.appendChild(aceptarCambio);
     }
 
@@ -2047,7 +2069,7 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
       confirmar.style.cssText = confirmarActivo
         ? "background:#FFC107; color:#0D47A1;"
         : "background:#ddd; color:#777; cursor:not-allowed;";
-      confirmar.onclick = function() { confirmarPartida(id); };
+      confirmar.onclick = function() { confirmarPartida(id, confirmar); };
       salirWrap.appendChild(confirmar);
 
       if (confirmarActivo) {
@@ -2055,7 +2077,7 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
         cancelarPartida.type = "button";
         cancelarPartida.textContent = "Cancelar partida";
         cancelarPartida.style.cssText = "background:#C62828; color:#fff;";
-        cancelarPartida.onclick = function() { cancelarPartidaPorFaltaDisponibilidad(id); };
+        cancelarPartida.onclick = function() { cancelarPartidaPorFaltaDisponibilidad(id, cancelarPartida); };
         salirWrap.appendChild(cancelarPartida);
       }
     }
@@ -2064,7 +2086,7 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
       const salir = document.createElement("button");
       salir.className = "partidaSalirBtn";
       salir.textContent = "Salir";
-      salir.onclick = function() { salirDePartida(id); };
+      salir.onclick = function() { salirDePartida(id, salir); };
 
       salirWrap.appendChild(salir);
     }
@@ -2079,13 +2101,13 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
     aceptar.type = "button";
     aceptar.textContent = "Aceptar sustitución";
     aceptar.style.cssText = "background:#1565C0; color:#fff;";
-    aceptar.onclick = function() { aceptarSustitucionPartida(id); };
+    aceptar.onclick = function() { aceptarSustitucionPartida(id, aceptar); };
 
     const rechazar = document.createElement("button");
     rechazar.type = "button";
     rechazar.textContent = "Rechazar sustitución";
     rechazar.style.cssText = "background:#FFC107; color:#000;";
-    rechazar.onclick = function() { rechazarSustitucionPartida(id); };
+    rechazar.onclick = function() { rechazarSustitucionPartida(id, rechazar); };
 
     sustitucionAcciones.appendChild(aceptar);
     sustitucionAcciones.appendChild(rechazar);
@@ -2100,7 +2122,7 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
     aceptarSolicitud.type = "button";
     aceptarSolicitud.textContent = "Aceptar ocupar la plaza";
     aceptarSolicitud.style.cssText = "background:#1565C0; color:#fff;";
-    aceptarSolicitud.onclick = function() { aceptarSustitucionPartida(id); };
+    aceptarSolicitud.onclick = function() { aceptarSustitucionPartida(id, aceptarSolicitud); };
 
     aceptarSolicitudWrap.appendChild(aceptarSolicitud);
     cabecera.appendChild(aceptarSolicitudWrap);
@@ -3753,9 +3775,14 @@ function ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, opciones) {
   });
 }
 
-function aceptarCambioCreadorPartida(idPartida) {
+function aceptarCambioCreadorPartida(idPartida, boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Confirmando...");
+  if (estadoBoton.bloqueado) return;
   const user = firebase.auth().currentUser;
-  if (!user) return;
+  if (!user) {
+    restaurarBotonAccion(estadoBoton);
+    return;
+  }
 
   const ref = db.collection("partidas").doc(idPartida);
 
@@ -3839,16 +3866,23 @@ function aceptarCambioCreadorPartida(idPartida) {
     });
   }).catch(function(error) {
     alert(error && error.message ? error.message : "No se pudo aceptar ser creador");
+  }).finally(function() {
+    restaurarBotonAccion(estadoBoton);
   });
 }
 
-function aceptarSustitucionPartida(idPartida) {
+function aceptarSustitucionPartida(idPartida, boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Confirmando...");
+  if (estadoBoton.bloqueado) return;
   const user = firebase.auth().currentUser;
-  if (!user) return;
+  if (!user) {
+    restaurarBotonAccion(estadoBoton);
+    return;
+  }
 
   const ref = db.collection("partidas").doc(idPartida);
 
-  db.runTransaction(function(transaction) {
+  return db.runTransaction(function(transaction) {
     return transaction.get(ref).then(function(doc) {
       if (!doc.exists) return false;
 
@@ -4031,16 +4065,23 @@ function aceptarSustitucionPartida(idPartida) {
       });
     }
     alert(error && error.message ? error.message : "No se pudo aceptar la sustitución");
+  }).finally(function() {
+    restaurarBotonAccion(estadoBoton);
   });
 }
 
-function rechazarSustitucionPartida(idPartida) {
+function rechazarSustitucionPartida(idPartida, boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Enviando...");
+  if (estadoBoton.bloqueado) return;
   const user = firebase.auth().currentUser;
-  if (!user) return;
+  if (!user) {
+    restaurarBotonAccion(estadoBoton);
+    return;
+  }
 
   const ref = db.collection("partidas").doc(idPartida);
 
-  db.runTransaction(function(transaction) {
+  return db.runTransaction(function(transaction) {
     return transaction.get(ref).then(function(doc) {
       if (!doc.exists) return false;
 
@@ -4213,6 +4254,8 @@ function rechazarSustitucionPartida(idPartida) {
       });
     }
     alert(error && error.message ? error.message : "No se pudo rechazar la sustitución");
+  }).finally(function() {
+    restaurarBotonAccion(estadoBoton);
   });
 }
 
@@ -4220,13 +4263,22 @@ function unirseAPartida(slotId) {
   const user = firebase.auth().currentUser;
   if (!user) return;
 
+  window.partidasAccionesEnCurso = window.partidasAccionesEnCurso || {};
+  const claveAccion = "unirse:" + slotId;
+  if (window.partidasAccionesEnCurso[claveAccion]) return;
+  window.partidasAccionesEnCurso[claveAccion] = true;
+
   const partidaId = slotId.split("_")[1];
   const esReserva = slotId.startsWith("r");
   const ref = db.collection("partidas").doc(partidaId);
-  return ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user);
+  return ejecutarUnirseAPartidaTransaccional(partidaId, esReserva, ref, user).finally(function() {
+    delete window.partidasAccionesEnCurso[claveAccion];
+  });
 
   ref.get().then(function(doc) {
-    if (!doc.exists) return;
+    if (!doc.exists) {
+      return;
+    }
     const p = doc.data();
 
     db.collection("usuarios").doc(user.uid).get().then(function(docUser) {
@@ -4367,19 +4419,28 @@ function elegirReservaSustitutaPartida(p, reservas, uidSale) {
   });
 }
 
-async function salirDePartida(partidaId) {
+async function salirDePartida(partidaId, boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Enviando...");
+  if (estadoBoton.bloqueado) return;
   const user = firebase.auth().currentUser;
-  if (!user) return;
+  if (!user) {
+    restaurarBotonAccion(estadoBoton);
+    return;
+  }
 
   const uid = user.uid;
   const ref = db.collection("partidas").doc(partidaId);
 
   try {
     const doc = await ref.get();
-    if (!doc.exists) return;
+    if (!doc.exists) {
+      restaurarBotonAccion(estadoBoton);
+      return;
+    }
     const p = doc.data() || {};
     if (partidaYaIniciadaOPostPartido(p)) {
       alert("La partida ya ha comenzado o está en fase de valoraciones. Ya no puedes salir.");
+      restaurarBotonAccion(estadoBoton);
       return;
     }
     const esTitularNoCreador =
@@ -4389,20 +4450,30 @@ async function salirDePartida(partidaId) {
 
     if (esTitularNoCreador) {
       const accion = await mostrarDialogoSalidaConfirmadaPartida();
-      if (accion === "solicitar") return solicitarSustitutoPartida(partidaId);
+      if (accion === "solicitar") {
+        return solicitarSustitutoPartida(partidaId).finally(function() {
+          restaurarBotonAccion(estadoBoton);
+        });
+      }
       if (accion === "penalizacion") {
         return ejecutarSalirDePartidaTransaccional(partidaId, ref, uid, {
           abandonoConfirmado: true
+        }).finally(function() {
+          restaurarBotonAccion(estadoBoton);
         });
       }
+      restaurarBotonAccion(estadoBoton);
       return;
     }
   } catch (error) {
     alert(error && error.message ? error.message : "No se pudo comprobar la partida");
+    restaurarBotonAccion(estadoBoton);
     return;
   }
 
-  return ejecutarSalirDePartidaTransaccional(partidaId, ref, uid);
+  return ejecutarSalirDePartidaTransaccional(partidaId, ref, uid).finally(function() {
+    restaurarBotonAccion(estadoBoton);
+  });
 }
 
 window.guardarPartidaFinalizada = function(p, idPartida) {
