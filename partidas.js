@@ -407,9 +407,22 @@ function partidaConfirmadaAlcanzoVentana5h(p, ahora) {
   );
 }
 
+function partidaAbiertaAlcanzoVentana5h(p, ahora) {
+  const fechaPartida = obtenerFechaHoraPartida(p);
+  return !!(
+    p &&
+    p.estado === "abierta" &&
+    fechaPartida &&
+    (ahora || new Date()) >= new Date(fechaPartida.getTime() - 5 * 60 * 60 * 1000)
+  );
+}
+
 function partidaAlcanzoLimiteCancelacionClub(p, ahora) {
-  return partidaNecesitaCancelacionClub(p) &&
-    partidaConfirmadaAlcanzoVentana5h(p, ahora);
+  return partidaAbiertaAlcanzoVentana5h(p, ahora) ||
+    (
+      partidaNecesitaCancelacionClub(p) &&
+      partidaConfirmadaAlcanzoVentana5h(p, ahora)
+    );
 }
 
 function crearErrorLimiteCancelacionClubPartida() {
@@ -434,6 +447,7 @@ function forzarCancelacionClubTrasAccionBloqueada(partidaId) {
 
 function puedeConfirmarPartida(p, uid, ahora) {
   const fechaPartida = obtenerFechaHoraPartida(p);
+  const referencia = ahora || new Date();
 
   return (
     uid &&
@@ -444,7 +458,8 @@ function puedeConfirmarPartida(p, uid, ahora) {
     p.estado === "abierta" &&
     (p.jugadores || []).length === 4 &&
     fechaPartida &&
-    fechaPartida >= (ahora || new Date())
+    fechaPartida >= referencia &&
+    !partidaAbiertaAlcanzoVentana5h(p, referencia)
   );
 }
 
@@ -1619,6 +1634,10 @@ function confirmarPartida(partidaId) {
         throw new Error("No se puede confirmar una partida cuya fecha u hora ya paso");
       }
 
+      if (partidaAbiertaAlcanzoVentana5h(p)) {
+        throw crearErrorLimiteCancelacionClubPartida();
+      }
+
       transaction.update(ref, {
         estado: "confirmada",
         confirmadaAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1647,6 +1666,11 @@ function confirmarPartida(partidaId) {
   }).then(function() {
     cargarPartidas();
   }).catch(function(error) {
+    if (esErrorLimiteCancelacionClubPartida(error)) {
+      return forzarCancelacionClubTrasAccionBloqueada(partidaId).then(function() {
+        alert(error.message);
+      });
+    }
     alert(error && error.message ? error.message : "No se pudo confirmar la partida");
     cargarPartidas();
   });
@@ -2251,7 +2275,13 @@ function procesarLimiteCancelacionClubPartida(partidaId) {
   }).then(function(actualizada) {
     if (!actualizada) return false;
 
+    const esPartidaAbierta = actualizada.partida && actualizada.partida.estado === "abierta";
     const pistaId = actualizada.partida && actualizada.partida.pistaId;
+    if (esPartidaAbierta) {
+      actualizada.contactoReserva = null;
+      return actualizada;
+    }
+
     return obtenerContactoReservaPartida(pistaId).then(function(contactoReserva) {
       actualizada.contactoReserva = contactoReserva;
       return actualizada;
@@ -2270,6 +2300,9 @@ function procesarLimiteCancelacionClubPartida(partidaId) {
     if (!actualizada) return false;
 
     const avisos = [];
+    const esPartidaAbierta = actualizada.partida && actualizada.partida.estado === "abierta";
+    const tituloCancelacionAbierta = "Partida cancelada autom\u00e1ticamente";
+    const mensajeCancelacionAbierta = "La partida no consigui\u00f3 completarse antes de llegar al l\u00edmite de 5 horas para su inicio y ha sido cancelada autom\u00e1ticamente.";
     if (actualizada.creadaPor) {
       avisos.push(notificarPartida(actualizada.creadaPor, {
         tipo: "partida_cancelada_automatica_5h_creador",
@@ -2283,6 +2316,15 @@ function procesarLimiteCancelacionClubPartida(partidaId) {
         data: {
           motivo: "incompleta_sin_sustituto",
           contactoReserva: actualizada.contactoReserva
+        },
+        titulo: esPartidaAbierta ? tituloCancelacionAbierta : "Partida cancelada autom\u00e1ticamente",
+        mensaje: esPartidaAbierta
+          ? mensajeCancelacionAbierta
+          : "La partida segu\u00eda incompleta al llegar al l\u00edmite de 5 horas y ha sido eliminada de la app.\n\nDebes cancelar la reserva real con el club lo antes posible. Como la cancelaci\u00f3n se ha producido a 5 horas del inicio, dispones aproximadamente de 1 hora para realizar la gesti\u00f3n antes de entrar en las \u00faltimas 4 horas previas a la partida, donde algunos clubes pueden aplicar condiciones especiales, restricciones o costes de cancelaci\u00f3n.\n\nSi la pista fue reservada por tel\u00e9fono o web, contacta con la instalaci\u00f3n cuanto antes para evitar posibles pagos u obligaciones asociadas a la reserva.",
+        accion: !esPartidaAbierta && actualizada.contactoReserva ? "contactar_pista" : null,
+        data: {
+          motivo: esPartidaAbierta ? "abierta_no_completada_5h" : "incompleta_sin_sustituto",
+          contactoReserva: esPartidaAbierta ? null : actualizada.contactoReserva
         }
       }));
     }
@@ -2298,7 +2340,13 @@ function procesarLimiteCancelacionClubPartida(partidaId) {
         dedupeKey: "partida_cancelada_automatica_5h_" + partidaId,
         prioridad: "alta",
         emailCritico: true,
-        data: { motivo: "incompleta_sin_sustituto" }
+        data: { motivo: "incompleta_sin_sustituto" },
+        titulo: esPartidaAbierta ? tituloCancelacionAbierta : "Partida cancelada",
+        mensaje: esPartidaAbierta
+          ? mensajeCancelacionAbierta
+          : "La partida segu\u00eda incompleta al llegar al l\u00edmite de 5 horas y se ha cancelado autom\u00e1ticamente.",
+        accion: null,
+        data: { motivo: esPartidaAbierta ? "abierta_no_completada_5h" : "incompleta_sin_sustituto" }
       }));
     }
     if (actualizada.penalizacionAgravada) {
@@ -2481,14 +2529,14 @@ function cargarPartidas() {
         return;
       }
 
-      if (p.estado === "confirmada" && fechaPartida) {
-        if (partidaAlcanzoLimiteCancelacionClub(p, ahora)) {
-          procesarLimiteCancelacionClubPartida(doc.id).then(function(actualizada) {
-            if (actualizada) cargarPartidas();
-          });
-          return;
-        }
+      if (partidaAlcanzoLimiteCancelacionClub(p, ahora)) {
+        procesarLimiteCancelacionClubPartida(doc.id).then(function(actualizada) {
+          if (actualizada) cargarPartidas();
+        });
+        return;
+      }
 
+      if (p.estado === "confirmada" && fechaPartida) {
         const limiteConfirmada = new Date(fechaPartida);
         limiteConfirmada.setDate(limiteConfirmada.getDate() + 3);
 
