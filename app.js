@@ -39,6 +39,10 @@ function restaurarBotonAccion(estado) {
 window.bloquearBotonAccion = bloquearBotonAccion;
 window.restaurarBotonAccion = restaurarBotonAccion;
 
+const HORAS_RETENCION_REGISTRO_INCOMPLETO = 72;
+const MS_DIA_REGISTRO_INCOMPLETO = 24 * 60 * 60 * 1000;
+const MS_HORA_REGISTRO_INCOMPLETO = 60 * 60 * 1000;
+
 function obtenerMillisRegistroIncompletoAdmin(datos) {
   const valor = datos && (datos.registroIniciadoAt || datos.fechaAlta || datos.createdAt);
   if (!valor) return null;
@@ -46,6 +50,57 @@ function obtenerMillisRegistroIncompletoAdmin(datos) {
   if (typeof valor.toDate === "function") return valor.toDate().getTime();
   const millis = new Date(valor).getTime();
   return Number.isFinite(millis) ? millis : null;
+}
+
+function calcularAntiguedadRegistroIncompleto(datos, ahoraMs) {
+  const iniciadoMs = obtenerMillisRegistroIncompletoAdmin(datos);
+  return Number.isFinite(iniciadoMs)
+    ? Math.max(0, Math.floor((ahoraMs - iniciadoMs) / MS_DIA_REGISTRO_INCOMPLETO))
+    : null;
+}
+
+function esRegistroIncompletoAntiguo(datos, ahoraMs, horasMinimas) {
+  if (!datos || datos.perfilCompleto !== false) return false;
+  const iniciadoMs = obtenerMillisRegistroIncompletoAdmin(datos);
+  return Number.isFinite(iniciadoMs) &&
+    ahoraMs - iniciadoMs >= horasMinimas * MS_HORA_REGISTRO_INCOMPLETO;
+}
+
+function obtenerEmailRegistroIncompleto(datos) {
+  const email = datos && (datos.email || datos.correo || datos.authEmail);
+  return typeof email === "string" && email.trim() ? email.trim() : null;
+}
+
+function valorFechaAuditoriaAuth(valor) {
+  if (!valor) return null;
+  if (typeof valor.toDate === "function") return valor;
+  if (typeof valor.toMillis === "function") return valor;
+  const fecha = new Date(valor);
+  return Number.isFinite(fecha.getTime())
+    ? firebase.firestore.Timestamp.fromDate(fecha)
+    : null;
+}
+
+function formatearFechaAuditoriaAuth(valor) {
+  if (!valor) return "Sin fecha";
+  let fecha = null;
+  if (typeof valor.toDate === "function") fecha = valor.toDate();
+  else if (typeof valor.toMillis === "function") fecha = new Date(valor.toMillis());
+  else fecha = new Date(valor);
+  return Number.isFinite(fecha.getTime()) ? fecha.toLocaleString() : "Sin fecha";
+}
+
+async function comprobarAdminRegistrosIncompletos() {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Debes iniciar sesion.");
+
+  const adminDoc = await db.collection("usuarios").doc(user.uid).get();
+  const datosAdmin = adminDoc.exists ? (adminDoc.data() || {}) : {};
+  if (datosAdmin.admin !== true && datosAdmin.rol !== "admin") {
+    throw new Error("Herramienta disponible solo para admin.");
+  }
+
+  return user;
 }
 
 async function auditarRegistrosIncompletosAdmin() {
@@ -58,29 +113,22 @@ async function auditarRegistrosIncompletosAdmin() {
   salida.textContent = "Auditando usuarios...";
 
   try {
-    const adminDoc = await db.collection("usuarios").doc(user.uid).get();
-    const datosAdmin = adminDoc.exists ? (adminDoc.data() || {}) : {};
-    if (datosAdmin.admin !== true && datosAdmin.rol !== "admin") {
-      throw new Error("Herramienta disponible solo para admin.");
-    }
+    await comprobarAdminRegistrosIncompletos();
 
     const snapshot = await db.collection("usuarios").get();
     const ahora = Date.now();
-    const diasMinimos = 30;
+    const horasMinimas = HORAS_RETENCION_REGISTRO_INCOMPLETO;
     const pendientes = [];
 
     snapshot.forEach(function(doc) {
       const datos = doc.data() || {};
       if (datos.perfilCompleto === true) return;
-      const iniciadoMs = obtenerMillisRegistroIncompletoAdmin(datos);
-      const antiguedadDias = Number.isFinite(iniciadoMs)
-        ? Math.max(0, Math.floor((ahora - iniciadoMs) / (24 * 60 * 60 * 1000)))
-        : null;
+      const antiguedadDias = calcularAntiguedadRegistroIncompleto(datos, ahora);
       pendientes.push({
         uid: doc.id,
         estado: datos.perfilCompleto === false ? "Registro incompleto" : "Sin marca perfilCompleto",
         antiguedadDias: antiguedadDias,
-        revisable: Number.isFinite(antiguedadDias) && antiguedadDias >= diasMinimos
+        revisable: esRegistroIncompletoAntiguo(datos, ahora, horasMinimas)
       });
     });
 
@@ -92,7 +140,7 @@ async function auditarRegistrosIncompletosAdmin() {
     salida.replaceChildren();
     const resumen = document.createElement("p");
     resumen.className = "auditoriaRegistrosResumen";
-    resumen.textContent = pendientes.length + " documento(s) incompleto(s). Solo se consideran candidatos manuales los de 30 dias o mas.";
+    resumen.textContent = pendientes.length + " documento(s) incompleto(s). Se borran automaticamente solo los perfilCompleto:false con registroIniciadoAt de " + horasMinimas + " horas o mas.";
     salida.appendChild(resumen);
 
     pendientes.forEach(function(item) {
@@ -115,6 +163,225 @@ async function auditarRegistrosIncompletosAdmin() {
 }
 
 window.auditarRegistrosIncompletosAdmin = auditarRegistrosIncompletosAdmin;
+
+async function registrarPendienteAuthAntesDeBorrar(candidato) {
+  const datos = candidato.datos || {};
+  const pendiente = {
+    uid: candidato.uid,
+    email: obtenerEmailRegistroIncompleto(datos),
+    fechaRegistro: valorFechaAuditoriaAuth(datos.registroIniciadoAt || datos.fechaAlta || datos.createdAt),
+    fechaLimpieza: firebase.firestore.FieldValue.serverTimestamp(),
+    motivo: "registro_incompleto",
+    estado: "pendiente"
+  };
+
+  await db.collection("limpieza_auth_pendiente").doc(candidato.uid).set(pendiente);
+  return pendiente;
+}
+
+async function limpiarRegistrosIncompletosAntiguosAdmin() {
+  const boton = document.getElementById("btnLimpiarRegistrosIncompletos");
+  const salida = document.getElementById("auditoriaRegistrosIncompletos");
+  const estadoBoton = bloquearBotonAccion(boton, "Limpiando...");
+  if (estadoBoton.bloqueado) return null;
+
+  try {
+    await comprobarAdminRegistrosIncompletos();
+    if (salida) salida.textContent = "Buscando registros incompletos antiguos...";
+
+    const snapshot = await db.collection("usuarios")
+      .where("perfilCompleto", "==", false)
+      .get();
+    const ahora = Date.now();
+    const candidatos = [];
+    const recientes = [];
+    const sinFecha = [];
+
+    snapshot.forEach(function(doc) {
+      const datos = doc.data() || {};
+      const antiguedadDias = calcularAntiguedadRegistroIncompleto(datos, ahora);
+      if (esRegistroIncompletoAntiguo(datos, ahora, HORAS_RETENCION_REGISTRO_INCOMPLETO)) {
+        candidatos.push({ uid: doc.id, ref: doc.ref, datos: datos, antiguedadDias: antiguedadDias });
+      } else if (Number.isFinite(antiguedadDias)) {
+        recientes.push({ uid: doc.id, antiguedadDias: antiguedadDias });
+      } else {
+        sinFecha.push(doc.id);
+      }
+    });
+
+    const eliminados = [];
+    const errores = [];
+    for (let i = 0; i < candidatos.length; i++) {
+      const candidato = candidatos[i];
+      try {
+        const pendienteAuth = await registrarPendienteAuthAntesDeBorrar(candidato);
+        await candidato.ref.delete();
+        eliminados.push({
+          uid: candidato.uid,
+          email: pendienteAuth.email,
+          antiguedadDias: candidato.antiguedadDias
+        });
+      } catch (error) {
+        errores.push({
+          uid: candidato.uid,
+          codigo: error && error.code ? error.code : "error",
+          mensaje: error && error.message ? error.message : String(error)
+        });
+      }
+    }
+
+    const resultado = {
+      plazoHoras: HORAS_RETENCION_REGISTRO_INCOMPLETO,
+      revisados: snapshot.size,
+      candidatos: candidatos.length,
+      eliminados: eliminados,
+      recientes: recientes,
+      sinFecha: sinFecha,
+      errores: errores,
+      auth: "El cliente no puede eliminar cuentas de Authentication de otros usuarios; requiere Firebase Console, Admin SDK o Cloud Function."
+    };
+
+    if (salida) {
+      salida.replaceChildren();
+      const resumen = document.createElement("p");
+      resumen.className = "auditoriaRegistrosResumen";
+      resumen.textContent = "Limpieza completada. Revisados: " + resultado.revisados +
+        ". Eliminados: " + eliminados.length +
+        ". Recientes conservados: " + recientes.length +
+        ". Sin fecha conservados: " + sinFecha.length +
+        ". Errores: " + errores.length + ".";
+      salida.appendChild(resumen);
+
+      eliminados.forEach(function(item) {
+        const fila = document.createElement("div");
+        fila.className = "auditoriaRegistroFila auditoriaRegistroAntiguo";
+        fila.textContent = "Eliminado Firestore y añadido a Auth pendiente | " +
+          (item.email || "Sin email guardado") +
+          " | " + item.antiguedadDias + " dias | UID: " + item.uid;
+        salida.appendChild(fila);
+      });
+
+      errores.forEach(function(item) {
+        const fila = document.createElement("div");
+        fila.className = "auditoriaRegistroFila";
+        fila.textContent = "Error " + item.codigo + " | UID: " + item.uid;
+        salida.appendChild(fila);
+      });
+    }
+
+    if (typeof cargarCuentasAuthPendientesAdmin === "function") {
+      cargarCuentasAuthPendientesAdmin().catch(function(error) {
+        console.warn("No se pudo refrescar la lista de Auth pendiente:", error.message);
+      });
+    }
+
+    return resultado;
+  } catch (error) {
+    console.error("No se pudo limpiar registros incompletos:", error && error.code ? error.code : "error");
+    if (salida) salida.textContent = error.message || "No se pudo completar la limpieza.";
+    return null;
+  } finally {
+    restaurarBotonAccion(estadoBoton);
+  }
+}
+
+window.limpiarRegistrosIncompletosAntiguosAdmin = limpiarRegistrosIncompletosAntiguosAdmin;
+
+function crearTextoAuthPendiente(texto, className) {
+  const div = document.createElement("div");
+  if (className) div.className = className;
+  div.textContent = texto;
+  return div;
+}
+
+async function cargarCuentasAuthPendientesAdmin() {
+  const lista = document.getElementById("limpiezaAuthPendienteLista");
+  if (!lista) return [];
+
+  lista.replaceChildren(crearTextoAuthPendiente("Cargando cuentas pendientes..."));
+
+  try {
+    await comprobarAdminRegistrosIncompletos();
+    const snapshot = await db.collection("limpieza_auth_pendiente")
+      .where("estado", "==", "pendiente")
+      .get();
+    const pendientes = [];
+    snapshot.forEach(function(doc) {
+      const data = doc.data() || {};
+      pendientes.push({
+        id: doc.id,
+        uid: data.uid || doc.id,
+        email: obtenerEmailRegistroIncompleto(data),
+        fechaLimpieza: data.fechaLimpieza || null,
+        fechaRegistro: data.fechaRegistro || null,
+        motivo: data.motivo || "registro_incompleto"
+      });
+    });
+
+    pendientes.sort(function(a, b) {
+      const fechaA = obtenerMillisRegistroIncompletoAdmin({ registroIniciadoAt: a.fechaLimpieza }) || 0;
+      const fechaB = obtenerMillisRegistroIncompletoAdmin({ registroIniciadoAt: b.fechaLimpieza }) || 0;
+      return fechaB - fechaA;
+    });
+
+    lista.replaceChildren();
+    if (pendientes.length === 0) {
+      lista.appendChild(crearTextoAuthPendiente("No hay cuentas Authentication pendientes de borrar.", "auditoriaRegistrosResumen"));
+      return pendientes;
+    }
+
+    pendientes.forEach(function(item) {
+      const fila = document.createElement("div");
+      fila.className = "auditoriaRegistroFila auditoriaRegistroAntiguo";
+
+      const detalle = document.createElement("div");
+      detalle.textContent = "Email: " + (item.email || "Sin email guardado") +
+        " | UID: " + item.uid +
+        " | Limpieza: " + formatearFechaAuditoriaAuth(item.fechaLimpieza) +
+        " | Motivo: " + item.motivo;
+
+      const boton = document.createElement("button");
+      boton.className = "btnYellow";
+      boton.type = "button";
+      boton.textContent = "Marcar como borrado";
+      boton.addEventListener("click", function() {
+        marcarCuentaAuthPendienteBorrada(item.id, boton);
+      });
+
+      fila.appendChild(detalle);
+      fila.appendChild(boton);
+      lista.appendChild(fila);
+    });
+
+    return pendientes;
+  } catch (error) {
+    console.error("No se pudo cargar Auth pendiente:", error && error.code ? error.code : "error");
+    lista.replaceChildren(crearTextoAuthPendiente(error.message || "No se pudo cargar la lista pendiente."));
+    return [];
+  }
+}
+
+async function marcarCuentaAuthPendienteBorrada(docId, boton) {
+  const estadoBoton = bloquearBotonAccion(boton, "Marcando...");
+  if (estadoBoton.bloqueado) return;
+
+  try {
+    await comprobarAdminRegistrosIncompletos();
+    await db.collection("limpieza_auth_pendiente").doc(docId).set({
+      estado: "borrado",
+      fechaMarcadoBorrado: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    await cargarCuentasAuthPendientesAdmin();
+  } catch (error) {
+    console.error("No se pudo marcar Auth como borrado:", error && error.code ? error.code : "error");
+    alert(error.message || "No se pudo marcar como borrado.");
+  } finally {
+    restaurarBotonAccion(estadoBoton);
+  }
+}
+
+window.cargarCuentasAuthPendientesAdmin = cargarCuentasAuthPendientesAdmin;
+window.marcarCuentaAuthPendienteBorrada = marcarCuentaAuthPendienteBorrada;
 
 const IMAGEN_STORAGE_PERFIL = {
   maxDimension: 512,
@@ -613,6 +880,7 @@ auth.createUserWithEmailAndPassword(email, pass)
     const user = cred.user;
     await db.collection("usuarios").doc(user.uid).set({
       perfilCompleto: false,
+      email: user.email || email,
       terminosAceptados: true,
       terminosAceptadosAt: firebase.firestore.FieldValue.serverTimestamp(),
       registroIniciadoAt: firebase.firestore.FieldValue.serverTimestamp()

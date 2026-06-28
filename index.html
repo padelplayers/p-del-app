@@ -632,8 +632,14 @@ Juego en red
     <div class="adminChatSistemaHeader">
       <h3>Registros incompletos</h3>
       <button id="btnAuditarRegistrosIncompletos" class="btnYellow" type="button" onclick="auditarRegistrosIncompletosAdmin()">Auditar registros</button>
+      <button id="btnLimpiarRegistrosIncompletos" class="btnRed" type="button" onclick="limpiarRegistrosIncompletosAntiguosAdmin()">Limpiar antiguos</button>
     </div>
     <div id="auditoriaRegistrosIncompletos" class="auditoriaRegistrosIncompletos"></div>
+    <div class="adminChatSistemaHeader">
+      <h3>Cuentas Authentication pendientes de borrar</h3>
+      <button id="btnCargarAuthPendiente" class="btnBlue" type="button" onclick="cargarCuentasAuthPendientesAdmin()">Actualizar lista</button>
+    </div>
+    <div id="limpiezaAuthPendienteLista" class="auditoriaRegistrosIncompletos"></div>
     <div id="adminChatSistemaEstado" class="adminChatSistemaEstado"></div>
     <div id="adminChatSistemaResumen" class="adminChatSistemaResumen"></div>
     <div id="adminChatSistemaLista" class="adminChatSistemaLista"></div>
@@ -1534,10 +1540,10 @@ const db = firebase.firestore();
 <script src="nivel.js?v=4"></script>
 <script src="postpartido.js?v=23"></script>
 <script src="notifications.js?v=14"></script>
-<script src="estadisticas.js?v=7"></script>
+<script src="estadisticas.js?v=8"></script>
 <script src="admin-chat-cleanup.js?v=6"></script>
 <script src="pwa.js?v=76"></script>
-<script src="app.js?v=37"></script>
+<script src="app.js?v=38"></script>
 <script src="testNivel.js?v=2"></script>
 
 <nav id="bottomNav" class="bottomNav" aria-label="Navegacion principal">

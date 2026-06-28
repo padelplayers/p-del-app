@@ -23,6 +23,9 @@ function usuarioEsAdminEstadisticas() {
 function abrirEstadisticas() {
   if (!usuarioEsAdminEstadisticas()) return;
   mostrar("estadisticas");
+  if (typeof window.cargarCuentasAuthPendientesAdmin === "function") {
+    window.cargarCuentasAuthPendientesAdmin();
+  }
 }
 
 function volverEstadisticas() {

@@ -35,14 +35,30 @@ service cloud.firestore {
     }
 
     function clientPrivilegesValidOnCreate() {
-      return !request.resource.data.keys().hasAny(['rol', 'email']) &&
+      return !request.resource.data.keys().hasAny(['rol']) &&
         request.resource.data.get('admin', false) == false;
+    }
+
+    function validClientEmailOnCreate() {
+      return !request.resource.data.keys().hasAny(['email']) ||
+        request.resource.data.get('email', '') == request.auth.token.email;
+    }
+
+    function emailUnchangedOrOwn() {
+      return resource.data.keys().hasAny(['email'])
+        ? request.resource.data.get('email', '') == resource.data.get('email', '')
+        : (
+            !request.resource.data.keys().hasAny(['email']) ||
+            request.resource.data.get('email', '') == request.auth.token.email
+          );
     }
 
     function validIncompleteUserCreate() {
       return request.resource.data.get('perfilCompleto', false) == false &&
+        validClientEmailOnCreate() &&
         request.resource.data.keys().hasOnly([
           'perfilCompleto',
+          'email',
           'terminosAceptados',
           'terminosAceptadosAt',
           'registroIniciadoAt',
@@ -90,6 +106,12 @@ service cloud.firestore {
         'nivelDelta',
         'rankingPartidos'
       ]);
+    }
+
+    function oldIncompleteUserForCleanup() {
+      return resource.data.get('perfilCompleto', true) == false &&
+        resource.data.get('registroIniciadoAt', null) is timestamp &&
+        resource.data.get('registroIniciadoAt', request.time) <= request.time - duration.value(72, 'h');
     }
 
     function partidaData(partidaId) {
@@ -190,6 +212,7 @@ service cloud.firestore {
 
       allow create: if isOwner(uid) &&
         clientPrivilegesValidOnCreate() &&
+        validClientEmailOnCreate() &&
         (validIncompleteUserCreate() || validCompleteUserCreate());
 
       // Excepcion temporal: postpartido, ranking, seguimiento y borrado de perfil
@@ -197,13 +220,13 @@ service cloud.firestore {
       allow update: if signedIn() && privilegesUnchanged() && (
         (
           isOwner(uid) &&
-          !request.resource.data.keys().hasAny(['email']) &&
+          emailUnchangedOrOwn() &&
           validPresenceState()
         ) ||
         compatibleCrossUserUpdate()
       );
 
-      allow delete: if isOwner(uid);
+      allow delete: if isOwner(uid) || (isAdmin() && oldIncompleteUserForCleanup());
 
       match /chatLeidos/{chatId} {
         allow read, create, update, delete: if isOwner(uid);
@@ -214,6 +237,10 @@ service cloud.firestore {
       allow read: if signedIn() && documento == 'resumen';
       allow create, update: if documento == 'resumen' && isAdmin();
       allow delete: if false;
+    }
+
+    match /limpieza_auth_pendiente/{documento} {
+      allow read, write: if isAdmin();
     }
 
     match /pistas/{pistaId} {
