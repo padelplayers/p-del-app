@@ -1,5 +1,7 @@
 window.modoPartidas = window.modoPartidas || "proximas";
 
+const VENTANA_PARTIDA_RAPIDA_MS = 5 * 60 * 60 * 1000;
+
 const DESCUENTO_FIABILIDAD_PENALIZACION = {
   abandono_confirmada: 10,
   cancelacion_por_falta_sustituto: 10,
@@ -412,8 +414,9 @@ function partidaAbiertaAlcanzoVentana5h(p, ahora) {
   return !!(
     p &&
     p.estado === "abierta" &&
+    p.partidaRapida !== true &&
     fechaPartida &&
-    (ahora || new Date()) >= new Date(fechaPartida.getTime() - 5 * 60 * 60 * 1000)
+    (ahora || new Date()) >= new Date(fechaPartida.getTime() - VENTANA_PARTIDA_RAPIDA_MS)
   );
 }
 
@@ -1262,6 +1265,72 @@ function mostrarDialogoSalidaConfirmadaPartida() {
   });
 }
 
+function cerrarDialogoPartidaRapida(dialogo, crear) {
+  if (!dialogo) return;
+  const resolver = dialogo._resolverPartidaRapida;
+  dialogo.remove();
+  if (typeof resolver === "function") resolver(crear === true);
+}
+
+function mostrarDialogoPartidaRapida() {
+  return new Promise(function(resolve) {
+    const anterior = document.getElementById("dialogoPartidaRapida");
+    if (anterior) cerrarDialogoPartidaRapida(anterior, false);
+
+    const overlay = document.createElement("div");
+    overlay.id = "dialogoPartidaRapida";
+    overlay.className = "partidaDialogoOverlay";
+    overlay._resolverPartidaRapida = resolve;
+
+    const dialogo = document.createElement("div");
+    dialogo.className = "partidaDialogo";
+    dialogo.setAttribute("role", "dialog");
+    dialogo.setAttribute("aria-modal", "true");
+    dialogo.setAttribute("aria-labelledby", "dialogoPartidaRapidaTitulo");
+
+    const titulo = textoNodo("Partida de \u00faltima hora", "h3");
+    titulo.id = "dialogoPartidaRapidaTitulo";
+
+    const parrafos = [
+      "Faltan menos de 5 horas para el inicio de la partida.",
+      "Debes tener ya asegurado que la partida se completar\u00e1 con los jugadores necesarios y haber reservado previamente la pista con el club.",
+      "Si la partida finalmente no se realiza, ya no quedar\u00e1 margen suficiente para cancelar la reserva con el club y tendr\u00e1s que asumir los gastos o condiciones derivados de esa reserva.",
+      "\u00bfQuieres crear la partida igualmente?"
+    ];
+    const contenido = document.createElement("div");
+    contenido.className = "partidaDialogoTexto";
+    parrafos.forEach(function(texto) {
+      contenido.appendChild(textoNodo(texto, "p"));
+    });
+
+    const acciones = document.createElement("div");
+    acciones.className = "partidaDialogoAcciones";
+
+    const cancelar = document.createElement("button");
+    cancelar.type = "button";
+    cancelar.textContent = "Cancelar";
+    cancelar.onclick = function() { cerrarDialogoPartidaRapida(overlay, false); };
+
+    const crear = document.createElement("button");
+    crear.type = "button";
+    crear.className = "partidaDialogoSolicitar";
+    crear.textContent = "Crear partida";
+    crear.onclick = function() { cerrarDialogoPartidaRapida(overlay, true); };
+
+    acciones.appendChild(cancelar);
+    acciones.appendChild(crear);
+    dialogo.appendChild(titulo);
+    dialogo.appendChild(contenido);
+    dialogo.appendChild(acciones);
+    overlay.appendChild(dialogo);
+    overlay.onclick = function(event) {
+      if (event.target === overlay) cerrarDialogoPartidaRapida(overlay, false);
+    };
+    document.body.appendChild(overlay);
+    cancelar.focus();
+  });
+}
+
 function datosSustitucionReservaPendientePartida(uidSale, uidEntra) {
   return {
     sustitucionPendiente: true,
@@ -1436,6 +1505,10 @@ async function crearPartida() {
 
   if (!user) return;
 
+  const esPartidaRapida =
+    fechaPartida > ahora &&
+    fechaPartida.getTime() - ahora.getTime() < VENTANA_PARTIDA_RAPIDA_MS;
+
   try {
     const pistaDoc = await db.collection("pistas").doc(pistaId).get();
     if (!pistaDoc.exists) {
@@ -1452,6 +1525,11 @@ async function crearPartida() {
     console.error("No se pudo validar la pista seleccionada:", error);
     alert("No se pudo validar la pista seleccionada.");
     return;
+  }
+
+  if (esPartidaRapida) {
+    const crearRapida = await mostrarDialogoPartidaRapida();
+    if (!crearRapida) return;
   }
 
   db.collection("usuarios").doc(user.uid).get().then(function(docUser) {
@@ -1497,6 +1575,7 @@ async function crearPartida() {
       creadaPor: user.uid,
       creadaAt: new Date()
     };
+    if (esPartidaRapida) datosNuevaPartida.partidaRapida = true;
     let nuevaPartidaId = null;
 
     db.collection("partidas").add(datosNuevaPartida)
@@ -1592,6 +1671,51 @@ async function eliminarPartidaConChat(partidaId) {
     });
   }
   return true;
+}
+
+function procesarPartidaRapidaVencida(partidaId, p) {
+  p = p || {};
+  const creadaPor = p.creadaPor || p.creador || null;
+  const apuntados = arrayUnicoPartida((p.jugadores || []).concat(p.reservas || [])).filter(function(uid) {
+    return uid && uid !== creadaPor;
+  });
+  const avisos = [];
+
+  if (creadaPor) {
+    avisos.push(notificarPartida(creadaPor, {
+      tipo: "partida_rapida_cancelada_inicio_creador",
+      titulo: "Partida de \u00faltima hora cancelada",
+      mensaje: "La partida de \u00faltima hora no lleg\u00f3 a completarse antes de la hora de inicio y ha sido cancelada autom\u00e1ticamente.\n\nRecuerda revisar la reserva con el club, ya que al crear una partida de \u00faltima hora aceptaste que la gesti\u00f3n de la reserva y cualquier gasto asociado quedan bajo tu responsabilidad.",
+      partidaId: partidaId,
+      dedupeKey: "partida_rapida_cancelada_inicio_creador_" + partidaId,
+      prioridad: "alta",
+      emailCritico: true,
+      accion: null,
+      data: { motivo: "partida_rapida_vencida" }
+    }));
+  }
+
+  if (apuntados.length > 0) {
+    avisos.push(notificarPartida(apuntados, {
+      tipo: "partida_rapida_cancelada_inicio",
+      titulo: "Partida de \u00faltima hora cancelada",
+      mensaje: "La partida de \u00faltima hora ha sido cancelada autom\u00e1ticamente porque no lleg\u00f3 a completarse antes de la hora de inicio.",
+      partidaId: partidaId,
+      dedupeKey: "partida_rapida_cancelada_inicio_" + partidaId,
+      prioridad: "alta",
+      emailCritico: true,
+      accion: null,
+      data: { motivo: "partida_rapida_vencida" }
+    }));
+  }
+
+  return Promise.all(avisos.map(function(aviso) {
+    return aviso.catch(function(error) {
+      console.warn("No se pudo enviar un aviso de partida r\u00e1pida vencida:", error.message);
+    });
+  })).then(function() {
+    return eliminarPartidaConChat(partidaId);
+  });
 }
 
 function confirmarPartida(partidaId) {
@@ -2522,6 +2646,11 @@ function cargarPartidas() {
           eliminarPartidaConChat(doc.id).then(function(ok) { if (ok) cargarPartidas(); });
           return;
         }
+      }
+
+      if (p.estado === "abierta" && p.partidaRapida === true && fechaPartida && fechaPartida <= ahora) {
+        procesarPartidaRapidaVencida(doc.id, p).then(function(ok) { if (ok) cargarPartidas(); });
+        return;
       }
 
       if (p.estado === "abierta" && fechaPartida && fechaPartida < ahora) {

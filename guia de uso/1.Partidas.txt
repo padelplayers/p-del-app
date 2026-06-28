@@ -203,7 +203,35 @@ Algunas penalizaciones pueden generar restricciones temporales para
 crear partidas, unirse a partidas o utilizar determinadas funciones de
 la aplicación.
 
-10. Importante
+10. Partidas de última hora
+
+La aplicación permite crear partidas cuando faltan menos de 5 horas para
+el inicio únicamente para facilitar partidos ya acordados entre
+jugadores.
+
+Por ejemplo, si varios jugadores hablan previamente por el chat,
+confirman que pueden jugar y deciden organizar la partida en ese
+momento, el creador puede crear una partida de última hora.
+
+Antes de crearla, el creador debe tener confirmada la participación de
+los jugadores necesarios y haber reservado previamente la pista con el
+club.
+
+Al crear una partida de última hora, el creador acepta que ya no queda
+margen suficiente para cancelar la reserva con el club en condiciones
+normales. Si la partida finalmente no se completa o no se juega, la
+responsabilidad de gestionar la cancelación y asumir cualquier gasto o
+condición del club será del creador.
+
+La partida rápida puede permanecer abierta dentro de las últimas 5 horas
+para que los jugadores se apunten, pero si llega la hora de inicio y no
+se ha completado o confirmado, la aplicación la cancelará
+automáticamente.
+
+La aplicación ayuda a organizar jugadores, pero no gestiona reservas,
+pagos ni cancelaciones con clubes.
+
+11. Importante
 
 La aplicación facilita la organización de partidas entre jugadores.
 
