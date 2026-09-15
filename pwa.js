@@ -2,7 +2,7 @@ window.pwaState = window.pwaState || {
   deferredPrompt: null
 };
 
-const PWA_APP_VERSION = "v117";
+const PWA_APP_VERSION = "v118";
 const PWA_INSTALADA_KEY = "pwaInstalada";
 const PWA_SW_UPDATE_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -111,7 +111,7 @@ function initPwaBasica() {
   localStorage.removeItem(PWA_INSTALADA_KEY);
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js", { updateViaCache: "none" })
+    navigator.serviceWorker.register("service-worker.js?v=127", { updateViaCache: "none" })
       .then(function(registration) {
         programarComprobacionesServiceWorker(registration);
         return comprobarActualizacionServiceWorker(registration);

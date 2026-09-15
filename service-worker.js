@@ -1,19 +1,9 @@
-const CACHE_NAME = "padel-players-morvedre-v126";
-const APP_SHELL = [
-  "./manifest.json?v=3",
-  "./styles.css?v=58",
-  "./logros.js?v=5",
-  "./perfil.js?v=48",
-  "./jugadores.js?v=5",
-  "./pistas.js?v=23",
-  "./chat.js?v=26",
-  "./partidas.js?v=43",
-  "./postpartido.js?v=23",
-  "./notifications.js?v=14",
-  "./estadisticas.js?v=7",
-  "./admin-chat-cleanup.js?v=6",
-  "./pwa.js?v=76",
-  "./app.js?v=37",
+const CACHE_NAME = "padel-players-morvedre-v127";
+
+// Solo recursos estáticos seguros para uso offline. El HTML, JavaScript, CSS y
+// las peticiones de Firebase deben ir siempre a red para evitar mezclar
+// versiones distintas de la aplicación.
+const STATIC_ASSETS = [
   "./logo.png",
   "./icon-192-v2.png",
   "./icon-512-v2.png",
@@ -23,106 +13,74 @@ const APP_SHELL = [
 
 self.addEventListener("install", function(event) {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(function(cache) {
-      return cache.addAll(APP_SHELL);
-    }).catch(function() {})
+    caches.open(CACHE_NAME)
+      .then(function(cache) {
+        return cache.addAll(STATIC_ASSETS);
+      })
+      .catch(function(error) {
+        console.warn("No se pudo completar la precaché estática:", error);
+      })
+      .then(function() {
+        return self.skipWaiting();
+      })
   );
 });
 
 self.addEventListener("activate", function(event) {
   event.waitUntil(
-    caches.keys().then(function(keys) {
-      return Promise.all(keys.map(function(key) {
-        if (key !== CACHE_NAME) return caches.delete(key);
-        return null;
-      }));
-    })
+    caches.keys()
+      .then(function(keys) {
+        return Promise.all(keys.map(function(key) {
+          if (key !== CACHE_NAME) return caches.delete(key);
+          return null;
+        }));
+      })
+      .then(function() {
+        return self.clients.claim();
+      })
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", function(event) {
   if (event.request.method !== "GET") return;
 
   const url = new URL(event.request.url);
+
+  // Nunca interceptar recursos externos (Firebase, gstatic, APIs, etc.).
+  if (url.origin !== self.location.origin) return;
+
+  // Nunca interceptar navegación ni recursos de código/configuración.
+  // Así cada carga obtiene una versión coherente directamente de GitHub Pages.
   const esNavegacion =
     event.request.mode === "navigate" ||
     event.request.destination === "document" ||
     url.pathname.endsWith("/") ||
     url.pathname.endsWith("/index.html");
 
-  if (esNavegacion) {
-    event.respondWith(
-      fetch(event.request, { cache: "reload" }).catch(function() {
-        return new Response("Sin conexi\u00f3n", {
-          status: 503,
-          headers: { "Content-Type": "text/plain; charset=utf-8" }
-        });
-      })
-    );
+  if (
+    esNavegacion ||
+    ["script", "style", "worker", "manifest"].includes(event.request.destination) ||
+    url.pathname.endsWith("/service-worker.js")
+  ) {
     return;
   }
 
-  if (url.origin === self.location.origin && url.pathname.endsWith("/service-worker.js")) {
-    event.respondWith(fetch(event.request, { cache: "no-store" }));
-    return;
-  }
-
-  if (url.origin !== self.location.origin) {
-    event.respondWith(fetch(event.request).catch(function() {
-      return caches.match(event.request);
-    }));
-    return;
-  }
-
-  if (["script", "style", "worker", "manifest"].includes(event.request.destination)) {
-    event.respondWith(
-      caches.open(CACHE_NAME).then(function(cache) {
-        return fetch(event.request, { cache: "reload" }).then(function(response) {
-          if (response && response.status === 200) {
-            cache.put(event.request, response.clone()).catch(function() {});
-          }
-          return response;
-        }).catch(function() {
-          return caches.match(event.request).then(function(cached) {
-            return cached || new Response("", { status: 504 });
-          });
-        });
-      })
-    );
-    return;
-  }
-
+  // Solo imágenes y fuentes locales: caché primero, red como respaldo y
+  // actualización de caché cuando la descarga es correcta.
   if (["image", "font"].includes(event.request.destination)) {
     event.respondWith(
       caches.match(event.request).then(function(cached) {
         if (cached) return cached;
 
-        return caches.open(CACHE_NAME).then(function(cache) {
-          return fetch(event.request).then(function(response) {
-            if (response && response.status === 200) {
+        return fetch(event.request).then(function(response) {
+          if (response && response.ok) {
+            caches.open(CACHE_NAME).then(function(cache) {
               cache.put(event.request, response.clone()).catch(function() {});
-            }
-            return response;
-          });
+            });
+          }
+          return response;
         });
       })
     );
-    return;
   }
-
-  event.respondWith(
-    caches.open(CACHE_NAME).then(function(cache) {
-      return fetch(event.request, { cache: "reload" }).then(function(response) {
-        if (response && response.status === 200) {
-          cache.put(event.request, response.clone()).catch(function() {});
-        }
-        return response;
-      }).catch(function() {
-        return caches.match(event.request).then(function(cached) {
-          return cached || new Response("", { status: 504 });
-        });
-      });
-    })
-  );
 });
