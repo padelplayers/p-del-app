@@ -231,6 +231,11 @@ service cloud.firestore {
       match /chatLeidos/{chatId} {
         allow read, create, update, delete: if isOwner(uid);
       }
+
+      // Cada usuario solo puede registrar y mantener los tokens push de sus propios dispositivos.
+      match /pushTokens/{tokenId} {
+        allow read, create, update, delete: if isOwner(uid);
+      }
     }
 
     match /estadisticas_globales/{documento} {

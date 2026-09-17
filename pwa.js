@@ -2,7 +2,7 @@ window.pwaState = window.pwaState || {
   deferredPrompt: null
 };
 
-const PWA_APP_VERSION = "v118";
+const PWA_APP_VERSION = "v128";
 const PWA_INSTALADA_KEY = "pwaInstalada";
 const PWA_SW_UPDATE_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -23,6 +23,56 @@ function esDispositivoMovilPwa() {
   const esIphone = /iPhone/i.test(ua);
   const esIpad = /iPad/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   return esAndroid || esIphone || esIpad;
+}
+
+
+function esIosPwa() {
+  const ua = navigator.userAgent || "";
+  return /iPhone|iPad|iPod/i.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function usuarioEstaEditandoPwa() {
+  const activo = document.activeElement;
+  if (!activo) return false;
+  const tag = String(activo.tagName || "").toLowerCase();
+  return tag === "input" || tag === "textarea" || tag === "select" || activo.isContentEditable === true;
+}
+
+function ofrecerActualizacionPwa(registration) {
+  if (!registration || !registration.waiting || window.pwaState.actualizacionOfrecida) return;
+
+  if (usuarioEstaEditandoPwa()) {
+    window.pwaState.actualizacionPendiente = registration;
+    return;
+  }
+
+  window.pwaState.actualizacionOfrecida = true;
+  const aceptar = window.confirm("Hay una nueva versi\u00f3n de P\u00e1del Players Morvedre disponible. ¿Actualizar ahora?");
+  if (aceptar && registration.waiting) {
+    window.pwaState.recargarAlCambiarControlador = true;
+    registration.waiting.postMessage({ type: "SKIP_WAITING" });
+  } else {
+    window.pwaState.actualizacionOfrecida = false;
+  }
+}
+
+function vigilarActualizacionesPwa(registration) {
+  if (!registration) return;
+
+  if (registration.waiting && navigator.serviceWorker.controller) {
+    ofrecerActualizacionPwa(registration);
+  }
+
+  registration.addEventListener("updatefound", function() {
+    const worker = registration.installing;
+    if (!worker) return;
+    worker.addEventListener("statechange", function() {
+      if (worker.state === "installed" && navigator.serviceWorker.controller) {
+        ofrecerActualizacionPwa(registration);
+      }
+    });
+  });
 }
 
 function cerrarAvisoPwa() {
@@ -67,7 +117,7 @@ function mostrarAvisoPwaSiProcede() {
   const aviso = document.getElementById("pwaAviso");
   if (!aviso || pwaEstaInstalada() || !esDispositivoMovilPwa()) return;
 
-  const esIos = /iPhone|iPad/i.test(navigator.userAgent || "");
+  const esIos = esIosPwa();
   if (!window.pwaState.deferredPrompt && !esIos) return;
 
   aviso.style.display = "flex";
@@ -103,7 +153,12 @@ function instalarPwa() {
     return;
   }
 
-  alert("En tu navegador, usa el men\u00fa y elige A\u00f1adir a pantalla de inicio.");
+  if (esIosPwa()) {
+    alert("En iPhone/iPad: abre esta web en Safari, pulsa Compartir (cuadrado con flecha hacia arriba) y elige Añadir a pantalla de inicio. Después pulsa Añadir.");
+    return;
+  }
+
+  alert("En tu navegador, usa el menú y elige Añadir a pantalla de inicio.");
 }
 
 function initPwaBasica() {
@@ -111,8 +166,9 @@ function initPwaBasica() {
   localStorage.removeItem(PWA_INSTALADA_KEY);
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js?v=127", { updateViaCache: "none" })
+    navigator.serviceWorker.register("service-worker.js?v=128", { updateViaCache: "none" })
       .then(function(registration) {
+        vigilarActualizacionesPwa(registration);
         programarComprobacionesServiceWorker(registration);
         return comprobarActualizacionServiceWorker(registration);
       })
@@ -126,6 +182,22 @@ function initPwaBasica() {
     window.pwaState.deferredPrompt = event;
     actualizarBotonInstalarPwa();
     mostrarAvisoPwaSiProcede();
+  });
+
+  navigator.serviceWorker.addEventListener("controllerchange", function() {
+    if (!window.pwaState.recargarAlCambiarControlador || window.pwaState.recargaPorActualizacion) return;
+    window.pwaState.recargaPorActualizacion = true;
+    window.location.reload();
+  });
+
+  document.addEventListener("focusout", function() {
+    if (!window.pwaState.actualizacionPendiente) return;
+    setTimeout(function() {
+      if (usuarioEstaEditandoPwa()) return;
+      const registration = window.pwaState.actualizacionPendiente;
+      window.pwaState.actualizacionPendiente = null;
+      ofrecerActualizacionPwa(registration);
+    }, 150);
   });
 
   window.addEventListener("appinstalled", function() {

@@ -57,7 +57,10 @@ async function crearNotificacionInterna(datos) {
     dedupeKey: datos.dedupeKey || null,
     data: datos.data || {},
     emailCritico: datos.emailCritico === true,
-    emailEnviado: false
+    emailEnviado: false,
+    // El backend de push reutiliza la notificación interna como fuente de verdad.
+    // Solo los avisos de partida/postpartido se marcan automáticamente.
+    pushSolicitado: datos.pushSolicitado === true || datos.origen === "partidas" || datos.origen === "postpartido"
   };
 
   if (payload.dedupeKey) {

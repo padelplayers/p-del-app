@@ -1,4 +1,4 @@
-const CACHE_NAME = "padel-players-morvedre-v127";
+const CACHE_NAME = "padel-players-morvedre-v128";
 
 // Solo recursos estáticos seguros para uso offline. El HTML, JavaScript, CSS y
 // las peticiones de Firebase deben ir siempre a red para evitar mezclar
@@ -20,9 +20,7 @@ self.addEventListener("install", function(event) {
       .catch(function(error) {
         console.warn("No se pudo completar la precaché estática:", error);
       })
-      .then(function() {
-        return self.skipWaiting();
-      })
+
   );
 });
 
@@ -39,6 +37,13 @@ self.addEventListener("activate", function(event) {
         return self.clients.claim();
       })
   );
+});
+
+
+self.addEventListener("message", function(event) {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", function(event) {

@@ -1157,13 +1157,25 @@ async function prepararEnvioChat(boton) {
       const msgRef = mensajesRef.doc();
       const nombreAutor = await obtenerNombreAutorChat(user);
 
-      batch.set(msgRef, {
+      const mensajeData = {
         u: user.uid,
         n: nombreAutor,
         t: texto,
         at: firebase.firestore.FieldValue.serverTimestamp(),
         type: "text"
-      });
+      };
+
+      // Chat General queda expresamente excluido de push.
+      // Partida y privado se marcan en el propio mensaje para que el backend
+      // pueda enviarlo una sola vez usando el id único del mensaje.
+      if (chat.tipo === "partida" || chat.tipo === "privado") {
+        mensajeData.pushSolicitado = true;
+        mensajeData.pushTipo = chat.tipo === "partida" ? "chat_partida" : "chat_privado";
+        mensajeData.pushChatId = chatId;
+        if (chat.tipo === "privado") mensajeData.pushDestinatarioUid = chat.otroUid || null;
+      }
+
+      batch.set(msgRef, mensajeData);
 
       if (chatId === "general") {
         const generalRef = db.collection("chats").doc("general");

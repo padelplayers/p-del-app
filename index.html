@@ -109,6 +109,7 @@ html, body {
 <link rel="icon" type="image/png" href="icon-192-v2.png">
 <link rel="apple-touch-icon" href="icon-192-v2.png">
 <link rel="stylesheet" href="styles.css?v=58">
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 
 <body>
@@ -132,7 +133,10 @@ html, body {
 <div id="notificacionesPanel" class="notificacionesPanel">
   <div class="notificacionesPanelHeader">
     <strong>Avisos</strong>
-    <button id="notificacionesCerrar" type="button">Cerrar</button>
+    <div>
+      <button id="pushActivarBtn" type="button" style="display:none;">Activar avisos</button>
+      <button id="notificacionesCerrar" type="button">Cerrar</button>
+    </div>
   </div>
   <div id="notificacionesLista" class="notificacionesLista"></div>
 </div>
@@ -1539,10 +1543,11 @@ const db = firebase.firestore();
 <script src="partidas.js?v=43"></script>
 <script src="nivel.js?v=4"></script>
 <script src="postpartido.js?v=23"></script>
-<script src="notifications.js?v=14"></script>
+<script src="notifications.js?v=15"></script>
+<script src="push.js?v=2"></script>
 <script src="estadisticas.js?v=8"></script>
 <script src="admin-chat-cleanup.js?v=6"></script>
-<script src="pwa.js?v=76"></script>
+<script src="pwa.js?v=78"></script>
 <script src="app.js?v=38"></script>
 <script src="testNivel.js?v=2"></script>
 
