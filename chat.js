@@ -1215,6 +1215,9 @@ async function prepararEnvioChat(boton) {
       }
 
       await batch.commit();
+      if ((chat.tipo === "partida" || chat.tipo === "privado") && typeof window.solicitarPushBackend === "function") {
+        window.solicitarPushBackend({ action: "chat", tipo: chat.tipo, chatId: chatId, messageId: msgRef.id });
+      }
       await limpiarMensajesAntiguos(chatId);
       input.value = "";
     } catch (e) {

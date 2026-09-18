@@ -1,0 +1,6 @@
+﻿name = "padel-morvedre-push"
+main = "worker.js"
+compatibility_date = "2026-09-18"
+
+[vars]
+ONESIGNAL_APP_ID = "31db48d9-ff66-45fb-82ba-f942e97df865"

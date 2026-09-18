@@ -66,10 +66,16 @@ async function crearNotificacionInterna(datos) {
   if (payload.dedupeKey) {
     const docId = crearDocIdNotificacion(payload.uid + "_" + payload.dedupeKey);
     await db.collection("notificaciones").doc(docId).set(payload, { merge: true });
+    if (payload.pushSolicitado && typeof window.solicitarPushBackend === "function") {
+      window.solicitarPushBackend({ action: "notification", notificationId: docId });
+    }
     return docId;
   }
 
   const doc = await db.collection("notificaciones").add(payload);
+  if (payload.pushSolicitado && typeof window.solicitarPushBackend === "function") {
+    window.solicitarPushBackend({ action: "notification", notificationId: doc.id });
+  }
   return doc.id;
 }
 

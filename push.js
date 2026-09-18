@@ -220,6 +220,33 @@
     iniciarOneSignal();
   }
 
+  const PUSH_BACKEND_URL = "https://padel-morvedre-push.padelplayersmorvedre.workers.dev";
+
+  async function solicitarPushBackend(payload) {
+    const user = firebase.auth().currentUser;
+    if (!user || !payload) return false;
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch(PUSH_BACKEND_URL, {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        console.warn("[PUSH] Backend rechazó la solicitud:", response.status);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.warn("[PUSH] No se pudo solicitar el aviso:", error && error.message ? error.message : error);
+      return false;
+    }
+  }
+
+  window.solicitarPushBackend = solicitarPushBackend;
   window.registrarPush = registrarPush;
   document.addEventListener("DOMContentLoaded", initPush);
 })();
