@@ -2,7 +2,7 @@ window.pwaState = window.pwaState || {
   deferredPrompt: null
 };
 
-const PWA_APP_VERSION = "v129";
+const PWA_APP_VERSION = "v130";
 const PWA_INSTALADA_KEY = "pwaInstalada";
 const PWA_SW_UPDATE_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -48,7 +48,7 @@ function ofrecerActualizacionPwa(registration) {
   }
 
   window.pwaState.actualizacionOfrecida = true;
-  const aceptar = window.confirm("Hay una nueva versi\u00f3n de P\u00e1del Players Morvedre disponible. ¿Actualizar ahora?");
+  const aceptar = window.confirm("Hay una nueva versi\u00f3n de P\u00e1del Players Morvedre disponible. Â¿Actualizar ahora?");
   if (aceptar && registration.waiting) {
     window.pwaState.recargarAlCambiarControlador = true;
     registration.waiting.postMessage({ type: "SKIP_WAITING" });
@@ -133,7 +133,11 @@ function actualizarTextoAvisoPwa() {
 
   if (titulo) titulo.textContent = "Instala P\u00e1del Players Morvedre";
   if (texto) {
-    texto.textContent = "Instala la app para disfrutar de una experiencia m\u00e1s completa. Accede m\u00e1s r\u00e1pido a tus partidas, chats y clasificaciones, y recuerda entrar peri\u00f3dicamente para consultar el estado de tus partidas y avisos importantes.";
+    if (esIosPwa() && !pwaEstaInstalada()) {
+      texto.textContent = "En iPhone/iPad: pulsa Compartir (cuadrado con flecha hacia arriba), elige Añadir a pantalla de inicio y pulsa Añadir. Después abre Pádel Players desde el nuevo icono. Al entrar te pediremos activar los avisos.";
+    } else {
+      texto.textContent = "Instala la app para disfrutar de una experiencia más completa. Accede más rápido a tus partidas, chats y clasificaciones y recibe los avisos importantes de la aplicación.";
+    }
   }
 }
 
@@ -154,11 +158,11 @@ function instalarPwa() {
   }
 
   if (esIosPwa()) {
-    alert("En iPhone/iPad: abre esta web en Safari, pulsa Compartir (cuadrado con flecha hacia arriba) y elige Añadir a pantalla de inicio. Después pulsa Añadir.");
+    cerrarAvisoPwa();
     return;
   }
 
-  alert("En tu navegador, usa el menú y elige Añadir a pantalla de inicio.");
+  alert("En tu navegador, usa el menÃº y elige AÃ±adir a pantalla de inicio.");
 }
 
 function initPwaBasica() {
@@ -166,7 +170,7 @@ function initPwaBasica() {
   localStorage.removeItem(PWA_INSTALADA_KEY);
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js?v=129", { updateViaCache: "none" })
+    navigator.serviceWorker.register("service-worker.js?v=130", { updateViaCache: "none" })
       .then(function(registration) {
         vigilarActualizacionesPwa(registration);
         programarComprobacionesServiceWorker(registration);
@@ -207,6 +211,11 @@ function initPwaBasica() {
     actualizarBotonInstalarPwa();
   });
 
+  if (esIosPwa() && !pwaEstaInstalada()) {
+    const instalarIos = document.getElementById("pwaInstalarBtn");
+    if (instalarIos) instalarIos.textContent = "Entendido";
+  }
+
   const instalar = document.getElementById("pwaInstalarBtn");
   const instalarMenu = document.getElementById("btnInstalarPwaMenu");
   const ahoraNo = document.getElementById("pwaAhoraNoBtn");
@@ -225,3 +234,4 @@ window.instalarPwa = instalarPwa;
 window.actualizarBotonInstalarPwa = actualizarBotonInstalarPwa;
 
 document.addEventListener("DOMContentLoaded", initPwaBasica);
+

@@ -9,34 +9,18 @@
   let oneSignal = null;
   let initPromise = null;
   let ultimoUid = null;
-  const AVISO_PUSH_POSPUESTO_MS = 7 * 24 * 60 * 60 * 1000;
-
-  function claveAvisoPush(uid) {
-    return "padel_push_aviso_" + uid;
-  }
-
   function ocultarInvitacionPush() {
     const capa = document.getElementById("pushInvitacionInicial");
     if (capa) capa.remove();
   }
 
-  function posponerInvitacionPush(uid) {
-    try {
-      localStorage.setItem(claveAvisoPush(uid), String(Date.now()));
-    } catch (_) {}
-    ocultarInvitacionPush();
-  }
-
   function debeMostrarInvitacionPush(user) {
     if (!user || !oneSignal || !entornoCompatible()) return false;
+    if (esIos() && !estaInstalada()) return false;
     if (Notification.permission === "denied") return false;
     const permiso = oneSignal.Notifications && oneSignal.Notifications.permission === true;
     const suscrito = !!(oneSignal.User && oneSignal.User.PushSubscription && oneSignal.User.PushSubscription.optedIn);
     if (permiso && suscrito) return false;
-    try {
-      const ultimo = Number(localStorage.getItem(claveAvisoPush(user.uid)) || 0);
-      if (ultimo && Date.now() - ultimo < AVISO_PUSH_POSPUESTO_MS) return false;
-    } catch (_) {}
     return true;
   }
 
@@ -47,17 +31,13 @@
     capa.id = "pushInvitacionInicial";
     capa.style.cssText = "position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;";
     capa.innerHTML = '<div role="dialog" aria-modal="true" aria-labelledby="pushInvitacionTitulo" style="width:min(430px,100%);background:#fff;border-radius:18px;padding:24px;box-shadow:0 12px 40px rgba(0,0,0,.3);font-family:inherit;">' +
-      '<h2 id="pushInvitacionTitulo" style="margin:0 0 12px;color:#1565C0;font-size:22px;">Activa los avisos de Pádel Players</h2>' +
+      '<h2 id="pushInvitacionTitulo" style="margin:0 0 12px;color:#1565C0;font-size:22px;">Activa los avisos de PÃ¡del Players</h2>' +
       '<p style="margin:0 0 20px;line-height:1.45;color:#222;">Recibe avisos importantes sobre tus partidas, cambios de jugadores, reservas y mensajes privados.</p>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;">' +
-      '<button id="pushInvitacionActivar" type="button" style="flex:1;min-width:150px;border:0;border-radius:12px;padding:13px 16px;background:#1565C0;color:#fff;font-weight:700;font-size:16px;">Activar avisos</button>' +
-      '<button id="pushInvitacionAhoraNo" type="button" style="flex:1;min-width:120px;border:1px solid #bbb;border-radius:12px;padding:13px 16px;background:#fff;color:#333;font-size:16px;">Ahora no</button>' +
+      '<button id="pushInvitacionActivar" type="button" style="width:100%;border:0;border-radius:12px;padding:13px 16px;background:#1565C0;color:#fff;font-weight:700;font-size:16px;">Activar avisos</button>' +
       '</div></div>';
     document.body.appendChild(capa);
 
-    document.getElementById("pushInvitacionAhoraNo").addEventListener("click", function() {
-      posponerInvitacionPush(user.uid);
-    });
     document.getElementById("pushInvitacionActivar").addEventListener("click", function() {
       registrarPush(true).then(function(ok) {
         if (ok) ocultarInvitacionPush();
@@ -129,7 +109,7 @@
 
     if (esIos() && !estaInstalada()) {
       if (interactivo) {
-        alert("En iPhone/iPad, instala primero Pádel Players en la pantalla de inicio y ábrela desde su icono. Después podrás activar las notificaciones.");
+        alert("En iPhone/iPad, instala primero PÃ¡del Players en la pantalla de inicio y Ã¡brela desde su icono. DespuÃ©s podrÃ¡s activar las notificaciones.");
       }
       return false;
     }
@@ -142,7 +122,7 @@
 
     if (!oneSignal.Notifications.permission) {
       if (interactivo && Notification.permission === "denied") {
-        alert("Las notificaciones están bloqueadas en este dispositivo. Debes permitirlas desde los ajustes del navegador o de la app.");
+        alert("Las notificaciones estÃ¡n bloqueadas en este dispositivo. Debes permitirlas desde los ajustes del navegador o de la app.");
       }
       actualizarBotonPush();
       return false;
@@ -213,7 +193,7 @@
           else setTimeout(function() { mostrarInvitacionPush(user); }, 900);
         });
       }).catch(function(error) {
-        console.warn("No se pudo sincronizar OneSignal con la sesión:", error && error.message ? error.message : error);
+        console.warn("No se pudo sincronizar OneSignal con la sesiÃ³n:", error && error.message ? error.message : error);
       });
     });
 
@@ -236,7 +216,7 @@
         body: JSON.stringify(payload)
       });
       if (!response.ok) {
-        console.warn("[PUSH] Backend rechazó la solicitud:", response.status);
+        console.warn("[PUSH] Backend rechazÃ³ la solicitud:", response.status);
         return false;
       }
       return true;
@@ -250,3 +230,4 @@
   window.registrarPush = registrarPush;
   document.addEventListener("DOMContentLoaded", initPush);
 })();
+
