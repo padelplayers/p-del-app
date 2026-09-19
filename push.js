@@ -231,3 +231,36 @@
   document.addEventListener("DOMContentLoaded", initPush);
 })();
 
+
+
+window.obtenerDiagnosticoPush = async function () {
+  const datos = {
+    "OneSignal initPromise": initPromise ? "CREADA" : "NO",
+    "OneSignal objeto": oneSignal ? "SI" : "NO",
+    "UID identificado": ultimoUid || "NO"
+  };
+
+  try {
+    datos["Firebase usuario"] = (window.auth && auth.currentUser) ? auth.currentUser.uid : "NO";
+  } catch (e) {
+    datos["Firebase usuario"] = "ERROR";
+  }
+
+  try {
+    datos["OneSignal permiso"] = oneSignal && oneSignal.Notifications
+      ? String(oneSignal.Notifications.permission)
+      : "NO DISPONIBLE";
+  } catch (e) {
+    datos["OneSignal permiso"] = "ERROR: " + e.message;
+  }
+
+  try {
+    datos["OneSignal optedIn"] = oneSignal && oneSignal.User && oneSignal.User.PushSubscription
+      ? String(oneSignal.User.PushSubscription.optedIn)
+      : "NO DISPONIBLE";
+  } catch (e) {
+    datos["OneSignal optedIn"] = "ERROR: " + e.message;
+  }
+
+  return datos;
+};

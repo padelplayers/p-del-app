@@ -135,6 +135,7 @@ html, body {
     <strong>Avisos</strong>
     <div>
       <button id="pushActivarBtn" type="button" style="display:none;">Activar avisos</button>
+      <button id="pushDiagnosticoIosBtn" type="button" onclick="mostrarDiagnosticoPushIos()" style="display:none;">Diagnóstico iOS</button>
       <button id="notificacionesCerrar" type="button">Cerrar</button>
     </div>
   </div>
@@ -1544,10 +1545,10 @@ const db = firebase.firestore();
 <script src="nivel.js?v=4"></script>
 <script src="postpartido.js?v=23"></script>
 <script src="notifications.js?v=15"></script>
-<script src="push.js?v=4"></script>
+<script src="push.js?v=5"></script>
 <script src="estadisticas.js?v=8"></script>
 <script src="admin-chat-cleanup.js?v=6"></script>
-<script src="pwa.js?v=80"></script>
+<script src="pwa.js?v=81"></script>
 <script src="app.js?v=38"></script>
 <script src="testNivel.js?v=2"></script>
 
@@ -1585,6 +1586,59 @@ const db = firebase.firestore();
   </button>
 </nav>
 
+
+
+<script>
+async function mostrarDiagnosticoPushIos() {
+  const lineas = [];
+  const siNo = v => v ? "SI" : "NO";
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const standalone = window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
+
+  lineas.push("DIAGNOSTICO PUSH iOS");
+  lineas.push("iOS detectado: " + siNo(ios));
+  lineas.push("PWA standalone: " + siNo(standalone));
+  lineas.push("HTTPS: " + siNo(window.isSecureContext));
+  lineas.push("Service Worker API: " + siNo("serviceWorker" in navigator));
+  lineas.push("Notification API: " + siNo("Notification" in window));
+  lineas.push("Permiso: " + (("Notification" in window) ? Notification.permission : "NO DISPONIBLE"));
+  lineas.push("OneSignalDeferred: " + siNo(Array.isArray(window.OneSignalDeferred)));
+  lineas.push("Funcion push.js: " + siNo(typeof window.registrarPush === "function"));
+
+  try {
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      lineas.push("SW registrados: " + regs.length);
+      regs.forEach((r, i) => lineas.push("SW" + (i + 1) + ": " + r.scope));
+    }
+  } catch (e) {
+    lineas.push("Error SW: " + (e && e.message ? e.message : String(e)));
+  }
+
+  try {
+    if (typeof window.obtenerDiagnosticoPush === "function") {
+      const extra = await window.obtenerDiagnosticoPush();
+      Object.entries(extra || {}).forEach(([k, v]) => lineas.push(k + ": " + String(v)));
+    } else {
+      lineas.push("Diagnostico interno push.js: NO");
+    }
+  } catch (e) {
+    lineas.push("Error diagnostico push.js: " + (e && e.message ? e.message : String(e)));
+  }
+
+  const texto = lineas.join("\n");
+  alert(texto);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("pushDiagnosticoIosBtn");
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (btn && ios) btn.style.display = "inline-block";
+});
+</script>
 
 </body>
 </html>
