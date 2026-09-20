@@ -1,8 +1,8 @@
-const CACHE_NAME = "padel-players-morvedre-v133";
+const CACHE_NAME = "padel-players-morvedre-v134";
 
-// Solo recursos estÃ¡ticos seguros para uso offline. El HTML, JavaScript, CSS y
+// Solo recursos estáticos seguros para uso offline. El HTML, JavaScript, CSS y
 // las peticiones de Firebase deben ir siempre a red para evitar mezclar
-// versiones distintas de la aplicaciÃ³n.
+// versiones distintas de la aplicación.
 const STATIC_ASSETS = [
   "./logo.png",
   "./icon-192-v2.png",
@@ -18,7 +18,7 @@ self.addEventListener("install", function(event) {
         return cache.addAll(STATIC_ASSETS);
       })
       .catch(function(error) {
-        console.warn("No se pudo completar la precachÃ© estÃ¡tica:", error);
+        console.warn("No se pudo completar la precaché estática:", error);
       })
 
   );
@@ -54,8 +54,8 @@ self.addEventListener("fetch", function(event) {
   // Nunca interceptar recursos externos (Firebase, gstatic, APIs, etc.).
   if (url.origin !== self.location.origin) return;
 
-  // Nunca interceptar navegaciÃ³n ni recursos de cÃ³digo/configuraciÃ³n.
-  // AsÃ­ cada carga obtiene una versiÃ³n coherente directamente de GitHub Pages.
+  // Nunca interceptar navegación ni recursos de código/configuración.
+  // Así cada carga obtiene una versión coherente directamente de GitHub Pages.
   const esNavegacion =
     event.request.mode === "navigate" ||
     event.request.destination === "document" ||
@@ -70,8 +70,8 @@ self.addEventListener("fetch", function(event) {
     return;
   }
 
-  // Solo imÃ¡genes y fuentes locales: cachÃ© primero, red como respaldo y
-  // actualizaciÃ³n de cachÃ© cuando la descarga es correcta.
+  // Solo imágenes y fuentes locales: caché primero, red como respaldo y
+  // actualización de caché cuando la descarga es correcta.
   if (["image", "font"].includes(event.request.destination)) {
     event.respondWith(
       caches.match(event.request).then(function(cached) {

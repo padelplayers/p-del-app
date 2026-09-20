@@ -681,13 +681,13 @@ async function resincronizarAvisosSistemaAdmin() {
   }
 
   if (typeof window.sincronizarMensajesSistemaPartida !== "function") {
-    if (estadoEl) estadoEl.textContent = "No se pudo resincronizar: sincronizaciÃ³n no disponible.";
+    if (estadoEl) estadoEl.textContent = "No se pudo resincronizar: sincronización no disponible.";
     return;
   }
 
-  const ok = confirm("Se revisarÃ¡n las partidas activas y se resincronizarÃ¡n sus avisos Sistema. Â¿Continuar?");
+  const ok = confirm("Se revisarán las partidas activas y se resincronizarán sus avisos Sistema. ¿Continuar?");
   if (!ok) {
-    if (estadoEl) estadoEl.textContent = "ResincronizaciÃ³n cancelada.";
+    if (estadoEl) estadoEl.textContent = "Resincronización cancelada.";
     return;
   }
 
@@ -713,7 +713,7 @@ async function resincronizarAvisosSistemaAdmin() {
     }
 
     if (estadoEl) {
-      estadoEl.textContent = "ResincronizaciÃ³n completada. Partidas revisadas: " +
+      estadoEl.textContent = "Resincronización completada. Partidas revisadas: " +
         revisadas + ". Avisos sincronizados: " + sincronizadas + ". Errores: " + errores.length + ".";
     }
 

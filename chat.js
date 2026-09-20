@@ -1016,7 +1016,7 @@ window.eliminarChatTotal = async function(chatId) {
       await batch.commit();
     }
   } catch (e) {
-    console.warn("[CHAT] No se pudo borrar la subcolecciÃ³n:", e.message);
+    console.warn("[CHAT] No se pudo borrar la subcolección:", e.message);
     return false;
   }
 

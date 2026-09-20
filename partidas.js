@@ -2024,7 +2024,7 @@ function crearBloquePartida(id, p, nivelTexto, mostrarSalir, fondo) {
     avisoSustitucionCreador.style.cssText = "padding:8px; border-radius:6px; background:#FFF3CD; color:#664D03; font-weight:bold; text-align:left;";
     avisoSustitucionCreador.textContent = p.sustitucionTipo === "reserva_subida_pendiente_aceptar"
       ? "Hay una reserva pendiente de aceptar su plaza. No puedes confirmar la partida hasta que responda."
-      : "Hay una sustituciÃ³n pendiente. No puedes confirmar la partida hasta que se resuelva.";
+      : "Hay una sustitución pendiente. No puedes confirmar la partida hasta que se resuelva.";
     cabecera.appendChild(avisoSustitucionCreador);
   }
 

@@ -2,7 +2,7 @@ window.pwaState = window.pwaState || {
   deferredPrompt: null
 };
 
-const PWA_APP_VERSION = "v133";
+const PWA_APP_VERSION = "v134";
 const PWA_INSTALADA_KEY = "pwaInstalada";
 const PWA_SW_UPDATE_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -48,7 +48,7 @@ function ofrecerActualizacionPwa(registration) {
   }
 
   window.pwaState.actualizacionOfrecida = true;
-  const aceptar = window.confirm("Hay una nueva versi\u00f3n de P\u00e1del Players Morvedre disponible. Â¿Actualizar ahora?");
+  const aceptar = window.confirm("Hay una nueva versi\u00f3n de P\u00e1del Players Morvedre disponible. ¿Actualizar ahora?");
   if (aceptar && registration.waiting) {
     window.pwaState.recargarAlCambiarControlador = true;
     registration.waiting.postMessage({ type: "SKIP_WAITING" });
@@ -162,7 +162,7 @@ function instalarPwa() {
     return;
   }
 
-  alert("En tu navegador, usa el menÃº y elige AÃ±adir a pantalla de inicio.");
+  alert("En tu navegador, usa el menú y elige Añadir a pantalla de inicio.");
 }
 
 function initPwaBasica() {
@@ -170,7 +170,7 @@ function initPwaBasica() {
   localStorage.removeItem(PWA_INSTALADA_KEY);
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js?v=133", { updateViaCache: "none" })
+    navigator.serviceWorker.register("service-worker.js?v=134", { updateViaCache: "none" })
       .then(function(registration) {
         vigilarActualizacionesPwa(registration);
         programarComprobacionesServiceWorker(registration);
