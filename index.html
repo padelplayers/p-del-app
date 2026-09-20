@@ -136,6 +136,7 @@ html, body {
     <div>
       <button id="pushActivarBtn" type="button" style="display:none;">Activar avisos</button>
       <button id="pushDiagnosticoIosBtn" type="button" onclick="mostrarDiagnosticoPushIos()" style="display:none;">Diagnóstico iOS</button>
+      <button id="pushRepararIosBtn" type="button" onclick="repararPushIosDesdePanel()" style="display:none;">Activar/Reparar avisos iOS</button>
       <button id="notificacionesCerrar" type="button">Cerrar</button>
     </div>
   </div>
@@ -1545,10 +1546,10 @@ const db = firebase.firestore();
 <script src="nivel.js?v=4"></script>
 <script src="postpartido.js?v=23"></script>
 <script src="notifications.js?v=15"></script>
-<script src="push.js?v=5"></script>
+<script src="push.js?v=6"></script>
 <script src="estadisticas.js?v=8"></script>
 <script src="admin-chat-cleanup.js?v=6"></script>
-<script src="pwa.js?v=81"></script>
+<script src="pwa.js?v=82"></script>
 <script src="app.js?v=38"></script>
 <script src="testNivel.js?v=2"></script>
 
@@ -1589,6 +1590,31 @@ const db = firebase.firestore();
 
 
 <script>
+
+async function repararPushIosDesdePanel() {
+  try {
+    if (typeof window.repararPushIos !== "function") {
+      alert("La función de reparación push no está disponible.");
+      return;
+    }
+    const resultado = await window.repararPushIos();
+    const d = (resultado && resultado.diagnostico) || {};
+    const lineas = [
+      resultado && resultado.ok ? "AVISOS iOS ACTIVADOS" : "NO SE PUDO COMPLETAR LA ACTIVACIÓN",
+      "Permiso navegador: " + (d["Permiso navegador"] || "NO"),
+      "OneSignal: " + (d["OneSignal objeto"] || "NO"),
+      "Error OneSignal: " + (d["Error OneSignal init"] || "NO"),
+      "optedIn: " + (d["OneSignal optedIn"] || "NO"),
+      "Subscription ID: " + (d["Subscription ID"] || "NO"),
+      "Push token: " + (d["Push token"] || "NO"),
+      "UID: " + (d["UID identificado"] || "NO")
+    ];
+    alert(lineas.join("\n"));
+  } catch (e) {
+    alert("Error al reparar avisos iOS: " + (e && e.message ? e.message : String(e)));
+  }
+}
+
 async function mostrarDiagnosticoPushIos() {
   const lineas = [];
   const siNo = v => v ? "SI" : "NO";
@@ -1634,9 +1660,11 @@ async function mostrarDiagnosticoPushIos() {
 
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("pushDiagnosticoIosBtn");
+  const reparar = document.getElementById("pushRepararIosBtn");
   const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   if (btn && ios) btn.style.display = "inline-block";
+  if (reparar && ios) reparar.style.display = "inline-block";
 });
 </script>
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = "padel-players-morvedre-v132";
+const CACHE_NAME = "padel-players-morvedre-v133";
 
 // Solo recursos estÃ¡ticos seguros para uso offline. El HTML, JavaScript, CSS y
 // las peticiones de Firebase deben ir siempre a red para evitar mezclar
