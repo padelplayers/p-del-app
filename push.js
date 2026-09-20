@@ -9,7 +9,6 @@
   let oneSignal = null;
   let initPromise = null;
   let ultimoUid = null;
-  let ultimoErrorOneSignal = null;
   function ocultarInvitacionPush() {
     const capa = document.getElementById("pushInvitacionInicial");
     if (capa) capa.remove();
@@ -163,7 +162,6 @@
           });
 
           oneSignal = OneSignal;
-          ultimoErrorOneSignal = null;
 
           if (OneSignal.Notifications && typeof OneSignal.Notifications.addEventListener === "function") {
             OneSignal.Notifications.addEventListener("permissionChange", actualizarBotonPush);
@@ -176,8 +174,7 @@
           setTimeout(function() { mostrarInvitacionPush(firebase.auth().currentUser); }, 900);
           resolve(OneSignal);
         } catch (error) {
-          ultimoErrorOneSignal = error && error.message ? error.message : String(error);
-          console.warn("No se pudo iniciar OneSignal:", ultimoErrorOneSignal);
+          console.warn("No se pudo iniciar OneSignal:", error && error.message ? error.message : String(error));
           resolve(null);
         }
       });
@@ -239,43 +236,6 @@
 
   window.solicitarPushBackend = solicitarPushBackend;
   window.registrarPush = registrarPush;
-  window.repararPushIos = async function() {
-    const ok = await registrarPush(true);
-    const diagnostico = await window.obtenerDiagnosticoPush();
-    return { ok: ok, diagnostico: diagnostico };
-  };
-
-  window.obtenerDiagnosticoPush = async function() {
-    const datos = {};
-    const user = firebase.auth().currentUser;
-    datos["push.js cargado"] = "SI";
-    datos["OneSignal initPromise"] = initPromise ? "CREADA" : "NO";
-    datos["OneSignal objeto"] = oneSignal ? "SI" : "NO";
-    datos["Error OneSignal init"] = ultimoErrorOneSignal || "NO";
-    datos["Firebase usuario"] = user ? user.uid : "NO";
-    datos["UID identificado"] = ultimoUid || "NO";
-    datos["Entorno compatible"] = entornoCompatible() ? "SI" : "NO";
-    datos["iOS detectado"] = esIos() ? "SI" : "NO";
-    datos["PWA instalada"] = estaInstalada() ? "SI" : "NO";
-    datos["Permiso navegador"] = ("Notification" in window) ? Notification.permission : "NO DISPONIBLE";
-
-    try {
-      datos["OneSignal permiso"] = oneSignal && oneSignal.Notifications
-        ? String(oneSignal.Notifications.permission) : "NO DISPONIBLE";
-    } catch (e) { datos["OneSignal permiso"] = "ERROR: " + (e.message || String(e)); }
-
-    try {
-      const sub = oneSignal && oneSignal.User && oneSignal.User.PushSubscription
-        ? oneSignal.User.PushSubscription : null;
-      datos["OneSignal optedIn"] = sub ? String(sub.optedIn) : "NO DISPONIBLE";
-      datos["Subscription ID"] = sub && sub.id ? String(sub.id) : "NO";
-      datos["Push token"] = sub && sub.token ? "SI" : "NO";
-    } catch (e) { datos["Suscripcion"] = "ERROR: " + (e.message || String(e)); }
-
-    try { datos["Debe mostrar invitacion"] = debeMostrarInvitacionPush(user) ? "SI" : "NO"; }
-    catch (e) { datos["Debe mostrar invitacion"] = "ERROR: " + (e.message || String(e)); }
-    return datos;
-  };
 
   document.addEventListener("DOMContentLoaded", initPush);
 })();

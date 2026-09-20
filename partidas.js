@@ -659,6 +659,28 @@ function crearMensajeSistemaPartida(partidaId, p, config) {
       dedupeKey: config.dedupeKey,
       action: "abrir_partida",
       origin: "partidas"
+    }).then(function(messageId) {
+      // Push de Sistema solo para eventos globales permitidos:
+      // nueva partida y avisos cuyo objetivo es encontrar un jugador/sustituto.
+      // El resto de eventos de partida usan las notificaciones internas dirigidas
+      // a participantes, evitando duplicar avisos.
+      const eventosPushSistema = [
+        "partida_creada",
+        "falta_1",
+        "falta_1_hombre",
+        "falta_1_mujer",
+        "plaza_libre_confirmada",
+        "sustitucion_urgente"
+      ];
+      if (messageId && eventosPushSistema.includes(config.eventType) && typeof window.solicitarPushBackend === "function") {
+        window.solicitarPushBackend({
+          action: "system",
+          partidaId: partidaId,
+          messageId: messageId,
+          eventType: config.eventType
+        });
+      }
+      return messageId;
     });
   });
 }
